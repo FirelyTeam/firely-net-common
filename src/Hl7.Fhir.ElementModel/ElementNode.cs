@@ -109,9 +109,6 @@ namespace Hl7.Fhir.ElementModel
         /// <summary>
         /// Will update the child to reflect it being a child of this element, but will not yet add the child at any position within this element
         /// </summary>
-        /// <param name="provider"></param>
-        /// <param name="child"></param>
-        /// <param name="name"></param>
         private void importChild(IStructureDefinitionSummaryProvider provider, ElementNode child, string name, int? position=null)
         {
             child.Name = name ?? child.Name;

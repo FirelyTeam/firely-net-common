@@ -1,10 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net45;net40;netstandard1.1;netstandard2.0</TargetFrameworks>
   </PropertyGroup>
 
-  <Import Project="..\fhir-net-api.props" />
-  <Import Project="..\fhir-net-api.targets" />
+  <Import Project="..\fhir-net-common.props" />
+  <Import Project="..\fhir-net-common.targets" />
 
   <PropertyGroup>
     <PackageId>Hl7.Fhir.Serialization</PackageId>

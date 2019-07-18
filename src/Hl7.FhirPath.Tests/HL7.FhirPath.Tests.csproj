@@ -3,8 +3,8 @@
     <TargetFrameworks>netcoreapp2.1;net452</TargetFrameworks>
   </PropertyGroup>
 
-  <Import Project="..\fhir-net-api.props" />
-  <Import Project="..\fhir-net-api.targets" />
+  <Import Project="..\fhir-net-common.props" />
+  <Import Project="..\fhir-net-common.targets" />
 
   <PropertyGroup>
     <AssemblyName>Hl7.FhirPath.Tests</AssemblyName>
