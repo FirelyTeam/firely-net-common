@@ -27,7 +27,7 @@ if (!$oldSuffix.StartsWith("alpha"))
 }
 
 #Replacing the version and suffix
-(Get-Content fhir-net-api.props) |
+(Get-Content fhir-net-common.props) |
     Foreach-Object { $_ `
         -replace "<VersionPrefix>.*</VersionPrefix>", "<VersionPrefix>$newVersion</VersionPrefix>" `
         -replace "<VersionSuffix>.*</VersionSuffix>", "<VersionSuffix>$suffix</VersionSuffix>" `
