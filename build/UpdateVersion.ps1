@@ -7,7 +7,7 @@ Param(
 #Go to src (version is not relevant to test projects)
 Push-Location $PsScriptRoot\..\src
 
-$xml = [xml](get-content fhir-net-api.props) 
+$xml = [xml](get-content fhir-net-common.props) 
 
 # newVersion is not set, so getting it from the fhir-net-api.props
 If ([string]::IsNullOrEmpty($newVersion)) 
@@ -32,7 +32,7 @@ if (!$oldSuffix.StartsWith("alpha"))
         -replace "<VersionPrefix>.*</VersionPrefix>", "<VersionPrefix>$newVersion</VersionPrefix>" `
         -replace "<VersionSuffix>.*</VersionSuffix>", "<VersionSuffix>$suffix</VersionSuffix>" `
     } |
-    Set-Content fhir-net-api.props
+    Set-Content fhir-net-common.props
 
 #go back to the original directory
 Pop-Location
