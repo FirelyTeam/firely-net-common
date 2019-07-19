@@ -1,6 +1,6 @@
 Push-Location $PsScriptRoot\..\src
 
-$xml = [xml](get-content ..\src\fhir-net-api.props)
+$xml = [xml](get-content ..\src\fhir-net-common.props)
 
 #Get the version 
 [string]$version = $xml.Project.PropertyGroup.VersionPrefix
