@@ -1,30 +1,19 @@
 ﻿using Hl7.Fhir.Model.Primitives;
 using Hl7.Fhir.Utility;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Support.Model
 {
     public class Primitives
     {
-        //public static readonly string[] PRIMITIVE_TYPES = new[] { "boolean", "integer", "unsignedInt",
-        //        "positiveInt","time","instant","date","dateTime","decimal",
-        //        "string","code","id","uri","oid","uuid","canonical","url","markdown",
-        //         "base64Binary", "xhtml" };
-
         public static bool IsPrimitive(string typeName) => Char.IsLower(typeName[0]);
-        // PRIMITIVE_TYPES.Contains(typeName);
-
 
         /// <summary>
         /// Derives the basic FHIR type name from a C# primitive type.
         /// </summary>
         /// <param name="dotNetType">Value to determine the type for.</param>
         /// <returns></returns>
-        /// <remarks>This function maps a primitive .NET value unto the subset of types supported by FhirPath.</remarks>
+        /// <remarks>This function maps a primitive .NET value unto the subset of types supported by FHIR.</remarks>
         public static string GetPrimitiveTypeName(Type dotNetType)
         {
             if (dotNetType == null) throw new ArgumentNullException(nameof(dotNetType));
@@ -32,7 +21,7 @@ namespace Hl7.Fhir.Support.Model
             if (TryGetPrimitiveTypeName(dotNetType, out string result))
                 return result;            
             else
-                throw Error.NotSupported($"Don't know which primitive ITypedElement value represents an instance of .NET type {dotNetType.Name}.");
+                throw new NotSupportedException($".NET type {dotNetType.Name} cannot be represented as a FHIR primitive.");
         }
 
 
