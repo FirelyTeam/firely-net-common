@@ -61,9 +61,9 @@ namespace Hl7.Fhir.Support.Tests.Model
         [TestMethod]
         public void OperatorsTest()
         {
-            foreach (var item in GetTestdata())
+            foreach (var (leftop, op, rightop, result) in GetTestdata())
             {
-                AssertOperatorsTest(item.leftop, item.op, item.rightop, item.result);
+                AssertOperatorsTest(leftop, op, rightop, result);
             }
         }
     }

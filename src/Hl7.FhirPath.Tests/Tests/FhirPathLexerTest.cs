@@ -85,7 +85,7 @@ namespace Hl7.FhirPath.Tests
             SucceedsPartialDateTime(parser, "@2015-01-02T12:34:00Z");
             SucceedsPartialDateTime(parser, "@2015-01-03T12:34:34+02:30");
             SucceedsPartialDateTime(parser, "@2015-01-03T12:34:34");
-            //      SucceedsPartialDateTime(parser, "@2015-01-01T23");  TODO: Make this work
+            SucceedsPartialDateTime(parser, "@2015-01-01T23");
             AssertParser.FailsMatch(parser, "@2015-32-02T12:34:00Z");
             AssertParser.FailsMatch(parser, "@2015-01-02T28:34:00Z");
             AssertParser.FailsMatch(parser, "T12:34:34+02:30");
@@ -94,7 +94,6 @@ namespace Hl7.FhirPath.Tests
             AssertParser.FailsMatch(parser, "@12:34:34+02:30");
             AssertParser.FailsMatch(parser, "@20150103T12:34:34+02:30");
             AssertParser.FailsMatch(parser, "@-2015-01");
-
         }
 
         private void SucceedsTime(Parser<PartialTime> parser, string s)

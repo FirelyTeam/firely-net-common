@@ -82,36 +82,55 @@ namespace Hl7.FhirPath.Parser
             Parse.Char('%').Then(c => Identifier.XOr(String))
             .Named("external constant");
 
+        // DATE
+        //      : '@'  ....
+        // Note: I split the lexer rule for DATETIME from the FP spec into separate DATETIME and DATE rules
+        public static readonly Regex DateRegEx = new Regex(
+                @"@[0-9]{4}     # Year
+                (
+                    -([0-9][0-9])   # Month
+                    (
+                        -([0-9][0-9])    # Day
+                    )?
+                )?", RegexOptions.IgnorePatternWhitespace);
+
+        public static readonly Parser<PartialDate> Date =
+            Parse.Regex(DateRegEx).Select(s => PartialDate.Parse(s.Substring(1)));
+
         // DATETIME
         //      : '@'  ....
-        // Note: I used a different regex from the spec, since this one is more complete (not allowing 99 as month for example),
-        // but disallowing partial datetimes with just the hour. EK
+        // Note: I split the lexer rule for DATETIME from the FP spec into separate DATETIME and DATE rules
         public static readonly Regex DateTimeRegEx = new Regex(
-                                @"@[0-9]{4}             # Year
-                                (
-                                    -(0[1-9]|1[0-2])                # Month
-                                    (
-                                        -(0[0-9]|[1-2][0-9]|3[0-1])         #Day
-                                        (
-                                            T
-                                            ([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\.[0-9]+)?   #Time
-                                            (Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?  #Timezone
-                                        )?
-                                    )?
-                                )?", RegexOptions.IgnorePatternWhitespace);
+                @"@[0-9]{4}     # Year
+                (
+                    ( 
+                        -([0-9][0-9])   # Month
+                        (
+                            (  
+                                -([0-9][0-9]) T  #Day
+                                (                    
+                                  " + TIMEFORMAT + "  #Time  " + @"
+                                ) ?
+                            )
+                            | T
+                        )
+                    ) 
+                    | T
+                ) (Z|((\+|-)[0-9][0-9]:[0-9][0-9]))?  #Timezone
+                ", RegexOptions.IgnorePatternWhitespace);
 
         public static readonly Parser<PartialDateTime> DateTime =
             Parse.Regex(DateTimeRegEx).Select(s => PartialDateTime.Parse(s.Substring(1)));
 
+        // fragment TIMEFORMAT
+        //      : [0-9] [0-9] (':'[0-9] [0-9] (':'[0-9] [0-9] ('.'[0-9]+)?)?)?
+        //      ;
+        private const string TIMEFORMAT = @"[0-9][0-9](:[0-9][0-9](:[0-9][0-9](\.[0-9]+)?)?)?";
+        
         // TIME
         //      : '@T'  ....
-        // Note: I used a different regex from the spec, since this one is more complete (not allowing 99 as an hour for example),
-        // but disallowing partial times with just the hour. EK
-        public static readonly Regex TimeRegEx = new Regex(
-                                @"@T
-                                            ([01][0-9]|2[0-3])(:[0-5][0-9](:[0-5][0-9](\.[0-9]+)?)?)?   #Time
-                                            (Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?  #Timezone
-                                 ", RegexOptions.IgnorePatternWhitespace);
+        // NB: No timezone (as specified in FHIR and FhirPath, but CQL *does* allow a timezone
+        public static readonly Regex TimeRegEx = new Regex("@T" + TIMEFORMAT, RegexOptions.IgnorePatternWhitespace);
 
         public static readonly Parser<PartialTime> Time =
             Parse.Regex(TimeRegEx).Select(s => PartialTime.Parse(s.Substring(2)));

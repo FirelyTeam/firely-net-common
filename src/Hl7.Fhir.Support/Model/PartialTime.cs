@@ -1,137 +1,123 @@
 ﻿/* 
- * Copyright (c) 2015, Firely (info@fire.ly) and contributors
+ * Copyright (c) 2019, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-
-using Hl7.Fhir.Serialization;
-using Hl7.Fhir.Utility;
 using System;
-using System.Xml;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public struct PartialTime : IComparable
+    public struct PartialTime : IComparable, IEquatable<PartialTime>
     {
-        private string _value;
+        public static PartialTime Parse(string value) =>
+            TryParse(value, out PartialTime result) ? result : throw new FormatException("Time value is in an invalid format.");
 
-        public static PartialTime Parse(string value)
+        public static bool TryParse(string representation, out PartialTime value) =>
+            tryParse(representation, 2016, 1, 1, out value);
+
+        public int? Hours => HasHours ? _parsedValue.Hour : (int?)null;
+        public int? Minutes => HasMinutes ? _parsedValue.Minute : (int?)null;
+        public int? Seconds => HasSeconds ? _parsedValue.Second : (int?)null;
+        public int? Millis => HasFraction ? _parsedValue.Millisecond : (int?)null;
+        public TimeSpan? Offset => HasOffset ? _parsedValue.Offset : (TimeSpan?)null;
+
+        private DateTimeOffset _parsedValue;
+
+        /// <summary>
+        /// Whether the time has precision of hours or more.
+        /// </summary>
+        /// <returns></returns>
+        public bool HasHours { get; private set; }
+
+        /// <summary>
+        /// Whether the time has precision of minutes or more.
+        /// </summary>
+        /// <returns></returns>
+        public bool HasMinutes { get; private set; }
+
+        /// <summary>
+        /// Whether the time has precision of seconds or more.
+        /// </summary>
+        public bool HasSeconds { get; private set; }
+
+        /// <summary>
+        /// Whether the time includes a seconds fraction.
+        /// </summary>
+        public bool HasFraction { get; private set; }
+
+        /// <summary>
+        /// Whether the time specifies an offset to UTC
+        /// </summary>
+        public bool HasOffset { get; private set; }
+
+        // Our regex is pretty flexible, it does not bother to capture rules about semantics (12:64 would be legal here), it
+        // even accepts just a timezone. Additional semantic checks will be verified using the built-in DateTimeOffset .NET parser.
+        // Also, it accept the superset of formats specified by FHIR, CQL, FhirPath and the mapping language. Each of these
+        // specific implementations may add additional constraints (e.g. about minimum precision or presence of timezones).
+        private const string TIMEFORMAT =
+            "^((?<hour>[0-9][0-9]) ((?<minutes>':'[0-9][0-9]) ((?<seconds>':'[0-9][0-9]) ((?<frac>'.'[0-9]+))?)?)?)?" +
+            "(?<offset>'Z' | ('+' | '-') [0-9][0-9]':'[0-9][0-9])?$";
+
+        public static readonly Regex TimeRegEx = new Regex(TIMEFORMAT, RegexOptions.IgnorePatternWhitespace);
+
+        public DateTimeOffset ToDateTimeOffset(int year, int month, int day) => 
+            new DateTimeOffset(year, month, day, _parsedValue.Hour,
+                    _parsedValue.Minute, _parsedValue.Second, _parsedValue.Millisecond, _parsedValue.Offset);
+
+        public const string FMT_FULL = "HH:mm:ss.FFFFFFFK";
+
+        public static PartialTime FromDateTimeOffset(DateTimeOffset dto)
         {
-            try
-            {
-                var dummy = PrimitiveTypeConverter.ConvertTo<DateTimeOffset>(toDTOParseable(value));
-            }
-            catch
-            {
-                throw new FormatException("Time value is in an invalid format, should conform to the time part of ISO8601");
-            }
-
-            return new PartialTime { _value = value };
+            var representation = dto.ToString(FMT_FULL);
+            return Parse(representation);
         }
 
-        public static bool TryParse(string representation, out PartialTime value)
+        public static PartialTime Now() => FromDateTimeOffset(DateTimeOffset.Now);
+
+        private static bool tryParse(string representation, int year, int month, int day, out PartialTime value)
         {
-            try
-            {
-                value = PartialTime.Parse(representation);
-                return true;
-            }
-            catch
-            {
-                value = default;
-                return false;
-            }
+            value = new PartialTime();
+
+            if (String.IsNullOrEmpty(representation)) return false;
+         
+            var matches = TimeRegEx.Match(representation);
+            if (!matches.Success) return false;
+
+            var hrg = matches.Groups["hours"];
+            var ming = matches.Groups["minutes"];
+            var secg = matches.Groups["seconds"];
+            var fracg = matches.Groups["frac"];
+            var offset = matches.Groups["offset"];
+
+            value.HasHours = hrg.Success;
+            value.HasMinutes = ming.Success;
+            value.HasSeconds = secg.Success;
+            value.HasFraction = fracg.Success;
+            value.HasOffset = offset.Success;
+
+            var parseableDT = $"{year:0000}-{month:00}-{day:00}" + "T" +
+                    (hrg.Success ? hrg.Value : "00") +
+                    (ming.Success ? ming.Value : ":00") +
+                    (secg.Success ? secg.Value : ":00") +
+                    (fracg.Success ? fracg.Value : "") +
+                    (offset.Success ? offset.Value : "");
+
+            return DateTimeOffset.TryParse(parseableDT, out value._parsedValue);
         }
 
-        private static string toDTOParseable(string value)
-        {
-            if (value.Length == 2)
-                value += ":00";
-            if (value.Length == 5)
-                value += ":00";
+        private DateTimeOffset toComparable() => _parsedValue.ToUniversalTime();
 
-            return "2016-01-01T" + value;
-        }
-
-        
-        private DateTimeOffset toDTO()
-        {
-            return PrimitiveTypeConverter.ConvertTo<DateTimeOffset>(toDTOParseable(_value)).ToUniversalTime();
-        }
-
-     
-        // overload operator <
-        public static bool operator <(PartialTime a, PartialTime b)
-        {
-            return a.toDTO() < b.toDTO();
-        }
-
-        public static bool operator <=(PartialTime a, PartialTime b)
-        {
-            return a.toDTO() <= b.toDTO();
-        }
-
-
-        // overload operator >
-        public static bool operator >(PartialTime a, PartialTime b)
-        {
-            return a.toDTO() > b.toDTO();
-        }
-
-        public static bool operator >=(PartialTime a, PartialTime b)
-        {
-            return a.toDTO() >= b.toDTO();
-        }
-
-
-        public static bool operator ==(PartialTime a, PartialTime b)
-        {
-            return Object.Equals(a, b);
-        }
-
-        public static bool operator !=(PartialTime a, PartialTime b)
-        {
-            return !Object.Equals(a, b);
-        }
-
-        public bool IsEquivalentTo(PartialTime other)
-        {
-            if (other == null) return false;
-
-            var left = toDTO();
-            var right = other.toDTO();
-
-            return   (left.Year == right.Year) && (left.Month == right.Month) && (left.Day == right.Day)              
-                            && (left.Hour == right.Hour) && (left.Minute == right.Minute);
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj == null) return false;
-
-            if (obj is PartialTime)
-                return ((PartialTime)obj).toDTO() == toDTO();
-            else
-                return false;
-        }
-
-        public override int GetHashCode()
-        {
-            return _value.GetHashCode();
-        }
-
-        public override string ToString()
-        {
-            return _value;
-        }
-
-        public static PartialTime Now()
-        {
-            return new PartialTime { _value = PrimitiveTypeConverter.ConvertTo<string>(DateTimeOffset.Now).Substring(10) };
-        }
+        public static bool operator <(PartialTime a, PartialTime b) => a.toComparable() < b.toComparable();
+        public static bool operator <=(PartialTime a, PartialTime b) => a.toComparable() <= b.toComparable();
+        public static bool operator >(PartialTime a, PartialTime b) => a.toComparable() > b.toComparable();
+        public static bool operator >=(PartialTime a, PartialTime b) => a.toComparable() >= b.toComparable();
+        public static bool operator ==(PartialTime a, PartialTime b) => Equals(a, b);
+        public static bool operator !=(PartialTime a, PartialTime b) => !(a == b);
 
         public int CompareTo(object obj)
         {
@@ -139,13 +125,44 @@ namespace Hl7.Fhir.Model.Primitives
 
             if (obj is PartialTime p)
             {
-                if (this < p) return -1;
-                if (this > p) return 1;
-                return 0;
+                if (this < p)
+                    return -1;
+                else if (this > p)
+                    return 1;
+                else
+                    return 0;
             }
             else
-                throw Error.Argument(nameof(obj), "Must be a Time");
+                throw new ArgumentException(nameof(obj), "Must be a Time");
         }
 
+        public override bool Equals(object obj) => obj is PartialTime time && Equals(time);
+        public bool Equals(PartialTime other) => other.toComparable() == toComparable();
+        public override int GetHashCode() => -1939223833 + EqualityComparer<DateTimeOffset>.Default.GetHashCode(toComparable());
+        public override string ToString() => _parsedValue.ToString(FMT_FULL);
     }
 }
+
+
+//if (!UInt16.TryParse(hrg.Value, out var hours) || hours > 23) return false;
+//value.Hours = hours;
+
+//if (ming.Success)
+//{
+//    if(!UInt16.TryParse(ming.Value, out var minutes) || minutes > 59) return false;
+//    value.Minutes = minutes;
+//}
+
+//if (secg.Success)
+//{
+//    if (!UInt16.TryParse(secg.Value, out var seconds) || seconds > 59) return false;
+//    value.Seconds = seconds;
+//}
+
+//if (fracg.Success)
+//{
+//    if (!fracg.Value.ToCharArray().All(c => Char.IsNumber(c))) return false;
+//    value.Fraction = fracg.Value;
+//}
+
+

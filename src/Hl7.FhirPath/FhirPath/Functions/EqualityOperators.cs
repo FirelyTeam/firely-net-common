@@ -122,9 +122,11 @@ namespace Hl7.FhirPath.Functions
                 else if (l.GetType() == typeof(decimal) && r.GetType() == typeof(long))
                     return ((decimal)l).IsEquivalentTo((decimal)(long)r);
                 else if (l.GetType() == typeof(PartialTime) && r.GetType() == typeof(PartialTime))
-                    return ((PartialTime)l).IsEquivalentTo((PartialTime)r);
+                    throw new NotImplementedException("The normative equivalence for 'time' has not yet been implemented");
+                else if (l.GetType() == typeof(PartialDate) && r.GetType() == typeof(PartialDate))
+                    throw new NotImplementedException("The normative equivalence for 'date' has not yet been implemented");
                 else if (l.GetType() == typeof(PartialDateTime) && r.GetType() == typeof(PartialDateTime))
-                    return ((PartialDateTime)l).IsEquivalentTo((PartialDateTime)r);
+                    throw new NotImplementedException("The normative equivalence for 'dateTime' has not yet been implemented");
                 else
                     return false;
             }

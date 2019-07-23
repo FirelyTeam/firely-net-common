@@ -30,10 +30,6 @@ namespace Hl7.Fhir.Model.Primitives
                 throw new FormatException("Partial is in an invalid format, should use ISO8601 YYYY-MM-DDThh:mm:ss+TZ notation");
             }
 
-            // Look for values like Thh:mm or hh:mm
-            if (value.IndexOf(":") == 2 || value.IndexOf(":") == 3)
-                throw Error.NotSupported("Partial date times cannot contain just a time");
-
             return new PartialDateTime { _value = value };
         }
 
@@ -41,53 +37,33 @@ namespace Hl7.Fhir.Model.Primitives
         {
             try
             {
-                value = PartialDateTime.Parse(representation);
+                value = Parse(representation);
                 return true;
             }
             catch
             {
-                value = default(PartialDateTime);
+                value = default;
                 return false;
             }
         }
 
-        public DateTimeOffset ToUniversalTime()
-        {
-            return PrimitiveTypeConverter.ConvertTo<DateTimeOffset>(_value).ToUniversalTime();
-        }
+        public DateTimeOffset ToUniversalTime() =>
+            PrimitiveTypeConverter.ConvertTo<DateTimeOffset>(_value).ToUniversalTime();
 
 
         // overload operator <
-        public static bool operator < (PartialDateTime a, PartialDateTime b)
-        {
-            return a.ToUniversalTime() < b.ToUniversalTime();
-        }
+        public static bool operator <(PartialDateTime a, PartialDateTime b) => a.ToUniversalTime() < b.ToUniversalTime();
 
-        public static bool operator <=(PartialDateTime a, PartialDateTime b)
-        {
-            return a.ToUniversalTime() <= b.ToUniversalTime();
-        }
+        public static bool operator <=(PartialDateTime a, PartialDateTime b) => a.ToUniversalTime() <= b.ToUniversalTime();
 
         // overload operator >
-        public static bool operator >(PartialDateTime a, PartialDateTime b)
-        {
-            return a.ToUniversalTime() > b.ToUniversalTime();
-        }
+        public static bool operator >(PartialDateTime a, PartialDateTime b) => a.ToUniversalTime() > b.ToUniversalTime();
 
-        public static bool operator >=(PartialDateTime a, PartialDateTime b)
-        {
-            return a.ToUniversalTime() >= b.ToUniversalTime();
-        }
+        public static bool operator >=(PartialDateTime a, PartialDateTime b) => a.ToUniversalTime() >= b.ToUniversalTime();
 
-        public static bool operator ==(PartialDateTime a, PartialDateTime b)
-        {
-            return Object.Equals(a, b);
-        }
+        public static bool operator ==(PartialDateTime a, PartialDateTime b) => Equals(a, b);
 
-        public static bool operator !=(PartialDateTime a, PartialDateTime b)
-        {
-            return !Object.Equals(a, b);
-        }
+        public static bool operator !=(PartialDateTime a, PartialDateTime b) => !(a == b);
 
         public bool IsEquivalentTo(PartialDateTime other)
         {
@@ -117,36 +93,15 @@ namespace Hl7.Fhir.Model.Primitives
                 return false;
         }
 
-        public override int GetHashCode()
-        {
-            return _value.GetHashCode();
-        }
+        public override int GetHashCode() => _value.GetHashCode();
 
-        public override string ToString()
-        {
-            return _value;
-        } 
+        public override string ToString() => _value;
 
-        public static PartialDateTime Now()
-        {
-            return FromDateTime(DateTimeOffset.Now);
-        }
+        public static PartialDateTime Now() => FromDateTime(DateTimeOffset.Now);
 
-        public static PartialDateTime Today()
-        {
-            return new PartialDateTime { _value = DateTimeOffset.Now.ToString("yyyy-MM-dd") };
-        }
+        public static PartialDateTime Today() => new PartialDateTime { _value = DateTimeOffset.Now.ToString("yyyy-MM-dd") };
 
-        public static PartialDateTime FromDateTime(DateTimeOffset dto)
-        {
-            return new PartialDateTime { _value = PrimitiveTypeConverter.ConvertTo<string>(dto) };
-        }
-
-        [Obsolete("Use FromDateTime(DateTimeOffset dto) instead")]
-        public static PartialDateTime FromDateTime(DateTime dt)
-        {
-            return new PartialDateTime { _value = PrimitiveTypeConverter.ConvertTo<string>(dt) };
-        }
+        public static PartialDateTime FromDateTime(DateTimeOffset dto) => new PartialDateTime { _value = PrimitiveTypeConverter.ConvertTo<string>(dto) };
 
         public int CompareTo(object obj)
         {

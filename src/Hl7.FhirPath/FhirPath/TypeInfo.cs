@@ -13,6 +13,7 @@ namespace Hl7.FhirPath
         public static readonly TypeInfo Integer = new TypeInfo("integer");
         public static readonly TypeInfo Decimal = new TypeInfo("decimal");
         public static readonly TypeInfo DateTime = new TypeInfo("dateTime");
+        public static readonly TypeInfo Date = new TypeInfo("date");
         public static readonly TypeInfo Time = new TypeInfo("time");
         public static readonly TypeInfo Any = new TypeInfo("any");
         public static readonly TypeInfo Void = new TypeInfo("void");
@@ -30,7 +31,8 @@ namespace Hl7.FhirPath
                 case "string": return TypeInfo.String;
                 case "integer": return TypeInfo.Integer;
                 case "decimal": return TypeInfo.Decimal;
-                case "datetime": return TypeInfo.DateTime;
+                case "dateTime": return TypeInfo.DateTime;
+                case "date": return TypeInfo.Date;
                 case "time": return TypeInfo.Time;
                 case "any": return TypeInfo.Any;
                 case "void": return TypeInfo.Void;

@@ -42,6 +42,8 @@ namespace Hl7.Fhir.Support.Model
                 typeName = "integer";
             else if (t<PartialTime>())
                 typeName = "time";
+            else if (t<PartialDate>())
+                typeName = "date";
             else if (t<PartialDateTime>() || t<DateTimeOffset>())
                 typeName = "dateTime";
             else if (t<float>() || t<double>() || t<Decimal>() )
@@ -91,6 +93,8 @@ namespace Hl7.Fhir.Support.Model
             else if (value is DateTimeOffset)
                 primitiveValue = PartialDateTime.FromDateTime((DateTimeOffset)value);
             else if (value is PartialDateTime)
+                primitiveValue = value;
+            else if (value is PartialDate)
                 primitiveValue = value;
             else if (value is float || value is double || value is Decimal)
                 primitiveValue = Convert.ToDecimal(value);
@@ -149,6 +153,7 @@ namespace Hl7.Fhir.Support.Model
                         return typeof(PartialTime);
                     case "instant":
                     case "date":
+                        return typeof(PartialDate);
                     case "dateTime":
                         return typeof(PartialDateTime);
                     case "decimal":

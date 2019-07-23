@@ -21,12 +21,14 @@ namespace Hl7.FhirPath.Parser
         //  | STRING                                                #stringLiteral
         //  | NUMBER                                                #numberLiteral
         //  | DATETIME                                              #dateTimeLiteral
+        //  | DATE                                                  #dateLiteral - additional to the spec
         //  | TIME                                                  #timeLiteral
         //  ;
         public static readonly Parser<ConstantExpression> Literal =
             Lexer.String.Select(v => new ConstantExpression(v, TypeInfo.String))
-                .XOr(Lexer.DateTime.Select(v => new ConstantExpression(v, TypeInfo.DateTime)))
-                .XOr(Lexer.Time.Select(v => new ConstantExpression(v, TypeInfo.Time)))
+                .Or(Lexer.DateTime.Select(v => new ConstantExpression(v, TypeInfo.DateTime)))
+                .Or(Lexer.Date.Select(v => new ConstantExpression(v, TypeInfo.Date)))
+                .Or(Lexer.Time.Select(v => new ConstantExpression(v, TypeInfo.Time)))
                 .XOr(Lexer.Bool.Select(v => new ConstantExpression(v, TypeInfo.Boolean)))
                 .Or(Lexer.DecimalNumber.Select(v => new ConstantExpression(v, TypeInfo.Decimal)))
                 .Or(Lexer.IntegerNumber.Select(v => new ConstantExpression(v, TypeInfo.Integer)));
