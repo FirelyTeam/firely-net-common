@@ -26,6 +26,7 @@ namespace Hl7.Fhir.Model.Primitives
         public int? Millis => HasFraction ? _parsedValue.Millisecond : (int?)null;
         public TimeSpan? Offset => HasOffset ? _parsedValue.Offset : (TimeSpan?)null;
 
+        private string _original;
         private DateTimeOffset _parsedValue;
 
         /// <summary>
@@ -60,8 +61,8 @@ namespace Hl7.Fhir.Model.Primitives
         // Also, it accept the superset of formats specified by FHIR, CQL, FhirPath and the mapping language. Each of these
         // specific implementations may add additional constraints (e.g. about minimum precision or presence of timezones).
         private const string TIMEFORMAT =
-            "^((?<hour>[0-9][0-9]) ((?<minutes>':'[0-9][0-9]) ((?<seconds>':'[0-9][0-9]) ((?<frac>'.'[0-9]+))?)?)?)?" +
-            "(?<offset>'Z' | ('+' | '-') [0-9][0-9]':'[0-9][0-9])?$";
+            "^((?<hours>[0-9][0-9]) ((?<minutes>:[0-9][0-9]) ((?<seconds>:[0-9][0-9]) ((?<frac>.[0-9]+))?)?)?)?" +
+            "(?<offset>Z | (\\+|-) [0-9][0-9]:[0-9][0-9])?$";
 
         public static readonly Regex TimeRegEx = new Regex(TIMEFORMAT, RegexOptions.IgnorePatternWhitespace);
 
@@ -107,6 +108,7 @@ namespace Hl7.Fhir.Model.Primitives
                     (fracg.Success ? fracg.Value : "") +
                     (offset.Success ? offset.Value : "");
 
+            value._original = representation;
             return DateTimeOffset.TryParse(parseableDT, out value._parsedValue);
         }
 
@@ -139,7 +141,7 @@ namespace Hl7.Fhir.Model.Primitives
         public override bool Equals(object obj) => obj is PartialTime time && Equals(time);
         public bool Equals(PartialTime other) => other.toComparable() == toComparable();
         public override int GetHashCode() => -1939223833 + EqualityComparer<DateTimeOffset>.Default.GetHashCode(toComparable());
-        public override string ToString() => _parsedValue.ToString(FMT_FULL);
+        public override string ToString() => _original;
     }
 }
 

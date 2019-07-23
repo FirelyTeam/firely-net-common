@@ -68,14 +68,6 @@ namespace Hl7.Fhir.Model.Primitives
 
         public static bool operator !=(PartialDate a, PartialDate b) => !(a == b);
 
-        public bool IsEquivalentTo(PartialDate other)
-        {
-            if (other == null) return false;
-
-            var len = Math.Min(_value.Length, other._value.Length);
-            return String.Compare(_value, 0, other._value, 0, len) == 0;
-        }
-
         public override bool Equals(object obj) => obj is PartialDate other ? _value == other._value : false;
 
         public override int GetHashCode() => _value.GetHashCode();

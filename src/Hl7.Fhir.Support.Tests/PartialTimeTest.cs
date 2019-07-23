@@ -18,20 +18,22 @@ namespace Hl7.FhirPath.Tests
         [TestMethod]
         public void TimeConstructor()
         {
-            accept("12:34:44.123456+02:00");
-            accept("12:34:44.123+02:00");
-            accept("12:34:44+02:00");
-            accept("12:34:44Z");
-            accept("12:34:44+00:00");
-            accept("12:34:44");
-            accept("12:34Z");
-            accept("12:34");
-            accept("12");
-            accept("12-04:30");
-            accept("+05:00");
-            accept("Z");
+            accept("12:34:44.123456+02:00",12,34,44,123, new TimeSpan(2,0,0));
+            accept("12:34:44.1+02:00", 12, 34, 44, 100, new TimeSpan(2, 0, 0));
+            accept("12:34:44+02:00",12,34,44,null,new TimeSpan(2, 0, 0));
+            accept("12:34:44Z",12,34,44,null,TimeSpan.Zero);
+            accept("12:34:44+00:00",12,34,44,null,TimeSpan.Zero);
+            accept("12:34:44",12,34,44,null,null);
+            accept("12:04.1234");
+            accept("12:34Z",12,34,null,null,TimeSpan.Zero);
+            accept("12:34",12,34,null,null,null);
+            accept("12", 12, null, null, null, null);
+            accept("12-04:30", 12, null,null,null, new TimeSpan(-4,30,0));
+            accept("+05:00",null,null,null,null, new TimeSpan(5,0,0));
+            accept("Z", null, null, null, null, new TimeSpan(5, 0, 0));
 
             reject("");
+
             reject("Hi12:34:44");
             reject("12:34:44there");
             reject("12:34:44+A");
@@ -39,10 +41,14 @@ namespace Hl7.FhirPath.Tests
             reject("92:34:44");
             reject("12:34:AM");
 
-            void accept(string testValue)
+            void accept(string testValue, int? h, int? m, int? s, int? ms, TimeSpan? o )
             {
                 Assert.IsTrue(PartialTime.TryParse(testValue, out PartialTime parsed));
-                Assert.AreEqual(parsed, PartialTime.Parse(testValue));
+                Assert.AreEqual(h, parsed.Hours);
+                Assert.AreEqual(m, parsed.Minutes);
+                Assert.AreEqual(s, parsed.Seconds);
+                Assert.AreEqual(ms, parsed.Millis);
+                Assert.AreEqual(o, parsed.Offset);
                 Assert.AreEqual(testValue, parsed.ToString());
             }
 
