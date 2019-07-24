@@ -92,7 +92,8 @@ namespace Hl7.FhirPath.Parser
                     (
                         -([0-9][0-9])    # Day
                     )?
-                )?", RegexOptions.IgnorePatternWhitespace);
+                )? (Z|((\+|-)[0-9][0-9]:[0-9][0-9]))?",
+                RegexOptions.IgnorePatternWhitespace);
 
         public static readonly Parser<PartialDate> Date =
             Parse.Regex(DateRegEx).Select(s => PartialDate.Parse(s.Substring(1)));
@@ -116,8 +117,8 @@ namespace Hl7.FhirPath.Parser
                         )
                     ) 
                     | T
-                ) (Z|((\+|-)[0-9][0-9]:[0-9][0-9]))?  #Timezone
-                ", RegexOptions.IgnorePatternWhitespace);
+                ) (Z|((\+|-)[0-9][0-9]:[0-9][0-9]))?", 
+                RegexOptions.IgnorePatternWhitespace);
 
         public static readonly Parser<PartialDateTime> DateTime =
             Parse.Regex(DateTimeRegEx).Select(s => PartialDateTime.Parse(s.Substring(1)));
@@ -129,7 +130,7 @@ namespace Hl7.FhirPath.Parser
         
         // TIME
         //      : '@T'  ....
-        // NB: No timezone (as specified in FHIR and FhirPath, but CQL *does* allow a timezone
+        // NB: No timezone (as specified in FHIR and FhirPath, CQL incorrectly states that it allows a timezone)
         public static readonly Regex TimeRegEx = new Regex("@T" + TIMEFORMAT, RegexOptions.IgnorePatternWhitespace);
 
         public static readonly Parser<PartialTime> Time =

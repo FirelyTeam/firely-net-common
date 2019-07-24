@@ -84,24 +84,28 @@ namespace Hl7.FhirPath.Expressions
             t.Add("binary.>", (object f, string a, string b) => String.CompareOrdinal(a, b) > 0, doNullProp: true);
             t.Add("binary.>", (object f, PartialDateTime a, PartialDateTime b) => a > b, doNullProp: true);
             t.Add("binary.>", (object f, PartialTime a, PartialTime b) => a > b, doNullProp: true);
+            t.Add("binary.>", (object f, PartialDate a, PartialDate b) => a > b, doNullProp: true);
 
             t.Add("binary.<", (object f, long a, long b) => a < b, doNullProp: true);
             t.Add("binary.<", (object f, decimal a, decimal b) => a < b, doNullProp: true);
             t.Add("binary.<", (object f, string a, string b) => String.CompareOrdinal(a, b) < 0, doNullProp: true);
             t.Add("binary.<", (object f, PartialDateTime a, PartialDateTime b) => a < b, doNullProp: true);
             t.Add("binary.<", (object f, PartialTime a, PartialTime b) => a < b, doNullProp: true);
+            t.Add("binary.<", (object f, PartialDate a, PartialDate b) => a < b, doNullProp: true);
 
             t.Add("binary.<=", (object f, long a, long b) => a <= b, doNullProp: true);
             t.Add("binary.<=", (object f, decimal a, decimal b) => a <= b, doNullProp: true);
             t.Add("binary.<=", (object f, string a, string b) => String.CompareOrdinal(a, b) <= 0, doNullProp: true);
             t.Add("binary.<=", (object f, PartialDateTime a, PartialDateTime b) => a <= b, doNullProp: true);
             t.Add("binary.<=", (object f, PartialTime a, PartialTime b) => a <= b, doNullProp: true);
+            t.Add("binary.<=", (object f, PartialDate a, PartialDate b) => a <= b, doNullProp: true);
 
             t.Add("binary.>=", (object f, long a, long b) => a >= b, doNullProp: true);
             t.Add("binary.>=", (object f, decimal a, decimal b) => a >= b, doNullProp: true);
             t.Add("binary.>=", (object f, string a, string b) => String.CompareOrdinal(a, b) >= 0, doNullProp: true);
             t.Add("binary.>=", (object f, PartialDateTime a, PartialDateTime b) => a >= b, doNullProp: true);
             t.Add("binary.>=", (object f, PartialTime a, PartialTime b) => a >= b, doNullProp: true);
+            t.Add("binary.>=", (object f, PartialDate a, PartialDate b) => a >= b, doNullProp: true);
 
             t.Add("single", (IEnumerable<ITypedElement> f) => f.Single(), doNullProp: true);
             t.Add("skip", (IEnumerable<ITypedElement> f, long a) =>  f.Skip((int)a), doNullProp: true);
@@ -121,6 +125,8 @@ namespace Hl7.FhirPath.Expressions
             t.Add("convertsToDateTime", (ITypedElement f) => f.ConvertsToDateTime(), doNullProp: true);
             t.Add("toTime", (ITypedElement f) => f.ToTime(), doNullProp: true);
             t.Add("convertsToTime", (ITypedElement f) => f.ConvertsToTime(), doNullProp: true);
+            t.Add("toDate", (ITypedElement f) => f.ToDate(), doNullProp: true);
+            t.Add("convertsToDate", (ITypedElement f) => f.ConvertsToDate(), doNullProp: true);
             t.Add("toString", (ITypedElement f) => f.ToStringRepresentation(), doNullProp: true);
             t.Add("convertsToString", (ITypedElement f) => f.ConvertsToString(), doNullProp: true);
 

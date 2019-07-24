@@ -86,6 +86,13 @@ namespace Hl7.FhirPath.Tests
             SucceedsPartialDateTime(parser, "@2015-01-03T12:34:34+02:30");
             SucceedsPartialDateTime(parser, "@2015-01-03T12:34:34");
             SucceedsPartialDateTime(parser, "@2015-01-01T23");
+            SucceedsPartialDateTime(parser, "@2015-01-01T");
+            SucceedsPartialDateTime(parser, "@2015-01-01T23Z");
+            SucceedsPartialDateTime(parser, "@2015-01-01T+01:00");
+
+            AssertParser.FailsMatch(parser, "@2015-32-02");  // since this is a date, not a dateTime
+            AssertParser.FailsMatch(parser, "@2015-32-02+01:00");  // since this is a date, not a dateTime
+
             AssertParser.FailsMatch(parser, "@2015-32-02T12:34:00Z");
             AssertParser.FailsMatch(parser, "@2015-01-02T28:34:00Z");
             AssertParser.FailsMatch(parser, "T12:34:34+02:30");
@@ -118,20 +125,27 @@ namespace Hl7.FhirPath.Tests
         {
             var parser = Lexer.Time.End();
 
-            SucceedsTime(parser, "@T12:34:00Z");
-            SucceedsTime(parser, "@T12:34:34+02:30");
+            SucceedsTime(parser, "@T12:34:34.345674");
             SucceedsTime(parser, "@T12:34:34");
+            SucceedsTime(parser, "@T12:35"); 
+            SucceedsTime(parser, "@T12");
 
-            // SucceedsTime(parser, "@T12:35");     TODO: make this work
-            // SucceedsTime(parser, "@T12");
-
+            AssertParser.FailsMatch(parser, "@T12:34:34+02:30");
+            AssertParser.FailsMatch(parser, "@T12:34:00Z"); 
             AssertParser.FailsMatch(parser, "2001-01-01T12:34:34+02:30");
             AssertParser.FailsMatch(parser, "@2001-01-01T12:34:34+02:30");
             AssertParser.FailsMatch(parser, "T12:34:34+02:30");
             AssertParser.FailsMatch(parser, "12:34:34+02:30");
             AssertParser.FailsMatch(parser, "@12:34:34+02:30");
-
             AssertParser.FailsMatch(parser, "@T12:34:34+48:30");
+        }
+
+        [Fact]
+        public void FhirPath_Lex_Date()
+        {
+            var parser = Lexer.Date.End();
+
+            Assert.True(false, "Tests need to be implemented.");
         }
 
         [Fact]

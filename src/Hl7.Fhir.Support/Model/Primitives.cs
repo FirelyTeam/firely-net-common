@@ -151,9 +151,9 @@ namespace Hl7.Fhir.Support.Model
                         return typeof(long);
                     case "time":
                         return typeof(PartialTime);
-                    case "instant":
                     case "date":
                         return typeof(PartialDate);
+                    case "instant":
                     case "dateTime":
                         return typeof(PartialDateTime);
                     case "decimal":

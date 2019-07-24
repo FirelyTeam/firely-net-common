@@ -60,6 +60,8 @@ namespace Hl7.FhirPath.Functions
                     return (PartialTime)l == (PartialTime)r;
                 else if (l.GetType() == typeof(PartialDateTime) && r.GetType() == typeof(PartialDateTime))
                     return (PartialDateTime)l == (PartialDateTime)r;
+                else if (l.GetType() == typeof(PartialDate) && r.GetType() == typeof(PartialDate))
+                    return (PartialDate)l == (PartialDate)r;
                 else
                     return false;
             }

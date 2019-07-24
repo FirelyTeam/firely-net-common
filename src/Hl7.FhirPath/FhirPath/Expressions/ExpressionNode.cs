@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * Copyright (c) 2015, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
@@ -73,6 +73,8 @@ namespace Hl7.FhirPath.Expressions
                 ExpressionType = TypeInfo.DateTime;
             else if (Value is PartialTime)
                 ExpressionType = TypeInfo.Time;
+            else if (Value is PartialDate)
+                ExpressionType = TypeInfo.Date;
             else
                 throw Error.InvalidOperation("Internal logic error: encountered unmappable Value of type " + Value.GetType().Name);
         }
