@@ -22,11 +22,11 @@ namespace Hl7.Fhir.Model.Primitives
             TryParse(value, out PartialDate result) ? result : throw new FormatException("Time value is in an invalid format.");
 
         public static bool TryParse(string representation, out PartialDate value) =>
-            tryParse(representation, 2016, 1, 1, out value);
+            tryParse(representation, 12, 0, 0, out value);
 
 
         private const string DATEFORMAT =
-            "^((<year>[0-9][0-9][0-9][0-9]) ((?<month>:[0-9][0-9]) ((?<day>:[0-9][0-9]) )?)?)?" +
+            "^((?<year>[0-9][0-9][0-9][0-9]) ((?<month>-[0-9][0-9]) ((?<day>-[0-9][0-9]) )?)?)?" +
             "(?<offset>Z | (\\+|-) [0-9][0-9]:[0-9][0-9])?$";
 
         public bool HasYear { get; private set; }
@@ -45,7 +45,7 @@ namespace Hl7.Fhir.Model.Primitives
         public TimeSpan? Offset => HasOffset ? _parsedValue.Offset : (TimeSpan?)null;
 
 
-        public const string FMT_FULL = "yyyy:MM:dd.FFFFFFFK";
+        public const string FMT_FULL = "yyyy-MM-dd.FFFFFFFK";
 
         public static PartialDate FromDateTimeOffset(DateTimeOffset dto)
         {
@@ -53,7 +53,7 @@ namespace Hl7.Fhir.Model.Primitives
             return Parse(representation);
         }
 
-        private static bool tryParse(string representation, int year, int month, int day, out PartialDate value)
+        private static bool tryParse(string representation, int hour, int minutes, int seconds, out PartialDate value)
         {
             value = new PartialDate();
 
@@ -72,11 +72,8 @@ namespace Hl7.Fhir.Model.Primitives
             value.HasDay = d.Success;
             value.HasOffset = offset.Success;
 
-            var parseableDT = $"{year:0000}-{month:00}-{day:00}" +
-                    (y.Success ? y.Value : "0000") +
-                    (m.Success ? m.Value : ":00") +
-                    (d.Success ? d.Value : ":00") +
-                    (offset.Success ? offset.Value : "");
+            var parseableDT = (y.Success ? y.Value : "0000") + (m.Success ? m.Value : "-01") + (d.Success ? d.Value : "-01") + "T" +
+                $"{hour:00}:{minutes:00}:{seconds:00}" + (offset.Success ? offset.Value : "");
 
             value._original = representation;
             return DateTimeOffset.TryParse(parseableDT, out value._parsedValue);
@@ -95,7 +92,7 @@ namespace Hl7.Fhir.Model.Primitives
         public bool Equals(PartialDate other) => other.toComparable() == toComparable();
 
         public override int GetHashCode() => -1939223833 + EqualityComparer<DateTimeOffset>.Default.GetHashCode(toComparable());
-        public override string ToString() => _parsedValue.ToString();
+        public override string ToString() => _original;
         public static PartialDate Today()
         {
            TryParse(DateTimeOffset.Now.ToString("yyyy-MM-dd"), out PartialDate todayValue);
