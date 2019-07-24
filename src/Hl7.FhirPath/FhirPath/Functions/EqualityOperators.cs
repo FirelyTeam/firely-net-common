@@ -36,6 +36,8 @@ namespace Hl7.FhirPath.Functions
 
         public static bool IsEqualTo(this ITypedElement left, ITypedElement right, bool compareNames = false)
         {
+            // TODO: Merge with ElementNodeComparator.IsEqualTo
+
             if (compareNames && (left.Name != right.Name)) return false;
 
             var l = left.Value;
@@ -109,12 +111,16 @@ namespace Hl7.FhirPath.Functions
             var r = right.Value;
 
             // Compare primitives (or extended primitives)
+            // TODO: Define IsEquivalentTo for ALL datatypes in ITypedElement.value and move to Support assembly + test
+            // TODO: Define on object, so this switch can be removed here
+            // TODO: Move this IsEquivalentTo to the ElementModel assembly
+            // Maybe create an interface?
             if (l != null && r != null)
             {
-                if (l.GetType() == typeof(string) && r.GetType() == typeof(string))
-                    return ((string)l).IsEquivalentTo((string)r);
-                else if (l.GetType() == typeof(bool) && r.GetType() == typeof(bool))
-                    return (bool)l == (bool)r;
+                if (l is string ls && r is string rs)
+                    return ls.IsEquivalentTo(rs);
+                else if (l is bool lb && r is bool rb)
+                    return l == r;
                 else if (l.GetType() == typeof(long) && r.GetType() == typeof(long))
                     return (long)l == (long)r;
                 else if (l.GetType() == typeof(decimal) && r.GetType() == typeof(decimal))
@@ -123,12 +129,12 @@ namespace Hl7.FhirPath.Functions
                     return ((decimal)(long)l).IsEquivalentTo((decimal)r);
                 else if (l.GetType() == typeof(decimal) && r.GetType() == typeof(long))
                     return ((decimal)l).IsEquivalentTo((decimal)(long)r);
-                else if (l.GetType() == typeof(PartialTime) && r.GetType() == typeof(PartialTime))
-                    throw new NotImplementedException("The normative equivalence for 'time' has not yet been implemented");
-                else if (l.GetType() == typeof(PartialDate) && r.GetType() == typeof(PartialDate))
-                    throw new NotImplementedException("The normative equivalence for 'date' has not yet been implemented");
-                else if (l.GetType() == typeof(PartialDateTime) && r.GetType() == typeof(PartialDateTime))
-                    throw new NotImplementedException("The normative equivalence for 'dateTime' has not yet been implemented");
+                else if (l is PartialTime lpt && r is PartialTime rpt)
+                    return lpt.IsEquivalentTo(rpt);
+                else if (l is PartialDate lpd && r is PartialDate rpd)
+                    return lpd.IsEquivalentTo(rpd);
+                else if (l is PartialDateTime lpdt && r is PartialDateTime rpdt)
+                    return lpdt.IsEquivalentTo(rpdt);
                 else
                     return false;
             }

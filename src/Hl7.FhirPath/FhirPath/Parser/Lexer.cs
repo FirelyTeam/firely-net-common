@@ -108,10 +108,12 @@ namespace Hl7.FhirPath.Parser
                         -([0-9][0-9])   # Month
                         (
                             (  
-                                -([0-9][0-9]) T  #Day
-                                (                    
-                                  " + TIMEFORMAT + "  #Time  " + @"
-                                ) ?
+                                -([0-9][0-9])  #Day
+                                (
+                                    (                    
+                                      " + TIMEFORMAT + "  #Time  " + @"
+                                    ) | T
+                                )
                             )
                             | T
                         )
