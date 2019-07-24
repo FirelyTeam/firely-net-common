@@ -64,7 +64,7 @@ namespace Hl7.Fhir.Model.Primitives
             "^((?<hours>[0-9][0-9]) ((?<minutes>:[0-9][0-9]) ((?<seconds>:[0-9][0-9]) ((?<frac>.[0-9]+))?)?)?)?" +
             "(?<offset>Z | (\\+|-) [0-9][0-9]:[0-9][0-9])?$";
 
-        public static readonly Regex TimeRegEx = new Regex(TIMEFORMAT, RegexOptions.IgnorePatternWhitespace);
+        private static readonly Regex TIMEREGEX = new Regex(TIMEFORMAT, RegexOptions.IgnorePatternWhitespace);
 
         public DateTimeOffset ToDateTimeOffset(int year, int month, int day) => 
             new DateTimeOffset(year, month, day, _parsedValue.Hour,
@@ -86,7 +86,7 @@ namespace Hl7.Fhir.Model.Primitives
 
             if (String.IsNullOrEmpty(representation)) return false;
          
-            var matches = TimeRegEx.Match(representation);
+            var matches = TIMEREGEX.Match(representation);
             if (!matches.Success) return false;
 
             var hrg = matches.Groups["hours"];
