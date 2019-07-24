@@ -61,15 +61,49 @@ namespace Hl7.FhirPath.Tests
         [TestMethod]
         public void ToDateTimeOffset()
         {
-            Assert.Fail();
-            //var pt = PartialTime.Parse("13:45:56");
-            //var dto = pt.ToDateTimeOffset(2019, 7, 23);
-            //Assert.Are
-            //pt = PartialTime.Parse("13:45:56+01:00");
-            //what to do with timezone????
-            //pass as a parameter ('defaultTimeZone')
+            var plusOne = new TimeSpan(1, 0, 0);
+            var plusTwo = new TimeSpan(2, 0, 0);
+
+            var pt = PartialTime.Parse("13:45:56");
+            var dto = pt.ToDateTimeOffset(2019, 7, 23, plusOne);
+            Assert.AreEqual(2019, dto.Year);
+            Assert.AreEqual(7, dto.Month);
+            Assert.AreEqual(23, dto.Day);
+            Assert.AreEqual(13, dto.Hour);
+            Assert.AreEqual(45, dto.Minute);
+            Assert.AreEqual(56, dto.Second);
+            Assert.AreEqual(plusOne, dto.Offset);
+
+            pt = PartialTime.Parse("13:45:56.456+02:00");
+            dto = pt.ToDateTimeOffset(2019, 7, 23, plusOne);
+            Assert.AreEqual(13, dto.Hour);
+            Assert.AreEqual(45, dto.Minute);
+            Assert.AreEqual(56, dto.Second);
+            Assert.AreEqual(456, dto.Millisecond);
+            Assert.AreEqual(plusTwo, dto.Offset);
+
+            pt = PartialTime.Parse("13+02:00");
+            dto = pt.ToDateTimeOffset(2019, 7, 23, plusOne);
+            Assert.AreEqual(13, dto.Hour);
+            Assert.AreEqual(0, dto.Minute);
+            Assert.AreEqual(0, dto.Second);
+            Assert.AreEqual(plusTwo, dto.Offset);
         }
 
+        [TestMethod]
+        public void FromDateTimeOffset()
+        {
+            var plusOne = new TimeSpan(1, 0, 0);
+
+            var dto = new DateTimeOffset(2019, 7, 23, 13, 45, 56, 567, plusOne);
+            var pt = PartialTime.FromDateTimeOffset(dto);
+
+            Assert.AreEqual(13, pt.Hours);
+            Assert.AreEqual(45, pt.Minutes);
+            Assert.AreEqual(56, pt.Seconds);
+            Assert.AreEqual(567, pt.Millis);
+            Assert.AreEqual(plusOne, pt.Offset);
+        }
 
         [TestMethod]
         public void TimeComparison()

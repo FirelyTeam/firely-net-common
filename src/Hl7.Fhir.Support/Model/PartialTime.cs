@@ -66,9 +66,18 @@ namespace Hl7.Fhir.Model.Primitives
 
         private static readonly Regex TIMEREGEX = new Regex(TIMEFORMAT, RegexOptions.IgnorePatternWhitespace);
 
-        public DateTimeOffset ToDateTimeOffset(int year, int month, int day) => 
+        /// <summary>
+        /// Converts the partial time to a full DateTimeOffset instance.
+        /// </summary>
+        /// <param name="year">Year used to turn a time into a date</param>
+        /// <param name="month">Month used to turn a time into a date</param>
+        /// <param name="day">Day used to turn a time into a date</param>
+        /// <param name="defaultOffset">Offset used when the partial time does not specify one.</param>
+        /// <returns></returns>
+        public DateTimeOffset ToDateTimeOffset(int year, int month, int day, TimeSpan defaultOffset) => 
             new DateTimeOffset(year, month, day, _parsedValue.Hour,
-                    _parsedValue.Minute, _parsedValue.Second, _parsedValue.Millisecond, _parsedValue.Offset);
+                    _parsedValue.Minute, _parsedValue.Second, _parsedValue.Millisecond, 
+                    HasOffset ? _parsedValue.Offset : defaultOffset);
 
         public const string FMT_FULL = "HH:mm:ss.FFFFFFFK";
 
@@ -145,26 +154,5 @@ namespace Hl7.Fhir.Model.Primitives
     }
 }
 
-
-//if (!UInt16.TryParse(hrg.Value, out var hours) || hours > 23) return false;
-//value.Hours = hours;
-
-//if (ming.Success)
-//{
-//    if(!UInt16.TryParse(ming.Value, out var minutes) || minutes > 59) return false;
-//    value.Minutes = minutes;
-//}
-
-//if (secg.Success)
-//{
-//    if (!UInt16.TryParse(secg.Value, out var seconds) || seconds > 59) return false;
-//    value.Seconds = seconds;
-//}
-
-//if (fracg.Success)
-//{
-//    if (!fracg.Value.ToCharArray().All(c => Char.IsNumber(c))) return false;
-//    value.Fraction = fracg.Value;
-//}
 
 
