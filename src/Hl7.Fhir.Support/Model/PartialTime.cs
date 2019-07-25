@@ -12,13 +12,13 @@ using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public struct PartialTime : IComparable, IEquatable<PartialTime>
+    public struct PartialTime : IComparable, IComparable<PartialTime>, IEquatable<PartialTime>
     {
         public static PartialTime Parse(string representation) =>
             TryParse(representation, out var result) ? result : throw new FormatException("Time value is in an invalid format.");
 
         public static bool TryParse(string representation, out PartialTime value) =>
-            tryParse(representation, 2016, 1, 1, out value);
+            tryParse(representation, out value);
 
         public int? Hours => Precision >= PartialPrecision.Hour ? _parsedValue.Hour : (int?)null;
         public int? Minutes => Precision >= PartialPrecision.Minute ? _parsedValue.Minute : (int?)null;
@@ -79,7 +79,7 @@ namespace Hl7.Fhir.Model.Primitives
 
         public static PartialTime Now() => FromDateTimeOffset(DateTimeOffset.Now);
 
-        private static bool tryParse(string representation, int year, int month, int day, out PartialTime value)
+        private static bool tryParse(string representation, out PartialTime value)
         {
             value = new PartialTime();
 
@@ -100,19 +100,21 @@ namespace Hl7.Fhir.Model.Primitives
 
             value.HasOffset = offset.Success;
 
-            var parseableDT = $"{year:0000}-{month:00}-{day:00}" + "T" +
+            var parseableDT = $"2016-01-01T" +
                     (hrg.Success ? hrg.Value : "00") +
                     (ming.Success ? ming.Value : ":00") +
                     (secg.Success ? secg.Value : ":00") +
                     (fracg.Success ? fracg.Value : "") +
-                    (offset.Success ? offset.Value : "");
+                    (offset.Success ? offset.Value : "Z");
 
             value._original = representation;
             return DateTimeOffset.TryParse(parseableDT, out value._parsedValue);
         }
 
+        public bool IsEqualTo(PartialTime other) => throw new NotImplementedException();
         public bool IsEquivalentTo(PartialTime other) => throw new NotImplementedException();
 
+        // TODO: Note, this enables comparisons between values that did or did not have timezones, need to fix.
         private DateTimeOffset toComparable() => _parsedValue.ToUniversalTime();
 
         public static bool operator <(PartialTime a, PartialTime b) => a.toComparable() < b.toComparable();
@@ -132,13 +134,16 @@ namespace Hl7.Fhir.Model.Primitives
                      (this > p) ? 1 : 0;
             }
             else
-                throw new ArgumentException(nameof(obj), "Must be a PartialTime");
+                throw new ArgumentException($"Object is not a {nameof(PartialTime)}");
         }
 
-        public override bool Equals(object obj) => obj is PartialTime time && Equals(time);
         public bool Equals(PartialTime other) => other.toComparable() == toComparable();
         public override int GetHashCode() => toComparable().GetHashCode();
         public override string ToString() => _original;
+
+        public int CompareTo(PartialTime obj) => CompareTo((object)obj);
+        public override bool Equals(object obj) => obj is PartialTime time && Equals(time);
+
     }
 }
 

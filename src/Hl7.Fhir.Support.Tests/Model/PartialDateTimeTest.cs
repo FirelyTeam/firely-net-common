@@ -44,9 +44,6 @@ namespace Hl7.FhirPath.Tests
             reject("T12:04:45Z");
             reject("12:04:45Z");
 
-            Assert.AreEqual(PartialDateTime.Today().ToString(), 
-                PartialDateTime.FromDateTimeOffset(DateTimeOffset.Now).ToString().Substring(0,10));
-
             void accept(string testValue, int? y = default, int? mo = default, int? d = default,
                 int? h = default, int? m = default, int? s = default, int? ms = default, TimeSpan? o = default)
             {

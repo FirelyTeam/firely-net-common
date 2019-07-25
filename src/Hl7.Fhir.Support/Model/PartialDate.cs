@@ -13,14 +13,13 @@ using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public struct PartialDate : IComparable, IEquatable<PartialDate>
+    public struct PartialDate : IComparable, IComparable<PartialDate>, IEquatable<PartialDate>
     {
-
         public static PartialDate Parse(string value) =>
-            TryParse(value, out PartialDate result) ? result : throw new FormatException("Time value is in an invalid format.");
+            TryParse(value, out PartialDate result) ? result : throw new FormatException("Date value is in an invalid format.");
 
         public static bool TryParse(string representation, out PartialDate value) =>
-            tryParse(representation, 12, 0, 0, out value);
+            tryParse(representation, out value);
 
         /// <summary>
         /// The precision of the date available. 
@@ -36,27 +35,34 @@ namespace Hl7.Fhir.Model.Primitives
         /// </summary>
         public TimeSpan? Offset => HasOffset ? _parsedValue.Offset : (TimeSpan?)null;
 
+        private string _original;
+        private DateTimeOffset _parsedValue;
+
         /// <summary>
         /// Whether the time specifies an offset to UTC
         /// </summary>
         public bool HasOffset { get; private set; }
 
-        internal const string DATEFORMAT =
-            "((?<year>[0-9][0-9][0-9][0-9]) ((?<month>-[0-9][0-9]) ((?<day>-[0-9][0-9]) )?)?)?";
-        internal const string OFFSETFORMAT = "(?<offset>Z | (\\+|-) [0-9][0-9]:[0-9][0-9])?";
+        private static readonly string DATEFORMAT =
+            $"(?<year>[0-9]{{4}}) ((?<month>-[0-9][0-9]) ((?<day>-[0-9][0-9]) )?)? {PartialTime.OFFSETFORMAT}?";
+        public static readonly Regex PARTIALDATEREGEX = new Regex("^" + DATEFORMAT +  "$", RegexOptions.IgnorePatternWhitespace);
 
-        // Our regex is pretty flexible, it does not bother to capture rules about semantics (12-01 would be legal here).
-        // Additional semantic checks will be verified using the built-in DateTimeOffset .NET parser.
-        // Also, it accept the superset of formats specified by FHIR, CQL, FhirPath and the mapping language. Each of these
-        // specific implementations may add additional constraints (e.g. about minimum precision or presence of timezones).
-        internal static readonly string PARTIALDATEFORMAT = $"{DATEFORMAT}{OFFSETFORMAT}";
+        /// <summary>
+        /// Converts the partial date to a full DateTimeOffset instance.
+        /// </summary>
+        /// <param name="defaultOffset">Offset used when the partial datetime does not specify one.</param>
+        /// <returns></returns>
+        public DateTimeOffset ToDateTimeOffset(int hours, int minutes, int seconds, TimeSpan defaultOffset) =>
+            ToDateTimeOffset(hours, minutes, seconds, 0, defaultOffset);
 
-        public static readonly Regex PARTIALDATEREGEX = new Regex("^" + PARTIALDATEFORMAT + "$", RegexOptions.IgnorePatternWhitespace);
-
-        
-
-        private string _original;
-        private DateTimeOffset _parsedValue;
+        /// <summary>
+        /// Converts the partial date to a full DateTimeOffset instance.
+        /// </summary>
+        /// <param name="defaultOffset">Offset used when the partial datetime does not specify one.</param>
+        /// <returns></returns>
+        public DateTimeOffset ToDateTimeOffset(int hours, int minutes, int seconds, int milliseconds, TimeSpan defaultOffset) =>
+                new DateTimeOffset(_parsedValue.Year, _parsedValue.Month, _parsedValue.Day, hours, minutes, seconds, milliseconds,
+                        HasOffset ? _parsedValue.Offset : defaultOffset);
 
         public const string FMT_FULL = "yyyy-MM-ddK";
 
@@ -66,20 +72,15 @@ namespace Hl7.Fhir.Model.Primitives
             return Parse(representation);
         }
 
+        public static PartialDate Today() => PartialDate.Parse(DateTimeOffset.Now.ToString(FMT_FULL));
 
         /// <summary>
         /// Converts the partial date to a full DateTimeOffset instance.
         /// </summary>
-        /// <param name="hour">Hour used to turn a date into a time</param>
-        /// <param name="minutes">Minutes used to turn a date into a time</param>
-        /// <param name="seconds">Seconds used to turn a date into a time</param>
-        /// <param name="defaultOffset">Offset used when the partial time does not specify one.</param>
         /// <returns></returns>
-        private static bool tryParse(string representation, int hour, int minutes, int seconds, out PartialDate value)
+        private static bool tryParse(string representation, out PartialDate value)
         {
             value = new PartialDate();
-
-            if (String.IsNullOrEmpty(representation)) return false;
 
             var matches = PARTIALDATEREGEX.Match(representation);
             if (!matches.Success) return false;
@@ -95,22 +96,20 @@ namespace Hl7.Fhir.Model.Primitives
                 PartialPrecision.Year;
             value.HasOffset = offset.Success;
 
-            var parseableDT = (y.Success ? y.Value : "0000") +
+            var parseableDT = y.Value +
                 (m.Success ? m.Value : "-01") +
                 (d.Success ? d.Value : "-01") +
-                "T" +
-                $"{hour:00}:{minutes:00}:{seconds:00}" +
-                (offset.Success ? offset.Value : "");
+                "T" + "00:00:00" +
+                (offset.Success ? offset.Value : "Z");
 
             value._original = representation;
             return DateTimeOffset.TryParse(parseableDT, out value._parsedValue);
         }
 
-        public DateTimeOffset ToDateTimeOffset(int hours, int minutes, int seconds, int milliseconds, TimeSpan defaultOffset) =>
-            new DateTimeOffset(_parsedValue.Year, _parsedValue.Month, _parsedValue.Day, hours,
-                    minutes, seconds, milliseconds,
-                    HasOffset ? _parsedValue.Offset : defaultOffset);
+        public bool IsEqualTo(PartialDate other) => throw new NotImplementedException();
+        public bool IsEquivalentTo(PartialDate other) => throw new NotImplementedException();
 
+        // TODO: Note, this enables comparisons between values that did or did not have timezones, need to fix.
         private DateTimeOffset toComparable() => _parsedValue.ToUniversalTime();
 
         public static bool operator <(PartialDate a, PartialDate b) => a.toComparable() < b.toComparable();
@@ -119,19 +118,6 @@ namespace Hl7.Fhir.Model.Primitives
         public static bool operator >=(PartialDate a, PartialDate b) => a.toComparable() >= b.toComparable();
         public static bool operator ==(PartialDate a, PartialDate b) => Equals(a, b);
         public static bool operator !=(PartialDate a, PartialDate b) => !(a == b);
-
-        public override bool Equals(object obj) => obj is PartialDate date && Equals(date);
-        public bool Equals(PartialDate other) => other.toComparable() == toComparable();
-
-        public override int GetHashCode() => -1939223833 + EqualityComparer<DateTimeOffset>.Default.GetHashCode(toComparable());
-        public override string ToString() => _original;
-        public static PartialDate Today()
-        {
-           TryParse(DateTimeOffset.Now.ToString("yyyy-MM-dd"), out PartialDate todayValue);
-            return todayValue;
-        }
-
-        public bool IsEquivalentTo(PartialDate other) => throw new NotImplementedException();
 
         public int CompareTo(object obj)
         {
@@ -144,10 +130,14 @@ namespace Hl7.Fhir.Model.Primitives
                 return 0;
             }
             else
-                throw Error.Argument(nameof(obj), "Must be a PartialDate");
+                throw new ArgumentException($"Object is not a {nameof(PartialDate)}");
         }
 
-        
-        
+        public bool Equals(PartialDate other) => other.toComparable() == toComparable();
+        public override int GetHashCode() => toComparable().GetHashCode();
+        public override string ToString() => _original;
+
+        public int CompareTo(PartialDate obj) => CompareTo((object)obj);
+        public override bool Equals(object obj) => obj is PartialDate date && Equals(date);
     }
 }
