@@ -6,6 +6,7 @@ using Hl7.Fhir.Utility;
 
 namespace Hl7.FhirPath
 {
+    [Obsolete("Please use Hl7.Fhir.Language.TypeSpecifier")]
     public class TypeInfo : IEquatable<TypeInfo>
     {
         public static readonly TypeInfo Boolean = new TypeInfo("boolean");
@@ -23,6 +24,7 @@ namespace Hl7.FhirPath
             Name = name;
         }
 
+        [Obsolete("Please use Hl7.Fhir.Language.TypeSpecifier.ByName")]
         public static TypeInfo ByName(string typeName)
         {
             switch (typeName)
@@ -42,6 +44,7 @@ namespace Hl7.FhirPath
             }
         }
 
+        [Obsolete("Please use Hl7.Fhir.Language.TypeSpecifier.Name")]
         public string Name { get; protected set; }
 
         public override string ToString() => Name;
@@ -60,5 +63,5 @@ namespace Hl7.FhirPath
         public static bool operator ==(TypeInfo left, TypeInfo right) => EqualityComparer<TypeInfo>.Default.Equals(left, right);
 
         public static bool operator !=(TypeInfo left, TypeInfo right) => !(left == right);
-    } 
+    }
 }

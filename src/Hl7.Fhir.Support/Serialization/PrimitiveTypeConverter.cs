@@ -10,10 +10,10 @@ using System;
 using System.Xml;
 using Hl7.Fhir.Utility;
 using Hl7.Fhir.Model.Primitives;
-using Hl7.Fhir.Support.Model;
 using System.Numerics;
 using System.Globalization;
 using System.Linq;
+using Hl7.Fhir.Language;
 
 namespace Hl7.Fhir.Serialization
 {
@@ -23,7 +23,7 @@ namespace Hl7.Fhir.Serialization
 
         public static object FromSerializedValue(string value, string primitiveType)
         {
-            var type = Primitives.GetNativeRepresentation(primitiveType);
+            var type = TypeSpecifier.GetNativeRepresentation(primitiveType);
             return ConvertTo(value, type);
         }
 

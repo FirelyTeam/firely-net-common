@@ -6,11 +6,10 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+using Hl7.Fhir.Language;
 using Hl7.Fhir.Specification;
-using Hl7.Fhir.Support.Model;
 using Hl7.Fhir.Utility;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -132,7 +131,7 @@ namespace Hl7.Fhir.ElementModel
                 {
                     // We are in a situation where we are on an polymorphic element, but the caller did not specify
                     // the instance type.  We can try to auto-set it by deriving it from the instance's type, if it is a primitive
-                    if (child.Value != null && Primitives.TryGetPrimitiveTypeName(child.Value.GetType(), out string instanceType))
+                    if (child.Value != null && TypeSpecifier.TryGetPrimitiveTypeName(child.Value.GetType(), out string instanceType))
                         child.InstanceType = instanceType;
                     else
                         throw Error.Argument("The ElementNode given should have its InstanceType property set, since the element is a choice or resource.");

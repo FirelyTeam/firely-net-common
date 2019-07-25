@@ -6,9 +6,9 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+using Hl7.Fhir.Language;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Specification;
-using Hl7.Fhir.Support.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,8 +21,8 @@ namespace Hl7.Fhir.ElementModel
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
 
-            Value = Primitives.ConvertToPrimitiveValue(value);
-            InstanceType = Primitives.GetPrimitiveTypeName(value.GetType());
+            Value = TypeSpecifier.ConvertToPrimitiveValue(value);
+            InstanceType = TypeSpecifier.GetPrimitiveTypeName(value.GetType());
             Name = name ?? "@primitivevalue@";
         }
 

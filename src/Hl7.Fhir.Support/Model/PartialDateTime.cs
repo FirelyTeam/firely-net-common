@@ -24,7 +24,7 @@ namespace Hl7.Fhir.Model.Primitives
         Fraction
     }
 
-    public struct PartialDateTime : IComparable
+    public struct PartialDateTime : IComparable, IComparable<PartialDateTime>, IEquatable<PartialDateTime>
     {
         public static PartialDateTime Parse(string representation) =>
             TryParse(representation, out var result) ? result : throw new FormatException("DateTime value is in an invalid format.");
@@ -81,12 +81,12 @@ namespace Hl7.Fhir.Model.Primitives
             return Parse(representation);
         }
 
+        [Obsolete("FromDateTime() has been renamed to FromDateTimeOffset()")]
+        public static PartialDateTime FromDateTime(DateTimeOffset dto) => FromDateTimeOffset(dto);
+
         public static PartialDateTime Now() => FromDateTimeOffset(DateTimeOffset.Now);
 
         public static PartialDateTime Today() => new PartialDateTime { _original = DateTimeOffset.Now.ToString("yyyy-MM-dd") };
-
-        [Obsolete("Call FromDateTimeOffset instead")]
-        public static PartialDateTime FromDateTime(DateTimeOffset dto) => FromDateTimeOffset(dto);
 
         private static bool tryParse(string representation, out PartialDateTime value)
         {
@@ -129,6 +129,9 @@ namespace Hl7.Fhir.Model.Primitives
             return DateTimeOffset.TryParse(parseableDT, out value._parsedValue);
         }
 
+
+        public bool IsEqualTo(PartialDateTime other) => throw new NotImplementedException();
+
         public bool IsEquivalentTo(PartialDateTime other) => throw new NotImplementedException();
 
         private DateTimeOffset toComparable() => _parsedValue.ToUniversalTime();
@@ -150,12 +153,14 @@ namespace Hl7.Fhir.Model.Primitives
                     (this > p) ? 1 : 0;
             }
             else
-                throw new ArgumentException(nameof(obj), "Must be a PartialDateTime");
+                throw new ArgumentException($"Object is not a {nameof(PartialDateTime)}");
         }
 
-        public override bool Equals(object obj) => obj is PartialDateTime dt && Equals(dt);
-        public bool Equals(PartialDateTime other) => other.toComparable() == toComparable();
-        public override int GetHashCode() => toComparable().GetHashCode();
+        public bool Equals(PartialDateTime other) => other._original == _original;
+        public override int GetHashCode() => _original.GetHashCode();
         public override string ToString() => _original;
+
+        public int CompareTo(PartialDateTime obj) => CompareTo(obj);
+        public override bool Equals(object obj) => obj is PartialDateTime dt && Equals(dt);
     }
 }
