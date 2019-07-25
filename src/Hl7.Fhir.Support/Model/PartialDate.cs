@@ -99,6 +99,8 @@ namespace Hl7.Fhir.Model.Primitives
             return todayValue;
         }
 
+        public bool IsEquivalentTo(PartialDate other) => throw new NotImplementedException();
+
         public int CompareTo(object obj)
         {
             if (obj == null) return 1;
@@ -110,7 +112,7 @@ namespace Hl7.Fhir.Model.Primitives
                 return 0;
             }
             else
-                throw Error.Argument(nameof(obj), "Must be a PartialDateTime");
+                throw Error.Argument(nameof(obj), "Must be a PartialDate");
         }
 
         

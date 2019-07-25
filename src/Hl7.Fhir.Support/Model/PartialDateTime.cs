@@ -7,101 +7,138 @@
  */
 
 
-using Hl7.Fhir.Serialization;
-using Hl7.Fhir.Utility;
 using System;
-using System.Xml;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    //TODO: Merge with FhirDateTime from Model namespace?
+    public enum PartialPrecision
+    {
+        Year,
+        Month,
+        Day,
+        Hour,
+        Minute,
+        Second,
+        Fraction
+    }
+
     public struct PartialDateTime : IComparable
     {
-        private string _value;
+        public static PartialDateTime Parse(string representation) =>
+            TryParse(representation, out var result) ? result : throw new FormatException("DateTime value is in an invalid format.");
 
-        public static PartialDateTime Parse(string value)
+        public static bool TryParse(string representation, out PartialDateTime value) =>
+            tryParse(representation, out value);
+
+        public int? Years => Precision >= PartialPrecision.Year ? _parsedValue.Year : (int?)null;
+        public int? Months => Precision >= PartialPrecision.Month ? _parsedValue.Month : (int?)null;
+        public int? Days => Precision >= PartialPrecision.Day ? _parsedValue.Day : (int?)null;
+        public int? Hours => Precision >= PartialPrecision.Hour ? _parsedValue.Hour : (int?)null;
+        public int? Minutes => Precision >= PartialPrecision.Minute ? _parsedValue.Minute : (int?)null;
+        public int? Seconds => Precision >= PartialPrecision.Second ? _parsedValue.Second : (int?)null;
+        public int? Millis => Precision >= PartialPrecision.Fraction ? _parsedValue.Millisecond : (int?)null;
+
+        /// <summary>
+        /// The span of time ahead/behind UTC
+        /// </summary>
+        public TimeSpan? Offset => HasOffset ? _parsedValue.Offset : (TimeSpan?)null;
+
+        private string _original;
+        private DateTimeOffset _parsedValue;
+
+        /// <summary>
+        /// The precision of the date and time available. 
+        /// </summary>
+        public PartialPrecision Precision { get; private set; }
+
+        /// <summary>
+        /// Whether the time specifies an offset to UTC
+        /// </summary>
+        public bool HasOffset { get; private set; }
+
+        private static readonly string DATETIMEFORMAT =
+            $"(?<year>[0-9]{{4}}) ((?<month>-[0-9][0-9]) ((?<day>-[0-9][0-9]) (T{PartialTime.TIMEFORMAT})?)?)? {PartialTime.OFFSETFORMAT}?";
+        private static readonly Regex DATETIMEREGEX =
+                new Regex("^" + DATETIMEFORMAT + "$", RegexOptions.IgnorePatternWhitespace);
+
+        /// <summary>
+        /// Converts the partial datetime to a full DateTimeOffset instance.
+        /// </summary>
+        /// <param name="defaultOffset">Offset used when the partial datetime does not specify one.</param>
+        /// <returns></returns>
+        public DateTimeOffset ToDateTimeOffset(TimeSpan defaultOffset) =>
+             new DateTimeOffset(_parsedValue.Year, _parsedValue.Month, _parsedValue.Day,
+                 _parsedValue.Hour, _parsedValue.Minute, _parsedValue.Second, _parsedValue.Millisecond,
+                    HasOffset ? _parsedValue.Offset : defaultOffset);
+
+        public const string FMT_FULL = "yyyy-MM-dd'T'HH:mm:ss.FFFFFFFK";
+
+        public static PartialDateTime FromDateTimeOffset(DateTimeOffset dto)
         {
-            try
-            {
-                var dummy = PrimitiveTypeConverter.ConvertTo<DateTimeOffset>(value);
-            }
-            catch
-            {
-                throw new FormatException("Partial is in an invalid format, should use ISO8601 YYYY-MM-DDThh:mm:ss+TZ notation");
-            }
-
-            return new PartialDateTime { _value = value };
+            var representation = dto.ToString(FMT_FULL);
+            return Parse(representation);
         }
 
-        public static bool TryParse(string representation, out PartialDateTime value)
+        public static PartialDateTime Now() => FromDateTimeOffset(DateTimeOffset.Now);
+
+        public static PartialDateTime Today() => new PartialDateTime { _original = DateTimeOffset.Now.ToString("yyyy-MM-dd") };
+
+        [Obsolete("Call FromDateTimeOffset instead")]
+        public static PartialDateTime FromDateTime(DateTimeOffset dto) => FromDateTimeOffset(dto);
+
+        private static bool tryParse(string representation, out PartialDateTime value)
         {
-            try
-            {
-                value = Parse(representation);
-                return true;
-            }
-            catch
-            {
-                value = default;
-                return false;
-            }
+            value = new PartialDateTime();
+            Debug.WriteLine(DATETIMEFORMAT);
+            var matches = DATETIMEREGEX.Match(representation);
+            if (!matches.Success) return false;
+
+            var yrg = matches.Groups["year"];
+            var mong = matches.Groups["month"];
+            var dayg = matches.Groups["day"];
+            var hrg = matches.Groups["hours"];
+            var ming = matches.Groups["minutes"];
+            var secg = matches.Groups["seconds"];
+            var fracg = matches.Groups["frac"];
+            var offset = matches.Groups["offset"];
+
+            value.Precision =
+                        fracg.Success ? PartialPrecision.Fraction :
+                        secg.Success ? PartialPrecision.Second :
+                        ming.Success ? PartialPrecision.Minute :
+                        hrg.Success ? PartialPrecision.Hour :
+                        dayg.Success ? PartialPrecision.Day :
+                        mong.Success ? PartialPrecision.Month :
+                        PartialPrecision.Year;
+
+            value.HasOffset = offset.Success;
+            value._original = representation;
+
+            var parseableDT = yrg.Value +
+                  (mong.Success ? mong.Value : "-01") +
+                  (dayg.Success ? dayg.Value : "-01") +
+                  (hrg.Success ? "T"+hrg.Value : "T00") +
+                  (ming.Success ? ming.Value : ":00") +
+                  (secg.Success ? secg.Value : ":00") +
+                  (fracg.Success ? fracg.Value : "") +
+                  (offset.Success ? offset.Value : "");
+
+            value._original = representation;
+            return DateTimeOffset.TryParse(parseableDT, out value._parsedValue);
         }
 
-        public DateTimeOffset ToUniversalTime() =>
-            PrimitiveTypeConverter.ConvertTo<DateTimeOffset>(_value).ToUniversalTime();
+        public bool IsEquivalentTo(PartialDateTime other) => throw new NotImplementedException();
 
+        private DateTimeOffset toComparable() => _parsedValue.ToUniversalTime();
 
-        // overload operator <
-        public static bool operator <(PartialDateTime a, PartialDateTime b) => a.ToUniversalTime() < b.ToUniversalTime();
-
-        public static bool operator <=(PartialDateTime a, PartialDateTime b) => a.ToUniversalTime() <= b.ToUniversalTime();
-
-        // overload operator >
-        public static bool operator >(PartialDateTime a, PartialDateTime b) => a.ToUniversalTime() > b.ToUniversalTime();
-
-        public static bool operator >=(PartialDateTime a, PartialDateTime b) => a.ToUniversalTime() >= b.ToUniversalTime();
-
+        public static bool operator <(PartialDateTime a, PartialDateTime b) => a.toComparable() < b.toComparable();
+        public static bool operator <=(PartialDateTime a, PartialDateTime b) => a.toComparable() <= b.toComparable();
+        public static bool operator >(PartialDateTime a, PartialDateTime b) => a.toComparable() > b.toComparable();
+        public static bool operator >=(PartialDateTime a, PartialDateTime b) => a.toComparable() >= b.toComparable();
         public static bool operator ==(PartialDateTime a, PartialDateTime b) => Equals(a, b);
-
         public static bool operator !=(PartialDateTime a, PartialDateTime b) => !(a == b);
-
-        public bool IsEquivalentTo(PartialDateTime other)
-        {
-            if (other == null) return false;
-
-            var len = Math.Min(10,Math.Min(_value.Length, other._value.Length));
-
-            return String.Compare(_value, 0, other._value, 0, len) == 0;
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj == null) return false;
-
-            if (obj is PartialDateTime other)
-            {
-
-                // If we just have a date, do a straight compare
-                // otherwise, we have date + time, and DateTimeOffset will work as expected,
-                // correctly comparing timezones
-                if (_value.Length <= 10)
-                    return _value == other._value;
-                else
-                    return ((PartialDateTime)obj).ToUniversalTime() == this.ToUniversalTime();
-            }
-            else
-                return false;
-        }
-
-        public override int GetHashCode() => _value.GetHashCode();
-
-        public override string ToString() => _value;
-
-        public static PartialDateTime Now() => FromDateTime(DateTimeOffset.Now);
-
-        public static PartialDateTime Today() => new PartialDateTime { _value = DateTimeOffset.Now.ToString("yyyy-MM-dd") };
-
-        public static PartialDateTime FromDateTime(DateTimeOffset dto) => new PartialDateTime { _value = PrimitiveTypeConverter.ConvertTo<string>(dto) };
 
         public int CompareTo(object obj)
         {
@@ -109,12 +146,16 @@ namespace Hl7.Fhir.Model.Primitives
 
             if (obj is PartialDateTime p)
             {
-                if (this < p) return -1;
-                if (this > p) return 1;
-                return 0;
+                return (this < p) ? -1 :
+                    (this > p) ? 1 : 0;
             }
             else
-                throw Error.Argument(nameof(obj), "Must be a PartialDateTime");
+                throw new ArgumentException(nameof(obj), "Must be a PartialDateTime");
         }
+
+        public override bool Equals(object obj) => obj is PartialDateTime dt && Equals(dt);
+        public bool Equals(PartialDateTime other) => other.toComparable() == toComparable();
+        public override int GetHashCode() => toComparable().GetHashCode();
+        public override string ToString() => _original;
     }
 }

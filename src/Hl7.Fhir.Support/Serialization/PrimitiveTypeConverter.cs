@@ -27,11 +27,7 @@ namespace Hl7.Fhir.Serialization
             return ConvertTo(value, type);
         }
 
-
-        public static T ConvertTo<T>(object value)
-        {
-            return (T)ConvertTo(value, typeof(T));
-        }
+        public static T ConvertTo<T>(object value) => (T)ConvertTo(value, typeof(T));
 
         public static object ConvertTo(object value, Type to)
         {
@@ -158,9 +154,6 @@ namespace Hl7.Fhir.Serialization
 
         private static DateTimeOffset convertToDatetimeOffset(string value)
         {
-            // May end with a single T (e.g. 2018-01-01T)
-            if (value.EndsWith("T")) value = value.Substring(0, value.Length - 1);
-
             // May not be just a time spec (without a date ). Look for values like Thh:mm or hh:mm
             if (value.IndexOf(":") == 2 || value.IndexOf(":") == 3)
                 throw Error.Format("Partial date(time) cannot contain just a time");

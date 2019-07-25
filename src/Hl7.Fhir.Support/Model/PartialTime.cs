@@ -14,57 +14,47 @@ namespace Hl7.Fhir.Model.Primitives
 {
     public struct PartialTime : IComparable, IEquatable<PartialTime>
     {
-        public static PartialTime Parse(string value) =>
-            TryParse(value, out PartialTime result) ? result : throw new FormatException("Time value is in an invalid format.");
+        public static PartialTime Parse(string representation) =>
+            TryParse(representation, out var result) ? result : throw new FormatException("Time value is in an invalid format.");
 
         public static bool TryParse(string representation, out PartialTime value) =>
             tryParse(representation, 2016, 1, 1, out value);
 
-        public int? Hours => HasHours ? _parsedValue.Hour : (int?)null;
-        public int? Minutes => HasMinutes ? _parsedValue.Minute : (int?)null;
-        public int? Seconds => HasSeconds ? _parsedValue.Second : (int?)null;
-        public int? Millis => HasFraction ? _parsedValue.Millisecond : (int?)null;
+        public int? Hours => Precision >= PartialPrecision.Hour ? _parsedValue.Hour : (int?)null;
+        public int? Minutes => Precision >= PartialPrecision.Minute ? _parsedValue.Minute : (int?)null;
+        public int? Seconds => Precision >= PartialPrecision.Second ? _parsedValue.Second : (int?)null;
+        public int? Millis => Precision >= PartialPrecision.Fraction ? _parsedValue.Millisecond : (int?)null;
+
+        /// <summary>
+        /// The span of time ahead/behind UTC
+        /// </summary>
         public TimeSpan? Offset => HasOffset ? _parsedValue.Offset : (TimeSpan?)null;
 
         private string _original;
         private DateTimeOffset _parsedValue;
 
         /// <summary>
-        /// Whether the time has precision of hours or more.
+        /// The precision of the time available. 
         /// </summary>
-        /// <returns></returns>
-        public bool HasHours { get; private set; }
-
-        /// <summary>
-        /// Whether the time has precision of minutes or more.
-        /// </summary>
-        /// <returns></returns>
-        public bool HasMinutes { get; private set; }
-
-        /// <summary>
-        /// Whether the time has precision of seconds or more.
-        /// </summary>
-        public bool HasSeconds { get; private set; }
-
-        /// <summary>
-        /// Whether the time includes a seconds fraction.
-        /// </summary>
-        public bool HasFraction { get; private set; }
+        public PartialPrecision Precision { get; private set; }
 
         /// <summary>
         /// Whether the time specifies an offset to UTC
         /// </summary>
         public bool HasOffset { get; private set; }
 
-        // Our regex is pretty flexible, it does not bother to capture rules about semantics (12:64 would be legal here), it
-        // even accepts just a timezone. Additional semantic checks will be verified using the built-in DateTimeOffset .NET parser.
+        // Our regex is pretty flexible, it does not bother to capture rules about semantics (12:64 would be legal here).
+        // Additional semantic checks will be verified using the built-in DateTimeOffset .NET parser.
         // Also, it accept the superset of formats specified by FHIR, CQL, FhirPath and the mapping language. Each of these
         // specific implementations may add additional constraints (e.g. about minimum precision or presence of timezones).
-        private const string TIMEFORMAT =
-            "^((?<hours>[0-9][0-9]) ((?<minutes>:[0-9][0-9]) ((?<seconds>:[0-9][0-9]) ((?<frac>.[0-9]+))?)?)?)?" +
-            "(?<offset>Z | (\\+|-) [0-9][0-9]:[0-9][0-9])?$";
 
-        private static readonly Regex TIMEREGEX = new Regex(TIMEFORMAT, RegexOptions.IgnorePatternWhitespace);
+        internal static readonly string PARTIALTIMEFORMAT = $"{TIMEFORMAT}{OFFSETFORMAT}?";
+        internal const string TIMEFORMAT =
+            "(?<time>(?<hours>[0-9][0-9]) ((?<minutes>:[0-9][0-9]) ((?<seconds>:[0-9][0-9]) ((?<frac>.[0-9]+))?)?)?)";
+        internal const string OFFSETFORMAT = "(?<offset>Z | (\\+|-) [0-9][0-9]:[0-9][0-9])";
+
+        private static readonly Regex PARTIALTIMEREGEX =
+            new Regex("^" + PARTIALTIMEFORMAT + "$", RegexOptions.IgnorePatternWhitespace);
 
         /// <summary>
         /// Converts the partial time to a full DateTimeOffset instance.
@@ -74,9 +64,9 @@ namespace Hl7.Fhir.Model.Primitives
         /// <param name="day">Day used to turn a time into a date</param>
         /// <param name="defaultOffset">Offset used when the partial time does not specify one.</param>
         /// <returns></returns>
-        public DateTimeOffset ToDateTimeOffset(int year, int month, int day, TimeSpan defaultOffset) => 
+        public DateTimeOffset ToDateTimeOffset(int year, int month, int day, TimeSpan defaultOffset) =>
             new DateTimeOffset(year, month, day, _parsedValue.Hour,
-                    _parsedValue.Minute, _parsedValue.Second, _parsedValue.Millisecond, 
+                    _parsedValue.Minute, _parsedValue.Second, _parsedValue.Millisecond,
                     HasOffset ? _parsedValue.Offset : defaultOffset);
 
         public const string FMT_FULL = "HH:mm:ss.FFFFFFFK";
@@ -93,9 +83,7 @@ namespace Hl7.Fhir.Model.Primitives
         {
             value = new PartialTime();
 
-            if (String.IsNullOrEmpty(representation)) return false;
-         
-            var matches = TIMEREGEX.Match(representation);
+            var matches = PARTIALTIMEREGEX.Match(representation);
             if (!matches.Success) return false;
 
             var hrg = matches.Groups["hours"];
@@ -104,10 +92,12 @@ namespace Hl7.Fhir.Model.Primitives
             var fracg = matches.Groups["frac"];
             var offset = matches.Groups["offset"];
 
-            value.HasHours = hrg.Success;
-            value.HasMinutes = ming.Success;
-            value.HasSeconds = secg.Success;
-            value.HasFraction = fracg.Success;
+            value.Precision =
+                        fracg.Success ? PartialPrecision.Fraction :
+                        secg.Success ? PartialPrecision.Second :
+                        ming.Success ? PartialPrecision.Minute :
+                        PartialPrecision.Hour;
+
             value.HasOffset = offset.Success;
 
             var parseableDT = $"{year:0000}-{month:00}-{day:00}" + "T" +
@@ -120,6 +110,8 @@ namespace Hl7.Fhir.Model.Primitives
             value._original = representation;
             return DateTimeOffset.TryParse(parseableDT, out value._parsedValue);
         }
+
+        public bool IsEquivalentTo(PartialTime other) => throw new NotImplementedException();
 
         private DateTimeOffset toComparable() => _parsedValue.ToUniversalTime();
 
@@ -136,20 +128,16 @@ namespace Hl7.Fhir.Model.Primitives
 
             if (obj is PartialTime p)
             {
-                if (this < p)
-                    return -1;
-                else if (this > p)
-                    return 1;
-                else
-                    return 0;
+                return (this < p) ? -1 :
+                     (this > p) ? 1 : 0;
             }
             else
-                throw new ArgumentException(nameof(obj), "Must be a Time");
+                throw new ArgumentException(nameof(obj), "Must be a PartialTime");
         }
 
         public override bool Equals(object obj) => obj is PartialTime time && Equals(time);
         public bool Equals(PartialTime other) => other.toComparable() == toComparable();
-        public override int GetHashCode() => -1939223833 + EqualityComparer<DateTimeOffset>.Default.GetHashCode(toComparable());
+        public override int GetHashCode() => toComparable().GetHashCode();
         public override string ToString() => _original;
     }
 }

@@ -237,6 +237,42 @@ namespace Hl7.FhirPath.Functions
 
 
         /// <summary>
+        /// FhirPath toDate() function.
+        /// </summary>
+        /// <param name="focus"></param>
+        /// <returns></returns>
+        public static PartialDate? ToDate(this ITypedElement focus)
+        {
+            var val = focus?.Value;
+            if (val == null) return null;
+
+            switch (val)
+            {
+                case PartialDate pt:
+                    return pt;
+                case string s:
+                    return convertString(s);
+                default:
+                    return null;
+            }
+
+            PartialDate? convertString(string si)
+            {
+                return PartialDate.TryParse(si, out var result) ?
+                     result : (PartialDate?)null;
+            }
+        }
+
+
+        /// <summary>
+        /// FhirPath convertsToDate() function.
+        /// </summary>
+        /// <param name="focus"></param>
+        /// <returns></returns>
+        public static bool ConvertsToDate(this ITypedElement focus) => ToDate(focus) != null;
+
+
+        /// <summary>
         /// FhirPath toString() function.
         /// </summary>
         /// <param name="focus"></param>

@@ -48,7 +48,8 @@ namespace Hl7.Fhir.ElementModel
         ///
         /// instant         Hl7.Fhir.Model.Primitive.PartialDateTime
         /// time            Hl7.Fhir.Model.Primitive.PartialTime
-        /// date, dateTime  Hl7.Fhir.Model.Primitive.PartialDateTime
+        /// date            Hl7.Fhir.Model.Primitive.PartialDate
+        /// dateTime        Hl7.Fhir.Model.Primitive.PartialDateTime
         /// decimal         decimal
         /// boolean         bool
         /// integer         long
