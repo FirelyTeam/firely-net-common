@@ -22,21 +22,38 @@ namespace Hl7.Fhir.Model.Primitives
         public static bool TryParse(string representation, out PartialDate value) =>
             tryParse(representation, 12, 0, 0, out value);
 
+        /// <summary>
+        /// The precision of the date available. 
+        /// </summary>
         public PartialPrecision Precision { get; private set; }
 
         public int? Year => Precision >= PartialPrecision.Year ? _parsedValue.Year : (int?)null;
         public int? Month => Precision >= PartialPrecision.Month ? _parsedValue.Month : (int?)null;
         public int? Day => Precision >= PartialPrecision.Day ? _parsedValue.Day : (int?)null;
+
+        /// <summary>
+        /// The span of time ahead/behind UTC
+        /// </summary>
         public TimeSpan? Offset => HasOffset ? _parsedValue.Offset : (TimeSpan?)null;
+
+        /// <summary>
+        /// Whether the time specifies an offset to UTC
+        /// </summary>
+        public bool HasOffset { get; private set; }
 
         internal const string DATEFORMAT =
             "((?<year>[0-9][0-9][0-9][0-9]) ((?<month>-[0-9][0-9]) ((?<day>-[0-9][0-9]) )?)?)?";
         internal const string OFFSETFORMAT = "(?<offset>Z | (\\+|-) [0-9][0-9]:[0-9][0-9])?";
+
+        // Our regex is pretty flexible, it does not bother to capture rules about semantics (12-01 would be legal here).
+        // Additional semantic checks will be verified using the built-in DateTimeOffset .NET parser.
+        // Also, it accept the superset of formats specified by FHIR, CQL, FhirPath and the mapping language. Each of these
+        // specific implementations may add additional constraints (e.g. about minimum precision or presence of timezones).
         internal static readonly string PARTIALDATEFORMAT = $"{DATEFORMAT}{OFFSETFORMAT}";
 
         public static readonly Regex PARTIALDATEREGEX = new Regex("^" + PARTIALDATEFORMAT + "$", RegexOptions.IgnorePatternWhitespace);
 
-        public bool HasOffset { get; private set; }
+        
 
         private string _original;
         private DateTimeOffset _parsedValue;
@@ -49,6 +66,15 @@ namespace Hl7.Fhir.Model.Primitives
             return Parse(representation);
         }
 
+
+        /// <summary>
+        /// Converts the partial date to a full DateTimeOffset instance.
+        /// </summary>
+        /// <param name="hour">Hour used to turn a date into a time</param>
+        /// <param name="minutes">Minutes used to turn a date into a time</param>
+        /// <param name="seconds">Seconds used to turn a date into a time</param>
+        /// <param name="defaultOffset">Offset used when the partial time does not specify one.</param>
+        /// <returns></returns>
         private static bool tryParse(string representation, int hour, int minutes, int seconds, out PartialDate value)
         {
             value = new PartialDate();
