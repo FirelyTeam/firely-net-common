@@ -58,7 +58,7 @@ namespace Hl7.Fhir.Model.Primitives
         private string _original;
         private DateTimeOffset _parsedValue;
 
-        public const string FMT_FULL = "yyyy-MM-dd.FFFFFFFK";
+        public const string FMT_FULL = "yyyy-MM-ddK";
 
         public static PartialDate FromDateTimeOffset(DateTimeOffset dto)
         {
@@ -106,6 +106,11 @@ namespace Hl7.Fhir.Model.Primitives
             return DateTimeOffset.TryParse(parseableDT, out value._parsedValue);
         }
 
+        public DateTimeOffset ToDateTimeOffset(int hours, int minutes, int seconds, int milliseconds, TimeSpan defaultOffset) =>
+            new DateTimeOffset(_parsedValue.Year, _parsedValue.Month, _parsedValue.Day, hours,
+                    minutes, seconds, milliseconds,
+                    HasOffset ? _parsedValue.Offset : defaultOffset);
+
         private DateTimeOffset toComparable() => _parsedValue.ToUniversalTime();
 
         public static bool operator <(PartialDate a, PartialDate b) => a.toComparable() < b.toComparable();
@@ -115,7 +120,7 @@ namespace Hl7.Fhir.Model.Primitives
         public static bool operator ==(PartialDate a, PartialDate b) => Equals(a, b);
         public static bool operator !=(PartialDate a, PartialDate b) => !(a == b);
 
-        public override bool Equals(object obj) => obj is PartialTime date && Equals(date);
+        public override bool Equals(object obj) => obj is PartialDate date && Equals(date);
         public bool Equals(PartialDate other) => other.toComparable() == toComparable();
 
         public override int GetHashCode() => -1939223833 + EqualityComparer<DateTimeOffset>.Default.GetHashCode(toComparable());
