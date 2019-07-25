@@ -92,7 +92,7 @@ namespace Hl7.FhirPath.Parser
                     (
                         -([0-9][0-9])    # Day
                     )?
-                )? (Z|((\+|-)[0-9][0-9]:[0-9][0-9]))?",
+                )?",
                 RegexOptions.IgnorePatternWhitespace);
 
         public static readonly Parser<PartialDate> Date =
@@ -110,9 +110,7 @@ namespace Hl7.FhirPath.Parser
                             (  
                                 -([0-9][0-9])  #Day
                                 (
-                                    (                    
-                                      " + TIMEFORMAT + "  #Time  " + @"
-                                    ) | T
+                                      T" + TIMEFORMAT + "?  #Time  " + @"
                                 )
                             )
                             | T
@@ -123,12 +121,27 @@ namespace Hl7.FhirPath.Parser
                 RegexOptions.IgnorePatternWhitespace);
 
         public static readonly Parser<PartialDateTime> DateTime =
-            Parse.Regex(DateTimeRegEx).Select(s => PartialDateTime.Parse(s.Substring(1)));
+            Parse.Regex(DateTimeRegEx).Select(s => PartialDateTime.Parse(CleanupDateTimeLiteral(s)));
+
+        internal static string CleanupDateTimeLiteral(string repr)
+        {
+            var result = repr.Substring(1);  // remove @
+
+            // not acceptable for our partialDateTime as 'T' without an actual time.
+            // dates without time but with a timezone are fine for our PartialDateTime, but should come immediately
+            // after the date: when a 'T' is encountered, a time is required.
+            // Here, the T literal is only there to distinguish date and dateTime, and so part of
+            // the FP literal and syntax, not the parseable value (just like '@').
+            var hasTWithoutTime = result.EndsWith("T") || result.Contains("TZ") || result.Contains("T+") || result.Contains("T-");
+            if (hasTWithoutTime) result = result.Replace("T", "");
+
+            return result;
+        }
 
         // fragment TIMEFORMAT
         //      : [0-9] [0-9] (':'[0-9] [0-9] (':'[0-9] [0-9] ('.'[0-9]+)?)?)?
         //      ;
-        private const string TIMEFORMAT = @"[0-9][0-9](:[0-9][0-9](:[0-9][0-9](\.[0-9]+)?)?)?";
+        private const string TIMEFORMAT = @"([0-9][0-9](:[0-9][0-9](:[0-9][0-9](\.[0-9]+)?)?)?)";
         
         // TIME
         //      : '@T'  ....
