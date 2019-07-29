@@ -6,7 +6,6 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using Hl7.Fhir.Model;
 using Hl7.Fhir.Model.Primitives;
 using Hl7.FhirPath.Sprache;
 using System;
@@ -24,60 +23,130 @@ namespace Hl7.FhirPath.Parser
         //   : ([A-Za-z] | '_')([A-Za-z0-9] | '_')*            // Added _ to support CQL (FHIR could constrain it out)
         //   ;
         public static readonly Parser<string> Id =
-            Parse.Identifier(Parse.Letter.XOr(Parse.Char('_')), Parse.LetterOrDigit.XOr(Parse.Char('_'))).Named("Identifier");
+            Parse.Identifier(
+                Parse.Letter
+                    .XOr(Parse.Char('_')),
+                Parse.LetterOrDigit
+                    .XOr(Parse.Char('_')))
+            .Named("Identifier");
 
-        //  QUOTEDIDENTIFIER
-        //      : '"' (ESC | ~[\\"])* '"'
-        //      ;
-        public static readonly Parser<string> QuotedIdentifier =
-            from openQ in Parse.Char('\"')
-            from id in Parse.CharExcept(@"""\").Many().Text().Or(Escape).Many()
-            from closeQ in Parse.Char('\"')
-            select string.Concat(id);
+        // fragment UNICODE: 'u' HEX HEX HEX HEX;
+        // fragment HEX: [0-9a-fA-F];
+        public static readonly Parser<string> Unicode =
+            from u in Parse.Char('u')
+            from hex in Parse.Chars("0123456789ABCDEFabcdef").Repeat(4).Text()
+            select hex;
+
+        // fragment ESC
+        //   : '\\' (["'`\\/fnrt] | UNICODE)    // allow \`, \", \', \\, \/, \f, etc. and \uXXX
+        //   ;
+        // EK: We allow \" here as well, to support the older " escaped identifiers
+        public static readonly Parser<string> Escape =
+            from backslash in Parse.Char('\\')
+            from escUnicode in
+                Parse.Chars("\"'`\\/fnrt").Once().Unescape().Or(Unicode.Unescape())
+            select escUnicode;
+
+        // This represents the fragment <delimiter> (ESC | .)*? <delimiter>
+        // as used by DELIMITEDIDENTIFIER and STRING lexers
+        internal static Parser<string> DelimitedContents(char delimiter) =>
+             from openQ in Parse.Char(delimiter)
+             from id in Parse.CharExcept(new[] { delimiter, '\\'}).Many().Text().Or(Escape).Many()
+             from closeQ in Parse.Char(delimiter)
+             select string.Concat(id);
+
+        //STRING
+        //    : '\'' (ESC | .)*? '\''
+        //    ;
+        public static readonly Parser<string> String = DelimitedContents('\'');
+
+        //DELIMITEDIDENTIFIER
+        //   : '"' (ESC | .)+? '"'
+        //   | '`' (ESC | .)+? '`'
+        //   ;
+        public static readonly Parser<string> DelimitedIdentifier =
+            DelimitedContents('"')
+            .XOr(DelimitedContents('`'));
 
         // identifier
         //  : IDENTIFIER
         //  | QUOTEDIDENTIFIER
         //  ;
         public static readonly Parser<string> Identifier =
-            Id.XOr(QuotedIdentifier);
+            Id.XOr(DelimitedIdentifier);
 
         // externalConstant
         //  : '%' identifier
         //  ;
         public static readonly Parser<string> ExternalConstant =
-            Parse.Char('%').Then(c => Identifier).Named("ExternalConstant");
+            Parse.Char('%').Then(c => Identifier.XOr(String))
+            .Named("external constant");
+
+        // DATE
+        //      : '@'  ....
+        // Note: I split the lexer rule for DATETIME from the FP spec into separate DATETIME and DATE rules
+        public static readonly Regex DateRegEx = new Regex(
+                @"@[0-9]{4}     # Year
+                (
+                    -([0-9][0-9])   # Month
+                    (
+                        -([0-9][0-9])    # Day
+                    )?
+                )?",
+                RegexOptions.IgnorePatternWhitespace);
+
+        public static readonly Parser<PartialDate> Date =
+            Parse.Regex(DateRegEx).Select(s => PartialDate.Parse(s.Substring(1)));
 
         // DATETIME
         //      : '@'  ....
-        // Note: I used a different regex from the spec, since this one is more complete (not allowing 99 as month for example),
-        // but disallowing partial datetimes with just the hour. EK
+        // Note: I split the lexer rule for DATETIME from the FP spec into separate DATETIME and DATE rules
         public static readonly Regex DateTimeRegEx = new Regex(
-                                @"@[0-9]{4}             # Year
+                @"@[0-9]{4}     # Year
+                (
+                    ( 
+                        -([0-9][0-9])   # Month
+                        (
+                            (  
+                                -([0-9][0-9])  #Day
                                 (
-                                    -(0[1-9]|1[0-2])                # Month
-                                    (
-                                        -(0[0-9]|[1-2][0-9]|3[0-1])         #Day
-                                        (
-                                            T
-                                            ([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\.[0-9]+)?   #Time
-                                            (Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?  #Timezone
-                                        )?
-                                    )?
-                                )?", RegexOptions.IgnorePatternWhitespace);     
+                                      T" + TIMEFORMAT + "?  #Time  " + @"
+                                )
+                            )
+                            | T
+                        )
+                    ) 
+                    | T
+                ) (Z|((\+|-)[0-9][0-9]:[0-9][0-9]))?", 
+                RegexOptions.IgnorePatternWhitespace);
 
-        public static readonly Parser<PartialDateTime> DateTime = 
-            Parse.Regex(DateTimeRegEx).Select(s => PartialDateTime.Parse(s.Substring(1)));
+        public static readonly Parser<PartialDateTime> DateTime =
+            Parse.Regex(DateTimeRegEx).Select(s => PartialDateTime.Parse(CleanupDateTimeLiteral(s)));
 
+        internal static string CleanupDateTimeLiteral(string repr)
+        {
+            var result = repr.Substring(1);  // remove @
+
+            // not acceptable for our partialDateTime as 'T' without an actual time.
+            // dates without time but with a timezone are fine for our PartialDateTime, but should come immediately
+            // after the date: when a 'T' is encountered, a time is required.
+            // Here, the T literal is only there to distinguish date and dateTime, and so part of
+            // the FP literal and syntax, not the parseable value (just like '@').
+            var hasTWithoutTime = result.EndsWith("T") || result.Contains("TZ") || result.Contains("T+") || result.Contains("T-");
+            if (hasTWithoutTime) result = result.Replace("T", "");
+
+            return result;
+        }
+
+        // fragment TIMEFORMAT
+        //      : [0-9] [0-9] (':'[0-9] [0-9] (':'[0-9] [0-9] ('.'[0-9]+)?)?)?
+        //      ;
+        private const string TIMEFORMAT = @"([0-9][0-9](:[0-9][0-9](:[0-9][0-9](\.[0-9]+)?)?)?)";
+        
         // TIME
         //      : '@T'  ....
-        // Note: I used a different regex from the spec, since this one is more complete (not allowing 99 as an hour for example),
-        // but disallowing partial times with just the hour. EK
-        public static readonly Regex TimeRegEx = new Regex(
-                                @"@T
-                                            ([01][0-9]|2[0-3])(:[0-5][0-9](:[0-5][0-9](\.[0-9]+)?)?)?   #Time
-                                            (Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?  #Timezone
-                                 ", RegexOptions.IgnorePatternWhitespace);
+        // NB: No timezone (as specified in FHIR and FhirPath, CQL incorrectly states that it allows a timezone)
+        public static readonly Regex TimeRegEx = new Regex("@T" + TIMEFORMAT, RegexOptions.IgnorePatternWhitespace);
 
         public static readonly Parser<PartialTime> Time =
             Parse.Regex(TimeRegEx).Select(s => PartialTime.Parse(s.Substring(2)));
@@ -94,29 +163,6 @@ namespace Hl7.FhirPath.Parser
                    from fraction in Parse.Number
                    select XmlConvert.ToDecimal(num + dot + fraction);
 
-
-        // STRING:  '\'' (ESC | ~[\'\\])* '\'';         // ' delineated string
-        // fragment ESC: '\\' (["'\\/fnrt] | UNICODE);    // allow \", \', \\, \/, \b, etc. and \uXXX
-        // fragment UNICODE: 'u' HEX HEX HEX HEX;
-        // fragment HEX: [0-9a-fA-F];
-        public static readonly Parser<string> Unicode =
-            from u in Parse.Char('u')
-            from hex in Parse.Chars("0123456789ABCDEFabcdef").Repeat(4).Text()
-            select hex;
-
-        public static readonly Parser<string> Escape =
-            from backslash in Parse.Char('\\')
-            from escUnicode in
-                Parse.Chars("\"'\\/fnrt").Once().Unescape().Or(Unicode.Unescape())
-            select escUnicode;
-
-        public static readonly Parser<string> String =
-            from openQ in Parse.Char('\'')
-            from str in Parse.CharExcept("\'\\").Many().Text().Or(Escape).Many()
-            from closeQ in Parse.Char('\'')
-            select string.Concat(str);
-
-  
         // BOOL: 'true' | 'false';
         public static readonly Parser<bool> Bool =
             Parse.String("true").XOr(Parse.String("false")).Text().Select(s => Boolean.Parse(s));
@@ -128,7 +174,9 @@ namespace Hl7.FhirPath.Parser
             Parse.ChainOperator(Parse.Char('.'), Identifier, (op, a, b) => a + "." + b);
 
         public static readonly Parser<string> Axis =
-            Parse.Char('$').Then(q => Parse.String("this")).Text().Select(v => v);
+            from _ in Parse.Char('$')
+            from name in Parse.String("this").XOr(Parse.String("index")).Or(Parse.String("total")).Text()
+            select name;
     }
 
 
@@ -136,7 +184,7 @@ namespace Hl7.FhirPath.Parser
     {
         public static Parser<string> Unescape(this Parser<IEnumerable<char>> c)
         {
-            return c.Select(chr => new String( Unescape(chr.Single()), 1));
+            return c.Select(chr => new String(Unescape(chr.Single()), 1));
         }
 
         public static char Unescape(char c)

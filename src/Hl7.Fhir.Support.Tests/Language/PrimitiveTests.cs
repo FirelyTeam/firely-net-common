@@ -1,6 +1,6 @@
-﻿using Hl7.Fhir.Model;
+﻿using Hl7.Fhir.Language;
+using Hl7.Fhir.Model;
 using Hl7.Fhir.Model.Primitives;
-using Hl7.Fhir.Support.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -25,7 +25,7 @@ namespace Hl7.Fhir.Support.Tests.Model
                 var native = pair.Key;
                 var expected = pair.Value;
 
-                Assert.IsTrue(Primitives.TryGetPrimitiveTypeName(native, out var actual));
+                Assert.IsTrue(TypeSpecifier.TryGetPrimitiveTypeName(native, out var actual));
                 Assert.AreEqual(expected, actual);
             }
         }
@@ -33,7 +33,7 @@ namespace Hl7.Fhir.Support.Tests.Model
         [TestMethod]
         public void CatchesUnknownPrimitiveName()
         {
-            Assert.IsFalse(Primitives.TryGetPrimitiveTypeName(typeof(PrimitiveTests), out _));
+            Assert.IsFalse(TypeSpecifier.TryGetPrimitiveTypeName(typeof(PrimitiveTests), out _));
         }
 
         [TestMethod]
@@ -45,7 +45,7 @@ namespace Hl7.Fhir.Support.Tests.Model
 
             foreach (var test in tests)
             {
-                Assert.IsTrue(Primitives.TryConvertToPrimitiveValue(test.Item1, out var actual));
+                Assert.IsTrue(TypeSpecifier.TryConvertToPrimitiveValue(test.Item1, out var actual));
                 Assert.AreEqual(test.Item2, actual);
             }
         }
@@ -99,7 +99,7 @@ namespace Hl7.Fhir.Support.Tests.Model
                 var fhirType = pair.Key;
                 var native = pair.Value;
 
-                Assert.IsTrue(Primitives.TryGetNativeRepresentation(fhirType, out var actual));
+                Assert.IsTrue(TypeSpecifier.TryGetNativeRepresentation(fhirType, out var actual));
                 Assert.AreEqual(native, actual);
             }
         }
@@ -107,7 +107,7 @@ namespace Hl7.Fhir.Support.Tests.Model
         [TestMethod]
         public void CatchesUnknownNativeRepresentation()
         {
-            Assert.IsFalse(Primitives.TryGetNativeRepresentation("Patient", out _));
+            Assert.IsFalse(TypeSpecifier.TryGetNativeRepresentation("Patient", out _));
         }
 
     }

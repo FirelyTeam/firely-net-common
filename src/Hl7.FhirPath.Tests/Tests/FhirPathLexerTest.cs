@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * Copyright (c) 2015, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
@@ -7,17 +7,17 @@
  */
 
 using System;
-using Hl7.FhirPath;
 using Hl7.FhirPath.Sprache;
 using Hl7.FhirPath.Parser;
-using Xunit;
 using Hl7.Fhir.Model.Primitives;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Hl7.FhirPath.Tests
 {
+    [TestClass]
     public class FhirPathLexerTest
     {
-        [Fact]
+        [TestMethod]
         public void FhirPath_Lex_QualifiedIdentifier()
         {
             var parser = Lexer.QualifiedIdentifier.End();
@@ -25,7 +25,9 @@ namespace Hl7.FhirPath.Tests
             AssertParser.SucceedsMatch(parser, "name");
             AssertParser.SucceedsMatch(parser, "name.name2");
             AssertParser.SucceedsMatch(parser, "name.name2.name3");
-            AssertParser.SucceedsMatch(parser, "name.\"name2\"", "name.name2");
+            AssertParser.SucceedsMatch(parser, "name.`name2`", "name.name2");
+            AssertParser.SucceedsMatch(parser, "`name`.`name2`", "name.name2");
+            AssertParser.SucceedsMatch(parser, "name.\"name2\"", "name.name2");   // should still support the pre-normative syntax
             AssertParser.SucceedsMatch(parser, "\"name\".\"name2\"", "name.name2");
         }
 
@@ -35,7 +37,7 @@ namespace Hl7.FhirPath.Tests
         }
 
 
-        [Fact]
+        [TestMethod]
         public void FhirPath_Lex_Const()
         {
             var parser = Lexer.ExternalConstant.End();
@@ -44,7 +46,9 @@ namespace Hl7.FhirPath.Tests
             SucceedsPrefixString(parser, "%const");
             SucceedsPrefixString(parser, "%a1");
             SucceedsPrefixString(parser, "%a__1");
-            AssertParser.SucceedsMatch(parser, "%\"forbidden-characters-1234\"", "forbidden-characters-1234");
+            AssertParser.SucceedsMatch(parser, "%`forbidden-characters-1234`", "forbidden-characters-1234");
+            AssertParser.SucceedsMatch(parser, "%\"forbidden-characters-1234\"", "forbidden-characters-1234"); // still support the old syntax
+            AssertParser.SucceedsMatch(parser, "%'forbidden-characters-1234'", "forbidden-characters-1234"); // new normative %<STRING>
 
             AssertParser.FailsMatch(parser, "%0");
             AssertParser.FailsMatch(parser, "%0123");
@@ -55,73 +59,101 @@ namespace Hl7.FhirPath.Tests
             AssertParser.FailsMatch(parser, "%*");
         }
 
-        [Fact]
+        [TestMethod]
         public void FhirPath_Lex_Identifier()
         {
             var parser = Lexer.Identifier.End();
 
             AssertParser.SucceedsMatch(parser, "A34", "A34");
-            AssertParser.SucceedsMatch(parser, "\"A\uface%$#34\"", "A\uface%$#34");
             AssertParser.FailsMatch(parser, "34");
             AssertParser.FailsMatch(parser, "'Hello'");
             AssertParser.FailsMatch(parser, "@2013");
-            //AssertParser.FailsMatch(parser, "true"); - this is an identifier, parser will only call in right context so no ambiguity
         }
 
 
-        private void SucceedsPartialDateTime(Parser<PartialDateTime> parser, string s)
-        {
-            AssertParser.SucceedsMatch(parser, s, PartialDateTime.Parse(s.Substring(1)));
-        }
-
-        [Fact]
+        [TestMethod]
         public void FhirPath_Lex_DateTime()
         {
             var parser = Lexer.DateTime.End();
 
-            SucceedsPartialDateTime(parser, "@2015-01");
-            SucceedsPartialDateTime(parser, "@2015-01-02T12:34:00Z");
-            SucceedsPartialDateTime(parser, "@2015-01-03T12:34:34+02:30");
-            SucceedsPartialDateTime(parser, "@2015-01-03T12:34:34");
-      //      SucceedsPartialDateTime(parser, "@2015-01-01T23");  TODO: Make this work
-            AssertParser.FailsMatch(parser, "@2015-32-02T12:34:00Z");
-            AssertParser.FailsMatch(parser, "@2015-01-02T28:34:00Z");
-            AssertParser.FailsMatch(parser, "T12:34:34+02:30");
-            AssertParser.FailsMatch(parser, "12:34:34+02:30");
-            AssertParser.FailsMatch(parser, "@T12:34:34+02:30");
-            AssertParser.FailsMatch(parser, "@12:34:34+02:30");
-            AssertParser.FailsMatch(parser, "@20150103T12:34:34+02:30");
-            AssertParser.FailsMatch(parser, "@-2015-01");
+            accept("@2015-01T");
+            accept("@2015-01-02T12:34:00Z");
+            accept("@2015-01-03T12:34:34+02:30");
+            accept("@2015-01-03T12:34:34");
+            accept("@2015-01-01T23");
+            accept("@2015-01-01T");
+            accept("@2015-01-01T23Z");
+            accept("@2015-01-01T+01:00");
 
+            reject("@2015-01");  // must have a T suffix
+            reject("@2015-01-02");  // since this is a date, not a dateTime
+            reject("@2015-01-02+01:00");  // since this is a date, not a dateTime
+
+            reject("T12:34:34+02:30");
+            reject("12:34:34+02:30");
+            reject("@T12:34:34+02:30");
+            reject("@12:34:34+02:30");
+            reject("@20150103T12:34:34+02:30");
+            reject("@-2015-01");
+
+            void accept(string s) => AssertParser.SucceedsMatch(parser, s, PartialDateTime.Parse(Lexer.CleanupDateTimeLiteral(s)));
+            void reject(string s) => AssertParser.FailsMatch(parser, s);
         }
 
-        private void SucceedsTime(Parser<PartialTime> parser, string s)
-        {
-            AssertParser.SucceedsMatch(parser, s, PartialTime.Parse(s.Substring(2)));
-        }
-
-        [Fact]
+        [TestMethod]
         public void FhirPath_Lex_Time()
         {
             var parser = Lexer.Time.End();
 
-            SucceedsTime(parser, "@T12:34:00Z");
-            SucceedsTime(parser, "@T12:34:34+02:30");
-            SucceedsTime(parser, "@T12:34:34");
+            accept("@T12:34:34.345674");
+            accept("@T12:34:34");
+            accept("@T12:35"); 
+            accept("@T12");
 
-            // SucceedsTime(parser, "@T12:35");     TODO: make this work
-            // SucceedsTime(parser, "@T12");
+            reject("@T12:34:34+02:30");
+            reject("@T12:34:00Z"); 
+            reject("2001-01-01T12:34:34+02:30");
+            reject("@2001-01-01T12:34:34+02:30");
+            reject("T12:34:34+02:30");
+            reject("12:34:34+02:30");
+            reject("@12:34:34+02:30");
+            reject("@T12:34:34+48:30");
 
-            AssertParser.FailsMatch(parser, "2001-01-01T12:34:34+02:30");
-            AssertParser.FailsMatch(parser, "@2001-01-01T12:34:34+02:30");
-            AssertParser.FailsMatch(parser, "T12:34:34+02:30");
-            AssertParser.FailsMatch(parser, "12:34:34+02:30");
-            AssertParser.FailsMatch(parser, "@12:34:34+02:30");
-
-            AssertParser.FailsMatch(parser, "@T12:34:34+48:30");
+            void accept(string s) => AssertParser.SucceedsMatch(parser, s, PartialTime.Parse(s.Substring(2)));
+            void reject(string s) => AssertParser.FailsMatch(parser, s);
         }
 
-            [Fact]
+        [TestMethod]
+        public void FhirPath_Lex_Date()
+        {
+            var parser = Lexer.Date.End();
+
+            accept("@2018-04-05");
+            accept("@2018-04");
+            accept("@2018");
+
+            reject("@2018-04-05T");
+            reject("@2018-04-05TZ");
+            reject("@2018-04-05Z");
+            reject("@2018-04-05T10:00:00");
+            reject("@2018-04-05T10:00:00Z");
+
+            void accept(string s) => AssertParser.SucceedsMatch(parser, s, PartialDate.Parse(s.Substring(1)));
+            void reject(string s) => AssertParser.FailsMatch(parser, s);
+        }
+
+        [TestMethod]
+        public void FhirPath_Lex_Axis()
+        {
+            var parser = Lexer.Axis.End();
+
+            AssertParser.SucceedsMatch(parser, "$this", "this");
+            AssertParser.SucceedsMatch(parser, "$index", "index");
+            AssertParser.SucceedsMatch(parser, "$total", "total");
+            AssertParser.FailsMatch(parser, "$that");
+        }
+
+        [TestMethod]
         public void FhirPath_Lex_Id()
         {
             var parser = Lexer.Id.End();
@@ -148,24 +180,31 @@ namespace Hl7.FhirPath.Tests
             AssertParser.FailsMatch(parser, "2A");
         }
 
-        [Fact]
+        [TestMethod]
         public void FhirPath_Lex_QuotedIdentifier()
         {
-            var parser = Lexer.QuotedIdentifier.End();
+            var parser = Lexer.DelimitedIdentifier.End();
 
-            SucceedsDelimitedString(parser, "\"2a\"");
-            SucceedsDelimitedString(parser, "\"_\"");
-            SucceedsDelimitedString(parser, "\"_Abcdef_ghijklmnopqrstuvwxyz_\"");
-            SucceedsDelimitedString(parser, "\"Hi \uface\"");
-            SucceedsDelimitedString(parser, "\"@#$%^&*().'\"");
-            SucceedsDelimitedString(parser, "\"3.1415\"");
+            SucceedsDelimitedString(parser, "`2a`");
+            SucceedsDelimitedString(parser, "`_`");
+            SucceedsDelimitedString(parser, "`_Abcdef_ghijklmnopqrstuvwxyz_`");
+            SucceedsDelimitedString(parser, "`Hi \uface`");
+            SucceedsDelimitedString(parser, "`@#$%^&*().'`");
+            SucceedsDelimitedString(parser, "`3.1415`");
+
+            AssertParser.SucceedsMatch(parser, "`A\uface%$#34`", "A\uface%$#34");
+            AssertParser.SucceedsMatch(parser, "`A\"quote`", "A\"quote");
+            AssertParser.SucceedsMatch(parser, "\"A`quote\"", "A`quote");
+            AssertParser.SucceedsMatch(parser, "`A\\`quote`", "A`quote");
+            AssertParser.SucceedsMatch(parser, "\"A\\\"quote\"", "A\"quote");
 
             AssertParser.FailsMatch(parser, "NoQuotes");
             AssertParser.FailsMatch(parser, @"'wrong es\qape'");
+
         }
 
 
-        [Fact]
+        [TestMethod]
         public void FhirPath_Lex_Unicode()
         {
             var parser = Lexer.Unicode.End();
@@ -183,17 +222,18 @@ namespace Hl7.FhirPath.Tests
             AssertParser.FailsMatch(parser, "ugggg");
         }
 
-        [Fact]
+
+        [TestMethod]
         public void FhirPath_Lex_Escape()
         {
             var parser = Lexer.Escape.End();
 
             AssertParser.SucceedsMatch(parser, @"\uface", "龜");
             AssertParser.SucceedsMatch(parser, @"\'", @"'");
-            AssertParser.SucceedsMatch(parser, @"\""", "\"");
+            AssertParser.SucceedsMatch(parser, @"\`", "`");
+            AssertParser.SucceedsMatch(parser, "\\\"", "\"");  // \" === "
             AssertParser.SucceedsMatch(parser, @"\\", @"\");
             AssertParser.SucceedsMatch(parser, @"\/", "/");
-            //AssertParser.SucceedsMatch(parser, @"\b"); - removed in STU3
             AssertParser.SucceedsMatch(parser, @"\f", "\f");
             AssertParser.SucceedsMatch(parser, @"\n", "\n");
             AssertParser.SucceedsMatch(parser, @"\r", "\r");
@@ -203,6 +243,7 @@ namespace Hl7.FhirPath.Tests
             AssertParser.FailsMatch(parser, @"\ugdef");
             AssertParser.FailsMatch(parser, @"\u01234");
             AssertParser.FailsMatch(parser, @"\x");
+            AssertParser.FailsMatch(parser, @"\b");
         }
 
         private void SucceedsDelimitedString(Parser<string> parser, string s)
@@ -210,10 +251,10 @@ namespace Hl7.FhirPath.Tests
             AssertParser.SucceedsMatch(parser, s, s.Substring(1, s.Length - 2));
         }
 
-        [Fact]
+        [TestMethod]
         public void FhirPath_Lex_String()
         {
-            var parser = Lexer.String.End();            
+            var parser = Lexer.String.End();
 
             SucceedsDelimitedString(parser, @"'single quotes'");
             SucceedsDelimitedString(parser, @"'""single quotes with doubles""'");
@@ -231,7 +272,7 @@ namespace Hl7.FhirPath.Tests
             AssertParser.FailsMatch(parser, @"""mixed quotes'");
         }
 
-        [Fact]
+        [TestMethod]
         public void FhirPath_Lex_Bool()
         {
             var parser = Lexer.Bool.End();
@@ -251,7 +292,7 @@ namespace Hl7.FhirPath.Tests
         }
 
 
-        [Fact]
+        [TestMethod]
         public void FhirPath_Lex_Int()
         {
             var parser = Lexer.IntegerNumber.End();
@@ -271,7 +312,7 @@ namespace Hl7.FhirPath.Tests
             AssertParser.FailsMatch(parser, "-3");      // use unary '-' operator to make negative
         }
 
-        [Fact]
+        [TestMethod]
         public void FhirPath_Lex_Decimal()
         {
             var parser = Lexer.DecimalNumber.End();
@@ -292,7 +333,7 @@ namespace Hl7.FhirPath.Tests
             AssertParser.FailsMatch(parser, "0.314+E01");
         }
 
-        [Fact]
+        [TestMethod]
         public void FhirPath_Lex_Mul()
         {
             var parser = Lexer.MulOperator.End();

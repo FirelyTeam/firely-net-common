@@ -6,12 +6,12 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 
 namespace Hl7.Fhir.Model.Primitives
 {
+
     public struct Coding : IEquatable<Coding>
     {
         public Coding(string system, string code, string display=null)

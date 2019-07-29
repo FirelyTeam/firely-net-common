@@ -35,8 +35,9 @@ namespace Hl7.FhirPath.Expressions
             t.Add("subsetOf", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => f.SubsetOf(a));
             t.Add("supersetOf", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => a.SubsetOf(f));
 
-            t.Add("today", (object f) => PartialDateTime.Today());
+            t.Add("today", (object f) => PartialDate.Today());
             t.Add("now", (object f) => PartialDateTime.Now());
+            t.Add("timeOfDay", (object f) => PartialTime.Now());
 
             t.Add("binary.&", (object f, string a, string b) => (a ?? "") + (b ?? ""));
 
@@ -84,24 +85,28 @@ namespace Hl7.FhirPath.Expressions
             t.Add("binary.>", (object f, string a, string b) => String.CompareOrdinal(a, b) > 0, doNullProp: true);
             t.Add("binary.>", (object f, PartialDateTime a, PartialDateTime b) => a > b, doNullProp: true);
             t.Add("binary.>", (object f, PartialTime a, PartialTime b) => a > b, doNullProp: true);
+            t.Add("binary.>", (object f, PartialDate a, PartialDate b) => a > b, doNullProp: true);
 
             t.Add("binary.<", (object f, long a, long b) => a < b, doNullProp: true);
             t.Add("binary.<", (object f, decimal a, decimal b) => a < b, doNullProp: true);
             t.Add("binary.<", (object f, string a, string b) => String.CompareOrdinal(a, b) < 0, doNullProp: true);
             t.Add("binary.<", (object f, PartialDateTime a, PartialDateTime b) => a < b, doNullProp: true);
             t.Add("binary.<", (object f, PartialTime a, PartialTime b) => a < b, doNullProp: true);
+            t.Add("binary.<", (object f, PartialDate a, PartialDate b) => a < b, doNullProp: true);
 
             t.Add("binary.<=", (object f, long a, long b) => a <= b, doNullProp: true);
             t.Add("binary.<=", (object f, decimal a, decimal b) => a <= b, doNullProp: true);
             t.Add("binary.<=", (object f, string a, string b) => String.CompareOrdinal(a, b) <= 0, doNullProp: true);
             t.Add("binary.<=", (object f, PartialDateTime a, PartialDateTime b) => a <= b, doNullProp: true);
             t.Add("binary.<=", (object f, PartialTime a, PartialTime b) => a <= b, doNullProp: true);
+            t.Add("binary.<=", (object f, PartialDate a, PartialDate b) => a <= b, doNullProp: true);
 
             t.Add("binary.>=", (object f, long a, long b) => a >= b, doNullProp: true);
             t.Add("binary.>=", (object f, decimal a, decimal b) => a >= b, doNullProp: true);
             t.Add("binary.>=", (object f, string a, string b) => String.CompareOrdinal(a, b) >= 0, doNullProp: true);
             t.Add("binary.>=", (object f, PartialDateTime a, PartialDateTime b) => a >= b, doNullProp: true);
             t.Add("binary.>=", (object f, PartialTime a, PartialTime b) => a >= b, doNullProp: true);
+            t.Add("binary.>=", (object f, PartialDate a, PartialDate b) => a >= b, doNullProp: true);
 
             t.Add("single", (IEnumerable<ITypedElement> f) => f.Single(), doNullProp: true);
             t.Add("skip", (IEnumerable<ITypedElement> f, long a) =>  f.Skip((int)a), doNullProp: true);
@@ -111,9 +116,20 @@ namespace Hl7.FhirPath.Expressions
             t.Add("take", (IEnumerable<ITypedElement> f, long a) => f.Take((int)a), doNullProp: true);
             t.Add("builtin.item", (IEnumerable<ITypedElement> f, long a) => f.Item((int)a), doNullProp: true);
 
+            t.Add("toBoolean", (ITypedElement f) => f.ToBoolean(), doNullProp: true);
+            t.Add("convertsToBoolean", (ITypedElement f) => f.ConvertsToBoolean(), doNullProp: true);
             t.Add("toInteger", (ITypedElement f) => f.ToInteger(), doNullProp: true);
+            t.Add("convertsToInteger", (ITypedElement f) => f.ConvertsToInteger(), doNullProp: true);
             t.Add("toDecimal", (ITypedElement f) => f.ToDecimal(), doNullProp: true);
+            t.Add("convertsToDecimal", (ITypedElement f) => f.ConvertsToDecimal(), doNullProp: true);
+            t.Add("toDateTime", (ITypedElement f) => f.ToDateTime(), doNullProp: true);
+            t.Add("convertsToDateTime", (ITypedElement f) => f.ConvertsToDateTime(), doNullProp: true);
+            t.Add("toTime", (ITypedElement f) => f.ToTime(), doNullProp: true);
+            t.Add("convertsToTime", (ITypedElement f) => f.ConvertsToTime(), doNullProp: true);
+            t.Add("toDate", (ITypedElement f) => f.ToDate(), doNullProp: true);
+            t.Add("convertsToDate", (ITypedElement f) => f.ConvertsToDate(), doNullProp: true);
             t.Add("toString", (ITypedElement f) => f.ToStringRepresentation(), doNullProp: true);
+            t.Add("convertsToString", (ITypedElement f) => f.ConvertsToString(), doNullProp: true);
 
             t.Add("substring", (string f, long a) => f.FpSubstring((int)a), doNullProp: true);
             t.Add("substring", (string f, long a, long b) => f.FpSubstring((int)a, (int)b), doNullProp: true);

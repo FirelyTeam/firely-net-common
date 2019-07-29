@@ -10,10 +10,10 @@ using System;
 using System.Xml;
 using Hl7.Fhir.Utility;
 using Hl7.Fhir.Model.Primitives;
-using Hl7.Fhir.Support.Model;
 using System.Numerics;
 using System.Globalization;
 using System.Linq;
+using Hl7.Fhir.Language;
 
 namespace Hl7.Fhir.Serialization
 {
@@ -23,15 +23,11 @@ namespace Hl7.Fhir.Serialization
 
         public static object FromSerializedValue(string value, string primitiveType)
         {
-            var type = Primitives.GetNativeRepresentation(primitiveType);
+            var type = TypeSpecifier.GetNativeRepresentation(primitiveType);
             return ConvertTo(value, type);
         }
 
-
-        public static T ConvertTo<T>(object value)
-        {
-            return (T)ConvertTo(value, typeof(T));
-        }
+        public static T ConvertTo<T>(object value) => (T)ConvertTo(value, typeof(T));
 
         public static object ConvertTo(object value, Type to)
         {
@@ -61,56 +57,36 @@ namespace Hl7.Fhir.Serialization
         }
 
         public const string FMT_FULL = "yyyy-MM-dd'T'HH:mm:ss.FFFFFFFK";
-        //private const string FMT_YEAR = "{0:D4}";
-        //private const string FMT_YEARMONTH = "{0:D4}-{1:D2}";
-        //private const string FMT_YEARMONTHDAY = "{0:D4}-{1:D2}-{2:D2}";
 
         private static string convertToXmlString(object value)
         {
-            if (value is Boolean)
-                return XmlConvert.ToString((bool)value);
-            if (value is Byte)
-                return XmlConvert.ToString((byte)value);        // Not used in FHIR serialization
-            if (value is Char)
-                return XmlConvert.ToString((char)value);        // Not used in FHIR serialization
-            if (value is DateTime)
-                return XmlConvert.ToString((DateTime)value, FMT_FULL);  // Obsolete: use DateTimeOffset instead!!
-            if (value is Decimal)
-                return XmlConvert.ToString((decimal)value);
-            if (value is Double)
-                return XmlConvert.ToString((double)value);
-            if (value is Int16)
-                return XmlConvert.ToString((short)value);
-            if (value is Int32)
-                return XmlConvert.ToString((int)value);
-            if (value is Int64)
-                return XmlConvert.ToString((long)value);       // Not used in FHIR serialization
-            if (value is SByte)
-                return XmlConvert.ToString((sbyte)value);       // Not used in FHIR serialization
-            if (value is Single)
-                return XmlConvert.ToString((float)value);      // Not used in FHIR serialization
-            if (value is UInt16)
-                return XmlConvert.ToString((ushort)value);      // Not used in FHIR serialization
-            if (value is UInt32)
-                return XmlConvert.ToString((uint)value);      // Not used in FHIR serialization
-            if (value is UInt64)
-                return XmlConvert.ToString((ulong)value);      // Not used in FHIR serialization
-            if (value is byte[])
-                return System.Convert.ToBase64String((byte[])value);
-            if (value is DateTimeOffset)
-                return XmlConvert.ToString((DateTimeOffset)value, FMT_FULL);
-            if (value is Uri)
-                return ((Uri)value).ToString();
-            if (value is PartialDateTime pdt)
-                return pdt.ToString();
-            if (value is PartialTime pt)
-                return pt.ToString();
-            if (value is Enum en)
-                return en.GetLiteral();
-            if (value is BigInteger bi)
-                return bi.ToString();
-
-            throw Error.NotSupported($"Cannot convert '{value.GetType().Name}' value '{value}' to string");
+            switch (value)
+            {
+                case Boolean bl: return XmlConvert.ToString(bl);
+                case Byte by: return XmlConvert.ToString(by);        // Not used in FHIR serialization
+                case Char cr: return XmlConvert.ToString(cr);        // Not used in FHIR serialization
+                case DateTime dt: return XmlConvert.ToString(dt, FMT_FULL);  // Obsolete: use DateTimeOffset instead!!
+                case Decimal dec: return XmlConvert.ToString(dec);
+                case Double dbl: return XmlConvert.ToString(dbl);
+                case Int16 i16: return XmlConvert.ToString(i16);
+                case Int32 i32: return XmlConvert.ToString(i32);
+                case Int64 i64: return XmlConvert.ToString(i64);       // Not used in FHIR serialization
+                case SByte sb: return XmlConvert.ToString(sb);         // Not used in FHIR serialization
+                case Single sing: return XmlConvert.ToString(sing);    // Not used in FHIR serialization
+                case UInt16 uint16: return XmlConvert.ToString(uint16);      // Not used in FHIR serialization
+                case UInt32 uint32: return XmlConvert.ToString(uint32);      // Not used in FHIR serialization
+                case UInt64 uint64: return XmlConvert.ToString(uint64);      // Not used in FHIR serialization
+                case byte[] barr: return System.Convert.ToBase64String(barr);
+                case DateTimeOffset dto: return XmlConvert.ToString(dto, FMT_FULL);
+                case Uri uri: return uri.ToString();
+                case PartialDateTime pdt: return pdt.ToString();
+                case PartialTime pt: return pt.ToString();
+                case PartialDate pd: return pd.ToString();
+                case Enum en: return en.GetLiteral();
+                case BigInteger bi: return bi.ToString();
+                default:
+                    throw Error.NotSupported($"Cannot convert '{value.GetType().Name}' value '{value}' to string");
+            }
         }
 
         private static object convertXmlStringToPrimitive(Type to, string value)
@@ -122,7 +98,7 @@ namespace Hl7.Fhir.Serialization
             if (typeof(Char) == to)
                 return XmlConvert.ToChar(value);        // Not used in FHIR serialization
             if (typeof(DateTime) == to)
-                return ConvertToDatetimeOffset(value).UtcDateTime;  // Obsolete: use DateTimeOffset instead!!
+                return convertToDatetimeOffset(value).UtcDateTime;  // Obsolete: use DateTimeOffset instead!!
             if (typeof(Decimal) == to)
             {
                 if (FORBIDDEN_DECIMAL_PREFIXES.Any(prefix => value.StartsWith(prefix)) || value.EndsWith("."))
@@ -153,11 +129,13 @@ namespace Hl7.Fhir.Serialization
             if (typeof(byte[]) == to)
                 return System.Convert.FromBase64String(value);
             if (typeof(DateTimeOffset) == to)
-                return ConvertToDatetimeOffset(value);
+                return convertToDatetimeOffset(value);
             if (typeof(System.Uri) == to)
                 return new Uri(value, UriKind.RelativeOrAbsolute);
             if (typeof(PartialDateTime) == to)
                 return PartialDateTime.Parse(value);
+            if (typeof(PartialDate) == to)
+                return PartialDate.Parse(value);
             if (typeof(PartialTime) == to)
                 return PartialTime.Parse(value);
             if (typeof(BigInteger) == to)
@@ -174,8 +152,12 @@ namespace Hl7.Fhir.Serialization
             throw Error.NotSupported($"Cannot convert string value '{value}' to a {to.Name}");
         }
 
-        private static DateTimeOffset ConvertToDatetimeOffset(string value)
+        private static DateTimeOffset convertToDatetimeOffset(string value)
         {
+            // May not be just a time spec (without a date ). Look for values like Thh:mm or hh:mm
+            if (value.IndexOf(":") == 2 || value.IndexOf(":") == 3)
+                throw Error.Format("Partial date(time) cannot contain just a time");
+
             if (!value.Contains("T") && value.Length <= 10)
             {
                 // MV: when there is no time-part, consider this then as a UTC datetime by adding Zulu = UTC(+0)
@@ -208,25 +190,15 @@ namespace Hl7.Fhir.Serialization
 #endif
 
             // And some specific complex native types
-            if (type == typeof(byte[]) ||
-                 type == typeof(string) ||
-                 type == typeof(DateTimeOffset) ||
-                 type == typeof(Uri))
-                return true;
-
-            return false;
+            return 
+                type == typeof(byte[]) ||
+                type == typeof(string) ||
+                type == typeof(DateTimeOffset) ||
+                type == typeof(Uri) ||
+                type == typeof(PartialDateTime) ||
+                type == typeof(PartialDate) ||
+                type == typeof(PartialTime) ||
+                type == typeof(BigInteger);
         }
-
-
-        //public static string GetValueAsString(this Primitive p)
-        //{
-        //    if (p == null) return null;
-
-        //    if (p.ObjectValue != null)
-        //        return ConvertTo<string>(p.ObjectValue);
-        //    else
-        //        return null;
-        //}
-
     }
 }

@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * Copyright (c) 2015, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
@@ -6,10 +6,9 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Language;
 using Hl7.Fhir.Language.Debugging;
 using Hl7.Fhir.Model.Primitives;
-using Hl7.Fhir.Support.Model;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
@@ -59,7 +58,7 @@ namespace Hl7.FhirPath.Expressions
         {
             if (value == null) Error.ArgumentNull("value");
 
-            Value = Primitives.ConvertToPrimitiveValue(value);
+            Value = TypeSpecifier.ConvertToPrimitiveValue(value);
 
             if (Value is bool)
                 ExpressionType = TypeInfo.Boolean;
@@ -73,6 +72,8 @@ namespace Hl7.FhirPath.Expressions
                 ExpressionType = TypeInfo.DateTime;
             else if (Value is PartialTime)
                 ExpressionType = TypeInfo.Time;
+            else if (Value is PartialDate)
+                ExpressionType = TypeInfo.Date;
             else
                 throw Error.InvalidOperation("Internal logic error: encountered unmappable Value of type " + Value.GetType().Name);
         }

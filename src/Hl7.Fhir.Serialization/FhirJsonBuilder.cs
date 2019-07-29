@@ -8,8 +8,8 @@
 
 
 using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Language;
 using Hl7.Fhir.Specification;
-using Hl7.Fhir.Support.Model;
 using Hl7.Fhir.Utility;
 using Newtonsoft.Json.Linq;
 using System;
@@ -74,7 +74,7 @@ namespace Hl7.Fhir.Serialization
         {
             var details = node.GetJsonSerializationDetails();
             object value = node.Definition != null ? node.Value : details?.OriginalValue ?? node.Value;
-            var objectInShadow = node.InstanceType != null ? Primitives.IsPrimitive(node.InstanceType) : details?.UsesShadow ?? false;
+            var objectInShadow = node.InstanceType != null ? TypeSpecifier.IsPrimitive(node.InstanceType) : details?.UsesShadow ?? false;
 
             JToken first = value != null ? buildValue(value) : null;
             JObject second = buildChildren(node);
