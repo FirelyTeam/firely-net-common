@@ -28,9 +28,9 @@ namespace Hl7.FhirPath.Tests
 
         void accept(string testInput, int? y, int? m, int? d, PartialPrecision? p, TimeSpan? o) {
             Assert.IsTrue(PartialDate.TryParse(testInput, out PartialDate parsed), "TryParse");
-            Assert.AreEqual(y, parsed.Year, "years");
-            Assert.AreEqual(m, parsed.Month, "months");
-            Assert.AreEqual(d, parsed.Day, "days");
+            Assert.AreEqual(y, parsed.Years, "years");
+            Assert.AreEqual(m, parsed.Months, "months");
+            Assert.AreEqual(d, parsed.Days, "days");
             Assert.AreEqual(o, parsed.Offset, "offset");
             Assert.AreEqual(p, parsed.Precision, "precision");
             Assert.AreEqual(testInput, parsed.ToString(), "ToString");
@@ -39,6 +39,18 @@ namespace Hl7.FhirPath.Tests
         void reject(string testValue)
         {
             Assert.IsFalse(PartialDate.TryParse(testValue, out _));
+        }
+
+        [TestMethod]
+        public void GetToday()
+        {
+            var today = PartialDate.Today();
+            var today2 = DateTimeOffset.Now;   // just don't run this unit test a split second before midnight
+
+            Assert.AreEqual(today2.Year, today.Years);
+            Assert.AreEqual(today2.Month, today.Months);
+            Assert.AreEqual(today2.Day, today.Days);
+            Assert.AreEqual(PartialPrecision.Day, today.Precision);
         }
 
         [TestMethod]
@@ -97,9 +109,9 @@ namespace Hl7.FhirPath.Tests
 
             var dateTimeOffset = new DateTimeOffset(2019, 7, 23, 13, 45, 56, 567, plusOne);
             var partialDate = PartialDate.FromDateTimeOffset(dateTimeOffset);
-            Assert.AreEqual(2019, partialDate.Year);
-            Assert.AreEqual(7, partialDate.Month);
-            Assert.AreEqual(23, partialDate.Day);
+            Assert.AreEqual(2019, partialDate.Years);
+            Assert.AreEqual(7, partialDate.Months);
+            Assert.AreEqual(23, partialDate.Days);
             Assert.AreEqual(plusOne, partialDate.Offset);
         }
 

@@ -26,9 +26,9 @@ namespace Hl7.Fhir.Model.Primitives
         /// </summary>
         public PartialPrecision Precision { get; private set; }
 
-        public int? Year => Precision >= PartialPrecision.Year ? _parsedValue.Year : (int?)null;
-        public int? Month => Precision >= PartialPrecision.Month ? _parsedValue.Month : (int?)null;
-        public int? Day => Precision >= PartialPrecision.Day ? _parsedValue.Day : (int?)null;
+        public int? Years => Precision >= PartialPrecision.Year ? _parsedValue.Year : (int?)null;
+        public int? Months => Precision >= PartialPrecision.Month ? _parsedValue.Month : (int?)null;
+        public int? Days => Precision >= PartialPrecision.Day ? _parsedValue.Day : (int?)null;
 
         /// <summary>
         /// The span of time ahead/behind UTC

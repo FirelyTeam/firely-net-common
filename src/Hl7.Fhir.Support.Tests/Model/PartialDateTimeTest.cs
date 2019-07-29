@@ -99,6 +99,18 @@ namespace Hl7.FhirPath.Tests
         }
 
         [TestMethod]
+        public void GetToday()
+        {
+            var today = PartialDateTime.Today();
+            var today2 = DateTimeOffset.Now;   // just don't run this unit test a split second before midnight
+
+            Assert.AreEqual(today2.Year, today.Years);
+            Assert.AreEqual(today2.Month, today.Months);
+            Assert.AreEqual(today2.Day, today.Days);
+            Assert.AreEqual(PartialPrecision.Day, today.Precision);
+        }
+
+        [TestMethod]
         public void FromDateTimeOffset()
         {
             var plusOne = new TimeSpan(1, 0, 0);
