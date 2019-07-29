@@ -290,6 +290,8 @@ namespace Hl7.FhirPath.Functions
                     return XmlConvert.ToString(l);
                 case decimal d:
                     return XmlConvert.ToString(d);
+                case PartialDate pd:
+                    return pd.ToString();
                 case PartialDateTime pdt:
                     return pdt.ToString();
                 case PartialTime pt:

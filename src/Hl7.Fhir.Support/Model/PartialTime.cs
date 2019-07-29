@@ -69,15 +69,47 @@ namespace Hl7.Fhir.Model.Primitives
                     _parsedValue.Minute, _parsedValue.Second, _parsedValue.Millisecond,
                     HasOffset ? _parsedValue.Offset : defaultOffset);
 
-        public const string FMT_FULL = "HH:mm:ss.FFFFFFFK";
-
-        public static PartialTime FromDateTimeOffset(DateTimeOffset dto)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <param name="prec"></param>
+        /// <param name="includeOffset">Whether to include the timezone offset.</param>
+        /// <returns></returns>
+        public static PartialTime FromDateTimeOffset(DateTimeOffset dto, PartialPrecision prec = PartialPrecision.Fraction,
+                bool includeOffset = false)
         {
-            var representation = dto.ToString(FMT_FULL);
+            string formatString;
+
+            switch (prec)
+            {
+                case PartialPrecision.Hour:
+                    formatString = "HH";
+                    break;
+                case PartialPrecision.Minute:
+                    formatString = "HH:mm";
+                    break;
+                case PartialPrecision.Second:
+                    formatString = "HH:mm:ss";
+                    break;
+                case PartialPrecision.Fraction:                    
+                default:
+                    formatString = "HH:mm:ss.FFFFFFF";
+                    break;
+            }
+
+            if (includeOffset) formatString += "K";
+
+            var representation = dto.ToString(formatString);
             return Parse(representation);
         }
 
-        public static PartialTime Now() => FromDateTimeOffset(DateTimeOffset.Now);
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="includeOffset">Whether to include the timezone offset.</param>
+        /// <returns></returns>
+        public static PartialTime Now(bool includeOffset = false) => FromDateTimeOffset(DateTimeOffset.Now, includeOffset: includeOffset);
 
         private static bool tryParse(string representation, out PartialTime value)
         {

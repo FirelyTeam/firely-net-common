@@ -8,11 +8,12 @@ namespace Hl7.FhirPath.Tests
     public class PartialDateTest
     {
         [TestMethod]
-        public void DateConstructor() {
+        public void DateConstructor()
+        {
             accept("2010", 2010, null, null, PartialPrecision.Year, null);
             accept("2010-12", 2010, 12, null, PartialPrecision.Month, null);
             accept("2010-08-12", 2010, 08, 12, PartialPrecision.Day, null);
-            accept("2010-08-12+02:00", 2010, 08, 12, PartialPrecision.Day, new TimeSpan(2,0,0));
+            accept("2010-08-12+02:00", 2010, 08, 12, PartialPrecision.Day, new TimeSpan(2, 0, 0));
             accept("2010-08-12+00:00", 2010, 08, 12, PartialPrecision.Day, TimeSpan.Zero);
 
             reject("");
@@ -26,7 +27,8 @@ namespace Hl7.FhirPath.Tests
             reject("2010-2-04");
         }
 
-        void accept(string testInput, int? y, int? m, int? d, PartialPrecision? p, TimeSpan? o) {
+        void accept(string testInput, int? y, int? m, int? d, PartialPrecision? p, TimeSpan? o)
+        {
             Assert.IsTrue(PartialDate.TryParse(testInput, out PartialDate parsed), "TryParse");
             Assert.AreEqual(y, parsed.Years, "years");
             Assert.AreEqual(m, parsed.Months, "months");
@@ -51,10 +53,15 @@ namespace Hl7.FhirPath.Tests
             Assert.AreEqual(today2.Month, today.Months);
             Assert.AreEqual(today2.Day, today.Days);
             Assert.AreEqual(PartialPrecision.Day, today.Precision);
+            Assert.IsFalse(today.HasOffset);
+
+            today = PartialDate.Today(includeOffset: true);
+            Assert.IsTrue(today.HasOffset);
         }
 
         [TestMethod]
-        public void ToDateTimeOffset() {
+        public void ToDateTimeOffset()
+        {
             var plusOne = new TimeSpan(1, 0, 0);
             var plusTwo = new TimeSpan(2, 0, 0);
 
@@ -104,7 +111,8 @@ namespace Hl7.FhirPath.Tests
         }
 
         [TestMethod]
-        public void FromDateTimeOffset() {
+        public void FromDateTimeOffset()
+        {
             var plusOne = new TimeSpan(1, 0, 0);
 
             var dateTimeOffset = new DateTimeOffset(2019, 7, 23, 13, 45, 56, 567, plusOne);
@@ -112,6 +120,18 @@ namespace Hl7.FhirPath.Tests
             Assert.AreEqual(2019, partialDate.Years);
             Assert.AreEqual(7, partialDate.Months);
             Assert.AreEqual(23, partialDate.Days);
+            Assert.IsNull(partialDate.Offset);
+
+            partialDate = PartialDate.FromDateTimeOffset(dateTimeOffset, includeOffset: true);
+            Assert.AreEqual(2019, partialDate.Years);
+            Assert.AreEqual(7, partialDate.Months);
+            Assert.AreEqual(23, partialDate.Days);
+            Assert.AreEqual(plusOne, partialDate.Offset);
+
+            partialDate = PartialDate.FromDateTimeOffset(dateTimeOffset, prec: PartialPrecision.Year, includeOffset: true);
+            Assert.AreEqual(2019, partialDate.Years);
+            Assert.IsNull(partialDate.Months);
+            Assert.AreEqual(PartialPrecision.Year, partialDate.Precision);
             Assert.AreEqual(plusOne, partialDate.Offset);
         }
 

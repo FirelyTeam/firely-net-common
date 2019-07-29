@@ -50,6 +50,9 @@ namespace Hl7.Fhir.Model.Primitives
         /// <summary>
         /// Converts the partial date to a full DateTimeOffset instance.
         /// </summary>
+        /// <param name="hours"></param>
+        /// <param name="minutes"></param>
+        /// <param name="seconds"></param>
         /// <param name="defaultOffset">Offset used when the partial datetime does not specify one.</param>
         /// <returns></returns>
         public DateTimeOffset ToDateTimeOffset(int hours, int minutes, int seconds, TimeSpan defaultOffset) =>
@@ -58,21 +61,42 @@ namespace Hl7.Fhir.Model.Primitives
         /// <summary>
         /// Converts the partial date to a full DateTimeOffset instance.
         /// </summary>
+        /// <param name="hours"></param>
+        /// <param name="minutes"></param>
+        /// <param name="seconds"></param>
+        /// <param name="milliseconds"></param>
         /// <param name="defaultOffset">Offset used when the partial datetime does not specify one.</param>
         /// <returns></returns>
         public DateTimeOffset ToDateTimeOffset(int hours, int minutes, int seconds, int milliseconds, TimeSpan defaultOffset) =>
                 new DateTimeOffset(_parsedValue.Year, _parsedValue.Month, _parsedValue.Day, hours, minutes, seconds, milliseconds,
                         HasOffset ? _parsedValue.Offset : defaultOffset);
 
-        public const string FMT_FULL = "yyyy-MM-ddK";
-
-        public static PartialDate FromDateTimeOffset(DateTimeOffset dto)
+        public static PartialDate FromDateTimeOffset(DateTimeOffset dto, PartialPrecision prec = PartialPrecision.Day,
+                bool includeOffset = false)
         {
-            var representation = dto.ToString(FMT_FULL);
+            string formatString;
+
+            switch(prec)
+            {
+                case PartialPrecision.Year:
+                    formatString = "yyyy";
+                    break;
+                case PartialPrecision.Month:
+                    formatString = "yyyy-MM";
+                    break;
+                case PartialPrecision.Day:
+                default:
+                    formatString = "yyyy-MM-dd";
+                    break;
+            }
+
+            if (includeOffset) formatString += "K";
+
+            var representation = dto.ToString(formatString);
             return Parse(representation);
         }
 
-        public static PartialDate Today() => PartialDate.Parse(DateTimeOffset.Now.ToString(FMT_FULL));
+        public static PartialDate Today(bool includeOffset = false) => FromDateTimeOffset(DateTimeOffset.Now, includeOffset: includeOffset);
 
         /// <summary>
         /// Converts the partial date to a full DateTimeOffset instance.

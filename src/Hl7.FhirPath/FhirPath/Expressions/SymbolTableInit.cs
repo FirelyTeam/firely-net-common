@@ -35,8 +35,9 @@ namespace Hl7.FhirPath.Expressions
             t.Add("subsetOf", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => f.SubsetOf(a));
             t.Add("supersetOf", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => a.SubsetOf(f));
 
-            t.Add("today", (object f) => PartialDateTime.Today());
+            t.Add("today", (object f) => PartialDate.Today());
             t.Add("now", (object f) => PartialDateTime.Now());
+            t.Add("timeOfDay", (object f) => PartialTime.Now());
 
             t.Add("binary.&", (object f, string a, string b) => (a ?? "") + (b ?? ""));
 

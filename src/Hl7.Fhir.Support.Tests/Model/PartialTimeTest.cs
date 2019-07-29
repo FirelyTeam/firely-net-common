@@ -91,6 +91,23 @@ namespace Hl7.FhirPath.Tests
             Assert.AreEqual(plusTwo, dto.Offset);
         }
 
+
+        [TestMethod]
+        public void GetNow()
+        {
+            var now = PartialTime.Now();
+            var now2 = DateTimeOffset.Now;
+
+            Assert.AreEqual(now2.Hour, now.Hours);
+            Assert.AreEqual(now2.Minute, now.Minutes);
+            // Assert.AreEqual(now2.Second, now.Seconds);  // well, maybe not to avoid random CI build/test failures
+            Assert.AreEqual(PartialPrecision.Fraction, now.Precision);
+            Assert.IsFalse(now.HasOffset);
+
+            now = PartialTime.Now(includeOffset: true);
+            Assert.IsTrue(now.HasOffset);
+        }
+
         [TestMethod]
         public void FromDateTimeOffset()
         {
@@ -98,12 +115,23 @@ namespace Hl7.FhirPath.Tests
 
             var dto = new DateTimeOffset(2019, 7, 23, 13, 45, 56, 567, plusOne);
             var pt = PartialTime.FromDateTimeOffset(dto);
+            Assert.AreEqual(13, pt.Hours);
+            Assert.AreEqual(45, pt.Minutes);
+            Assert.AreEqual(56, pt.Seconds);
+            Assert.AreEqual(567, pt.Millis);
+            Assert.IsNull(pt.Offset);
 
+            pt = PartialTime.FromDateTimeOffset(dto, includeOffset: true);
             Assert.AreEqual(13, pt.Hours);
             Assert.AreEqual(45, pt.Minutes);
             Assert.AreEqual(56, pt.Seconds);
             Assert.AreEqual(567, pt.Millis);
             Assert.AreEqual(plusOne, pt.Offset);
+
+            pt = PartialTime.FromDateTimeOffset(dto, prec: PartialPrecision.Hour, includeOffset: true);
+            Assert.AreEqual(13, pt.Hours);
+            Assert.IsNull(pt.Minutes);
+            Assert.AreEqual(PartialPrecision.Hour, pt.Precision);
         }
 
         [TestMethod]

@@ -16,6 +16,10 @@ namespace Hl7.Fhir.Model.Primitives
         Hour,
         Minute,
         Second,
+
+        /// <summary>
+        /// Milliseconds and fractions
+        /// </summary>
         Fraction
     }
 }
