@@ -62,15 +62,10 @@ namespace Hl7.FhirPath.Parser
                 select new FunctionCallExpression(context, n, TypeInfo.Any, paramList.GetOrElse(Enumerable.Empty<Expression>()));
         }
 
-        public static Parser<Expression> FunctionParameter(string name)
-        {
+        public static Parser<Expression> FunctionParameter(string name) =>
             // Make exception for is() and as() FUNCTIONS (operators are handled elsewhere), since they don't
             // take a normal parameter, but an identifier (which is not normally a FhirPath type)
-            if (name != "is" && name != "as")
-                return Grammar.Expression;
-            else
-                return TypeSpecifier.Select(s => new ConstantExpression(s));
-        }
+            name != "is" && name != "as" ? Grammar.Expression : TypeSpecifier.Select(s => new ConstantExpression(s));
 
 
         public static Parser<Expression> FunctionInvocation(Expression focus)

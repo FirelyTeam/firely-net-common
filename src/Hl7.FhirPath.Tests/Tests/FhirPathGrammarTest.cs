@@ -87,11 +87,11 @@ namespace Hl7.FhirPath.Tests
         {
             var parser = Grammar.Term.End();
 
-            AssertParser.SucceedsMatch(parser, "%\"ext-11179-de-is-data-element-concept\"",
+            AssertParser.SucceedsMatch(parser, "%`ext-11179-de-is-data-element-concept`",
                 new FunctionCallExpression(AxisExpression.That, "builtin.coreexturl", TypeInfo.String,
                             new ConstantExpression("11179-de-is-data-element-concept")));
 
-            AssertParser.SucceedsMatch(parser, "%\"vs-administrative-gender\"",
+            AssertParser.SucceedsMatch(parser, "%`vs-administrative-gender`",
                 new FunctionCallExpression(AxisExpression.That, "builtin.corevsurl", TypeInfo.String,
                     new ConstantExpression("administrative-gender")));
         }
@@ -218,16 +218,5 @@ namespace Hl7.FhirPath.Tests
 
             AssertParser.FailsMatch(parser, "true implies false and 4 != 5 and 4 <> 6 and ('h' ~ 'H' or 'a' !~ 'b')");
         }
-
-        private void SucceedsConstantValueMatch(Parser<ConstantExpression> parser, string expr, object value, TypeInfo expected)
-        {
-            AssertParser.SucceedsWith(parser, expr,
-                    v =>
-                        {
-                            Assert.AreEqual(v.Value, value);
-                            Assert.AreEqual(v.ExpressionType, expected);
-                        });
-        }
-
     }
 }

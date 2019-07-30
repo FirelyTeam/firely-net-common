@@ -149,6 +149,8 @@ namespace Hl7.FhirPath.Expressions
             t.Add("ofType", (IEnumerable<ITypedElement> f, string name) => f.FilterType(name), doNullProp: true);
             t.Add("binary.is", (object f, ITypedElement left, string name) => left.Is(name), doNullProp: true);
             t.Add("binary.as", (object f, ITypedElement left, string name) => left.CastAs(name), doNullProp: true);
+
+            // Kept for backwards compatibility, but no longer part of the spec
             t.Add("binary.as", (object f, IEnumerable<ITypedElement> left, string name) => left.FilterType(name), doNullProp: true);
 
             t.Add("extension", (IEnumerable<ITypedElement> f, string url) => f.Extension(url), doNullProp: true);
@@ -194,8 +196,7 @@ namespace Hl7.FhirPath.Expressions
             var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
             string name = arguments.Skip(1).First()(ctx, InvokeeFactory.EmptyArgs).FirstOrDefault()?.Value as string;
 
-            List<Invokee> selectArgs = new List<Invokee>();
-            selectArgs.Add(arguments.First());
+            List<Invokee> selectArgs = new List<Invokee> { arguments.First() };
             selectArgs.AddRange(arguments.Skip(2));
             var selectResults = runSelect(ctx, selectArgs);
             ctx?.EvaluationContext?.Tracer?.Invoke(name, selectResults);

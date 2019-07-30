@@ -84,9 +84,8 @@ namespace Hl7.FhirPath.Expressions
 
             if (to.CanBeTreatedAsType(typeof(IEnumerable<ITypedElement>))) return instance;
 
-            if (instance is IEnumerable<ITypedElement>)
+            if (instance is IEnumerable<ITypedElement> list)
             {
-                var list = (IEnumerable<ITypedElement>)instance;
                 if (!list.Any()) return null;
                 if (list.Count() == 1)
                     instance = list.Single();
@@ -94,10 +93,8 @@ namespace Hl7.FhirPath.Expressions
 
             if (to.CanBeTreatedAsType(typeof(ITypedElement))) return instance;
 
-            if (instance is ITypedElement)
+            if (instance is ITypedElement element)
             {
-                var element = (ITypedElement)instance;
-
                 if (element.Value != null)
                     instance = element.Value;
             }
@@ -111,10 +108,7 @@ namespace Hl7.FhirPath.Expressions
                 return to.IsNullable();
 
             var from = Unbox(source, to);
-            if (from == null)
-                return to.IsNullable();
-
-            return getImplicitCast(from.GetType(),to) != null;
+            return from == null ? to.IsNullable() : getImplicitCast(from.GetType(),to) != null;
         }
 
         public static bool CanCastTo(Type from, Type to)
@@ -177,10 +171,7 @@ namespace Hl7.FhirPath.Expressions
                 var values = ete.ToList();
                 var types = ete.Select(te => ReadableFhirPathName(te)).Distinct();
 
-                if (values.Count > 1)
-                    return "collection of " + String.Join("/", types);
-                else
-                    return types.Single();
+                return values.Count > 1 ? "collection of " + String.Join("/", types) : types.Single();
             }
             else if (value is ITypedElement te)
                 return te.InstanceType;
