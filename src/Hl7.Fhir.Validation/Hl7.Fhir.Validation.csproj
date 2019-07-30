@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net45;net40;netstandard1.1;netstandard2.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <Import Project="..\fhir-net-common.props" />
+  <Import Project="..\fhir-net-common.targets" />
+
+  <PropertyGroup>
+    <PackageId>Hl7.Fhir.Validation</PackageId>
+    <Title>HL7 FHIR validation library</Title>
+    <Summary>TODO</Summary>
+    <Description>TODO</Description>
+    <PackageTags>HL7;FHIR;Validation;Utility;</PackageTags>
+    <AssemblyName>Hl7.Fhir.Validation</AssemblyName>
+  </PropertyGroup>
+
+</Project>

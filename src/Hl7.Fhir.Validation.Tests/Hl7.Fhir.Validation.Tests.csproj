@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netcoreapp2.1;net45;net40</TargetFrameworks>
+  </PropertyGroup>
+
+  <Import Project="..\fhir-net-common.props" />
+  <Import Project="..\fhir-net-common.targets" />
+
+  <PropertyGroup>
+    <AssemblyName>Hl7.Fhir.Validation.Tests</AssemblyName>
+    <ContainsTests>true</ContainsTests>
+  </PropertyGroup>
+
+</Project>
