@@ -9,23 +9,16 @@
 using System;
 using System.Xml;
 using Hl7.Fhir.Utility;
-using Hl7.Fhir.Model.Primitives;
 using System.Numerics;
 using System.Globalization;
 using System.Linq;
-using Hl7.Fhir.Language;
+using Hl7.Fhir.Model.Primitives;
 
 namespace Hl7.Fhir.Serialization
 {
     public static class PrimitiveTypeConverter
     {
         private static readonly string[] FORBIDDEN_DECIMAL_PREFIXES = new[] { "+", ".", "00" };
-
-        public static object FromSerializedValue(string value, string primitiveType)
-        {
-            var type = TypeSpecifier.GetNativeRepresentation(primitiveType);
-            return ConvertTo(value, type);
-        }
 
         public static T ConvertTo<T>(object value) => (T)ConvertTo(value, typeof(T));
 

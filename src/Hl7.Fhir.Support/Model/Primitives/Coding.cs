@@ -42,5 +42,8 @@ namespace Hl7.Fhir.Model.Primitives
         public static bool operator ==(Coding left, Coding right) => left.Equals(right);
 
         public static bool operator !=(Coding left, Coding right) => !(left == right);
+
+        public static Coding Parse(string value) => throw new NotImplementedException();
+        public static bool TryParse(string value, out Coding p) => throw new NotImplementedException();
     }
 }

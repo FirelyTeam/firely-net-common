@@ -7,6 +7,7 @@
  */
 
 using Hl7.Fhir.Language;
+using Hl7.Fhir.Model.Primitives;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Specification;
 using System;
@@ -21,8 +22,12 @@ namespace Hl7.Fhir.ElementModel
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
 
-            Value = TypeSpecifier.ConvertToPrimitiveValue(value);
-            InstanceType = TypeSpecifier.GetPrimitiveTypeName(value.GetType());
+            var systemType = TypeSpecifier.ForNativeType(value.GetType());
+            if(!ElementNode.SupportedPrimitiveTypes.Contains(systemType))
+                throw new ArgumentException("The supplied value cannot be represented with a System primitive.", nameof(value));
+           
+            Value = Any.ConvertToSystemValue(value);
+            InstanceType = systemType.Name;
             Name = name ?? "@primitivevalue@";
         }
 

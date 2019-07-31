@@ -6,9 +6,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using Hl7.Fhir.Utility;
 using System;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model.Primitives
@@ -140,7 +138,7 @@ namespace Hl7.Fhir.Model.Primitives
         public static bool operator <=(PartialDate a, PartialDate b) => a.toComparable() <= b.toComparable();
         public static bool operator >(PartialDate a, PartialDate b) => a.toComparable() > b.toComparable();
         public static bool operator >=(PartialDate a, PartialDate b) => a.toComparable() >= b.toComparable();
-        public static bool operator ==(PartialDate a, PartialDate b) => Equals(a, b);
+        public static bool operator ==(PartialDate a, PartialDate b) => a.Equals(b);
         public static bool operator !=(PartialDate a, PartialDate b) => !(a == b);
 
         public int CompareTo(object obj)

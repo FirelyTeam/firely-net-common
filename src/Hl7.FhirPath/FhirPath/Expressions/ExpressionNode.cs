@@ -58,7 +58,7 @@ namespace Hl7.FhirPath.Expressions
         {
             if (value == null) Error.ArgumentNull("value");
 
-            Value = TypeSpecifier.ConvertToPrimitiveValue(value);
+            Value = Any.ConvertToSystemValue(value);
 
             if (Value is bool)
                 ExpressionType = TypeInfo.Boolean;

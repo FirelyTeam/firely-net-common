@@ -13,11 +13,25 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using TS = Hl7.Fhir.Language.TypeSpecifier;
 
 namespace Hl7.Fhir.ElementModel
 {
     public class ElementNode : DomNode<ElementNode>, ITypedElement, IAnnotated, IAnnotatable, IShortPathGenerator
     {
+        /// <summary>
+        /// This is the list of supported types for the primitive values in ITypedElement.Value
+        /// </summary>
+        public static readonly TypeSpecifier[] SupportedPrimitiveTypes = 
+            new[] { TS.System.Boolean, TS.System.Date, TS.System.DateTime, TS.System.Decimal,
+                    TS.System.Integer, TS.System.String, TS.System.Time };
+
+        public static bool IsSupportedValue(object value)
+        {
+            var systemType = TypeSpecifier.ForNativeType(value.GetType());
+            return ElementNode.SupportedPrimitiveTypes.Contains(systemType);
+        }
+
         /// <summary>
         /// Creates an implementation of ITypedElement that represents a primitive value
         /// </summary>
@@ -131,8 +145,8 @@ namespace Hl7.Fhir.ElementModel
                 {
                     // We are in a situation where we are on an polymorphic element, but the caller did not specify
                     // the instance type.  We can try to auto-set it by deriving it from the instance's type, if it is a primitive
-                    if (child.Value != null && TypeSpecifier.TryGetPrimitiveTypeName(child.Value.GetType(), out string instanceType))
-                        child.InstanceType = instanceType;
+                    if (child.Value != null && IsSupportedValue(child.Value))
+                        child.InstanceType = TypeSpecifier.ForNativeType(child.Value.GetType()).Name;
                     else
                         throw Error.Argument("The ElementNode given should have its InstanceType property set, since the element is a choice or resource.");
                 }
@@ -144,6 +158,7 @@ namespace Hl7.Fhir.ElementModel
                 ChildList.Add(child);
             else
                 ChildList.Insert(position.Value, child);
+
         }
 
         public static ElementNode Root(IStructureDefinitionSummaryProvider provider, string type, string name=null, object value=null)

@@ -7,7 +7,7 @@
  */
 
 using Hl7.Fhir.Language;
-using Hl7.Fhir.Serialization;
+using Hl7.Fhir.Model.Primitives;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using System;
@@ -102,6 +102,43 @@ namespace Hl7.Fhir.ElementModel
 
         public string Name => Definition?.ElementName ?? Source.Name;
 
+        private static bool tryMapFhirPrimitiveTypeToSystemType(string fhirType, out TypeSpecifier ts)
+        {
+            throw new NotImplementedException();
+            //switch (tn)
+            //{
+            //    case "boolean":
+            //        return typeof(bool);
+            //    case "integer":
+            //    case "unsignedInt":
+            //    case "positiveInt":
+            //        return typeof(long);
+            //    case "time":
+            //        return typeof(PartialTime);
+            //    case "date":
+            //        return typeof(PartialDate);
+            //    case "instant":
+            //    case "dateTime":
+            //        return typeof(PartialDateTime);
+            //    case "decimal":
+            //        return typeof(decimal);
+            //    case "string":
+            //    case "code":
+            //    case "id":
+            //    case "uri":
+            //    case "oid":
+            //    case "uuid":
+            //    case "canonical":
+            //    case "url":
+            //    case "markdown":
+            //    case "base64Binary":
+            //    case "xhtml":
+            //        return typeof(string);
+            //    default:
+            //        return null;
+        }
+
+
         public object Value
         {
             get
@@ -114,7 +151,7 @@ namespace Hl7.Fhir.ElementModel
                 // for current node), all we can do is return the underlying string value
                 if (InstanceType == null) return sourceText;
 
-                if (!TypeSpecifier.IsPrimitive(InstanceType))
+                if (!tryMapFhirPrimitiveTypeToSystemType(InstanceType, out var ts))
                 {
                     raiseTypeError($"Since type {InstanceType} is not a primitive, it cannot have a value", Source, location: Source.Location);
                     return null;
@@ -122,13 +159,11 @@ namespace Hl7.Fhir.ElementModel
 
                 // Finally, we have a (potentially) unparsed string + type info
                 // parse this primitive into the desired type
-                try
+                if (Any.TryParse(sourceText, ts, out var val))
+                    return val;
+                else
                 {
-                    return PrimitiveTypeConverter.FromSerializedValue(sourceText, InstanceType);
-                }
-                catch (FormatException fe)
-                {
-                    raiseTypeError($"Literal '{sourceText}' cannot be interpreted as a {InstanceType}: '{fe.Message}'.", Source, location: Source.Location);
+                    raiseTypeError($"Literal '{sourceText}' cannot be parsed as a {InstanceType}.", Source, location: Source.Location);
                     return sourceText;
                 }
             }
@@ -266,7 +301,7 @@ namespace Hl7.Fhir.ElementModel
 
         private IEnumerable<ITypedElement> runAdditionalRules(IEnumerable<ITypedElement> children)
         {
-#pragma warning disable 612,618
+#pragma warning disable 612, 618
             var additionalRules = Source.Annotations(typeof(AdditionalStructuralRule));
             var stateBag = new Dictionary<AdditionalStructuralRule, object>();
             foreach (var child in children)
@@ -280,7 +315,7 @@ namespace Hl7.Fhir.ElementModel
 
                 yield return child;
             }
-#pragma warning restore 612,618
+#pragma warning restore 612, 618
         }
 
         public string Location => Source.Location;

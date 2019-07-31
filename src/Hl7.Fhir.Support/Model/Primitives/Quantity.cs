@@ -11,24 +11,23 @@ using System;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public struct Quantity : IComparable
+    public struct Quantity : IEquatable<Quantity>, IComparable<Quantity>, IComparable
     {
         public const string UCUM = "http://unitsofmeasure.org";
 
         public decimal Value { get; }
         public string Unit { get; }
-        public string System { get; }
+        public string System => UCUM;
 
-        public Quantity(double value, string unit, string system = UCUM) : this((decimal)value, unit, system)
+        public Quantity(double value, string unit) : this((decimal)value, unit)
         {
             // call other constructor
         }
 
-        public Quantity(decimal value, string unit, string system = UCUM)
+        public Quantity(decimal value, string unit)
         {
             Value = value;
             Unit = unit;
-            System = system;
         }
 
         public static bool operator <(Quantity a, Quantity b)
@@ -68,38 +67,21 @@ namespace Hl7.Fhir.Model.Primitives
             return Object.Equals(a, b);
         }
 
-        public static bool operator !=(Quantity a, Quantity b)
-        {
-            enforceSameUnits(a, b);
-
-            return !Object.Equals(a, b);
-        }
+        public static bool operator !=(Quantity a, Quantity b) => !(a == b);
 
 
         private static void enforceSameUnits(Quantity a, Quantity b)
         {
-            if (a.Unit + a.System != b.Unit + b.System)
+            if (a.Unit != b.Unit)
                 throw Error.NotSupported("Comparing quantities with different units is not yet supported");
         }
 
-        public override bool Equals(object obj)
-        {
-            if (obj == null) return false;
+        public bool Equals(Quantity other) => other.Unit == Unit && other.Value == Value;
+        public override bool Equals(object obj) => obj is Quantity other && Equals(other);
 
-            if (obj is Quantity q)
-            {
-                return q.Unit == this.Unit
-                        && q.Value == this.Value
-                        && q.System == this.System;
-            }
-            else
-                return false;
-        }
+        public override int GetHashCode() =>  Unit.GetHashCode() ^ Value.GetHashCode();
 
-        public override int GetHashCode()
-        {
-            return Unit.GetHashCode() ^ Value.GetHashCode() ^ System.GetHashCode();
-        }
+        public override string ToString() => $"{Value} {Unit}";
 
         public int CompareTo(object obj)
         {
@@ -112,8 +94,12 @@ namespace Hl7.Fhir.Model.Primitives
                 return 0;
             }
             else
-                throw Error.Argument(nameof(obj), "Must be a Quantity");
+                throw Error.Argument(nameof(obj), $"Must be a {nameof(Quantity)}");
         }
 
+        public int CompareTo(Quantity other) => CompareTo((object)other);
+
+        public static Quantity Parse(string value) => throw new NotImplementedException();
+        public static bool TryParse(string value, out Quantity p) => throw new NotImplementedException();
     }
 }

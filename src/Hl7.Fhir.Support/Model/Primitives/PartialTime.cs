@@ -7,7 +7,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model.Primitives
