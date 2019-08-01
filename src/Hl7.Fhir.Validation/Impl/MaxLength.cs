@@ -18,7 +18,8 @@ namespace Hl7.Fhir.Validation.Impl
 
         public MaxLength(int maxLength)
         {
-            if (maxLength <= 0) Error.ArgumentNull(nameof(maxLength), "Must be a positive number");
+            if (maxLength <= 0)
+                throw new IncorrectElementDefinitionException($"{nameof(maxLength)}: Must be a positive number");
 
             _maxLength = maxLength;
         }
