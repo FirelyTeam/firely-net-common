@@ -37,6 +37,9 @@ namespace Hl7.Fhir.Language
             Namespace = @namespace ?? throw new ArgumentNullException(nameof(@namespace));
         }
 
+        public static TypeSpecifier GetByName(string typeName) => GetByName(SYSTEM_NAMESPACE, typeName);
+
+
         public static TypeSpecifier GetByName(string @namespace, string typeName)
         {
             if (@namespace == null) throw new ArgumentNullException(nameof(@namespace));
@@ -81,7 +84,13 @@ namespace Hl7.Fhir.Language
             get
             {
                 return $"{esc(Namespace)}.{esc(Name)}";
-                string esc(string spec) => spec.Contains(".") ? $"`{spec}`" : spec;
+                string esc(string spec)
+                {
+                    if (!spec.Contains(".") && !spec.Contains("`")) return spec;
+
+                    spec = spec.Replace("`", "\\`");
+                    return $"`{spec}`";
+                }
             }
         }
 
@@ -121,8 +130,20 @@ namespace Hl7.Fhir.Language
                 return GetByName(DOTNET_NAMESPACE, dotNetType.ToString());
 
             bool t<A>() => dotNetType == typeof(A);
+
+            //TypeSpecifier getDotNetNamespace()
+            //{
+            //    var tn = dotNetType.ToString();
+            //    var pos = tn.LastIndexOf('.');
+
+            //    if (pos == -1) return GetByName(DOTNET_NAMESPACE, dotNetType.ToString());
+
+            //    var ns = tn.Substring(0, pos);
+            //    var n = tn.Substring(pos + 1);
+            //    return GetByName(DOTNET_NAMESPACE + "." + ns, n);
+            //}
         }
-       
+
         public Type GetNativeType()
         {
             if (!TryGetNativeType(out var nativeType))
@@ -140,7 +161,7 @@ namespace Hl7.Fhir.Language
         {
             result = Namespace == DOTNET_NAMESPACE ? getFromDotNet() : getFromKnownSystemTypes();
             return result != null;
- 
+
             Type getFromDotNet() => Type.GetType(Name, throwOnError: false);
 
             // NOTE: Keep Any.TryConvertToSystemValue, TypeSpecifier.TryGetNativeType and TypeSpecifier.ForNativeType in sync

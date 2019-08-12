@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * Copyright (c) 2019, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
@@ -122,7 +122,7 @@ namespace Hl7.Fhir.Model.Primitives
         }
 
         /// <summary>
-        /// Try to converts a primitive .NET instance to a System-based instance.
+        /// Try to converts a .NET instance to a System-based instance.
         /// </summary>
         public static bool TryConvertToSystemValue(object value, out object primitiveValue)
         {

@@ -58,7 +58,10 @@ namespace Hl7.FhirPath.Expressions
         {
             if (value == null) Error.ArgumentNull("value");
 
-            Value = Any.ConvertToSystemValue(value);
+            if (Any.TryConvertToSystemValue(value, out var systemValue))
+                Value = systemValue;
+            else
+                throw Error.InvalidOperation("Internal logic error: encountered unmappable Value of type " + Value.GetType().Name);
 
             if (Value is bool)
                 ExpressionType = TypeInfo.Boolean;
@@ -75,7 +78,8 @@ namespace Hl7.FhirPath.Expressions
             else if (Value is PartialDate)
                 ExpressionType = TypeInfo.Date;
             else
-                throw Error.InvalidOperation("Internal logic error: encountered unmappable Value of type " + Value.GetType().Name);
+                throw Error.InvalidOperation($"Internal logic error: encountered unmappable Value of type " + Value.GetType().Name);
+
         }
 
         public object Value { get; private set; }
