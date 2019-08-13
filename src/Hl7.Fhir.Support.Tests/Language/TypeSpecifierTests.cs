@@ -38,6 +38,9 @@ namespace Hl7.Fhir.Support.Tests.Language
             Assert.IsTrue(TypeSpecifier.System.Concept != TypeSpecifier.System.Code);
             Assert.AreEqual(TypeSpecifier.System.Concept, TypeSpecifier.GetByName("Concept"));
             Assert.AreEqual(TypeSpecifier.System.Concept, TypeSpecifier.GetByName("System","Concept"));
+
+            Assert.AreNotEqual(TypeSpecifier.System.Concept, TypeSpecifier.GetByName("System", "concept"));
+            Assert.AreNotEqual(TypeSpecifier.GetByName("System", "Concept"), TypeSpecifier.GetByName("System", "concept"));
         }
 
         [TestMethod]
