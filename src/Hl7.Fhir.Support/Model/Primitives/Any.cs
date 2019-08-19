@@ -8,6 +8,8 @@
 
 using Hl7.Fhir.Language;
 using System;
+using System.Globalization;
+using System.Linq;
 using System.Xml;
 
 namespace Hl7.Fhir.Model.Primitives
@@ -19,37 +21,61 @@ namespace Hl7.Fhir.Model.Primitives
             if (l == null && r == null) return true;
             if (l == null || r == null) return false;
 
-            if (l.GetType() == typeof(string) && r.GetType() == typeof(string))
-                return (string)l == (string)r;
-            else if (l.GetType() == typeof(bool) && r.GetType() == typeof(bool))
-                return (bool)l == (bool)r;
-            else if (l.GetType() == typeof(long) && r.GetType() == typeof(long))
-                return (long)l == (long)r;
-            else if (l.GetType() == typeof(decimal) && r.GetType() == typeof(decimal))
-                return (decimal)l == (decimal)r;
-            else if (l.GetType() == typeof(long) && r.GetType() == typeof(decimal))
-                return (decimal)(long)l == (decimal)r;
-            else if (l.GetType() == typeof(decimal) && r.GetType() == typeof(long))
-                return (decimal)l == (decimal)(long)r;
-            else if (l.GetType() == typeof(PartialTime) && r.GetType() == typeof(PartialTime))
-                return (PartialTime)l == (PartialTime)r;
-            else if (l.GetType() == typeof(PartialDateTime) && r.GetType() == typeof(PartialDateTime))
-                return (PartialDateTime)l == (PartialDateTime)r;
-            else if (l.GetType() == typeof(PartialDate) && r.GetType() == typeof(PartialDate))
-                return (PartialDate)l == (PartialDate)r;
+            if (l is string lstr && r is string rstr)
+                return lstr == rstr;
+            else if (l is bool lbl && r is bool rbl)
+                return lbl == rbl;
+            else if (l is long llng && r is long rlng)
+                return llng == rlng;
+            else if (l is decimal ldec && r is decimal rdec)
+                return ldec == rdec;
+            else if (l is long llng2 && r is decimal rdec2)     // this really should be handled by casts outside this func (and in the engine?)
+                return llng2 == rdec2;
+            else if (l is decimal ldec3 && r is long rlng3)     // this really should be handled by casts outside this func (and in the engine?)
+                return ldec3 == rlng3;
+            else if (l is PartialTime lpt && r is PartialTime rpt)
+                return lpt == rpt;
+            else if (l is PartialDateTime lpdt && r is PartialDateTime rpdt)
+                return lpdt == rpdt;
+            else if (l is PartialDate lpd && r is PartialDate rpd)
+                return lpd == rpd;
             else
-                throw new ArgumentException("Can only compare Model.Primitives, bool, long, decimal and string.");
+                throw new ArgumentException("Can only compare System primitives string, bool, long, decimal and partial date/dateTime/time.");
         }
 
-        private delegate bool parseFunc(string value, out object result);
+        // private static readonly string[] FORBIDDEN_DECIMAL_PREFIXES = new[] { "+", ".", "00" };
+        // [20190819] EK Consolidated this syntax with CQL and FhirPath, which will allow leading zeroes 
+        private static readonly string[] FORBIDDEN_DECIMAL_PREFIXES = new[] { "+", "." };
 
+        public static object Parse(string value, TypeSpecifier systemType)
+        {
+            if (value == null) return null;
+
+            if (TryParse(value, systemType, out object result))
+                return result;
+            else
+                throw new FormatException($"Input string '{value}' was not in a correct format for type '{systemType}'.");
+        }
 
         public static bool TryParse(string value, TypeSpecifier systemType, out object parsed)
         {
+            if(value == null)
+            {
+                parsed = null;
+                return true;
+            }
+
             (bool succ, object output) result = default;
 
             if (systemType == TypeSpecifier.System.Boolean)
-                result = doXmlConvert(() => XmlConvert.ToBoolean(value));
+            {
+                if (value == "true")
+                    result = (true, true);
+                else if (value == "false")
+                    result = (true, false);
+                else
+                    result = (false, default);
+            }                
             else if (systemType == TypeSpecifier.System.Code)
             {
                 var success = Coding.TryParse(value, out var p);
@@ -71,7 +97,13 @@ namespace Hl7.Fhir.Model.Primitives
                 result = (success, p);
             }
             else if (systemType == TypeSpecifier.System.Decimal)
-                result = doXmlConvert(() => XmlConvert.ToDecimal(value));
+            {
+                if (FORBIDDEN_DECIMAL_PREFIXES.Any(prefix => value.StartsWith(prefix)) || value.EndsWith("."))
+                    result = (false, null);
+                else
+                    result = doXmlConvert(() =>
+                        decimal.Parse(value, NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture));
+            }
             else if (systemType == TypeSpecifier.System.Integer)
                 result = doXmlConvert(() => XmlConvert.ToInt64(value));
             else if (systemType == TypeSpecifier.System.Quantity)
