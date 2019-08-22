@@ -102,42 +102,56 @@ namespace Hl7.Fhir.ElementModel
 
         public string Name => Definition?.ElementName ?? Source.Name;
 
-        private static bool tryMapFhirPrimitiveTypeToSystemType(string fhirType, out TypeSpecifier ts)
+        // [EK, 20190822] This is a temporary fix - it brings information in the ElementModel about which
+        // FHIR type uses which "universal" primitive type, so a mapping from FHIR.* -> System.*
+        // This knowledge is probably needed elsewhere too, and conversely, ElementMode should
+        // not be so tightly bound to FHIR here.  If we are going to support V2 or other models,
+        // we'd need the same mapping for V2.* -> System.*, so this should actually be pluggable.
+        // Maybe get this from the IStructureDefinitionSummaryProvider?  That machine knows what
+        // model it is dealing with, so should have knowledge of these mappings.
+        // The same holds true for our documentation in the header of ITypedElement, this shows
+        // only these mappings, but it should not be bound to a single model.
+        //
+        // In fact one could derive this dynamically from the structure definition, by looking
+        // at the type of the "value" element (e.g. String.value). Although this differs in 
+        // R3 and R4, these value (and url and id elements by the way) will indicate which type
+        // of "universal" primitive there are, implicitly specifying the mapping between primitive
+        // FHIR types and primitive System types.
+        private static TypeSpecifier tryMapFhirPrimitiveTypeToSystemType(string fhirType)
         {
-            throw new NotImplementedException();
-            //switch (tn)
-            //{
-            //    case "boolean":
-            //        return typeof(bool);
-            //    case "integer":
-            //    case "unsignedInt":
-            //    case "positiveInt":
-            //        return typeof(long);
-            //    case "time":
-            //        return typeof(PartialTime);
-            //    case "date":
-            //        return typeof(PartialDate);
-            //    case "instant":
-            //    case "dateTime":
-            //        return typeof(PartialDateTime);
-            //    case "decimal":
-            //        return typeof(decimal);
-            //    case "string":
-            //    case "code":
-            //    case "id":
-            //    case "uri":
-            //    case "oid":
-            //    case "uuid":
-            //    case "canonical":
-            //    case "url":
-            //    case "markdown":
-            //    case "base64Binary":
-            //    case "xhtml":
-            //        return typeof(string);
-            //    default:
-            //        return null;
+            switch (fhirType)
+            {
+                case "boolean":
+                    return TypeSpecifier.System.Boolean;
+                case "integer":
+                case "unsignedInt":
+                case "positiveInt":
+                    return TypeSpecifier.System.Integer;
+                case "time":
+                    return TypeSpecifier.System.Time;
+                case "date":
+                    return TypeSpecifier.System.Date;
+                case "instant":
+                case "dateTime":
+                    return TypeSpecifier.System.DateTime;
+                case "decimal":
+                    return TypeSpecifier.System.Decimal;
+                case "string":
+                case "code":
+                case "id":
+                case "uri":
+                case "oid":
+                case "uuid":
+                case "canonical":
+                case "url":
+                case "markdown":
+                case "base64Binary":
+                case "xhtml":
+                    return TypeSpecifier.System.String;
+                default:
+                    return null;
+            }
         }
-
 
         public object Value
         {
@@ -151,7 +165,8 @@ namespace Hl7.Fhir.ElementModel
                 // for current node), all we can do is return the underlying string value
                 if (InstanceType == null) return sourceText;
 
-                if (!tryMapFhirPrimitiveTypeToSystemType(InstanceType, out var ts))
+                var ts = tryMapFhirPrimitiveTypeToSystemType(InstanceType);
+                if (ts == null)
                 {
                     raiseTypeError($"Since type {InstanceType} is not a primitive, it cannot have a value", Source, location: Source.Location);
                     return null;

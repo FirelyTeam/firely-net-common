@@ -8,6 +8,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Hl7.Fhir.Model.Primitives
 {
@@ -25,7 +26,9 @@ namespace Hl7.Fhir.Model.Primitives
         public string Display { get; }
 
         public override bool Equals(object obj) => obj is Concept concept && Equals(concept);
-        public bool Equals(Concept other) => EqualityComparer<Coding[]>.Default.Equals(Codes, other.Codes) && Display == other.Display;
+        public bool Equals(Concept other) =>
+            //EqualityComparer<Coding[]>.Default.Equals(Codes, other.Codes) && Display == other.Display;
+            Enumerable.SequenceEqual(Codes, other.Codes) && Display == other.Display;
 
         public override int GetHashCode()
         {
