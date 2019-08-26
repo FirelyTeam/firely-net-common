@@ -46,26 +46,7 @@ namespace Hl7.FhirPath.Functions
             // Compare primitives (or extended primitives)
             if (l != null && r != null)
             {
-                if (l.GetType() == typeof(string) && r.GetType() == typeof(string))
-                    return (string)l == (string)r;
-                else if (l.GetType() == typeof(bool) && r.GetType() == typeof(bool))
-                    return (bool)l == (bool)r;
-                else if (l.GetType() == typeof(long) && r.GetType() == typeof(long))
-                    return (long)l == (long)r;
-                else if (l.GetType() == typeof(decimal) && r.GetType() == typeof(decimal))
-                    return (decimal)l == (decimal)r;
-                else if (l.GetType() == typeof(long) && r.GetType() == typeof(decimal))
-                    return (decimal)(long)l == (decimal)r;
-                else if (l.GetType() == typeof(decimal) && r.GetType() == typeof(long))
-                    return (decimal)l == (decimal)(long)r;
-                else if (l.GetType() == typeof(PartialTime) && r.GetType() == typeof(PartialTime))
-                    return (PartialTime)l == (PartialTime)r;
-                else if (l.GetType() == typeof(PartialDateTime) && r.GetType() == typeof(PartialDateTime))
-                    return (PartialDateTime)l == (PartialDateTime)r;
-                else if (l.GetType() == typeof(PartialDate) && r.GetType() == typeof(PartialDate))
-                    return (PartialDate)l == (PartialDate)r;
-                else
-                    return false;
+                return Any.IsEqualTo(l, r);
             }
             else if (l == null && r == null)
             {
@@ -117,26 +98,7 @@ namespace Hl7.FhirPath.Functions
             // Maybe create an interface?
             if (l != null && r != null)
             {
-                if (l is string ls && r is string rs)
-                    return ls.IsEquivalentTo(rs);
-                else if (l is bool lb && r is bool rb)
-                    return l == r;
-                else if (l.GetType() == typeof(long) && r.GetType() == typeof(long))
-                    return (long)l == (long)r;
-                else if (l.GetType() == typeof(decimal) && r.GetType() == typeof(decimal))
-                    return ((decimal)l).IsEquivalentTo((decimal)r);
-                else if (l.GetType() == typeof(long) && r.GetType() == typeof(decimal))
-                    return ((decimal)(long)l).IsEquivalentTo((decimal)r);
-                else if (l.GetType() == typeof(decimal) && r.GetType() == typeof(long))
-                    return ((decimal)l).IsEquivalentTo((decimal)(long)r);
-                else if (l is PartialTime lpt && r is PartialTime rpt)
-                    return lpt.IsEquivalentTo(rpt);
-                else if (l is PartialDate lpd && r is PartialDate rpd)
-                    return lpd.IsEquivalentTo(rpd);
-                else if (l is PartialDateTime lpdt && r is PartialDateTime rpdt)
-                    return lpdt.IsEquivalentTo(rpdt);
-                else
-                    return false;
+                return Any.IsEquivalentTo(l, r);
             }
             else if (l == null && r == null)
             {
@@ -173,21 +135,6 @@ namespace Hl7.FhirPath.Functions
             //CompareOptions.IgnoreNonSpace | CompareOptions.IgnoreCase | CompareOptions.IgnoreSymbols) == 0;
         }
 
-        public static bool IsEquivalentTo(this decimal a, decimal b)
-        {
-            var prec = Math.Min(a.precision(), b.precision());
-            var aR = Math.Round(a, prec);
-            var bR = Math.Round(b, prec);
-
-            return aR == bR;
-        }
-
-        private static int precision(this decimal a)
-        {
-            var repr = a.ToString(CultureInfo.InvariantCulture);
-            return repr.Length - repr.IndexOf('.') - 1;
-        }
-
         internal class ValueProviderEqualityComparer : IEqualityComparer<ITypedElement>
         {
             public bool Equals(ITypedElement x, ITypedElement y)
@@ -204,8 +151,8 @@ namespace Hl7.FhirPath.Functions
 
                 if (element is ITypedElement)
                 {
-                    var childnames = String.Concat(((ITypedElement)element).Children().Select(c => c.Name));
-                    if (!String.IsNullOrEmpty(childnames))
+                    var childnames = string.Concat(((ITypedElement)element).Children().Select(c => c.Name));
+                    if (!string.IsNullOrEmpty(childnames))
                         result ^= childnames.GetHashCode();
                 }
 

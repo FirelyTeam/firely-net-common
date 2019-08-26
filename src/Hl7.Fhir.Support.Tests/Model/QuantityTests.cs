@@ -17,6 +17,37 @@ namespace Hl7.FhirPath.Tests
     public class QuantityTests
     {
         [TestMethod]
+        public void QuantityParsing()
+        {
+            Assert.AreEqual(new Quantity(75.5m, "kg"), Quantity.Parse("75.5 'kg'"));
+            Assert.AreEqual(new Quantity(75.5m, "kg"), Quantity.Parse("75.5'kg'"));
+            Assert.AreEqual(new Quantity(75m, "kg"), Quantity.Parse("75 'kg'"));
+            Assert.AreEqual(new Quantity(40d, "wk"), Quantity.Parse("40 weeks"));
+            Assert.AreEqual(new Quantity(40.0m, "1"), Quantity.Parse("40.0"));
+            Assert.AreEqual(new Quantity(1d, "1"), Quantity.Parse("1 '1'"));
+            Assert.AreEqual(new Quantity(1m, "m/s"), Quantity.Parse("1 'm/s'"));
+
+            reject("40,5 weeks");
+            reject("40 weks");
+            reject("40 decennia");
+            reject("ab kg");
+            reject("75 'kg");
+            reject("75 kg");
+            reject("'kg'");
+        }
+
+        void reject(string testValue)
+        {
+            Assert.IsFalse(Quantity.TryParse(testValue, out _));
+        }
+
+        [TestMethod]
+        public void QuantityFormatting()
+        {
+            Assert.AreEqual("75.6 'kg'", new Quantity(75.6m, "kg").ToString());
+        }
+
+        [TestMethod]
         public void QuantityConstructor()
         {
             var newq = new Quantity(3.14m, "kg");
@@ -57,7 +88,7 @@ namespace Hl7.FhirPath.Tests
             var a = new Quantity(3.14m, "kg");
             var b = new Quantity(30.5, "g");
 
-            ExceptionAssert.Throws<NotSupportedException>( () => a < b);
+            ExceptionAssert.Throws<NotSupportedException>(() => a < b);
             ExceptionAssert.Throws<NotSupportedException>(() => a == b);
             ExceptionAssert.Throws<NotSupportedException>(() => a >= b);
 

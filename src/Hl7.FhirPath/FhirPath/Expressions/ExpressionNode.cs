@@ -69,7 +69,7 @@ namespace Hl7.FhirPath.Expressions
                 ExpressionType = TypeInfo.String;
             else if (Value is Int64)
                 ExpressionType = TypeInfo.Integer;
-            else if (Value is Decimal)
+            else if (Value is decimal)
                 ExpressionType = TypeInfo.Decimal;
             else if (Value is PartialDateTime)
                 ExpressionType = TypeInfo.DateTime;
@@ -77,6 +77,8 @@ namespace Hl7.FhirPath.Expressions
                 ExpressionType = TypeInfo.Time;
             else if (Value is PartialDate)
                 ExpressionType = TypeInfo.Date;
+            else if (Value is Quantity)
+                ExpressionType = TypeInfo.Quantity;
             else
                 throw Error.InvalidOperation($"Internal logic error: encountered unmappable Value of type " + Value.GetType().Name);
 
@@ -114,7 +116,7 @@ namespace Hl7.FhirPath.Expressions
 
         public FunctionCallExpression(Expression focus, string name, TypeInfo type, IEnumerable<Expression> arguments, ISourcePositionInfo location = null) : base(type, location)
         {
-            if (String.IsNullOrEmpty(name)) throw Error.ArgumentNull("name");
+            if (string.IsNullOrEmpty(name)) throw Error.ArgumentNull("name");
             Focus = focus;
             FunctionName = name;
             Arguments = arguments ?? throw Error.ArgumentNull("arguments");
@@ -183,7 +185,7 @@ namespace Hl7.FhirPath.Expressions
         internal static readonly int BIN_PREFIX_LEN = BIN_PREFIX.Length;
 
 
-        public BinaryExpression(char op, Expression left, Expression right) : this(new String(op,1), left, right)
+        public BinaryExpression(char op, Expression left, Expression right) : this(new string(op,1), left, right)
         {
         }
 
@@ -221,7 +223,7 @@ namespace Hl7.FhirPath.Expressions
         internal const string URY_PREFIX = "unary.";
         internal static readonly int URY_PREFIX_LEN = URY_PREFIX.Length;
 
-        public UnaryExpression(char op, Expression operand) : this(new String(op,1), operand)
+        public UnaryExpression(char op, Expression operand) : this(new string(op,1), operand)
         {
         }
 

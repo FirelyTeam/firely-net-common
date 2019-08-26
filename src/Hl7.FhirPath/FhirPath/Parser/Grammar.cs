@@ -16,6 +16,25 @@ namespace Hl7.FhirPath.Parser
 {
     internal class Grammar
     {
+        public static readonly Parser<Fhir.Model.Primitives.Quantity> Quantity = quantityParser;
+        private static IResult<Fhir.Model.Primitives.Quantity> quantityParser(IInput i)
+        {
+            var current = i;
+            var result = Lexer.Quantity.Token()(i);
+
+            if (result.WasSuccessful)
+            {
+                var success = Fhir.Model.Primitives.Quantity.TryParse(result.Value, out var quantity);
+                if (success)
+                    return Result.Success(quantity, result.Remainder);
+            }
+
+            return Result.Failure<Fhir.Model.Primitives.Quantity>(i, $"Quantity is invalid",
+                new[] { "a quantity" });
+
+        }
+
+
         // literal
         //  : ('true' | 'false')                                    #booleanLiteral
         //  | STRING                                                #stringLiteral
@@ -23,6 +42,7 @@ namespace Hl7.FhirPath.Parser
         //  | DATETIME                                              #dateTimeLiteral
         //  | DATE                                                  #dateLiteral - additional to the spec
         //  | TIME                                                  #timeLiteral
+        //  | quantity
         //  ;
         public static readonly Parser<ConstantExpression> Literal =
             Lexer.String.Select(v => new ConstantExpression(v, TypeInfo.String))
@@ -30,6 +50,7 @@ namespace Hl7.FhirPath.Parser
                 .Or(Lexer.Date.Select(v => new ConstantExpression(v, TypeInfo.Date)))
                 .Or(Lexer.Time.Select(v => new ConstantExpression(v, TypeInfo.Time)))
                 .XOr(Lexer.Bool.Select(v => new ConstantExpression(v, TypeInfo.Boolean)))
+                .Or(Quantity.Select(v => new ConstantExpression(v, TypeInfo.Quantity)))
                 .Or(Lexer.DecimalNumber.Select(v => new ConstantExpression(v, TypeInfo.Decimal)))
                 .Or(Lexer.IntegerNumber.Select(v => new ConstantExpression(v, TypeInfo.Integer)));
 

@@ -8,9 +8,6 @@
 
 using Hl7.Fhir.Language;
 using System;
-using System.Globalization;
-using System.Linq;
-using System.Xml;
 
 namespace Hl7.Fhir.Model.Primitives
 {
@@ -22,30 +19,57 @@ namespace Hl7.Fhir.Model.Primitives
             if (l == null || r == null) return false;
 
             if (l is string lstr && r is string rstr)
-                return lstr == rstr;
+                return lstr.IsEqualTo(rstr);
             else if (l is bool lbl && r is bool rbl)
-                return lbl == rbl;
+                return lbl.IsEqualTo(rbl);
             else if (l is long llng && r is long rlng)
-                return llng == rlng;
+                return llng.IsEqualTo(rlng);
             else if (l is decimal ldec && r is decimal rdec)
-                return ldec == rdec;
+                return ldec.IsEqualTo(rdec);
             else if (l is long llng2 && r is decimal rdec2)     // this really should be handled by casts outside this func (and in the engine?)
-                return llng2 == rdec2;
+                return ((decimal)llng2).IsEqualTo(rdec2);
             else if (l is decimal ldec3 && r is long rlng3)     // this really should be handled by casts outside this func (and in the engine?)
-                return ldec3 == rlng3;
+                return ldec3.IsEqualTo((decimal)rlng3);
             else if (l is PartialTime lpt && r is PartialTime rpt)
-                return lpt == rpt;
+                return lpt.IsEqualTo(rpt);
             else if (l is PartialDateTime lpdt && r is PartialDateTime rpdt)
-                return lpdt == rpdt;
+                return lpdt.IsEqualTo(rpdt);
             else if (l is PartialDate lpd && r is PartialDate rpd)
-                return lpd == rpd;
+                return lpd.IsEqualTo(rpd);
+            else if (l is Quantity lq && r is Quantity rq)
+                return lq.IsEqualTo(rq);
             else
                 throw new ArgumentException("Can only compare System primitives string, bool, long, decimal and partial date/dateTime/time.");
         }
 
-        // private static readonly string[] FORBIDDEN_DECIMAL_PREFIXES = new[] { "+", ".", "00" };
-        // [20190819] EK Consolidated this syntax with CQL and FhirPath, which will allow leading zeroes 
-        private static readonly string[] FORBIDDEN_DECIMAL_PREFIXES = new[] { "+", "." };
+        public static bool IsEquivalentTo(object l, object r)
+        {
+            if (l == null && r == null) return true;
+            if (l == null || r == null) return false;
+
+            if (l is string lstr && r is string rstr)
+                return lstr.IsEquivalentTo(rstr);
+            else if (l is bool lbl && r is bool rbl)
+                return lbl.IsEquivalentTo(rbl);
+            else if (l is long llng && r is long rlng)
+                return llng.IsEquivalentTo(rlng);
+            else if (l is decimal ldec && r is decimal rdec)
+                return ldec.IsEquivalentTo(rdec);
+            else if (l is long llng2 && r is decimal rdec2)     // this really should be handled by casts outside this func (and in the engine?)
+                return ((decimal)llng2).IsEquivalentTo(rdec2);
+            else if (l is decimal ldec3 && r is long rlng3)     // this really should be handled by casts outside this func (and in the engine?)
+                return ldec3.IsEquivalentTo((decimal)rlng3);
+            else if (l is PartialTime lpt && r is PartialTime rpt)
+                return lpt.IsEquivalentTo(rpt);
+            else if (l is PartialDateTime lpdt && r is PartialDateTime rpdt)
+                return lpdt.IsEquivalentTo(rpdt);
+            else if (l is PartialDate lpd && r is PartialDate rpd)
+                return lpd.IsEquivalentTo(rpd);
+            else if (l is Quantity lq && r is Quantity rq)
+                return lq.IsEquivalentTo(rq);
+            else
+                throw new ArgumentException("Can only compare System primitives string, bool, long, decimal and partial date/dateTime/time.");
+        }
 
         public static object Parse(string value, TypeSpecifier systemType)
         {
@@ -69,13 +93,9 @@ namespace Hl7.Fhir.Model.Primitives
 
             if (systemType == TypeSpecifier.System.Boolean)
             {
-                if (value == "true")
-                    result = (true, true);
-                else if (value == "false")
-                    result = (true, false);
-                else
-                    result = (false, default);
-            }                
+                var success = Boolean.TryParse(value, out var p);
+                result = (success, p);
+            }
             else if (systemType == TypeSpecifier.System.Code)
             {
                 var success = Coding.TryParse(value, out var p);
@@ -98,21 +118,24 @@ namespace Hl7.Fhir.Model.Primitives
             }
             else if (systemType == TypeSpecifier.System.Decimal)
             {
-                if (FORBIDDEN_DECIMAL_PREFIXES.Any(prefix => value.StartsWith(prefix)) || value.EndsWith("."))
-                    result = (false, null);
-                else
-                    result = doXmlConvert(() =>
-                        decimal.Parse(value, NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture));
+                var success = Decimal.TryParse(value, out var p);
+                result = (success, p);
             }
             else if (systemType == TypeSpecifier.System.Integer)
-                result = doXmlConvert(() => XmlConvert.ToInt64(value));
+            {
+                var success = Integer.TryParse(value, out var p);
+                result = (success, p);
+            }
             else if (systemType == TypeSpecifier.System.Quantity)
             {
                 var success = Quantity.TryParse(value, out var p);
                 result = (success, p);
             }
             else if (systemType == TypeSpecifier.System.String)
-                result = (true, value);
+            {
+                var success = String.TryParse(value, out var p);
+                result = (success, p);
+            }
             else if (systemType == TypeSpecifier.System.Time)
             {
                 var success = PartialTime.TryParse(value, out var p);
@@ -124,19 +147,21 @@ namespace Hl7.Fhir.Model.Primitives
             parsed = result.output;
             return result.succ;
 
-            (bool, object) doXmlConvert(Func<object> parser)
-            {
-                try
-                {
-                    return (true, parser());
-                }
-                catch (Exception)
-                {
-                    return (false, null);
-                }
-            }
-
+          
         }
+
+        internal static (bool, T) DoConvert<T>(Func<T> parser)
+        {
+            try
+            {
+                return (true, parser());
+            }
+            catch (Exception)
+            {
+                return (false, default);
+            }
+        }
+
 
         public static string ToRepresentation() => throw new NotImplementedException();
 
@@ -175,7 +200,7 @@ namespace Hl7.Fhir.Model.Primitives
             else if (value is float || value is double || value is decimal)
                 primitiveValue = Convert.ToDecimal(value);
             else if (value is char)
-                primitiveValue = new String((char)value, 1);
+                primitiveValue = new string((char)value, 1);
             else if (value is Uri u)
                 primitiveValue = u.OriginalString;
             else

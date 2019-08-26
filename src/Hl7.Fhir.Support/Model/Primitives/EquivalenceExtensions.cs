@@ -7,6 +7,7 @@
  */
 
 using System;
+using System.Globalization;
 
 namespace Hl7.Fhir.Model.Primitives
 {
@@ -17,18 +18,30 @@ namespace Hl7.Fhir.Model.Primitives
     /// deviates from the spec, and instead aligns with the logic for PartialDateTime as described
     /// in the FhirPath specification.
     /// </remarks>
-    public static class EqualityExtensions
+    public static class EquivalenceExtensions
     {
         // String: comparison is based on Unicode values
-        public static bool IsEqualTo(this string l, string r) => l == r;
+        public static bool IsEquivalentTo(this string l, string r) => l == r;
 
         // Integer: values must be exactly equal
-        public static bool IsEqualTo(this long l, long r) => l == r;          
+        public static bool IsEquivalentTo(this long l, long r) => l == r;          
+
+        public static bool IsEquivalentTo(this bool l, bool r) => l == r;   // aligns with .NET decimal behaviour
 
         // Decimal: values must be equal, trailing zeroes after the decimal are ignored
-        public static bool IsEqualTo(this decimal l, decimal r) => l == r;   // aligns with .NET decimal behaviour
+        public static bool IsEquivalentTo(this decimal a, decimal b)
+        {
+            var prec = Math.Min(precision(a), precision(b));
+            var aR = Math.Round(a, prec);
+            var bR = Math.Round(b, prec);
 
-        // Boolean: values must be the same
-        public static bool IsEqualTo(this bool l, bool r) => l == r;
+            return aR == bR;
+
+            int precision(decimal av)
+            {
+                var repr = av.ToString(CultureInfo.InvariantCulture);
+                return repr.Length - repr.IndexOf('.') - 1;
+            }
+        }
     }
 }

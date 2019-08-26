@@ -18,7 +18,7 @@ namespace Hl7.Fhir.ElementModel
 {
     internal class PrimitiveElement : ITypedElement, IElementDefinitionSummary, IStructureDefinitionSummary
     {
-        public PrimitiveElement(object value, string name = null)
+        public PrimitiveElement(object value, string name = null, bool useFullTypeName = false)
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
 
@@ -27,7 +27,7 @@ namespace Hl7.Fhir.ElementModel
                 throw new ArgumentException("The supplied value cannot be represented with a System primitive.", nameof(value));
            
             Value = Any.ConvertToSystemValue(value);
-            InstanceType = systemType.Name;
+            InstanceType = useFullTypeName ? systemType.FullName : systemType.Name;
             Name = name ?? "@primitivevalue@";
         }
 
@@ -75,7 +75,12 @@ namespace Hl7.Fhir.ElementModel
         public ITypedElement Clone() => new PrimitiveElement(Value);
 
         public IEnumerable<ITypedElement> Children(string name = null) => Enumerable.Empty<ITypedElement>();
-        IReadOnlyCollection<IElementDefinitionSummary> IStructureDefinitionSummary.GetElements() => throw new NotImplementedException();
+        IReadOnlyCollection<IElementDefinitionSummary> IStructureDefinitionSummary.GetElements() =>
+#if NET40
+            new ReadOnlyList<IElementDefinitionSummary>();
+#else
+            new List<IElementDefinitionSummary>();
+#endif
 
         public override string ToString() => Value != null ? PrimitiveTypeConverter.ConvertTo<string>(Value) : "";
 

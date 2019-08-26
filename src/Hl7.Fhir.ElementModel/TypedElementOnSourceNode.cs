@@ -203,16 +203,19 @@ namespace Hl7.Fhir.ElementModel
             {
                 var suffix = current.Name.Substring(info.ElementName.Length);
 
-                if (String.IsNullOrEmpty(suffix))
+                if (string.IsNullOrEmpty(suffix))
                 {
                     raiseTypeError($"Choice element '{current.Name}' is not suffixed with a type.", current, location: current.Location);
                     instanceType = null;
                 }
                 else
                 {
-                    instanceType = info.Type.OfType<IStructureDefinitionReference>().Select(t => t.ReferredType).FirstOrDefault(t => String.Compare(t, suffix, StringComparison.OrdinalIgnoreCase) == 0);
+                    instanceType = info.Type
+                        .OfType<IStructureDefinitionReference>()
+                        .Select(t => t.ReferredType)
+                        .FirstOrDefault(t => string.Compare(t, suffix, StringComparison.OrdinalIgnoreCase) == 0);
 
-                    if (String.IsNullOrEmpty(instanceType))
+                    if (string.IsNullOrEmpty(instanceType))
                         raiseTypeError($"Choice element '{current.Name}' is suffixed with unexpected type '{suffix}'", current, location: current.Location);
                 }
             }

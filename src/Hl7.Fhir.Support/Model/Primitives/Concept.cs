@@ -12,7 +12,6 @@ using System.Linq;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-
     public struct Concept : IEquatable<Concept>
     {
         public Concept(Coding[] codes, string display=null)
@@ -29,6 +28,10 @@ namespace Hl7.Fhir.Model.Primitives
         public bool Equals(Concept other) =>
             //EqualityComparer<Coding[]>.Default.Equals(Codes, other.Codes) && Display == other.Display;
             Enumerable.SequenceEqual(Codes, other.Codes) && Display == other.Display;
+
+        public bool IsEqualTo(Concept other) => throw new NotImplementedException();
+
+        public bool IsEquivalentTo(Concept other) => throw new NotImplementedException();
 
         public override int GetHashCode()
         {

@@ -147,7 +147,6 @@ namespace Hl7.Fhir.Model.Primitives
         public bool Equals(PartialDateTime other) => other.toComparable() == toComparable();
         public override int GetHashCode() => toComparable().GetHashCode();
         public override string ToString() => _original;
-
         public int CompareTo(PartialDateTime obj) => CompareTo((object)obj);
         public override bool Equals(object obj) => obj is PartialDateTime dt && Equals(dt);
     }
