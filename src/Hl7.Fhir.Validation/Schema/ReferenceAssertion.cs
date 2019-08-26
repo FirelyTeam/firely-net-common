@@ -46,3 +46,4 @@ namespace Hl7.Fhir.Validation.Schema
             throw Error.InvalidOperation("Cannot convert to Json: reference refers to a schema without an identifier"));
     }
 }
+    

@@ -6,6 +6,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Utility;
 using Newtonsoft.Json.Linq;
 using System;
@@ -14,7 +15,7 @@ using System.Linq;
 
 namespace Hl7.Fhir.Validation.Schema
 {
-    public class Children : IAssertion, IMergeable//, ICollectable
+    public class Children : IAssertion, IMergeable, IValidatable//, ICollectable
     {
         private readonly Lazy<IReadOnlyDictionary<string, IAssertion>> _childList;
 
@@ -80,5 +81,37 @@ namespace Hl7.Fhir.Validation.Schema
         public JToken ToJson() =>
             new JProperty("children", new JObject() { ChildList.Select(child =>
                 new JProperty(child.Key, child.Value.ToJson().MakeNestedProp())) });
+
+        public Assertions Validate(ITypedElement input, ValidationContext vc)
+        {
+            // Check first if all the children exist in the schema
+            foreach (var item in input.Children())
+            {
+                if (!ChildList.ContainsKey(item.Name)) return Assertions.Failure;
+            }
+
+
+            var result = Assertions.Empty;
+
+            foreach (var item in input.Children())
+            {
+                if (ChildList.TryGetValue(item.Name, out var assertion))
+                {
+                    if (assertion is IValidatable validatable)
+                    {
+                        result += validatable.Validate(item, vc);
+                    }
+                    else if (assertion is IGroupValidatable groupvalidatable)
+                    {
+                        var a = groupvalidatable.Validate(new[] { item }, vc);
+                        a.Select(s => result += s.Item1);
+                    }
+                }
+            }
+
+
+
+            return result;
+        }
     }
 }
