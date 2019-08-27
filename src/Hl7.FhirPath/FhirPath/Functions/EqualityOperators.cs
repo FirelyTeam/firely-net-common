@@ -43,6 +43,13 @@ namespace Hl7.FhirPath.Functions
             var l = left.Value;
             var r = right.Value;
 
+            // TODO: this is actually a cast with knowledge of FHIR->System mappings, we don't want that here anymore
+            // Convert quantities
+            //if (left.InstanceType == "Quantity" && l == null)
+            //    l = Typecasts.ParseQuantity(left);
+            //if (right.InstanceType == "Quantity" && r == null)
+            //    r = Typecasts.ParseQuantity(right);
+
             // Compare primitives (or extended primitives)
             if (l != null && r != null)
             {
@@ -90,6 +97,13 @@ namespace Hl7.FhirPath.Functions
 
             var l = left.Value;
             var r = right.Value;
+
+            // TODO: this is actually a cast with knowledge of FHIR->System mappings, we don't want that here anymore
+            // Convert quantities
+            //if (left.InstanceType == "Quantity" && l == null)
+            //    l = Typecasts.ParseQuantity(left);
+            //if (right.InstanceType == "Quantity" && r == null)
+            //    r = Typecasts.ParseQuantity(right);
 
             // Compare primitives (or extended primitives)
             // TODO: Define IsEquivalentTo for ALL datatypes in ITypedElement.value and move to Support assembly + test

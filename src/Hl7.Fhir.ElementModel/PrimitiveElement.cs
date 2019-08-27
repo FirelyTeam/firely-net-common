@@ -18,6 +18,26 @@ namespace Hl7.Fhir.ElementModel
 {
     internal class PrimitiveElement : ITypedElement, IElementDefinitionSummary, IStructureDefinitionSummary
     {
+        // [20190827 EK] Hack, allow a Quantity as a "primitive" value in ITypedElement.Value for now, so
+        // we can at least continue to integrate the changes from the dead branch into 2.0
+        // We need to have Quantity implement ITypedElement itself.
+        internal static PrimitiveElement ForQuantity(Quantity value)
+        {
+            if (value == null) throw new ArgumentNullException(nameof(value));
+
+            return new PrimitiveElement
+            {
+                Value = value,
+                InstanceType = TypeSpecifier.System.Quantity.FullName,
+                Name = "@QuantityAsPrimitiveValue@"
+            };
+        }
+
+        private PrimitiveElement()
+        {
+            
+        }
+
         public PrimitiveElement(object value, string name = null, bool useFullTypeName = false)
         {
             if (value == null) throw new ArgumentNullException(nameof(value));

@@ -134,7 +134,7 @@ namespace Hl7.FhirPath.Tests
         {
             var inputs = ElementNode.CreateList("hoi", 4L, 3.4m, true, false, PartialTime.Parse("15:47:00+01:00"),
                 PartialDateTime.Parse("2019-01-11T15:47:00+01:00"));
-            var vals = new[] { "hoi", "4", "3.4", "true", "false", "T15:47:00+01:00", "2019-01-11T15:47:00+01:00" };
+            var vals = new[] { "hoi", "4", "3.4", "true", "false", "15:47:00+01:00", "2019-01-11T15:47:00+01:00" };
 
             inputs.Zip(vals, (i, v) => (i, v))
                 .ToList()

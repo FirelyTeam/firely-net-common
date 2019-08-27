@@ -37,7 +37,11 @@ namespace Hl7.Fhir.ElementModel
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static ITypedElement ForPrimitive(object value) => new PrimitiveElement(value);
+        // HACK: For now, allow a Quantity (which is NOT a primitive) in the .Value property
+        // of ITypedElement. This is a temporary situation to make a quick & dirty upgrade of
+        // FP to Normative (with Quantity support) possible.
+        public static ITypedElement ForPrimitive(object value) =>
+            value is Model.Primitives.Quantity q ? PrimitiveElement.ForQuantity(q) : new PrimitiveElement(value);
 
         /// <summary>
         /// Create a fixed length set of values (but also support variable number of parameter values)
