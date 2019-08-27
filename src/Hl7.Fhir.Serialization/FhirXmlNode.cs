@@ -207,13 +207,6 @@ namespace Hl7.Fhir.Serialization
             while (scan != null);
         }
 
-
-        public bool MoveToNext(string nameFilter = null) => throw new NotImplementedException();
-
-        public bool MoveToFirstChild(string nameFilter = null) => throw new NotImplementedException();
-
-        public ISourceNode Clone() => throw new NotImplementedException();
-
         public override string ToString() => Current.ToString();
 
         public IEnumerable<object> Annotations(Type type)

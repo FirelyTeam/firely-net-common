@@ -30,6 +30,10 @@ namespace Hl7.Fhir.Model.Primitives
         public override bool Equals(object obj) => obj is Coding coding && Equals(coding);
         public bool Equals(Coding other) => System == other.System && Code == other.Code && Display == other.Display;
 
+        public bool IsEqualTo(Coding other) => throw new NotImplementedException();
+
+        public bool IsEquivalentTo(Coding other) => throw new NotImplementedException();
+
         public override int GetHashCode()
         {
             var hashCode = -1868345243;
@@ -42,5 +46,8 @@ namespace Hl7.Fhir.Model.Primitives
         public static bool operator ==(Coding left, Coding right) => left.Equals(right);
 
         public static bool operator !=(Coding left, Coding right) => !(left == right);
+
+        public static Coding Parse(string value) => throw new NotImplementedException();
+        public static bool TryParse(string value, out Coding p) => throw new NotImplementedException();
     }
 }

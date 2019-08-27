@@ -17,40 +17,63 @@ namespace Hl7.FhirPath.Tests
     public class QuantityTests
     {
         [TestMethod]
+        public void QuantityParsing()
+        {
+            Assert.AreEqual(new Quantity(75.5m, "kg"), Quantity.Parse("75.5 'kg'"));
+            Assert.AreEqual(new Quantity(75.5m, "kg"), Quantity.Parse("75.5'kg'"));
+            Assert.AreEqual(new Quantity(75m, "kg"), Quantity.Parse("75 'kg'"));
+            Assert.AreEqual(new Quantity(40d, "wk"), Quantity.Parse("40 weeks"));
+            Assert.AreEqual(new Quantity(40.0m, "1"), Quantity.Parse("40.0"));
+            Assert.AreEqual(new Quantity(1d, "1"), Quantity.Parse("1 '1'"));
+            Assert.AreEqual(new Quantity(1m, "m/s"), Quantity.Parse("1 'm/s'"));
+
+            reject("40,5 weeks");
+            reject("40 weks");
+            reject("40 decennia");
+            reject("ab kg");
+            reject("75 'kg");
+            reject("75 kg");
+            reject("'kg'");
+        }
+
+        void reject(string testValue)
+        {
+            Assert.IsFalse(Quantity.TryParse(testValue, out _));
+        }
+
+        [TestMethod]
+        public void QuantityFormatting()
+        {
+            Assert.AreEqual("75.6 'kg'", new Quantity(75.6m, "kg").ToString());
+        }
+
+        [TestMethod]
         public void QuantityConstructor()
         {
             var newq = new Quantity(3.14m, "kg");
             Assert.AreEqual("kg", newq.Unit);
             Assert.AreEqual(3.14m, newq.Value);
-
-            newq = new Quantity(3.14, "kg", "http://someothersystem.nl");
-            Assert.AreEqual("kg", newq.Unit);
-            Assert.AreEqual(3.14m, newq.Value);
-            Assert.AreEqual("http://someothersystem.nl", newq.System);
         }
 
         [TestMethod]
         public void QuantityEquals()
         {
             var newq = new Quantity(3.14m, "kg");
-            var newq2 = new Quantity(3.14, "kg", Quantity.UCUM);
-            var newq3 = new Quantity(3.14, "kg", "http://nu.nl");
-            var newq4 = new Quantity(3.15, "kg");
 
-            Assert.AreEqual(newq, newq2);
-            ExceptionAssert.Throws<NotSupportedException>( () => newq == newq3);
-            Assert.AreNotEqual(newq, newq4);
+            Assert.AreEqual(newq, new Quantity(3.14, "kg"));
+            Assert.AreNotEqual(newq, new Quantity(3.15, "kg"));
         }
 
         [TestMethod]
         public void Comparison()
         {
             var smaller = new Quantity(3.14m, "kg");
-            var smaller2 = new Quantity(3.14, "kg", Quantity.UCUM);
             var bigger = new Quantity(4.0, "kg");
 
             Assert.IsTrue(smaller < bigger);
-            Assert.IsTrue(smaller <= smaller2);
+#pragma warning disable CS1718 // Comparison made to same variable
+            Assert.IsTrue(smaller <= smaller);
+#pragma warning restore CS1718 // Comparison made to same variable
             Assert.IsTrue(bigger >= smaller);
 
             Assert.AreEqual(-1, smaller.CompareTo(bigger));
@@ -65,7 +88,7 @@ namespace Hl7.FhirPath.Tests
             var a = new Quantity(3.14m, "kg");
             var b = new Quantity(30.5, "g");
 
-            ExceptionAssert.Throws<NotSupportedException>( () => a < b);
+            ExceptionAssert.Throws<NotSupportedException>(() => a < b);
             ExceptionAssert.Throws<NotSupportedException>(() => a == b);
             ExceptionAssert.Throws<NotSupportedException>(() => a >= b);
 

@@ -80,6 +80,8 @@ namespace Hl7.FhirPath.Tests
             AssertParser.SucceedsMatch(parser, "(3)", new ConstantExpression(3L));
             AssertParser.SucceedsMatch(parser, "{}", NewNodeListInitExpression.Empty);
             AssertParser.SucceedsMatch(parser, "@2014-12-13T12:00:00+02:00", new ConstantExpression(PartialDateTime.Parse("2014-12-13T12:00:00+02:00")));
+            AssertParser.SucceedsMatch(parser, "78 'kg'", new ConstantExpression(new Quantity(78m, "kg")));
+            AssertParser.SucceedsMatch(parser, "10.1 'mg'", new ConstantExpression(new Quantity(10.1m, "mg")));
         }
 
         [TestMethod]
@@ -87,17 +89,35 @@ namespace Hl7.FhirPath.Tests
         {
             var parser = Grammar.Term.End();
 
-            AssertParser.SucceedsMatch(parser, "%\"ext-11179-de-is-data-element-concept\"",
+            AssertParser.SucceedsMatch(parser, "%`ext-11179-de-is-data-element-concept`",
                 new FunctionCallExpression(AxisExpression.That, "builtin.coreexturl", TypeInfo.String,
                             new ConstantExpression("11179-de-is-data-element-concept")));
 
-            AssertParser.SucceedsMatch(parser, "%\"vs-administrative-gender\"",
+            AssertParser.SucceedsMatch(parser, "%`vs-administrative-gender`",
                 new FunctionCallExpression(AxisExpression.That, "builtin.corevsurl", TypeInfo.String,
                     new ConstantExpression("administrative-gender")));
         }
 
 
         private static readonly Expression patientName = new ChildExpression(new ChildExpression(AxisExpression.This, "Patient"), "name");
+
+        [TestMethod]
+        public void FhirPath_Gramm_Quantity()
+        {
+            var parser = Grammar.Quantity.End();
+
+            AssertParser.SucceedsMatch(parser, "78 'kg'", new Quantity(78m, "kg"));
+            AssertParser.SucceedsMatch(parser, "78.0 'kg'", new Quantity(78m, "kg"));
+            AssertParser.SucceedsMatch(parser, "78.0'kg'", new Quantity(78m, "kg"));
+            AssertParser.SucceedsMatch(parser, "4 months", new Quantity(4m, "mo"));
+            AssertParser.SucceedsMatch(parser, "1 '1'", new Quantity(1m, "1"));
+
+            AssertParser.FailsMatch(parser, "78");   // still a integer
+            AssertParser.FailsMatch(parser, "78.0");   // still a decimal
+            AssertParser.FailsMatch(parser, "78 kg");
+            AssertParser.FailsMatch(parser, "four 'kg'");
+            AssertParser.FailsMatch(parser, "4 decennia");
+        }
 
         [TestMethod]
         public void FhirPath_Gramm_Expression_Invocation()
@@ -218,16 +238,5 @@ namespace Hl7.FhirPath.Tests
 
             AssertParser.FailsMatch(parser, "true implies false and 4 != 5 and 4 <> 6 and ('h' ~ 'H' or 'a' !~ 'b')");
         }
-
-        private void SucceedsConstantValueMatch(Parser<ConstantExpression> parser, string expr, object value, TypeInfo expected)
-        {
-            AssertParser.SucceedsWith(parser, expr,
-                    v =>
-                        {
-                            Assert.AreEqual(v.Value, value);
-                            Assert.AreEqual(v.ExpressionType, expected);
-                        });
-        }
-
     }
 }
