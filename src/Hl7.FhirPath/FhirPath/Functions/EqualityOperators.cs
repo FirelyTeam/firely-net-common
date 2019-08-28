@@ -13,6 +13,7 @@ using System.Linq;
 using Hl7.FhirPath;
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Model.Primitives;
+using Hl7.FhirPath.Expressions;
 
 namespace Hl7.FhirPath.Functions
 {
@@ -45,10 +46,10 @@ namespace Hl7.FhirPath.Functions
 
             // TODO: this is actually a cast with knowledge of FHIR->System mappings, we don't want that here anymore
             // Convert quantities
-            //if (left.InstanceType == "Quantity" && l == null)
-            //    l = Typecasts.ParseQuantity(left);
-            //if (right.InstanceType == "Quantity" && r == null)
-            //    r = Typecasts.ParseQuantity(right);
+            if (left.InstanceType == "Quantity" && l == null)
+                l = Typecasts.ParseQuantity(left);
+            if (right.InstanceType == "Quantity" && r == null)
+                r = Typecasts.ParseQuantity(right);
 
             // Compare primitives (or extended primitives)
             if (l != null && r != null)
@@ -100,10 +101,10 @@ namespace Hl7.FhirPath.Functions
 
             // TODO: this is actually a cast with knowledge of FHIR->System mappings, we don't want that here anymore
             // Convert quantities
-            //if (left.InstanceType == "Quantity" && l == null)
-            //    l = Typecasts.ParseQuantity(left);
-            //if (right.InstanceType == "Quantity" && r == null)
-            //    r = Typecasts.ParseQuantity(right);
+            if (left.InstanceType == "Quantity" && l == null)
+                l = Typecasts.ParseQuantity(left);
+            if (right.InstanceType == "Quantity" && r == null)
+                r = Typecasts.ParseQuantity(right);
 
             // Compare primitives (or extended primitives)
             // TODO: Define IsEquivalentTo for ALL datatypes in ITypedElement.value and move to Support assembly + test

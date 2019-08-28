@@ -33,7 +33,7 @@ namespace Hl7.FhirPath.Expressions
                 if (element.InstanceType == "Quantity")
                 {
                     // Need to downcast from a FHIR Quantity to a System.Quantity
-                    return parseQuantity(element);
+                    return ParseQuantity(element);
                 }
                 else
                     throw new InvalidCastException($"Cannot convert from '{element.InstanceType}' to Quantity");
@@ -41,14 +41,17 @@ namespace Hl7.FhirPath.Expressions
 
             throw new InvalidCastException($"Cannot convert from '{source.GetType().Name}' to Quantity");
 
-            Fhir.Model.Primitives.Quantity? parseQuantity(ITypedElement qe)
-            {
-                var value = qe.Children("value").SingleOrDefault()?.Value as decimal?;
-                if (value == null) return null;
+         
+        }
 
-                var unit = qe.Children("code").SingleOrDefault()?.Value as string;
-                return new Fhir.Model.Primitives.Quantity(value.Value, unit);
-            }
+
+        internal static Fhir.Model.Primitives.Quantity? ParseQuantity(ITypedElement qe)
+        {
+            var value = qe.Children("value").SingleOrDefault()?.Value as decimal?;
+            if (value == null) return null;
+
+            var unit = qe.Children("code").SingleOrDefault()?.Value as string;
+            return new Fhir.Model.Primitives.Quantity(value.Value, unit);
         }
 
         private static Cast getImplicitCast(Type from, Type to)

@@ -185,9 +185,9 @@ namespace Hl7.Fhir.Model.Primitives
         public bool Equals(Quantity other) => other.Unit == Unit && other.Value == Value;
         public override bool Equals(object obj) => obj is Quantity other && Equals(other);
 
-        public bool IsEqualTo(Quantity other) => throw new NotImplementedException();
+        public bool IsEqualTo(Quantity other) => this == other;
 
-        public bool IsEquivalentTo(Quantity other) => throw new NotImplementedException();
+        public bool IsEquivalentTo(Quantity other) => this == other;
 
         public override int GetHashCode() =>  Unit.GetHashCode() ^ Value.GetHashCode();
 
