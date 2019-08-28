@@ -82,7 +82,7 @@ namespace Hl7.FhirPath.Expressions
 
         private void appendType(Expression expr)
         {
-            if (expr.ExpressionType != TypeSpecifier.Any)
+            if (expr.ExpressionType is NamedTypeSpecifier nts && nts != TypeSpecifier.Any)
                 append(" : {0}".FormatWith(expr.ExpressionType), newLine: false);
         }
 

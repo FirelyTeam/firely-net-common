@@ -117,7 +117,7 @@ namespace Hl7.Fhir.ElementModel
         // R3 and R4, these value (and url and id elements by the way) will indicate which type
         // of "universal" primitive there are, implicitly specifying the mapping between primitive
         // FHIR types and primitive System types.
-        private static TypeSpecifier tryMapFhirPrimitiveTypeToSystemType(string fhirType)
+        private static NamedTypeSpecifier tryMapFhirPrimitiveTypeToSystemType(string fhirType)
         {
             switch (fhirType)
             {

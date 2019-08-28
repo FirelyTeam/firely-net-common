@@ -77,7 +77,7 @@ namespace Hl7.Fhir.Model.Primitives
                 return false;
         }
 
-        public static object Parse(string value, TypeSpecifier systemType)
+        public static object Parse(string value, NamedTypeSpecifier systemType)
         {
             if (value == null) return null;
 
@@ -87,7 +87,7 @@ namespace Hl7.Fhir.Model.Primitives
                 throw new FormatException($"Input string '{value}' was not in a correct format for type '{systemType}'.");
         }
 
-        public static bool TryParse(string value, TypeSpecifier systemType, out object parsed)
+        public static bool TryParse(string value, NamedTypeSpecifier systemType, out object parsed)
         {
             if(value == null)
             {
