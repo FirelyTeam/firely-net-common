@@ -141,5 +141,31 @@ namespace Hl7.FhirPath.Tests
                 .ForEach(c => Assert.AreEqual(c.v, c.i.ToString()));
             inputs.ToList().ForEach(c => Assert.IsTrue(c.ConvertsToString()));
         }
+
+        [TestMethod]
+        public void CheckTypeDetermination()
+        {
+            var values = ElementNode.CreateList(1, true, "hi", 4.0m, 4.0f, PartialDateTime.Now());
+
+            Test.IsInstanceOfType(values.Item(0).Single().Value, typeof(Int64));
+            Test.IsInstanceOfType(values.Item(1).Single().Value, typeof(bool));
+            Test.IsInstanceOfType(values.Item(2).Single().Value, typeof(string));
+            Test.IsInstanceOfType(values.Item(3).Single().Value, typeof(decimal));
+            Test.IsInstanceOfType(values.Item(4).Single().Value, typeof(decimal));
+            Test.IsInstanceOfType(values.Item(5).Single().Value, typeof(PartialDateTime));
+        }
+
+
+        [TestMethod]
+        public void TestItemSelection()
+        {
+            var values = ElementNode.CreateList(1, 2, 3, 4, 5, 6, 7);
+
+            Assert.AreEqual((Int64)1, values.Item(0).Single().Value);
+            Assert.AreEqual((Int64)3, values.Item(2).Single().Value);
+            Assert.AreEqual((Int64)1, values.First().Value);
+            Assert.IsFalse(values.Item(100).Any());
+        }
+
     }
 }

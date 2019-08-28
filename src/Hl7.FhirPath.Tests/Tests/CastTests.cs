@@ -81,7 +81,6 @@ namespace Hl7.FhirPath.Tests
             Assert.IsFalse(Typecasts.CanCastTo(collection, typeof(string)));
         }
 
-
         [TestMethod]
         public void CastValue()
         {

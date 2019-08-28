@@ -39,7 +39,10 @@ namespace Hl7.Fhir.Model.Primitives
             else if (l is Quantity lq && r is Quantity rq)
                 return lq.IsEqualTo(rq);
             else
-                throw new ArgumentException("Can only compare System primitives string, bool, long, decimal and partial date/dateTime/time.");
+                // the spec says that this should be false - you can compare
+                // anything to anything!
+                //throw new ArgumentException("Can only compare System primitives string, bool, long, decimal and partial date/dateTime/time.");
+                return false;             
         }
 
         public static bool IsEquivalentTo(object l, object r)
@@ -68,7 +71,10 @@ namespace Hl7.Fhir.Model.Primitives
             else if (l is Quantity lq && r is Quantity rq)
                 return lq.IsEquivalentTo(rq);
             else
-                throw new ArgumentException("Can only compare System primitives string, bool, long, decimal and partial date/dateTime/time.");
+                // the spec says that this should be false - you can compare
+                // anything to anything!
+                // throw new ArgumentException("Can only compare System primitives string, bool, long, decimal and partial date/dateTime/time.");
+                return false;
         }
 
         public static object Parse(string value, TypeSpecifier systemType)

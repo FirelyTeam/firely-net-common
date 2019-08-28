@@ -128,7 +128,7 @@ namespace Hl7.Fhir.Model.Primitives
             return DateTimeOffset.TryParse(parseableDT, out value._parsedValue);
         }
 
-        public bool IsEqualTo(PartialDate other) => throw new NotImplementedException();
+        public bool IsEqualTo(PartialDate other) => this == other;
         public bool IsEquivalentTo(PartialDate other) => throw new NotImplementedException();
 
         // TODO: Note, this enables comparisons between values that did or did not have timezones, need to fix.
