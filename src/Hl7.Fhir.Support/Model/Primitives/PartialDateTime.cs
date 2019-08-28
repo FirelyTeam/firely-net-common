@@ -117,7 +117,7 @@ namespace Hl7.Fhir.Model.Primitives
             return DateTimeOffset.TryParse(parseableDT, out value._parsedValue);
         }
 
-        public bool IsEqualTo(PartialDateTime other) => throw new NotImplementedException();
+        public bool IsEqualTo(PartialDateTime other) => this == other;
 
         public bool IsEquivalentTo(PartialDateTime other) => throw new NotImplementedException();
 
