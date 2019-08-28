@@ -5,6 +5,7 @@
  * This file is licensed under the BSD 3-Clause license
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
+using Hl7.Fhir.Language;
 using Hl7.Fhir.Utility;
 using System;
 using System.Text;
@@ -13,7 +14,7 @@ namespace Hl7.FhirPath.Expressions
 {
     public class TreeVisualizerVisitor : ExpressionVisitor<StringBuilder>
     {
-        private StringBuilder _result = new StringBuilder();
+        private readonly StringBuilder _result = new StringBuilder();
         private int _indent = 0;
 
         public override StringBuilder VisitConstant(ConstantExpression expression, SymbolTable scope)
@@ -81,7 +82,7 @@ namespace Hl7.FhirPath.Expressions
 
         private void appendType(Expression expr)
         {
-            if (expr.ExpressionType != TypeInfo.Any)
+            if (expr.ExpressionType != TypeSpecifier.Any)
                 append(" : {0}".FormatWith(expr.ExpressionType), newLine: false);
         }
 

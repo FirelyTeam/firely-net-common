@@ -6,6 +6,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+using Hl7.Fhir.Language;
 using Hl7.Fhir.Model.Primitives;
 using Hl7.FhirPath.Expressions;
 using Hl7.FhirPath.Parser;
@@ -44,17 +45,17 @@ namespace Hl7.FhirPath.Tests
             AssertParser.SucceedsMatch(parser, "childname", new ChildExpression(AxisExpression.That, "childname"));
             // AssertParser.SucceedsMatch(parser, "$this", AxisExpression.This);
 
-            AssertParser.SucceedsMatch(parser, "doSomething()", new FunctionCallExpression(AxisExpression.That, "doSomething", TypeInfo.Any));
-            AssertParser.SucceedsMatch(parser, "doSomething ( ) ", new FunctionCallExpression(AxisExpression.That, "doSomething", TypeInfo.Any));
-            AssertParser.SucceedsMatch(parser, "doSomething ( 3.14 ) ", new FunctionCallExpression(AxisExpression.That, "doSomething", TypeInfo.Any,
+            AssertParser.SucceedsMatch(parser, "doSomething()", new FunctionCallExpression(AxisExpression.That, "doSomething", TypeSpecifier.Any));
+            AssertParser.SucceedsMatch(parser, "doSomething ( ) ", new FunctionCallExpression(AxisExpression.That, "doSomething", TypeSpecifier.Any));
+            AssertParser.SucceedsMatch(parser, "doSomething ( 3.14 ) ", new FunctionCallExpression(AxisExpression.That, "doSomething", TypeSpecifier.Any,
                                 new ConstantExpression(3.14m)));
 
-            AssertParser.SucceedsMatch(parser, "doSomething('hi', 3.14, 3, $this, somethingElse(true))", new FunctionCallExpression(AxisExpression.That, "doSomething", TypeInfo.Any,
+            AssertParser.SucceedsMatch(parser, "doSomething('hi', 3.14, 3, $this, somethingElse(true))", new FunctionCallExpression(AxisExpression.That, "doSomething", TypeSpecifier.Any,
                         new ConstantExpression("hi"), new ConstantExpression(3.14m), new ConstantExpression(3L),
                         AxisExpression.This,
-                        new FunctionCallExpression(AxisExpression.That, "somethingElse", TypeInfo.Any, new ConstantExpression(true))));
+                        new FunctionCallExpression(AxisExpression.That, "somethingElse", TypeSpecifier.Any, new ConstantExpression(true))));
 
-            AssertParser.SucceedsMatch(parser, "as(Patient)", new FunctionCallExpression(AxisExpression.That, "as", TypeInfo.Any, new ConstantExpression("Patient")));
+            AssertParser.SucceedsMatch(parser, "as(Patient)", new FunctionCallExpression(AxisExpression.That, "as", TypeSpecifier.Any, new ConstantExpression("Patient")));
 
             AssertParser.FailsMatch(parser, "$that");
             //     AssertParser.FailsMatch(parser, "as(Patient.identifier)");
@@ -69,8 +70,8 @@ namespace Hl7.FhirPath.Tests
 
             AssertParser.SucceedsMatch(parser, "childname", new ChildExpression(AxisExpression.This, "childname"));
             AssertParser.SucceedsMatch(parser, "$this", AxisExpression.This);
-            AssertParser.SucceedsMatch(parser, "doSomething()", new FunctionCallExpression(AxisExpression.This, "doSomething", TypeInfo.Any));
-            AssertParser.SucceedsMatch(parser, "doSomething('hi', 3.14)", new FunctionCallExpression(AxisExpression.This, "doSomething", TypeInfo.Any,
+            AssertParser.SucceedsMatch(parser, "doSomething()", new FunctionCallExpression(AxisExpression.This, "doSomething", TypeSpecifier.Any));
+            AssertParser.SucceedsMatch(parser, "doSomething('hi', 3.14)", new FunctionCallExpression(AxisExpression.This, "doSomething", TypeSpecifier.Any,
                         new ConstantExpression("hi"), new ConstantExpression(3.14m)));
             AssertParser.SucceedsMatch(parser, "%external", new VariableRefExpression("external"));
             AssertParser.SucceedsMatch(parser, "@2013-12", new ConstantExpression(PartialDate.Parse("2013-12")));
@@ -90,11 +91,11 @@ namespace Hl7.FhirPath.Tests
             var parser = Grammar.Term.End();
 
             AssertParser.SucceedsMatch(parser, "%`ext-11179-de-is-data-element-concept`",
-                new FunctionCallExpression(AxisExpression.That, "builtin.coreexturl", TypeInfo.String,
+                new FunctionCallExpression(AxisExpression.That, "builtin.coreexturl", TypeSpecifier.String,
                             new ConstantExpression("11179-de-is-data-element-concept")));
 
             AssertParser.SucceedsMatch(parser, "%`vs-administrative-gender`",
-                new FunctionCallExpression(AxisExpression.That, "builtin.corevsurl", TypeInfo.String,
+                new FunctionCallExpression(AxisExpression.That, "builtin.corevsurl", TypeSpecifier.String,
                     new ConstantExpression("administrative-gender")));
         }
 
@@ -125,7 +126,7 @@ namespace Hl7.FhirPath.Tests
             var parser = Grammar.InvocationExpression.End();
 
             AssertParser.SucceedsMatch(parser, "Patient.name.doSomething(true)",
-                    new FunctionCallExpression(patientName, "doSomething", TypeInfo.Any, new ConstantExpression(true)));
+                    new FunctionCallExpression(patientName, "doSomething", TypeSpecifier.Any, new ConstantExpression(true)));
 
             AssertParser.FailsMatch(parser, "Patient.");
             //AssertParser.FailsMatch(parser, "Patient. name");     //oops

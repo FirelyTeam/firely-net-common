@@ -28,14 +28,13 @@ namespace Hl7.Fhir.ElementModel
             return new PrimitiveElement
             {
                 Value = value,
-                InstanceType = TypeSpecifier.System.Quantity.FullName,
+                InstanceType = TypeSpecifier.Quantity.FullName,
                 Name = "@QuantityAsPrimitiveValue@"
             };
         }
 
         private PrimitiveElement()
-        {
-            
+        {            
         }
 
         public PrimitiveElement(object value, string name = null, bool useFullTypeName = false)
@@ -43,7 +42,7 @@ namespace Hl7.Fhir.ElementModel
             if (value == null) throw new ArgumentNullException(nameof(value));
 
             var systemType = TypeSpecifier.ForNativeType(value.GetType());
-            if(!ElementNode.SupportedPrimitiveTypes.Contains(systemType))
+            if(!TypeSpecifier.PrimitiveTypes.Contains(systemType))
                 throw new ArgumentException("The supplied value cannot be represented with a System primitive.", nameof(value));
            
             Value = Any.ConvertToSystemValue(value);
