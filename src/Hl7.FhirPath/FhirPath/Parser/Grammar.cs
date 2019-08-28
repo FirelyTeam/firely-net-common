@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Hl7.Fhir.Language;
 using Hl7.FhirPath;
 using Hl7.FhirPath.Expressions;
 using Hl7.FhirPath.Sprache;
@@ -45,14 +46,14 @@ namespace Hl7.FhirPath.Parser
         //  | quantity
         //  ;
         public static readonly Parser<ConstantExpression> Literal =
-            Lexer.String.Select(v => new ConstantExpression(v, TypeInfo.String))
-                .Or(Lexer.DateTime.Select(v => new ConstantExpression(v, TypeInfo.DateTime)))
-                .Or(Lexer.Date.Select(v => new ConstantExpression(v, TypeInfo.Date)))
-                .Or(Lexer.Time.Select(v => new ConstantExpression(v, TypeInfo.Time)))
-                .XOr(Lexer.Bool.Select(v => new ConstantExpression(v, TypeInfo.Boolean)))
-                .Or(Quantity.Select(v => new ConstantExpression(v, TypeInfo.Quantity)))
-                .Or(Lexer.DecimalNumber.Select(v => new ConstantExpression(v, TypeInfo.Decimal)))
-                .Or(Lexer.IntegerNumber.Select(v => new ConstantExpression(v, TypeInfo.Integer)));
+            Lexer.String.Select(v => new ConstantExpression(v, TypeSpecifier.String))
+                .Or(Lexer.DateTime.Select(v => new ConstantExpression(v, TypeSpecifier.DateTime)))
+                .Or(Lexer.Date.Select(v => new ConstantExpression(v, TypeSpecifier.Date)))
+                .Or(Lexer.Time.Select(v => new ConstantExpression(v, TypeSpecifier.Time)))
+                .XOr(Lexer.Bool.Select(v => new ConstantExpression(v, TypeSpecifier.Boolean)))
+                .Or(Quantity.Select(v => new ConstantExpression(v, TypeSpecifier.Quantity)))
+                .Or(Lexer.DecimalNumber.Select(v => new ConstantExpression(v, TypeSpecifier.Decimal)))
+                .Or(Lexer.IntegerNumber.Select(v => new ConstantExpression(v, TypeSpecifier.Integer)));
 
 
         //term
@@ -80,13 +81,13 @@ namespace Hl7.FhirPath.Parser
                 from lparen in Parse.Char('(').Token()
                 from paramList in Parse.Ref(() => FunctionParameter(n).Named("parameter")).DelimitedBy(Parse.Char(',').Token()).Optional()
                 from rparen in Parse.Char(')').Token()
-                select new FunctionCallExpression(context, n, TypeInfo.Any, paramList.GetOrElse(Enumerable.Empty<Expression>()));
+                select new FunctionCallExpression(context, n, TypeSpecifier.Any, paramList.GetOrElse(Enumerable.Empty<Expression>()));
         }
 
         public static Parser<Expression> FunctionParameter(string name) =>
             // Make exception for is() and as() FUNCTIONS (operators are handled elsewhere), since they don't
             // take a normal parameter, but an identifier (which is not normally a FhirPath type)
-            name != "is" && name != "as" ? Grammar.Expression : TypeSpecifier.Select(s => new ConstantExpression(s));
+            name != "is" && name != "as" ? Grammar.Expression : TypeSpec.Select(s => new ConstantExpression(s));
 
 
         public static Parser<Expression> FunctionInvocation(Expression focus)
@@ -111,15 +112,16 @@ namespace Hl7.FhirPath.Parser
         public static Expression BuildVariableRefExpression(string name)
         {
             if (name.StartsWith("ext-"))
-                return new FunctionCallExpression(AxisExpression.That, "builtin.coreexturl", TypeInfo.String, new ConstantExpression(name.Substring(4)));
+                return new FunctionCallExpression(AxisExpression.That, "builtin.coreexturl", TypeSpecifier.String, new ConstantExpression(name.Substring(4)));
+#pragma warning disable IDE0046 // Convert to conditional expression
             else if (name.StartsWith("vs-"))
-                return new FunctionCallExpression(AxisExpression.That, "builtin.corevsurl", TypeInfo.String, new ConstantExpression(name.Substring(3)));
+#pragma warning restore IDE0046 // Convert to conditional expression
+                return new FunctionCallExpression(AxisExpression.That, "builtin.corevsurl", TypeSpecifier.String, new ConstantExpression(name.Substring(3)));
             else
                 return new VariableRefExpression(name);
         }
 
-        public static readonly Parser<string> TypeSpecifier =
-            //Lexer.QualifiedIdentifier.Select(qi => TypeInfo.ByName(qi)).Token();
+        public static readonly Parser<string> TypeSpec =
             Lexer.QualifiedIdentifier.Token();
 
         //expression
@@ -203,7 +205,7 @@ namespace Hl7.FhirPath.Parser
         public static readonly Parser<Expression> TypeExpression =
             InEqExpression.Then(
                     ineq => (from isas in Lexer.TypeOperator
-                             from tp in TypeSpecifier
+                             from tp in TypeSpec
                              select new BinaryExpression(isas, ineq, new ConstantExpression(tp)))
                     .Or(Parse.Return(ineq)));
 

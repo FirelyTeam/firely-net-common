@@ -21,25 +21,25 @@ namespace Hl7.FhirPath.Expressions
         internal const string OP_PREFIX = "builtin.";
         internal static readonly int OP_PREFIX_LEN = OP_PREFIX.Length;
 
-        protected Expression(TypeInfo type)
+        protected Expression(TypeSpecifier type)
         {
             ExpressionType = type;
         }
 
-        protected Expression(TypeInfo type, ISourcePositionInfo location) : this(type)
+        protected Expression(TypeSpecifier type, ISourcePositionInfo location) : this(type)
         {
             Location = location;           
         }
 
         public ISourcePositionInfo Location { get; }
 
-        public TypeInfo ExpressionType { get; protected set; }
+        public TypeSpecifier ExpressionType { get; protected set; }
 
         public abstract T Accept<T>(ExpressionVisitor<T> visitor, SymbolTable scope);
 
         public override bool Equals(object obj) => Equals(obj as Expression);
-        public bool Equals(Expression other) => other != null && EqualityComparer<TypeInfo>.Default.Equals(ExpressionType, other.ExpressionType);
-        public override int GetHashCode() => -28965461 + EqualityComparer<TypeInfo>.Default.GetHashCode(ExpressionType);
+        public bool Equals(Expression other) => other != null && EqualityComparer<TypeSpecifier>.Default.Equals(ExpressionType, other.ExpressionType);
+        public override int GetHashCode() => -28965461 + EqualityComparer<TypeSpecifier>.Default.GetHashCode(ExpressionType);
         public static bool operator ==(Expression left, Expression right) => EqualityComparer<Expression>.Default.Equals(left, right);
         public static bool operator !=(Expression left, Expression right) => !(left == right);
     }
@@ -47,14 +47,14 @@ namespace Hl7.FhirPath.Expressions
 
     public class ConstantExpression : Expression
     {
-        public ConstantExpression(object value, TypeInfo type, ISourcePositionInfo location = null) : base(type, location)
+        public ConstantExpression(object value, TypeSpecifier type, ISourcePositionInfo location = null) : base(type, location)
         {
             if (value == null) Error.ArgumentNull("value");
 
             Value = value;
         }
 
-        public ConstantExpression(object value, ISourcePositionInfo location = null) : base(TypeInfo.Any, location)
+        public ConstantExpression(object value, ISourcePositionInfo location = null) : base(TypeSpecifier.Any, location)
         {
             if (value == null) Error.ArgumentNull("value");
 
@@ -64,21 +64,21 @@ namespace Hl7.FhirPath.Expressions
                 throw Error.InvalidOperation("Internal logic error: encountered unmappable Value of type " + Value.GetType().Name);
 
             if (Value is bool)
-                ExpressionType = TypeInfo.Boolean;
+                ExpressionType = TypeSpecifier.Boolean;
             else if (Value is string)
-                ExpressionType = TypeInfo.String;
+                ExpressionType = TypeSpecifier.String;
             else if (Value is Int64)
-                ExpressionType = TypeInfo.Integer;
+                ExpressionType = TypeSpecifier.Integer;
             else if (Value is decimal)
-                ExpressionType = TypeInfo.Decimal;
+                ExpressionType = TypeSpecifier.Decimal;
             else if (Value is PartialDateTime)
-                ExpressionType = TypeInfo.DateTime;
+                ExpressionType = TypeSpecifier.DateTime;
             else if (Value is PartialTime)
-                ExpressionType = TypeInfo.Time;
+                ExpressionType = TypeSpecifier.Time;
             else if (Value is PartialDate)
-                ExpressionType = TypeInfo.Date;
+                ExpressionType = TypeSpecifier.Date;
             else if (Value is Quantity)
-                ExpressionType = TypeInfo.Quantity;
+                ExpressionType = TypeSpecifier.Quantity;
             else
                 throw Error.InvalidOperation($"Internal logic error: encountered unmappable Value of type " + Value.GetType().Name);
 
@@ -110,11 +110,11 @@ namespace Hl7.FhirPath.Expressions
 
     public class FunctionCallExpression : Expression
     {
-        public FunctionCallExpression(Expression focus, string name, TypeInfo type, params Expression[] arguments) : this(focus, name, type, (IEnumerable<Expression>) arguments)
+        public FunctionCallExpression(Expression focus, string name, TypeSpecifier type, params Expression[] arguments) : this(focus, name, type, (IEnumerable<Expression>) arguments)
         {
         }
 
-        public FunctionCallExpression(Expression focus, string name, TypeInfo type, IEnumerable<Expression> arguments, ISourcePositionInfo location = null) : base(type, location)
+        public FunctionCallExpression(Expression focus, string name, TypeSpecifier type, IEnumerable<Expression> arguments, ISourcePositionInfo location = null) : base(type, location)
         {
             if (string.IsNullOrEmpty(name)) throw Error.ArgumentNull("name");
             Focus = focus;
@@ -153,7 +153,7 @@ namespace Hl7.FhirPath.Expressions
 
     public class ChildExpression : FunctionCallExpression
     {
-        public ChildExpression(Expression focus, string name) : base(focus, OP_PREFIX+"children", TypeInfo.Any, new ConstantExpression(name, TypeInfo.String))
+        public ChildExpression(Expression focus, string name) : base(focus, OP_PREFIX+"children", TypeSpecifier.Any, new ConstantExpression(name, TypeSpecifier.String))
         {
         }
 
@@ -166,7 +166,7 @@ namespace Hl7.FhirPath.Expressions
 
     public class IndexerExpression : FunctionCallExpression
     {
-        public IndexerExpression(Expression collection, Expression index) : base(collection, OP_PREFIX+"item", TypeInfo.Any, index)
+        public IndexerExpression(Expression collection, Expression index) : base(collection, OP_PREFIX+"item", TypeSpecifier.Any, index)
         {
         }
 
@@ -189,7 +189,7 @@ namespace Hl7.FhirPath.Expressions
         {
         }
 
-        public BinaryExpression(string op, Expression left, Expression right) : base(AxisExpression.That, BIN_PREFIX + op, TypeInfo.Any, left, right)
+        public BinaryExpression(string op, Expression left, Expression right) : base(AxisExpression.That, BIN_PREFIX + op, TypeSpecifier.Any, left, right)
         {
         }
         public string Op
@@ -227,7 +227,7 @@ namespace Hl7.FhirPath.Expressions
         {
         }
 
-        public UnaryExpression(string op, Expression operand) : base(AxisExpression.That, URY_PREFIX + op, TypeInfo.Any, operand)
+        public UnaryExpression(string op, Expression operand) : base(AxisExpression.That, URY_PREFIX + op, TypeSpecifier.Any, operand)
         {
         }
         public string Op
@@ -282,7 +282,7 @@ namespace Hl7.FhirPath.Expressions
 
     public class NewNodeListInitExpression : Expression
     {
-        public NewNodeListInitExpression(IEnumerable<Expression> contents) : base(TypeInfo.Any)
+        public NewNodeListInitExpression(IEnumerable<Expression> contents) : base(TypeSpecifier.Any)
         {
             Contents = contents ?? throw Error.ArgumentNull("contents");
         }
@@ -315,7 +315,7 @@ namespace Hl7.FhirPath.Expressions
 
     public class VariableRefExpression : Expression
     {
-        public VariableRefExpression(string name, ISourcePositionInfo location = null) : base(TypeInfo.Any, location)
+        public VariableRefExpression(string name, ISourcePositionInfo location = null) : base(TypeSpecifier.Any, location)
         {
             Name = name ?? throw Error.ArgumentNull("name");
         }

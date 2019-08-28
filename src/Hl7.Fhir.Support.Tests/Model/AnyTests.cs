@@ -21,48 +21,48 @@ namespace Hl7.FhirPath.Tests
         {
             IEnumerable<(string value, TypeSpecifier to, bool success, object expected)> tests()
             {
-                yield return ("true", TypeSpecifier.System.Boolean, true, true);
-                yield return ("True", TypeSpecifier.System.Boolean, false, default);
-                yield return ("tru", TypeSpecifier.System.Boolean, false, default);
-                yield return ("1", TypeSpecifier.System.Boolean, false, default);
-                yield return ("false", TypeSpecifier.System.Boolean, true, false);
-                yield return ("False", TypeSpecifier.System.Boolean, false, default);
-                yield return ("fal", TypeSpecifier.System.Boolean, false, default);
-                yield return ("0", TypeSpecifier.System.Boolean, false, default);
+                yield return ("true", TypeSpecifier.Boolean, true, true);
+                yield return ("True", TypeSpecifier.Boolean, false, default);
+                yield return ("tru", TypeSpecifier.Boolean, false, default);
+                yield return ("1", TypeSpecifier.Boolean, false, default);
+                yield return ("false", TypeSpecifier.Boolean, true, false);
+                yield return ("False", TypeSpecifier.Boolean, false, default);
+                yield return ("fal", TypeSpecifier.Boolean, false, default);
+                yield return ("0", TypeSpecifier.Boolean, false, default);
 
-                yield return ("2018-01", TypeSpecifier.System.Date, true, PartialDate.Parse("2018-01"));
-                yield return ("hallo", TypeSpecifier.System.Date, false, default);
+                yield return ("2018-01", TypeSpecifier.Date, true, PartialDate.Parse("2018-01"));
+                yield return ("hallo", TypeSpecifier.Date, false, default);
 
-                yield return ("2018-01-04T12:00:00Z", TypeSpecifier.System.DateTime, true, PartialDateTime.Parse("2018-01-04T12:00:00Z"));
-                yield return ("hallo", TypeSpecifier.System.DateTime, false, default);
+                yield return ("2018-01-04T12:00:00Z", TypeSpecifier.DateTime, true, PartialDateTime.Parse("2018-01-04T12:00:00Z"));
+                yield return ("hallo", TypeSpecifier.DateTime, false, default);
 
-                yield return ("12:00:00Z", TypeSpecifier.System.Time, true, PartialTime.Parse("12:00:00Z"));
-                yield return ("hallo", TypeSpecifier.System.Time, false, default);
+                yield return ("12:00:00Z", TypeSpecifier.Time, true, PartialTime.Parse("12:00:00Z"));
+                yield return ("hallo", TypeSpecifier.Time, false, default);
 
-                yield return ("hallo", TypeSpecifier.System.String, true, "hallo");
+                yield return ("hallo", TypeSpecifier.String, true, "hallo");
 
-                yield return ("34", TypeSpecifier.System.Integer, true, 34L);
-                yield return ("-34", TypeSpecifier.System.Integer, true, -34L);
-                yield return ("+34", TypeSpecifier.System.Integer, true, 34L);
-                yield return ("34.5", TypeSpecifier.System.Integer, false, default);
+                yield return ("34", TypeSpecifier.Integer, true, 34L);
+                yield return ("-34", TypeSpecifier.Integer, true, -34L);
+                yield return ("+34", TypeSpecifier.Integer, true, 34L);
+                yield return ("34.5", TypeSpecifier.Integer, false, default);
 
-                yield return ("34", TypeSpecifier.System.Decimal, true, 34m);
-                yield return ("0034", TypeSpecifier.System.Decimal, true, 34m);
-                yield return ("34.0", TypeSpecifier.System.Decimal, true, 34.0m);
-                yield return ("-34", TypeSpecifier.System.Decimal, true, -34m);
-                yield return ("3e+4", TypeSpecifier.System.Decimal, true, 3e+4m);
-                yield return ("+34", TypeSpecifier.System.Decimal, false, default);
-                yield return ("34.", TypeSpecifier.System.Decimal, false, default);
+                yield return ("34", TypeSpecifier.Decimal, true, 34m);
+                yield return ("0034", TypeSpecifier.Decimal, true, 34m);
+                yield return ("34.0", TypeSpecifier.Decimal, true, 34.0m);
+                yield return ("-34", TypeSpecifier.Decimal, true, -34m);
+                yield return ("3e+4", TypeSpecifier.Decimal, true, 3e+4m);
+                yield return ("+34", TypeSpecifier.Decimal, false, default);
+                yield return ("34.", TypeSpecifier.Decimal, false, default);
 
-                yield return ("hallo", TypeSpecifier.System.DateTime, false, default);
+                yield return ("hallo", TypeSpecifier.DateTime, false, default);
             };
 
-            foreach (var test in tests())
+            foreach (var (value, to, success, expected) in tests())
             {
-                Assert.AreEqual(test.success, Any.TryParse(test.value, test.to, out var parsed), $"While parsing {test.value} for type {test.to}");
+                Assert.AreEqual(success, Any.TryParse(value, to, out var parsed), $"While parsing {value} for type {to}");
 
-                if(test.success)
-                    Assert.AreEqual(test.expected, parsed);
+                if(success)
+                    Assert.AreEqual(expected, parsed);
             }
         }
     }

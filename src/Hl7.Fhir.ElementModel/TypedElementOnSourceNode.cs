@@ -122,20 +122,20 @@ namespace Hl7.Fhir.ElementModel
             switch (fhirType)
             {
                 case "boolean":
-                    return TypeSpecifier.System.Boolean;
+                    return TypeSpecifier.Boolean;
                 case "integer":
                 case "unsignedInt":
                 case "positiveInt":
-                    return TypeSpecifier.System.Integer;
+                    return TypeSpecifier.Integer;
                 case "time":
-                    return TypeSpecifier.System.Time;
+                    return TypeSpecifier.Time;
                 case "date":
-                    return TypeSpecifier.System.Date;
+                    return TypeSpecifier.Date;
                 case "instant":
                 case "dateTime":
-                    return TypeSpecifier.System.DateTime;
+                    return TypeSpecifier.DateTime;
                 case "decimal":
-                    return TypeSpecifier.System.Decimal;
+                    return TypeSpecifier.Decimal;
                 case "string":
                 case "code":
                 case "id":
@@ -147,7 +147,7 @@ namespace Hl7.Fhir.ElementModel
                 case "markdown":
                 case "base64Binary":
                 case "xhtml":
-                    return TypeSpecifier.System.String;
+                    return TypeSpecifier.String;
                 default:
                     return null;
             }
@@ -345,7 +345,9 @@ namespace Hl7.Fhir.ElementModel
 
         public IEnumerable<object> Annotations(Type type)
         {
+#pragma warning disable IDE0046 // Convert to conditional expression
             if (type == typeof(TypedElementOnSourceNode) || type == typeof(ITypedElement) || type == typeof(IShortPathGenerator))
+#pragma warning restore IDE0046 // Convert to conditional expression
                 return new[] { this };
             else
                 return Source.Annotations(type);

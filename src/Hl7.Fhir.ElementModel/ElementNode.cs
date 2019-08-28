@@ -20,19 +20,6 @@ namespace Hl7.Fhir.ElementModel
     public class ElementNode : DomNode<ElementNode>, ITypedElement, IAnnotated, IAnnotatable, IShortPathGenerator
     {
         /// <summary>
-        /// This is the list of supported types for the primitive values in ITypedElement.Value
-        /// </summary>
-        internal static readonly TypeSpecifier[] SupportedPrimitiveTypes = 
-            new[] { TS.System.Boolean, TS.System.Date, TS.System.DateTime, TS.System.Decimal,
-                    TS.System.Integer, TS.System.String, TS.System.Time };
-
-        //public static bool IsSupportedValue(object value)
-        //{
-        //    var systemType = TypeSpecifier.ForNativeType(value.GetType());
-        //    return ElementNode.SupportedPrimitiveTypes.Contains(systemType);
-        //}
-
-        /// <summary>
         /// Creates an implementation of ITypedElement that represents a primitive value
         /// </summary>
         /// <param name="value"></param>

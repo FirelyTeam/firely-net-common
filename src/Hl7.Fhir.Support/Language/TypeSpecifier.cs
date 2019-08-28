@@ -9,27 +9,31 @@ namespace Hl7.Fhir.Language
         public const string SYSTEM_NAMESPACE = "System";
         public const string DOTNET_NAMESPACE = "DotNet";
 
-        public static class System
-        {
-            // From the Types section in Appendix B of the CQL reference
-            public static readonly TypeSpecifier Any = new TypeSpecifier(SYSTEM_NAMESPACE, "Any");
-            public static readonly TypeSpecifier Boolean = new TypeSpecifier(SYSTEM_NAMESPACE, "Boolean");
-            public static readonly TypeSpecifier Code = new TypeSpecifier(SYSTEM_NAMESPACE, "Code");
-            public static readonly TypeSpecifier Concept = new TypeSpecifier(SYSTEM_NAMESPACE, "Concept");
-            public static readonly TypeSpecifier Date = new TypeSpecifier(SYSTEM_NAMESPACE, "Date");
-            public static readonly TypeSpecifier DateTime = new TypeSpecifier(SYSTEM_NAMESPACE, "DateTime");
-            public static readonly TypeSpecifier Decimal = new TypeSpecifier(SYSTEM_NAMESPACE, "Decimal");
-            public static readonly TypeSpecifier Integer = new TypeSpecifier(SYSTEM_NAMESPACE, "Integer");
-            public static readonly TypeSpecifier Quantity = new TypeSpecifier(SYSTEM_NAMESPACE, "Quantity");
-            public static readonly TypeSpecifier String = new TypeSpecifier(SYSTEM_NAMESPACE, "String");
-            public static readonly TypeSpecifier Time = new TypeSpecifier(SYSTEM_NAMESPACE, "Time");
+        // From the Types section in Appendix B of the CQL reference
+        public static readonly TypeSpecifier Any = new TypeSpecifier(SYSTEM_NAMESPACE, "Any");
+        public static readonly TypeSpecifier Boolean = new TypeSpecifier(SYSTEM_NAMESPACE, "Boolean");
+        public static readonly TypeSpecifier Code = new TypeSpecifier(SYSTEM_NAMESPACE, "Code");
+        public static readonly TypeSpecifier Concept = new TypeSpecifier(SYSTEM_NAMESPACE, "Concept");
+        public static readonly TypeSpecifier Date = new TypeSpecifier(SYSTEM_NAMESPACE, "Date");
+        public static readonly TypeSpecifier DateTime = new TypeSpecifier(SYSTEM_NAMESPACE, "DateTime");
+        public static readonly TypeSpecifier Decimal = new TypeSpecifier(SYSTEM_NAMESPACE, "Decimal");
+        public static readonly TypeSpecifier Integer = new TypeSpecifier(SYSTEM_NAMESPACE, "Integer");
+        public static readonly TypeSpecifier Quantity = new TypeSpecifier(SYSTEM_NAMESPACE, "Quantity");
+        public static readonly TypeSpecifier String = new TypeSpecifier(SYSTEM_NAMESPACE, "String");
+        public static readonly TypeSpecifier Time = new TypeSpecifier(SYSTEM_NAMESPACE, "Time");
 
-            // This was added to represent the datatype with a single void element
-            public static readonly TypeSpecifier Void = new TypeSpecifier(SYSTEM_NAMESPACE, "Void");
+        // This was added to represent the datatype with a single void element
+        public static readonly TypeSpecifier Void = new TypeSpecifier(SYSTEM_NAMESPACE, "Void");
 
-            public static readonly TypeSpecifier[] Types = new[] { Any, Boolean, Code, Concept,
+        public static readonly TypeSpecifier[] AllTypes = new[] { Any, Boolean, Code, Concept,
                 Date, DateTime, Decimal, Integer, Quantity, String, Time };
-        }
+
+        /// <summary>
+        /// This is the list of supported types for the primitive values in ITypedElement.Value
+        /// </summary>
+        public static readonly TypeSpecifier[] PrimitiveTypes =
+            new[] { Boolean, Date, DateTime, Decimal,    Integer, String, Time };
+
 
         protected TypeSpecifier(string @namespace, string name)
         {
@@ -56,18 +60,18 @@ namespace Hl7.Fhir.Language
             {
                 switch (name)
                 {
-                    case "Any": return TypeSpecifier.System.Any;
-                    case "Boolean": return TypeSpecifier.System.Boolean;
-                    case "Code": return TypeSpecifier.System.Code;
-                    case "Concept": return TypeSpecifier.System.Concept;
-                    case "Date": return TypeSpecifier.System.Date;
-                    case "DateTime": return TypeSpecifier.System.DateTime;
-                    case "Decimal": return TypeSpecifier.System.Decimal;
-                    case "Integer": return TypeSpecifier.System.Integer;
-                    case "Quantity": return TypeSpecifier.System.Quantity;
-                    case "String": return TypeSpecifier.System.String;
-                    case "Time": return TypeSpecifier.System.Time;
-                    case "Void": return TypeSpecifier.System.Void;
+                    case "Any": return Any;
+                    case "Boolean": return Boolean;
+                    case "Code": return Code;
+                    case "Concept": return Concept;
+                    case "Date": return Date;
+                    case "DateTime": return DateTime;
+                    case "Decimal": return Decimal;
+                    case "Integer": return Integer;
+                    case "Quantity": return Quantity;
+                    case "String": return String;
+                    case "Time": return Time;
+                    case "Void": return Void;
                     default:
                         return null;
                 }
@@ -105,27 +109,29 @@ namespace Hl7.Fhir.Language
 
             // NOTE: Keep Any.TryConvertToSystemValue, TypeSpecifier.TryGetNativeType and TypeSpecifier.ForNativeType in sync
             if (t<bool>())
-                return System.Boolean;
+                return Boolean;
             else if (t<int>() || t<short>() || t<long>() || t<ushort>() || t<uint>() || t<ulong>())
-                return System.Integer;
+                return Integer;
             else if (t<PartialTime>())
-                return System.Time;
+                return Time;
             else if (t<PartialDate>())
-                return System.Date;
+                return Date;
             else if (t<PartialDateTime>() || t<DateTimeOffset>())
-                return System.DateTime;
+                return DateTime;
             else if (t<float>() || t<double>() || t<decimal>())
-                return System.Decimal;
+                return Decimal;
             else if (t<string>() || t<char>() || t<Uri>())
-                return System.String;
+                return String;
             else if (t<Quantity>())
-                return System.Quantity;
+                return Quantity;
             else if (t<Coding>())
-                return System.Code;
+                return Code;
             else if (t<Concept>())
-                return System.Concept;
+                return Concept;
+#pragma warning disable IDE0046 // Convert to conditional expression
             else if (t<object>())
-                return System.Any;
+#pragma warning restore IDE0046 // Convert to conditional expression
+                return Any;
             else
                 return GetByName(DOTNET_NAMESPACE, dotNetType.ToString());
 
@@ -167,27 +173,29 @@ namespace Hl7.Fhir.Language
             // NOTE: Keep Any.TryConvertToSystemValue, TypeSpecifier.TryGetNativeType and TypeSpecifier.ForNativeType in sync
             Type getFromKnownSystemTypes()
             {
-                if (this == System.Any)
+                if (this == Any)
                     return typeof(object);
-                else if (this == System.Boolean)
+                else if (this == Boolean)
                     return typeof(bool);
-                else if (this == System.Code)
+                else if (this == Code)
                     return typeof(Coding);
-                else if (this == System.Concept)
+                else if (this == Concept)
                     return typeof(Concept);
-                else if (this == System.Date)
+                else if (this == Date)
                     return typeof(PartialDate);
-                else if (this == System.DateTime)
+                else if (this == DateTime)
                     return typeof(PartialDateTime);
-                else if (this == System.Decimal)
+                else if (this == Decimal)
                     return typeof(decimal);
-                else if (this == System.Integer)
+                else if (this == Integer)
                     return typeof(long);
-                else if (this == System.Quantity)
+                else if (this == Quantity)
                     return typeof(Quantity);
-                else if (this == System.String)
+                else if (this == String)
                     return typeof(string);
-                else if (this == System.Time)
+#pragma warning disable IDE0046 // Convert to conditional expression
+                else if (this == Time)
+#pragma warning restore IDE0046 // Convert to conditional expression
                     return typeof(PartialTime);
                 else
                     return null;

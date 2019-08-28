@@ -89,54 +89,54 @@ namespace Hl7.Fhir.Model.Primitives
                 return true;
             }
 
-            (bool succ, object output) result = default;
+            (bool succ, object output) result;
 
-            if (systemType == TypeSpecifier.System.Boolean)
+            if (systemType == TypeSpecifier.Boolean)
             {
                 var success = Boolean.TryParse(value, out var p);
                 result = (success, p);
             }
-            else if (systemType == TypeSpecifier.System.Code)
+            else if (systemType == TypeSpecifier.Code)
             {
                 var success = Coding.TryParse(value, out var p);
                 result = (success, p);
             }
-            else if (systemType == TypeSpecifier.System.Concept)
+            else if (systemType == TypeSpecifier.Concept)
             {
                 var success = Concept.TryParse(value, out var p);
                 result = (success, p);
             }
-            else if (systemType == TypeSpecifier.System.Date)
+            else if (systemType == TypeSpecifier.Date)
             {
                 var success = PartialDate.TryParse(value, out var p);
                 result = (success, p);
             }
-            else if (systemType == TypeSpecifier.System.DateTime)
+            else if (systemType == TypeSpecifier.DateTime)
             {
                 var success = PartialDateTime.TryParse(value, out var p);
                 result = (success, p);
             }
-            else if (systemType == TypeSpecifier.System.Decimal)
+            else if (systemType == TypeSpecifier.Decimal)
             {
                 var success = Decimal.TryParse(value, out var p);
                 result = (success, p);
             }
-            else if (systemType == TypeSpecifier.System.Integer)
+            else if (systemType == TypeSpecifier.Integer)
             {
                 var success = Integer.TryParse(value, out var p);
                 result = (success, p);
             }
-            else if (systemType == TypeSpecifier.System.Quantity)
+            else if (systemType == TypeSpecifier.Quantity)
             {
                 var success = Quantity.TryParse(value, out var p);
                 result = (success, p);
             }
-            else if (systemType == TypeSpecifier.System.String)
+            else if (systemType == TypeSpecifier.String)
             {
                 var success = String.TryParse(value, out var p);
                 result = (success, p);
             }
-            else if (systemType == TypeSpecifier.System.Time)
+            else if (systemType == TypeSpecifier.Time)
             {
                 var success = PartialTime.TryParse(value, out var p);
                 result = (success, p);
@@ -201,7 +201,9 @@ namespace Hl7.Fhir.Model.Primitives
                 primitiveValue = Convert.ToDecimal(value);
             else if (value is char)
                 primitiveValue = new string((char)value, 1);
+#pragma warning disable IDE0045 // Convert to conditional expression
             else if (value is Uri u)
+#pragma warning restore IDE0045 // Convert to conditional expression
                 primitiveValue = u.OriginalString;
             else
                 primitiveValue = null;

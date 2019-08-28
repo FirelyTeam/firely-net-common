@@ -16,7 +16,7 @@ namespace Hl7.Fhir.Support.Tests.Language
             var sysT = TypeSpecifier.GetByName("Concept");
             Assert.AreEqual("System", sysT.Namespace);
             Assert.AreEqual("Concept", sysT.Name);
-            Assert.IsTrue(Object.ReferenceEquals(sysT, TypeSpecifier.System.Concept));
+            Assert.IsTrue(Object.ReferenceEquals(sysT, TypeSpecifier.Concept));
 
             sysT = TypeSpecifier.GetByName("AsYetUnknown");
             Assert.AreEqual("System", sysT.Namespace);
@@ -30,23 +30,23 @@ namespace Hl7.Fhir.Support.Tests.Language
         [TestMethod]
         public void TestEquality()
         {
-            Assert.AreEqual(TypeSpecifier.System.Concept, TypeSpecifier.System.Concept);
-            Assert.AreNotEqual(TypeSpecifier.System.Concept, TypeSpecifier.System.Code);
+            Assert.AreEqual(TypeSpecifier.Concept, TypeSpecifier.Concept);
+            Assert.AreNotEqual(TypeSpecifier.Concept, TypeSpecifier.Code);
 #pragma warning disable CS1718 // Comparison made to same variable - we're testing the '==' operator here
-            Assert.IsTrue(TypeSpecifier.System.Concept == TypeSpecifier.System.Concept);
+            Assert.IsTrue(TypeSpecifier.Concept == TypeSpecifier.Concept);
 #pragma warning restore CS1718 // Comparison made to same variable
-            Assert.IsTrue(TypeSpecifier.System.Concept != TypeSpecifier.System.Code);
-            Assert.AreEqual(TypeSpecifier.System.Concept, TypeSpecifier.GetByName("Concept"));
-            Assert.AreEqual(TypeSpecifier.System.Concept, TypeSpecifier.GetByName("System","Concept"));
+            Assert.IsTrue(TypeSpecifier.Concept != TypeSpecifier.Code);
+            Assert.AreEqual(TypeSpecifier.Concept, TypeSpecifier.GetByName("Concept"));
+            Assert.AreEqual(TypeSpecifier.Concept, TypeSpecifier.GetByName("System","Concept"));
 
-            Assert.AreNotEqual(TypeSpecifier.System.Concept, TypeSpecifier.GetByName("System", "concept"));
+            Assert.AreNotEqual(TypeSpecifier.Concept, TypeSpecifier.GetByName("System", "concept"));
             Assert.AreNotEqual(TypeSpecifier.GetByName("System", "Concept"), TypeSpecifier.GetByName("System", "concept"));
         }
 
         [TestMethod]
         public void TestToString()
         {
-            Assert.AreEqual("System.Concept", TypeSpecifier.System.Concept.ToString());
+            Assert.AreEqual("System.Concept", TypeSpecifier.Concept.ToString());
             Assert.AreEqual("`dot.net`.String", TypeSpecifier.GetByName("dot.net", "String").ToString());
             Assert.AreEqual("DotNet.`System.Guid`", TypeSpecifier.GetByName("DotNet", "System.Guid").ToString());
             Assert.AreEqual(@"`dot.\`net\``.String", TypeSpecifier.GetByName("dot.`net`", "String").ToString());
@@ -56,10 +56,10 @@ namespace Hl7.Fhir.Support.Tests.Language
         [TestMethod]
         public void TestForNativeType()
         {
-            Assert.AreEqual(TypeSpecifier.System.Boolean,TypeSpecifier.ForNativeType(typeof(bool)));
-            Assert.AreEqual(TypeSpecifier.System.DateTime, TypeSpecifier.ForNativeType(typeof(PartialDateTime)));
-            Assert.AreEqual(TypeSpecifier.System.Concept, TypeSpecifier.ForNativeType(typeof(Concept)));
-            Assert.AreEqual(TypeSpecifier.System.Any, TypeSpecifier.ForNativeType(typeof(object)));
+            Assert.AreEqual(TypeSpecifier.Boolean,TypeSpecifier.ForNativeType(typeof(bool)));
+            Assert.AreEqual(TypeSpecifier.DateTime, TypeSpecifier.ForNativeType(typeof(PartialDateTime)));
+            Assert.AreEqual(TypeSpecifier.Concept, TypeSpecifier.ForNativeType(typeof(Concept)));
+            Assert.AreEqual(TypeSpecifier.Any, TypeSpecifier.ForNativeType(typeof(object)));
             Assert.AreEqual(TypeSpecifier.GetByName("DotNet", "System.Guid"), TypeSpecifier.ForNativeType(typeof(Guid)));
             Assert.AreEqual(TypeSpecifier.GetByName("DotNet", "System.Collections.Generic.IEnumerable`1[System.Guid]"), 
                 TypeSpecifier.ForNativeType(typeof(IEnumerable<Guid>)));
@@ -68,10 +68,10 @@ namespace Hl7.Fhir.Support.Tests.Language
         [TestMethod]
         public void TestGetNativeType()
         {
-            Assert.AreEqual(typeof(string), TypeSpecifier.System.String.GetNativeType());
-            Assert.AreEqual(typeof(Quantity), TypeSpecifier.System.Quantity.GetNativeType());
-            Assert.AreEqual(typeof(object), TypeSpecifier.System.Any.GetNativeType());
-            Assert.AreEqual(typeof(PartialTime), TypeSpecifier.System.Time.GetNativeType());
+            Assert.AreEqual(typeof(string), TypeSpecifier.String.GetNativeType());
+            Assert.AreEqual(typeof(Quantity), TypeSpecifier.Quantity.GetNativeType());
+            Assert.AreEqual(typeof(object), TypeSpecifier.Any.GetNativeType());
+            Assert.AreEqual(typeof(PartialTime), TypeSpecifier.Time.GetNativeType());
             Assert.AreEqual(typeof(Guid), TypeSpecifier.ForNativeType(typeof(Guid)).GetNativeType());
 
 #if !NET40
