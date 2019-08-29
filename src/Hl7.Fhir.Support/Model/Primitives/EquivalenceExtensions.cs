@@ -29,19 +29,6 @@ namespace Hl7.Fhir.Model.Primitives
         public static bool IsEquivalentTo(this bool l, bool r) => l == r;   // aligns with .NET decimal behaviour
 
         // Decimal: values must be equal, trailing zeroes after the decimal are ignored
-        public static bool IsEquivalentTo(this decimal a, decimal b)
-        {
-            var prec = Math.Min(precision(a), precision(b));
-            var aR = Math.Round(a, prec);
-            var bR = Math.Round(b, prec);
-
-            return aR == bR;
-
-            int precision(decimal av)
-            {
-                var repr = av.ToString(CultureInfo.InvariantCulture);
-                return repr.Length - repr.IndexOf('.') - 1;
-            }
-        }
+        public static bool IsEquivalentTo(this decimal a, decimal b) => a == b;   // aligns with .NET decimal behaviour
     }
 }

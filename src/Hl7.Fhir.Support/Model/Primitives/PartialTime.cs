@@ -143,7 +143,7 @@ namespace Hl7.Fhir.Model.Primitives
         }
 
         public bool IsEqualTo(PartialTime other) => this == other;
-        public bool IsEquivalentTo(PartialTime other) => throw new NotImplementedException();
+        public bool IsEquivalentTo(PartialTime other) => this == other;
 
         // TODO: Note, this enables comparisons between values that did or did not have timezones, need to fix.
         private DateTimeOffset toComparable() => _parsedValue.ToUniversalTime();
@@ -168,7 +168,7 @@ namespace Hl7.Fhir.Model.Primitives
                 throw new ArgumentException($"Object is not a {nameof(PartialTime)}");
         }
 
-        public bool Equals(PartialTime other) => other.toComparable() == toComparable();
+        public bool Equals(PartialTime other) => this.Precision == other.Precision && other.toComparable() == toComparable();
         public override int GetHashCode() => toComparable().GetHashCode();
         public override string ToString() => _original;
 

@@ -144,7 +144,7 @@ namespace Hl7.Fhir.Model.Primitives
                 throw new ArgumentException($"Object is not a {nameof(PartialDateTime)}");
         }
 
-        public bool Equals(PartialDateTime other) => other.toComparable() == toComparable();
+        public bool Equals(PartialDateTime other) => this.Precision == other.Precision && other.toComparable() == toComparable();
         public override int GetHashCode() => toComparable().GetHashCode();
         public override string ToString() => _original;
         public int CompareTo(PartialDateTime obj) => CompareTo((object)obj);

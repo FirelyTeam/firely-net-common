@@ -129,17 +129,7 @@ namespace Hl7.FhirPath.Tests
         }
 
 
-        [TestMethod,Ignore]
-        public void TimeEquality()
-        {
-            Assert.IsTrue(PartialDateTime.Parse("2015-01-01") == PartialDateTime.Parse("2015-01-01"));
-            Assert.IsTrue(PartialDateTime.Parse("2015-01-01") != PartialDateTime.Parse("2015-01"));
-            Assert.IsTrue(PartialDateTime.Parse("2015-01-01T13:40:50+02:00") == PartialDateTime.Parse("2015-01-01T13:40:50+02:00"));
-            Assert.IsTrue(PartialDateTime.Parse("2015-01-01T13:40:50+00:00") == PartialDateTime.Parse("2015-01-01T13:40:50Z"));
-            Assert.IsTrue(PartialDateTime.Parse("2015-01-01T13:40:50+00:10") != PartialDateTime.Parse("2015-01-01T13:40:50Z"));
-            Assert.IsTrue(PartialDateTime.Parse("2015-01-01T13:40:50+00:10") != PartialDateTime.Parse("2015-01-01"));
-        }
-
+     
         [TestMethod]
         public void CheckOrdering()
         {
