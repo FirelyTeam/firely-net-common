@@ -10,6 +10,7 @@ using Hl7.Fhir.Utility;
 using System;
 using System.IO;
 using System.Net;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Rest
@@ -50,6 +51,10 @@ namespace Hl7.Fhir.Rest
         /// </summary>
         public const string HISTORY_PARAM_SINCE = "_since";
 
+        /// <summary>
+        /// "_count" found as a parameter on the REST History operation URL
+        /// </summary>
+        public const string HISTORY_PARAM_COUNT = SearchParams.SEARCH_PARAM_COUNT;
 
         public static byte[] ReadAllFromStream(Stream s)
         {
@@ -143,6 +148,20 @@ namespace Hl7.Fhir.Rest
             }
 
             return true;
+        }
+
+        public static string DecodeBody(byte[] body, Encoding enc)
+        {
+            if (body == null) return null;
+            if (enc == null) enc = Encoding.UTF8;
+
+            // [WMR 20160421] Explicit disposal
+            // return (new StreamReader(new MemoryStream(body), enc, true)).ReadToEnd();
+            using (var stream = new MemoryStream(body))
+            using (var reader = new StreamReader(stream, enc, true))
+            {
+                return reader.ReadToEnd();
+            }
         }
 
 

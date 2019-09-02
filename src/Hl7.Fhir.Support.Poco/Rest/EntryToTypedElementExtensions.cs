@@ -10,7 +10,7 @@ namespace Hl7.Fhir.Rest
     {
         public static TypedEntryResponse ToTypedEntryResponse(this EntryResponse response, ParserSettings parserSettings, IStructureDefinitionSummaryProvider provider)
         {
-            var result = new TypedEntryResponse()
+            var result = new TypedEntryResponse
             {
                 ContentType = response.ContentType,
                 Body = response.Body,
@@ -20,6 +20,7 @@ namespace Hl7.Fhir.Rest
                 LastRequest = response.LastRequest,
                 LastResponse = response.LastResponse,
                 Location = response.Location,
+                ResponseUri = response.ResponseUri,
                 Status = response.Status
             };
             
@@ -27,7 +28,7 @@ namespace Hl7.Fhir.Rest
             {
                 try
                 {
-                    var resource = parseResource(response.GetBodyAsText(), response.ContentType, parserSettings, provider, response.IsSuccessful());
+                    result.TypedElement = parseResource(response.GetBodyAsText(), response.ContentType, parserSettings, provider, response.IsSuccessful());
                 }
                 catch (UnsupportedBodyTypeException bte)
                 {
@@ -68,9 +69,9 @@ namespace Hl7.Fhir.Rest
                 else
                     result = FhirXmlNode.Parse(bodyText).ToTypedElement(provider);
             }
-            catch (FormatException fe) when (!throwOnFormatException)
+            catch (FormatException) when (!throwOnFormatException)
             {
-                if (throwOnFormatException) throw fe;
+                //if (throwOnFormatException) throw fe;
 
                 //         [WMR 20181029]
                 //TODO...

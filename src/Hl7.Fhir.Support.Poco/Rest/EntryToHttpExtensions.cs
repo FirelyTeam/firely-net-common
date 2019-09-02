@@ -17,8 +17,7 @@ namespace Hl7.Fhir.Rest
 {
     internal static class EntryToHttpExtensions
     {
-        public static HttpWebRequest ToHttpRequest(this EntryRequest entry, Uri baseUrl,
-            SearchParameterHandling? handlingPreference, Prefer? returnPreference, ResourceFormat format, bool useFormatParameter)
+        public static HttpWebRequest ToHttpRequest(this EntryRequest entry, Uri baseUrl, FhirClientSettings settings)
         {
             System.Diagnostics.Debug.WriteLine("{0}: {1}", entry.Method, entry.Url);
 
@@ -34,17 +33,17 @@ namespace Hl7.Fhir.Rest
                 uri = HttpUtil.MakeAbsoluteToBase(uri, baseUrl);
             }
 
-            var location = new RestUrl(interaction.Url);
+            var location = new RestUrl(uri);
 
-            if (useFormatParameter)
-                location.AddParam(HttpUtil.RESTPARAM_FORMAT, Hl7.Fhir.Rest.ContentType.BuildFormatParam(format));
+            if (settings.UseFormatParameter)
+                location.AddParam(HttpUtil.RESTPARAM_FORMAT, Hl7.Fhir.Rest.ContentType.BuildFormatParam(settings.PreferredFormat));
 
             var request = (HttpWebRequest)HttpWebRequest.Create(location.Uri);
             request.Method = interaction.Method.ToString();
             setAgent(request, ".NET FhirClient for FHIR " + entry.Agent);
 
-            if (!useFormatParameter)
-                request.Accept = Hl7.Fhir.Rest.ContentType.BuildContentType(format, forBundle: false);
+            if (!settings.UseFormatParameter)
+                request.Accept = Hl7.Fhir.Rest.ContentType.BuildContentType(settings.PreferredFormat, forBundle: false);
 
             if (interaction.Headers.IfMatch != null) request.Headers["If-Match"] = interaction.Headers.IfMatch;
             if (interaction.Headers.IfNoneMatch != null) request.Headers["If-None-Match"] = interaction.Headers.IfNoneMatch;
@@ -56,20 +55,20 @@ namespace Hl7.Fhir.Rest
 #endif
             if (interaction.Headers.IfNoneExist != null) request.Headers["If-None-Exist"] = interaction.Headers.IfNoneExist;
 
-            if (canHaveReturnPreference() && returnPreference.HasValue)
+            if (canHaveReturnPreference() && settings.PreferredReturn.HasValue)
             {
-                if (returnPreference == Prefer.RespondAsync)
-                    request.Headers["Prefer"] = PrimitiveTypeConverter.ConvertTo<string>(returnPreference);
+                if (settings.PreferredReturn == Prefer.RespondAsync)
+                    request.Headers["Prefer"] = PrimitiveTypeConverter.ConvertTo<string>(settings.PreferredReturn);
                 else
-                    request.Headers["Prefer"] = "return=" + PrimitiveTypeConverter.ConvertTo<string>(returnPreference);
+                    request.Headers["Prefer"] = "return=" + PrimitiveTypeConverter.ConvertTo<string>(settings.PreferredReturn);
             }
             else if (entry.Type == InteractionType.Search)
             {
                 List<string> preferHeader = new List<string>();
-                if (handlingPreference.HasValue)
-                    preferHeader.Add("handling=" + handlingPreference.GetLiteral());
-                if (returnPreference.HasValue && returnPreference == Prefer.RespondAsync)
-                    preferHeader.Add(returnPreference.GetLiteral());
+                if (settings.PreferredParameterHandling.HasValue)
+                    preferHeader.Add("handling=" + settings.PreferredParameterHandling.GetLiteral());
+                if (settings.PreferredReturn.HasValue && settings.PreferredReturn == Prefer.RespondAsync)
+                    preferHeader.Add(settings.PreferredReturn.GetLiteral());
                 if (preferHeader.Count > 0)
                     request.Headers["Prefer"] = String.Join(", ", preferHeader);
             }

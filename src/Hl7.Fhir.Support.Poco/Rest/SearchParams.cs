@@ -354,9 +354,12 @@ namespace Hl7.Fhir.Rest
                 return new Tuple<string,string>(SEARCH_PARAM_SORT, String.Join(",", values));
             }
         }
-
-
         
+        [Obsolete("Use the Parameters.ToSearchParameters() method instead.", true)]
+        public static SearchParams FromParameters(object parameters)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public enum SortOrder

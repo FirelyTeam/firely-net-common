@@ -76,27 +76,13 @@ namespace Hl7.Fhir.Rest
             int.TryParse(response.Status, out int code);
             return code >= 200 && code < 300;
         }
-
-        internal static string DecodeBody(byte[] body, Encoding enc)
-        {
-            if (body == null) return null;
-            if (enc == null) enc = Encoding.UTF8;
-
-            // [WMR 20160421] Explicit disposal
-            // return (new StreamReader(new MemoryStream(body), enc, true)).ReadToEnd();
-            using (var stream = new MemoryStream(body))
-            using (var reader = new StreamReader(stream, enc, true))
-            {
-                return reader.ReadToEnd();
-            }
-        }
-
+        
         public static string GetBodyAsText(this EntryResponse interaction)
         {
             var body = interaction.Body;
 
             if (body != null)
-                return DecodeBody(body, Encoding.UTF8);
+                return HttpUtil.DecodeBody(body, Encoding.UTF8);
             else
                 return null;
         }

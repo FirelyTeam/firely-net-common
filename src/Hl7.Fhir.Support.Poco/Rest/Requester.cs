@@ -39,7 +39,7 @@ namespace Hl7.Fhir.Rest
 
             bool compressRequestBody = false;
 
-            var request = interaction.ToHttpRequest(BaseUrl, Settings.PreferredParameterHandling, Settings.PreferredReturn, Settings.PreferredFormat, Settings.UseFormatParameter);
+            var request = interaction.ToHttpRequest(BaseUrl, Settings);
             request.ContentType = interaction.ContentType;
 
 #if !NETSTANDARD1_1
