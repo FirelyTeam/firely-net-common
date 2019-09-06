@@ -1,5 +1,6 @@
 ﻿using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Validation.Schema;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
 
@@ -14,6 +15,8 @@ namespace Hl7.Fhir.Validation.Impl
             this._fixed = fixedValue;
         }
 
+        public Fixed(object fixedValue) : this(ElementNode.ForPrimitive(fixedValue)) { }
+
         protected override string Key => "fixed[x]";
 
         protected override object Value => _fixed;
@@ -22,12 +25,15 @@ namespace Hl7.Fhir.Validation.Impl
         {
             if (!input.IsExactlyEqualTo(_fixed))
             {
-                return Assertions.Failure;
-                //v.Trace(outcome, $"Value is not exactly equal to fixed value '{toReadable(definition.Fixed)}'",
-                //                        Issue.CONTENT_DOES_NOT_MATCH_FIXED_VALUE, instance);
+                return new Assertions(Assertions.Failure + new TraceText($"Value is not exactly equal to fixed value '{_fixed.Value}'"));
             }
 
             return Assertions.Success;
+        }
+
+        public override JToken ToJson()
+        {
+            return new JProperty(Key, _fixed.Value);
         }
     }
 

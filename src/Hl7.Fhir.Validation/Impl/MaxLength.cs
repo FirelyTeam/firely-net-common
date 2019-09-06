@@ -39,7 +39,11 @@ namespace Hl7.Fhir.Validation.Impl
                 var serializedValue = input.Value.ToString();
 
                 if (serializedValue.Length > _maxLength)
-                    return new Assertions(Assertions.Failure + new TraceText($"Value '{serializedValue}' is too long (maximum length is {_maxLength})"));
+                {
+
+                    return new Assertions(new ResultAssertion(ValidationResult.Failure, this));
+                }
+                //return new Assertions(Assertions.Failure + new TraceText($"Value '{serializedValue}' is too long (maximum length is {_maxLength})"));
             }
             return Assertions.Success;
         }

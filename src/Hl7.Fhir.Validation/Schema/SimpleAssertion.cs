@@ -7,7 +7,7 @@ namespace Hl7.Fhir.Validation.Schema
     {
         //public IEnumerable<Assertions> Collect() => new Assertions(this).Collection;
 
-        public JToken ToJson() => new JProperty(Key, Value);
+        public virtual JToken ToJson() => new JProperty(Key, Value);
 
         public abstract Assertions Validate(ITypedElement input, ValidationContext vc);
 

@@ -84,34 +84,67 @@ namespace Hl7.Fhir.Validation.Schema
 
         public Assertions Validate(ITypedElement input, ValidationContext vc)
         {
-            // Check first if all the children exist in the schema
-            foreach (var item in input.Children())
-            {
-                if (!ChildList.ContainsKey(item.Name)) return Assertions.Failure;
-            }
-
-
             var result = Assertions.Empty;
 
-            foreach (var item in input.Children())
+            foreach (var assertion in ChildList)
             {
-                if (ChildList.TryGetValue(item.Name, out var assertion))
+                var childElements = input.ChildrenIncValue().Where(child => NameMatches(assertion.Key, child)).ToList();
+
+                switch (assertion.Value)
                 {
-                    if (assertion is IValidatable validatable)
-                    {
-                        result += validatable.Validate(item, vc);
-                    }
-                    else if (assertion is IGroupValidatable groupvalidatable)
-                    {
-                        var a = groupvalidatable.Validate(new[] { item }, vc);
-                        a.Select(s => result += s.Item1);
-                    }
+                    case IValidatable validatable:
+                        result += validatable.Validate(childElements.SingleOrDefault(), vc);
+                        break;
+                    case IGroupValidatable groupvalidatable:
+                        {
+                            var a = groupvalidatable.Validate(childElements, vc);
+                            foreach (var item in a)
+                            {
+                                result += item.Item1;
+                            }
+                            break;
+                        }
                 }
             }
 
-
-
             return result;
+        }
+
+        private bool NameMatches(string name, ITypedElement instanceElement)
+        {
+            var definedName = name;
+
+            // simple direct match
+            if (definedName == instanceElement.Name) return true;
+
+            // match where definition path includes a type suffix (typeslice shorthand)
+            // example: path Patient.deceasedBoolean matches Patient.deceased (with type 'boolean')
+            if (definedName == instanceElement.Name + instanceElement.InstanceType.Capitalize()) return true;
+
+            // match where definition path is a choice (suffix '[x]'), in this case
+            // match the path without the suffix against the name
+            if (definedName.EndsWith("[x]"))
+            {
+                if (definedName.Substring(0, definedName.Length - 3) == instanceElement.Name) return true;
+            }
+
+            return false;
+        }
+    }
+
+    public static class TypeElementExtensions
+    {
+        public static IEnumerable<ITypedElement> ChildrenIncValue(this ITypedElement instance)
+        {
+            foreach (var child in instance.Children())
+            {
+                yield return child;
+
+            }
+            if (instance.InstanceType == "string")
+            {
+                yield return new ValueElementNode(instance.Value, instance.Location);
+            }
         }
     }
 }

@@ -7,6 +7,7 @@
  */
 
 using Hl7.Fhir.Utility;
+using Hl7.FhirPath;
 
 namespace Hl7.Fhir.Validation.Schema
 {
@@ -15,5 +16,7 @@ namespace Hl7.Fhir.Validation.Schema
         public ITerminologyServiceNEW TerminologyService;
 
         public IExceptionSource ExceptionSink;
+
+        public FhirPathCompiler fpCompiler;
     }
 }

@@ -37,6 +37,23 @@ namespace Hl7.Fhir.Validation.Schema
 
         public ElementSchema(Uri id, Assertions assertions) : this(assertions) => Id = id;
 
+        private static Uri buildUri(string uri) => new Uri(uri, UriKind.RelativeOrAbsolute);
+
+        public ElementSchema(string id, params IAssertion[] assertions) : this(assertions)
+        {
+            Id = buildUri(id);
+        }
+
+        public ElementSchema(string id, IEnumerable<IAssertion> assertions) : this(assertions)
+        {
+            Id = buildUri(id);
+        }
+
+        public ElementSchema(string id, Assertions assertions) : this(assertions)
+        {
+            Id = buildUri(id);
+        }
+
         public bool IsEmpty => !Members.Any();
 
         public IList<(Assertions, ITypedElement)> Validate(IEnumerable<ITypedElement> input, ValidationContext vc)

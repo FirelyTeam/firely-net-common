@@ -73,6 +73,21 @@ namespace Hl7.Fhir.ElementModel
             return child;
         }
 
+        /// <summary>
+        /// Adds a child to this instance. Be careful: this will not add type information to the child. 
+        /// Use <see cref="Add(IStructureDefinitionSummaryProvider, ElementNode, string)"/> instead
+        /// </summary>
+        /// <param name="child"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        internal ElementNode Add(ElementNode child, string name = null)
+        {
+            if (child == null) throw new ArgumentNullException(nameof(child));
+
+            importChild(null, child, name);
+            return child;
+        }
+
         public ElementNode Add(IStructureDefinitionSummaryProvider provider, string name, object value = null, string instanceType = null)
         {
             if (provider == null) throw new ArgumentNullException(nameof(provider));
@@ -82,6 +97,23 @@ namespace Hl7.Fhir.ElementModel
 
             // Add() will supply the definition and the instanceType (if necessary)
             return Add(provider, child);
+        }
+
+        /// <summary>
+        /// Adds a child to this instance. Be careful: this will not add type information to the child. 
+        /// Use <see cref="Add(IStructureDefinitionSummaryProvider, string, object, string)"/> instead
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="value"></param>
+        /// <param name="instanceType"></param>
+        /// <returns></returns>
+        internal ElementNode Add(string name, object value = null, string instanceType = null)
+        {
+            if (name == null) throw new ArgumentNullException(nameof(name));
+
+            var child = new ElementNode(name, value, instanceType, null);
+
+            return Add(child);
         }
 
         public void ReplaceWith(IStructureDefinitionSummaryProvider provider, ElementNode node)
@@ -108,7 +140,7 @@ namespace Hl7.Fhir.ElementModel
         /// <summary>
         /// Will update the child to reflect it being a child of this element, but will not yet add the child at any position within this element
         /// </summary>
-        private void importChild(IStructureDefinitionSummaryProvider provider, ElementNode child, string name, int? position=null)
+        private void importChild(IStructureDefinitionSummaryProvider provider, ElementNode child, string name, int? position = null)
         {
             child.Name = name ?? child.Name;
             if (child.Name == null) throw Error.Argument($"The ElementNode given should have its Name property set or the '{nameof(name)}' parameter should be given.");
@@ -116,14 +148,17 @@ namespace Hl7.Fhir.ElementModel
             // Remove this child from the current parent (if any), then reassign to me
             if (child.Parent != null) Parent.Remove(child);
             child.Parent = this;
-            
-            // If we add a child, we better overwrite it's definition with what
-            // we think it should be - this way you can safely first create a node representing
-            // an independently created root for a resource of datatype, and then add it to the tree.
-            var childDefs = getChildDefinitions(provider ?? throw Error.ArgumentNull(nameof(provider)));
-            var childDef = childDefs.Where(cd => cd.ElementName == child.Name).SingleOrDefault();
 
-            child.Definition = childDef ?? child.Definition;    // if we don't know about the definition, stick with the old one (if any)
+            if (provider != null)
+            {
+                // If we add a child, we better overwrite it's definition with what
+                // we think it should be - this way you can safely first create a node representing
+                // an independently created root for a resource of datatype, and then add it to the tree.
+                var childDefs = getChildDefinitions(provider);
+                var childDef = childDefs.Where(cd => cd.ElementName == child.Name).SingleOrDefault();
+
+                child.Definition = childDef ?? child.Definition;    // if we don't know about the definition, stick with the old one (if any)
+            }
 
             if (child.InstanceType == null && child.Definition != null)
             {
@@ -140,13 +175,27 @@ namespace Hl7.Fhir.ElementModel
                     child.InstanceType = child.Definition.Type.Single().GetTypeName();
             }
 
-            if(position == null || position >= ChildList.Count)
+            if (position == null || position >= ChildList.Count)
                 ChildList.Add(child);
             else
                 ChildList.Insert(position.Value, child);
         }
 
-        public static ElementNode Root(IStructureDefinitionSummaryProvider provider, string type, string name=null, object value=null)
+        /// <summary>
+        /// Creates a Root element. Be careful: This method will not provide type information to the node. 
+        /// Use <see cref="Root(IStructureDefinitionSummaryProvider, string, string, object)"/> instead.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="name"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        internal static ElementNode Root(string type, string name = null, object value = null)
+        {
+            if (type == null) throw Error.ArgumentNull(nameof(type));
+            return new ElementNode(name ?? type, value, type, null);
+        }
+
+        public static ElementNode Root(IStructureDefinitionSummaryProvider provider, string type, string name = null, object value = null)
         {
             if (provider == null) throw Error.ArgumentNull(nameof(provider));
             if (type == null) throw Error.ArgumentNull(nameof(type));
