@@ -145,17 +145,6 @@ namespace Hl7.FhirPath.Tests
         }
 
         [TestMethod]
-        public void TimeEquality()
-        {
-            Assert.IsTrue(PartialTime.Parse("13:40:50+02:00") == PartialTime.Parse("13:40:50+02:00"));
-            Assert.IsTrue(PartialTime.Parse("13:40:50+00:00") == PartialTime.Parse("13:40:50Z"));
-            Assert.IsTrue(PartialTime.Parse("13:40:50+00:10") != PartialTime.Parse("13:40:50Z"));
-            Assert.IsTrue(PartialTime.Parse("13:45:02Z") == PartialTime.Parse("13:45:02+00:00"));
-            Assert.IsTrue(PartialTime.Parse("13:45:02+01:00") == PartialTime.Parse("13:45:02+01:00"));
-            Assert.IsTrue(PartialTime.Parse("13:45:02+00:00") != PartialTime.Parse("13:45:02+01:00"));
-        }
-
-        [TestMethod]
         public void CheckOrdering()
         {
             Assert.AreEqual(1, PartialTime.Parse("13:00:00Z").CompareTo(PartialTime.Parse("12:00:00Z")));

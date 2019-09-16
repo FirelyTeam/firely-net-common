@@ -24,16 +24,21 @@ namespace Hl7.FhirPath.Expressions
             t.Add("empty", (IEnumerable<object> f) => !f.Any());
             t.Add("exists", (IEnumerable<object> f) => f.Any());
             t.Add("count", (IEnumerable<object> f) => f.Count());
-            t.Add("trace", (IEnumerable<ITypedElement> f, string name, EvaluationContext ctx) => f.Trace(name, ctx));
+            t.Add("trace", (IEnumerable<ITypedElement> f, string name, EvaluationContext ctx)
+                    => f.Trace(name, ctx));
 
+            t.Add("allTrue", (IEnumerable<ITypedElement> f) => f.All(e => e.Value as bool? == true));
             t.Add("combine", (IEnumerable<ITypedElement> l, IEnumerable<ITypedElement> r) => l.Concat(r));
             t.Add("binary.|", (object f, IEnumerable<ITypedElement> l, IEnumerable<ITypedElement> r) => l.DistinctUnion(r));
+            t.Add("union", (IEnumerable<ITypedElement> l, IEnumerable<ITypedElement> r) => l.DistinctUnion(r));
             t.Add("binary.contains", (object f, IEnumerable<ITypedElement> a, ITypedElement b) => a.Contains(b));
             t.Add("binary.in", (object f, ITypedElement a, IEnumerable<ITypedElement> b) => b.Contains(a));
             t.Add("distinct", (IEnumerable<ITypedElement> f) => f.Distinct());
             t.Add("isDistinct", (IEnumerable<ITypedElement> f) => f.IsDistinct());
             t.Add("subsetOf", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => f.SubsetOf(a));
             t.Add("supersetOf", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => a.SubsetOf(f));
+            t.Add("intersect", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => f.Intersect(a));
+            t.Add("exclude", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => f.Exclude(a));
 
             t.Add("today", (object f) => PartialDate.Today());
             t.Add("now", (object f) => PartialDateTime.Now());
@@ -63,16 +68,19 @@ namespace Hl7.FhirPath.Expressions
 
             t.Add("binary.*", (object f, long a, long b) => a * b, doNullProp: true);
             t.Add("binary.*", (object f, decimal a, decimal b) => a * b, doNullProp: true);
+            t.Add("binary.*", (object f, Quantity a, Quantity b) => a * b, doNullProp: true);
 
             t.Add("binary./", (object f, decimal a, decimal b) => a / b, doNullProp: true);
-            //.Add((object f, decimal a, decimal b) => a / b, doNullProp: true);
+            t.Add("binary./", (object f, Quantity a, Quantity b) => a / b, doNullProp: true);
 
             t.Add("binary.+", (object f, long a, long b) => a + b, doNullProp: true);
             t.Add("binary.+", (object f, decimal a, decimal b) => a + b, doNullProp: true);
             t.Add("binary.+", (object f, string a, string b) => a + b, doNullProp: true);
+            t.Add("binary.+", (object f, Quantity a, Quantity b) => a + b, doNullProp: true);
 
             t.Add("binary.-", (object f, long a, long b) => a - b, doNullProp: true);
             t.Add("binary.-", (object f, decimal a, decimal b) => a - b, doNullProp: true);
+            t.Add("binary.-", (object f, Quantity a, Quantity b) => a - b, doNullProp: true);
 
             t.Add("binary.div", (object f, long a, long b) => a / b, doNullProp: true);
             t.Add("binary.div", (object f, decimal a, decimal b) => (long)Math.Truncate(a / b), doNullProp: true);
@@ -82,31 +90,35 @@ namespace Hl7.FhirPath.Expressions
 
             t.Add("binary.>", (object f, long a, long b) => a > b, doNullProp: true);
             t.Add("binary.>", (object f, decimal a, decimal b) => a > b, doNullProp: true);
-            t.Add("binary.>", (object f, string a, string b) => String.CompareOrdinal(a, b) > 0, doNullProp: true);
+            t.Add("binary.>", (object f, string a, string b) => string.CompareOrdinal(a, b) > 0, doNullProp: true);
             t.Add("binary.>", (object f, PartialDateTime a, PartialDateTime b) => a > b, doNullProp: true);
             t.Add("binary.>", (object f, PartialTime a, PartialTime b) => a > b, doNullProp: true);
             t.Add("binary.>", (object f, PartialDate a, PartialDate b) => a > b, doNullProp: true);
+            t.Add("binary.>", (object f, Quantity a, Quantity b) => a > b, doNullProp: true);
 
             t.Add("binary.<", (object f, long a, long b) => a < b, doNullProp: true);
             t.Add("binary.<", (object f, decimal a, decimal b) => a < b, doNullProp: true);
-            t.Add("binary.<", (object f, string a, string b) => String.CompareOrdinal(a, b) < 0, doNullProp: true);
+            t.Add("binary.<", (object f, string a, string b) => string.CompareOrdinal(a, b) < 0, doNullProp: true);
             t.Add("binary.<", (object f, PartialDateTime a, PartialDateTime b) => a < b, doNullProp: true);
             t.Add("binary.<", (object f, PartialTime a, PartialTime b) => a < b, doNullProp: true);
             t.Add("binary.<", (object f, PartialDate a, PartialDate b) => a < b, doNullProp: true);
+            t.Add("binary.<", (object f, Quantity a, Quantity b) => a < b, doNullProp: true);
 
             t.Add("binary.<=", (object f, long a, long b) => a <= b, doNullProp: true);
             t.Add("binary.<=", (object f, decimal a, decimal b) => a <= b, doNullProp: true);
-            t.Add("binary.<=", (object f, string a, string b) => String.CompareOrdinal(a, b) <= 0, doNullProp: true);
+            t.Add("binary.<=", (object f, string a, string b) => string.CompareOrdinal(a, b) <= 0, doNullProp: true);
             t.Add("binary.<=", (object f, PartialDateTime a, PartialDateTime b) => a <= b, doNullProp: true);
             t.Add("binary.<=", (object f, PartialTime a, PartialTime b) => a <= b, doNullProp: true);
             t.Add("binary.<=", (object f, PartialDate a, PartialDate b) => a <= b, doNullProp: true);
+            t.Add("binary.<=", (object f, Quantity a, Quantity b) => a <= b, doNullProp: true);
 
             t.Add("binary.>=", (object f, long a, long b) => a >= b, doNullProp: true);
             t.Add("binary.>=", (object f, decimal a, decimal b) => a >= b, doNullProp: true);
-            t.Add("binary.>=", (object f, string a, string b) => String.CompareOrdinal(a, b) >= 0, doNullProp: true);
+            t.Add("binary.>=", (object f, string a, string b) => string.CompareOrdinal(a, b) >= 0, doNullProp: true);
             t.Add("binary.>=", (object f, PartialDateTime a, PartialDateTime b) => a >= b, doNullProp: true);
             t.Add("binary.>=", (object f, PartialTime a, PartialTime b) => a >= b, doNullProp: true);
             t.Add("binary.>=", (object f, PartialDate a, PartialDate b) => a >= b, doNullProp: true);
+            t.Add("binary.>=", (object f, Quantity a, Quantity b) => a >= b, doNullProp: true);
 
             t.Add("single", (IEnumerable<ITypedElement> f) => f.Single(), doNullProp: true);
             t.Add("skip", (IEnumerable<ITypedElement> f, long a) =>  f.Skip((int)a), doNullProp: true);
@@ -130,7 +142,12 @@ namespace Hl7.FhirPath.Expressions
             t.Add("convertsToDate", (ITypedElement f) => f.ConvertsToDate(), doNullProp: true);
             t.Add("toString", (ITypedElement f) => f.ToStringRepresentation(), doNullProp: true);
             t.Add("convertsToString", (ITypedElement f) => f.ConvertsToString(), doNullProp: true);
+            t.Add("toQuantity", (ITypedElement f) => f.ToQuantity(), doNullProp: true);
+            t.Add("convertsToQuantity", (ITypedElement f) => f.ConvertsToQuantity(), doNullProp: true);
 
+            t.Add("upper", (string f) => f.ToUpper(), doNullProp: true);
+            t.Add("lower", (string f) => f.ToLower(), doNullProp: true);
+            t.Add("toChars", (string f) => f.ToChars(), doNullProp: true);
             t.Add("substring", (string f, long a) => f.FpSubstring((int)a), doNullProp: true);
             t.Add("substring", (string f, long a, long b) => f.FpSubstring((int)a, (int)b), doNullProp: true);
             t.Add("startsWith", (string f, string fragment) => f.StartsWith(fragment), doNullProp: true);
@@ -149,6 +166,8 @@ namespace Hl7.FhirPath.Expressions
             t.Add("ofType", (IEnumerable<ITypedElement> f, string name) => f.FilterType(name), doNullProp: true);
             t.Add("binary.is", (object f, ITypedElement left, string name) => left.Is(name), doNullProp: true);
             t.Add("binary.as", (object f, ITypedElement left, string name) => left.CastAs(name), doNullProp: true);
+
+            // Kept for backwards compatibility, but no longer part of the spec
             t.Add("binary.as", (object f, IEnumerable<ITypedElement> left, string name) => left.FilterType(name), doNullProp: true);
 
             t.Add("extension", (IEnumerable<ITypedElement> f, string url) => f.Extension(url), doNullProp: true);
@@ -166,7 +185,6 @@ namespace Hl7.FhirPath.Expressions
             t.Add(new CallSignature("any", typeof(bool), typeof(object), typeof(Invokee)), runAny);
             t.Add(new CallSignature("repeat", typeof(IEnumerable<ITypedElement>), typeof(object), typeof(Invokee)), runRepeat);
             t.Add(new CallSignature("trace", typeof(IEnumerable<ITypedElement>), typeof(string), typeof(object), typeof(Invokee)), Trace);
-
 
             t.AddVar("sct", "http://snomed.info/sct");
             t.AddVar("loinc", "http://loinc.org");
@@ -194,8 +212,7 @@ namespace Hl7.FhirPath.Expressions
             var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
             string name = arguments.Skip(1).First()(ctx, InvokeeFactory.EmptyArgs).FirstOrDefault()?.Value as string;
 
-            List<Invokee> selectArgs = new List<Invokee>();
-            selectArgs.Add(arguments.First());
+            List<Invokee> selectArgs = new List<Invokee> { arguments.First() };
             selectArgs.AddRange(arguments.Skip(2));
             var selectResults = runSelect(ctx, selectArgs);
             ctx?.EvaluationContext?.Tracer?.Invoke(name, selectResults);

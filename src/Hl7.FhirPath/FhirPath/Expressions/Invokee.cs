@@ -23,22 +23,22 @@ namespace Hl7.FhirPath.Expressions
         public static readonly IEnumerable<Invokee> EmptyArgs = Enumerable.Empty<Invokee>();
 
 
-        public static IEnumerable<ITypedElement> GetThis(Closure context, IEnumerable<Invokee> args)
+        public static IEnumerable<ITypedElement> GetThis(Closure context, IEnumerable<Invokee> _)
         {
             return context.GetThis();
         }
 
-        public static IEnumerable<ITypedElement> GetContext(Closure context, IEnumerable<Invokee> arguments)
+        public static IEnumerable<ITypedElement> GetContext(Closure context, IEnumerable<Invokee> _)
         {
             return context.GetOriginalContext();
         }
 
-        public static IEnumerable<ITypedElement> GetResource(Closure context, IEnumerable<Invokee> arguments)
+        public static IEnumerable<ITypedElement> GetResource(Closure context, IEnumerable<Invokee> _)
         {
             return context.GetResource();
         }
 
-        public static IEnumerable<ITypedElement> GetThat(Closure context, IEnumerable<Invokee> args)
+        public static IEnumerable<ITypedElement> GetThat(Closure context, IEnumerable<Invokee> _)
         {
             return context.GetThat();
         }

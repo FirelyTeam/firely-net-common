@@ -70,11 +70,35 @@ namespace Hl7.Fhir.Serialization
         }
 
 
+        // These are the "primitive" FHIR instance types that possibly need a separate element/_element
+        // serialization in json.
+        private static readonly string[] primitiveTypes = { "boolean",
+             "integer",
+             "unsignedInt",
+             "positiveInt",
+             "time",
+             "date",
+             "instant",
+             "dateTime",
+             "decimal",
+             "string",
+             "code",
+             "id",
+             "uri",
+             "oid",
+             "uuid",
+             "canonical",
+             "url",
+             "markdown",
+             "base64Binary",
+             "xhtml" };
+
+
         private (JToken first, JObject second) buildNode(ITypedElement node)
         {
             var details = node.GetJsonSerializationDetails();
             object value = node.Definition != null ? node.Value : details?.OriginalValue ?? node.Value;
-            var objectInShadow = node.InstanceType != null ? TypeSpecifier.IsPrimitive(node.InstanceType) : details?.UsesShadow ?? false;
+            var objectInShadow = node.InstanceType != null ? primitiveTypes.Contains(node.InstanceType) : details?.UsesShadow ?? false;
 
             JToken first = value != null ? buildValue(value) : null;
             JObject second = buildChildren(node);

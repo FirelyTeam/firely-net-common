@@ -63,7 +63,6 @@ namespace Hl7.FhirPath.Expressions
             }
         }
 
-
         private string noMatchError(IEnumerable<object> arguments)
         {
             string result;

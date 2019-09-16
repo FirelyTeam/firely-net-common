@@ -151,21 +151,7 @@ namespace Hl7.FhirPath.Tests
             Assert.IsTrue(PartialDate.Parse("2010-12-03+06:00") < PartialDate.Parse("2010-12-04+02:00"));
             Assert.IsTrue(PartialDate.Parse("2010-12-05+08:00") > PartialDate.Parse("2010-12-04+02:00"));
         }
-
-        [TestMethod]
-        public void DateEquality()
-        {
-            Assert.IsTrue(PartialDate.Parse("2010-06-03") == PartialDate.Parse("2010-06-03"));
-            Assert.IsTrue(PartialDate.Parse("2010-07") == PartialDate.Parse("2010-07"));
-            Assert.IsTrue(PartialDate.Parse("2011") == PartialDate.Parse("2011"));
-            Assert.IsTrue(PartialDate.Parse("2010-06-02") != PartialDate.Parse("2010-06-03"));
-            Assert.IsTrue(PartialDate.Parse("2010-07") != PartialDate.Parse("2010-05"));
-            Assert.IsTrue(PartialDate.Parse("2010-06-02") != PartialDate.Parse("2010-06-03"));
-            Assert.IsTrue(PartialDate.Parse("2018") != PartialDate.Parse("2019"));
-            Assert.IsTrue(PartialDate.Parse("2010-06-03+02:00") == PartialDate.Parse("2010-06-03+02:00"));
-            Assert.IsTrue(PartialDate.Parse("2010-06-03+02:00") != PartialDate.Parse("2010-06-03+05:00"));
-        }
-
+      
         [TestMethod]
         public void CheckOrdering()
         {

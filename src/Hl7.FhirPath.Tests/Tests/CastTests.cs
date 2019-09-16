@@ -12,13 +12,14 @@
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Specification;
 using Hl7.FhirPath.Expressions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Xunit;
 
 namespace Hl7.FhirPath.Tests
 {
+    [TestClass]
     public class CastTests
     {
         static readonly ITypedElement complex = new ComplexValue();
@@ -27,72 +28,71 @@ namespace Hl7.FhirPath.Tests
         static readonly IEnumerable<ITypedElement> singleC = ElementNode.CreateList(complex);
         static readonly IEnumerable<ITypedElement> emptyColl = ElementNode.EmptyList;
 
-        [Fact]
+        [TestMethod]
         public void TestUnbox()
         {
 
-            Assert.Null(Typecasts.Unbox(emptyColl, typeof(string)));
-            Assert.Equal(collection, Typecasts.Unbox(collection, typeof(IEnumerable<ITypedElement>)));
-            Assert.Equal(complex, Typecasts.Unbox(singleC, typeof(ITypedElement)));
+            Assert.IsNull(Typecasts.UnboxTo(emptyColl, typeof(string)));
+            Assert.AreEqual(collection, Typecasts.UnboxTo(collection, typeof(IEnumerable<ITypedElement>)));
+            Assert.AreEqual(complex, Typecasts.UnboxTo(singleC, typeof(ITypedElement)));
 
-            Assert.Equal(4L, Typecasts.Unbox(singleV, typeof(long)));
-            Assert.Equal(4L, Typecasts.Unbox(ElementNode.ForPrimitive(4), typeof(long)));
+            Assert.AreEqual(4L, Typecasts.UnboxTo(singleV, typeof(long)));
+            Assert.AreEqual(4L, Typecasts.UnboxTo(ElementNode.ForPrimitive(4), typeof(long)));
 
-            Assert.Equal(complex, Typecasts.Unbox(complex, typeof(ITypedElement)));
-            Assert.Null(Typecasts.Unbox(null, typeof(string)));
-            Assert.Equal(4L, Typecasts.Unbox(4L, typeof(long)));
-            Assert.Equal("hi!", Typecasts.Unbox("hi!", typeof(string)));
+            Assert.AreEqual(complex, Typecasts.UnboxTo(complex, typeof(ITypedElement)));
+            Assert.IsNull(Typecasts.UnboxTo(null, typeof(string)));
+            Assert.AreEqual(4L, Typecasts.UnboxTo(4L, typeof(long)));
+            Assert.AreEqual("hi!", Typecasts.UnboxTo("hi!", typeof(string)));
         }
 
-        [Fact]
+        [TestMethod]
         public void CastFromNull()
         {
             checkCast<object>(null, null);
             checkCast<IEnumerable<ITypedElement>>(null, ElementNode.EmptyList);
             checkCast<ITypedElement>(null, null);
-            Assert.False(Typecasts.CanCastTo(null, typeof(bool)));
+            Assert.IsFalse(Typecasts.CanCastTo(null, typeof(bool)));
             checkCast<bool?>(null, null);
             checkCast<string>(null, null);
         }
 
-        [Fact]
+        [TestMethod]
         public void CastCollection()
         {
             checkCast<object>(collection, collection);
             checkCast<IEnumerable<ITypedElement>>(collection, collection);
-            Assert.False(Typecasts.CanCastTo(collection, typeof(ITypedElement)));
-            Assert.False(Typecasts.CanCastTo(collection, typeof(bool)));
-            Assert.False(Typecasts.CanCastTo(collection, typeof(bool?)));
-            Assert.False(Typecasts.CanCastTo(collection, typeof(string)));
+            Assert.IsFalse(Typecasts.CanCastTo(collection, typeof(ITypedElement)));
+            Assert.IsFalse(Typecasts.CanCastTo(collection, typeof(bool)));
+            Assert.IsFalse(Typecasts.CanCastTo(collection, typeof(bool?)));
+            Assert.IsFalse(Typecasts.CanCastTo(collection, typeof(string)));
         }
 
-        [Fact]
+        [TestMethod]
         public void CastComplex()
         {
             checkCast<object>(complex, complex);
 
-            Assert.True(Typecasts.CanCastTo(complex, typeof(IEnumerable<ITypedElement>)));
+            Assert.IsTrue(Typecasts.CanCastTo(complex, typeof(IEnumerable<ITypedElement>)));
             var result = (IEnumerable<ITypedElement>)Typecasts.CastTo(complex, typeof(IEnumerable<ITypedElement>));
-            Assert.Equal(complex, result.Single());
+            Assert.AreEqual(complex, result.Single());
             checkCast<ITypedElement>(complex, complex);
-            Assert.False(Typecasts.CanCastTo(collection, typeof(bool)));
-            Assert.False(Typecasts.CanCastTo(collection, typeof(bool?)));
-            Assert.False(Typecasts.CanCastTo(collection, typeof(string)));
+            Assert.IsFalse(Typecasts.CanCastTo(collection, typeof(bool)));
+            Assert.IsFalse(Typecasts.CanCastTo(collection, typeof(bool?)));
+            Assert.IsFalse(Typecasts.CanCastTo(collection, typeof(string)));
         }
 
-
-        [Fact]
+        [TestMethod]
         public void CastValue()
         {
             checkCast<object>(4L, 4L);
 
-            Assert.True(Typecasts.CanCastTo(4, typeof(IEnumerable<ITypedElement>)));
+            Assert.IsTrue(Typecasts.CanCastTo(4, typeof(IEnumerable<ITypedElement>)));
             var result = (IEnumerable<ITypedElement>)Typecasts.CastTo(4L, typeof(IEnumerable<ITypedElement>));
-            Assert.Equal(4L, result.Single().Value);
+            Assert.AreEqual(4L, result.Single().Value);
 
-            Assert.True(Typecasts.CanCastTo(4L, typeof(ITypedElement)));
+            Assert.IsTrue(Typecasts.CanCastTo(4L, typeof(ITypedElement)));
             var result2 = (ITypedElement)Typecasts.CastTo(4L, typeof(ITypedElement));
-            Assert.Equal(4L, result2.Value);
+            Assert.AreEqual(4L, result2.Value);
 
             checkCast<bool>(true, true);
             checkCast<decimal>(4L, 4m);
@@ -101,39 +101,39 @@ namespace Hl7.FhirPath.Tests
             checkCast<decimal?>(4L, 4m);
             checkCast<string>("hi", "hi");
 
-            Assert.False(Typecasts.CanCastTo(4, typeof(string)));
-            Assert.False(Typecasts.CanCastTo(4m, typeof(long)));
+            Assert.IsFalse(Typecasts.CanCastTo(4, typeof(string)));
+            Assert.IsFalse(Typecasts.CanCastTo(4m, typeof(long)));
         }
 
 
-        [Fact]
+        [TestMethod]
         public void CastNullable()
         {
             checkCast<object>("hi", "hi");
 
-            Assert.True(Typecasts.CanCastTo("hi", typeof(IEnumerable<ITypedElement>)));
+            Assert.IsTrue(Typecasts.CanCastTo("hi", typeof(IEnumerable<ITypedElement>)));
             var result = (IEnumerable<ITypedElement>)Typecasts.CastTo("hi", typeof(IEnumerable<ITypedElement>));
-            Assert.Equal("hi", result.Single().Value);
+            Assert.AreEqual("hi", result.Single().Value);
 
-            Assert.True(Typecasts.CanCastTo("hi", typeof(ITypedElement)));
+            Assert.IsTrue(Typecasts.CanCastTo("hi", typeof(ITypedElement)));
             var result2 = (ITypedElement)Typecasts.CastTo("hi", typeof(ITypedElement));
-            Assert.Equal("hi", result2.Value);
+            Assert.AreEqual("hi", result2.Value);
 
             checkCast<bool?>(true, true);
             checkCast<decimal?>(4L, 4m);
             checkCast<string>("hi", "hi");
 
-            Assert.False(Typecasts.CanCastTo(4, typeof(string)));
-            Assert.False(Typecasts.CanCastTo(4m, typeof(long?)));
+            Assert.IsFalse(Typecasts.CanCastTo(4, typeof(string)));
+            Assert.IsFalse(Typecasts.CanCastTo(4m, typeof(long?)));
         }
 
 
         private void checkCast<T>(object source, T value)
         {
-            Assert.True(Typecasts.CanCastTo(source, typeof(T)));
+            Assert.IsTrue(Typecasts.CanCastTo(source, typeof(T)));
 
             var result = Typecasts.CastTo(source, typeof(T));
-            Assert.Equal(value, result);
+            Assert.AreEqual(value, result);
         }
 
     }

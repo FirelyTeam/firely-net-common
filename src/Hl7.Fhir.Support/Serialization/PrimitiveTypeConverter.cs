@@ -9,23 +9,16 @@
 using System;
 using System.Xml;
 using Hl7.Fhir.Utility;
-using Hl7.Fhir.Model.Primitives;
 using System.Numerics;
 using System.Globalization;
 using System.Linq;
-using Hl7.Fhir.Language;
+using Hl7.Fhir.Model.Primitives;
 
 namespace Hl7.Fhir.Serialization
 {
     public static class PrimitiveTypeConverter
     {
         private static readonly string[] FORBIDDEN_DECIMAL_PREFIXES = new[] { "+", ".", "00" };
-
-        public static object FromSerializedValue(string value, string primitiveType)
-        {
-            var type = TypeSpecifier.GetNativeRepresentation(primitiveType);
-            return ConvertTo(value, type);
-        }
 
         public static T ConvertTo<T>(object value) => (T)ConvertTo(value, typeof(T));
 
@@ -62,11 +55,11 @@ namespace Hl7.Fhir.Serialization
         {
             switch (value)
             {
-                case Boolean bl: return XmlConvert.ToString(bl);
+                case bool bl: return XmlConvert.ToString(bl);
                 case Byte by: return XmlConvert.ToString(by);        // Not used in FHIR serialization
                 case Char cr: return XmlConvert.ToString(cr);        // Not used in FHIR serialization
                 case DateTime dt: return XmlConvert.ToString(dt, FMT_FULL);  // Obsolete: use DateTimeOffset instead!!
-                case Decimal dec: return XmlConvert.ToString(dec);
+                case decimal dec: return XmlConvert.ToString(dec);
                 case Double dbl: return XmlConvert.ToString(dbl);
                 case Int16 i16: return XmlConvert.ToString(i16);
                 case Int32 i32: return XmlConvert.ToString(i32);
@@ -84,6 +77,7 @@ namespace Hl7.Fhir.Serialization
                 case PartialDate pd: return pd.ToString();
                 case Enum en: return en.GetLiteral();
                 case BigInteger bi: return bi.ToString();
+                case Quantity q: return q.ToString();
                 default:
                     throw Error.NotSupported($"Cannot convert '{value.GetType().Name}' value '{value}' to string");
             }
@@ -91,7 +85,7 @@ namespace Hl7.Fhir.Serialization
 
         private static object convertXmlStringToPrimitive(Type to, string value)
         {
-            if (typeof(Boolean) == to)
+            if (typeof(bool) == to)
                 return XmlConvert.ToBoolean(value);
             if (typeof(Byte) == to)
                 return XmlConvert.ToByte(value);        // Not used in FHIR serialization
@@ -99,7 +93,7 @@ namespace Hl7.Fhir.Serialization
                 return XmlConvert.ToChar(value);        // Not used in FHIR serialization
             if (typeof(DateTime) == to)
                 return convertToDatetimeOffset(value).UtcDateTime;  // Obsolete: use DateTimeOffset instead!!
-            if (typeof(Decimal) == to)
+            if (typeof(decimal) == to)
             {
                 if (FORBIDDEN_DECIMAL_PREFIXES.Any(prefix => value.StartsWith(prefix)) || value.EndsWith("."))
                 {
@@ -138,8 +132,11 @@ namespace Hl7.Fhir.Serialization
                 return PartialDate.Parse(value);
             if (typeof(PartialTime) == to)
                 return PartialTime.Parse(value);
+            if (typeof(Quantity) == to)
+                return Quantity.Parse(value);
             if (typeof(BigInteger) == to)
                 return BigInteger.Parse(value);
+
             if (to.IsEnum())
             {
                 var result = EnumUtility.ParseLiteral(value, to);
@@ -170,10 +167,10 @@ namespace Hl7.Fhir.Serialization
         {
 #if NETSTANDARD1_1
 			// We support all primitive .NET types in the serializer
-			if (type == typeof(Boolean)
+			if (type == typeof(bool)
 				|| type == typeof(Byte)
 				|| type == typeof(char)
-				|| type == typeof(Decimal)
+				|| type == typeof(decimal)
 				|| type == typeof(double)
 				|| type == typeof(short)
 				|| type == typeof(int)
