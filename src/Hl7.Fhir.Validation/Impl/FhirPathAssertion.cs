@@ -1,6 +1,15 @@
-﻿using Hl7.Fhir.ElementModel;
+﻿/* 
+ * Copyright (c) 2019, Firely (info@fire.ly) and contributors
+ * See the file CONTRIBUTORS for details.
+ * 
+ * This file is licensed under the BSD 3-Clause license
+ * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ */
+
+using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Validation.Schema;
 using Hl7.FhirPath;
+using Hl7.FhirPath.Expressions;
 
 namespace Hl7.Fhir.Validation.Impl
 {
@@ -8,11 +17,15 @@ namespace Hl7.Fhir.Validation.Impl
     {
         private readonly string _key;
         private readonly string _expression;
+        private readonly IssueSeverity? _severity;
+        private readonly bool _bestPractice;
 
-        public FhirPathAssertion(string key, string expression)
+        public FhirPathAssertion(string key, string expression, IssueSeverity? severity, bool bestPractice)
         {
             _key = key;
             _expression = expression;
+            _severity = severity;
+            _bestPractice = bestPractice;
         }
 
         protected override string Key => _key;
@@ -25,13 +38,36 @@ namespace Hl7.Fhir.Validation.Impl
 
             var context = node.ResourceContext;
 
-            var compiler = vc.fpCompiler;
+            if (_bestPractice && vc.ConstraintBestPractices == ValidateBestPractices.Ignore)
+                return Assertions.Success;
+
+            var compiler = GetFhirPathCompiler(vc);
 
             var compiledExpression = compiler.Compile(_expression);
             var success = compiledExpression.Predicate(input, new EvaluationContext(context));
 
+            if (!success)
+            {
+                var result = Assertions.Failure;
+                result += new IssueAssertion((_severity == IssueSeverity.Error) ? 1012 : 1013, input.Location, $"Instance failed constraint '{Key}'", _severity);
+                return result;
+            }
 
-            return success ? Assertions.Success : Assertions.Failure;
+            return Assertions.Success;
+        }
+
+        private FhirPathCompiler GetFhirPathCompiler(ValidationContext context)
+        {
+
+            // Use a provided compiler
+            if (context?.FhirPathCompiler != null)
+                return context.FhirPathCompiler;
+
+            var symbolTable = new SymbolTable();
+            symbolTable.AddStandardFP();
+            //symbolTable.AddFhirExtensions();
+
+            return new FhirPathCompiler(symbolTable);
         }
     }
 }

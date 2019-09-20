@@ -1,4 +1,12 @@
-﻿using Hl7.Fhir.ElementModel;
+﻿/* 
+ * Copyright (c) 2019, Firely (info@fire.ly) and contributors
+ * See the file CONTRIBUTORS for details.
+ * 
+ * This file is licensed under the BSD 3-Clause license
+ * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ */
+
+using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation.Schema;
 using Newtonsoft.Json.Linq;
@@ -53,7 +61,7 @@ namespace Hl7.Fhir.Validation.Impl
                                     comparisonOutcome == 0 ? "equal to" :
                                         "larger than";
 
-                    return new Assertions(Assertions.Failure + new TraceText($"Value '{instanceValue}' is {label} {_minMaxValue.Value})"));
+                    return Assertions.Failure + new Trace($"Value '{instanceValue}' is {label} {_minMaxValue.Value})");
                 }
             }
 

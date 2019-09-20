@@ -11,12 +11,24 @@ using Hl7.FhirPath;
 
 namespace Hl7.Fhir.Validation.Schema
 {
+    public enum ValidateBestPractices
+    {
+        Ignore,
+        Enabled,
+        Disabled
+    }
     public class ValidationContext
     {
         public ITerminologyServiceNEW TerminologyService;
 
         public IExceptionSource ExceptionSink;
 
-        public FhirPathCompiler fpCompiler;
+        /// <summary>
+        /// An instance of the FhirPath compiler to use when evaluating constraints
+        /// (provide this if you have custom functions included in the symbol table)
+        /// </summary>
+        public FhirPathCompiler FhirPathCompiler;
+
+        public ValidateBestPractices ConstraintBestPractices = ValidateBestPractices.Ignore;
     }
 }

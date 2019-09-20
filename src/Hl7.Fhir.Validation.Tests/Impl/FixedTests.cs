@@ -33,18 +33,51 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         }
 
         [TestMethod]
-        public void FixedWithInteger()
+        public void FixedTestcases()
         {
-            foreach (var testItem in TestData())
+            foreach (var (fixedValue, input, expectedResult, failureMessage) in TestData())
             {
-                var validatable = new Fixed(testItem.fixedValue);
-                var input = ElementNode.ForPrimitive(testItem.input);
-
-                var result = validatable.Validate(input, new ValidationContext());
+                var validatable = new Fixed(fixedValue);
+                var result = validatable.Validate(ElementNode.ForPrimitive(input), new ValidationContext());
 
                 Assert.IsNotNull(result);
-                Assert.IsTrue(result.Result.IsSuccessful == testItem.expectedResult, testItem.failureMessage);
+                Assert.IsTrue(result.Result.IsSuccessful == expectedResult, failureMessage);
             }
+        }
+
+        [TestMethod]
+        public void FixedHumanName()
+        {
+            var fixedValue = ElementNode.Root("HumanName");
+            fixedValue.Add("family", "Brown", "string");
+            fixedValue.Add("given", "Joe", "string");
+            fixedValue.Add("given", "Patrick", "string");
+
+            var validatable = new Fixed(fixedValue);
+            var result = validatable.Validate(ElementNode.ForPrimitive("Brown, Joe Patrick"), new ValidationContext());
+
+            Assert.IsNotNull(result);
+            Assert.IsFalse(result.Result.IsSuccessful, "String and HumanName are different");
+        }
+
+        [TestMethod]
+        public void FixedHumanNameDifferentInstance()
+        {
+            var fixedValue = ElementNode.Root("HumanName");
+            fixedValue.Add("family", "Brown", "string");
+            fixedValue.Add("given", "Joe", "string");
+            fixedValue.Add("given", "Patrick", "string");
+
+            var input = ElementNode.Root("HumanName");
+            fixedValue.Add("family", "Brown", "string");
+            fixedValue.Add("given", "Patrick", "string");
+            fixedValue.Add("given", "Joe", "string");
+
+            var validatable = new Fixed(fixedValue);
+            var result = validatable.Validate(input, new ValidationContext());
+
+            Assert.IsNotNull(result);
+            Assert.IsFalse(result.Result.IsSuccessful, "The input (HumanName) is slightly different than the fixed value");
         }
     }
 }

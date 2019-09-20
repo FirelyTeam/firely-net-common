@@ -1,6 +1,6 @@
+using Hl7.Fhir.Model.Primitives;
 using System;
 using System.Collections.Generic;
-using Hl7.Fhir.Model.Primitives;
 
 namespace Hl7.Fhir.Language
 {
@@ -32,7 +32,7 @@ namespace Hl7.Fhir.Language
         /// This is the list of supported types for the primitive values in ITypedElement.Value
         /// </summary>
         public static readonly TypeSpecifier[] PrimitiveTypes =
-            new[] { Boolean, Date, DateTime, Decimal,    Integer, String, Time };
+            new[] { Boolean, Date, DateTime, Decimal, Integer, String, Time };
 
 
         protected TypeSpecifier(string @namespace, string name)

@@ -2,6 +2,7 @@
 using Hl7.Fhir.Validation.Impl;
 using Hl7.Fhir.Validation.Schema;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Linq;
 
 namespace Hl7.Fhir.Validation.Tests.Schema
 {
@@ -74,6 +75,8 @@ namespace Hl7.Fhir.Validation.Tests.Schema
             var result = myHumanNameSchema.ToJson().ToString();
 
             var validationResults = myHumanNameSchema.Validate(new[] { humanName }, null);
+
+            var issues = validationResults[0].Item1.OfType<IssueAssertion>();
 
         }
     }

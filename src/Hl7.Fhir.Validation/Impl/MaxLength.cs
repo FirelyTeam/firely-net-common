@@ -7,6 +7,7 @@
  */
 
 using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Model.Primitives;
 using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation.Schema;
 
@@ -32,20 +33,19 @@ namespace Hl7.Fhir.Validation.Impl
         {
             if (input == null) throw Error.ArgumentNull(nameof(input));
 
-            if (input.Value != null)
+            var result = Assertions.Empty;
+
+            if (Any.ConvertToSystemValue(input.Value) is string serializedValue)
             {
-                //TODO: Is ToString() really the right way to turn (Fhir?) Primitives back into their original representation?
-                //If the source is POCO, hopefully FHIR types have all overloaded ToString() 
-                var serializedValue = input.Value.ToString();
+                result += new Trace($"Maxlength validation with value '{serializedValue}'");
 
                 if (serializedValue.Length > _maxLength)
                 {
-
-                    return new Assertions(new ResultAssertion(ValidationResult.Failure, this));
+                    return result + Assertions.Failure + new IssueAssertion(1005, input.Location, "message") + new Trace($"Value '{serializedValue}' is too long (maximum length is {_maxLength})");
                 }
-                //return new Assertions(Assertions.Failure + new TraceText($"Value '{serializedValue}' is too long (maximum length is {_maxLength})"));
             }
-            return Assertions.Success;
+
+            return result + Assertions.Success;
         }
     }
 }

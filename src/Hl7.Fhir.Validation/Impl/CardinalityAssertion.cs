@@ -1,4 +1,12 @@
-﻿using Hl7.Fhir.ElementModel;
+﻿/* 
+ * Copyright (c) 2019, Firely (info@fire.ly) and contributors
+ * See the file CONTRIBUTORS for details.
+ * 
+ * This file is licensed under the BSD 3-Clause license
+ * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ */
+
+using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Validation.Schema;
 using Newtonsoft.Json.Linq;
 using System;
@@ -31,7 +39,7 @@ namespace Hl7.Fhir.Validation.Impl
             var count = input.Count();
             if (!InRange(count))
             {
-                result.Add((Assertions.Failure, null));
+                result.Add((Assertions.Failure + new IssueAssertion(1028, "TODO: Unknow location", "message"), null));
             }
             return result;
         }

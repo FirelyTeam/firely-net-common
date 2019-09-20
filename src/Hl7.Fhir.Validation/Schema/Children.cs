@@ -141,7 +141,7 @@ namespace Hl7.Fhir.Validation.Schema
                 yield return child;
 
             }
-            if (instance.InstanceType == "string")
+            if (instance.InstanceType == "string" || instance.InstanceType == "instant")
             {
                 yield return new ValueElementNode(instance.Value, instance.Location);
             }

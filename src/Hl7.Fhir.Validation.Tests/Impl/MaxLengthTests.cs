@@ -3,6 +3,7 @@ using Hl7.Fhir.Validation.Impl;
 using Hl7.Fhir.Validation.Schema;
 using Hl7.Fhir.Validation.Tests.Impl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Linq;
 
 namespace Hl7.Fhir.Validation.Tests.Schema
 {
@@ -19,11 +20,10 @@ namespace Hl7.Fhir.Validation.Tests.Schema
             var result = _validatable.Validate(node, null);
 
             Assert.IsNotNull(result);
-            Assert.AreEqual(1, result.Count);
             Assert.IsFalse(result.Result.IsSuccessful);
-            Assert.AreEqual(1, result.Result.Evidence.Length);
-            Assert.IsInstanceOfType(result.Result.Evidence[0], typeof(MaxLength));
-
+            var issues = result.OfType<IssueAssertion>();
+            Assert.AreEqual(1, issues.Count());
+            Assert.AreEqual(1005, issues.Single().IssueNumber);
         }
 
         [TestMethod]
@@ -34,7 +34,6 @@ namespace Hl7.Fhir.Validation.Tests.Schema
             var result = _validatable.Validate(node, null);
 
             Assert.IsNotNull(result);
-            Assert.AreEqual(1, result.Count);
             Assert.IsTrue(result.Result.IsSuccessful);
         }
 
@@ -45,15 +44,24 @@ namespace Hl7.Fhir.Validation.Tests.Schema
 
             var result = _validatable.Validate(node, null);
 
-            Assert.IsFalse(result.Result.IsSuccessful);
+            Assert.IsTrue(result.Result.IsSuccessful, "MaxLength constraint on a non-string primitive must be succesful");
+        }
+
+        [TestMethod]
+        public void ValidateWithEmptyString()
+        {
+            var node = ElementNode.ForPrimitive("");
+
+            var result = _validatable.Validate(node, null);
+
+            Assert.IsTrue(result.Result.IsSuccessful, "MaxLength constraint on an empty string must be succesful");
         }
 
         [TestMethod]
         [ExpectedException(typeof(IncorrectElementDefinitionException), "A negative number was allowed.")]
         public void InitializeWithNegativeMaxLength()
         {
-            var validatable = new MaxLength(-1);
-
+            new MaxLength(-1);
         }
     }
 }

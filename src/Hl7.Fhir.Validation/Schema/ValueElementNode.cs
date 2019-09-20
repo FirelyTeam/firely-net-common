@@ -1,7 +1,6 @@
 ﻿using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Language;
 using Hl7.Fhir.Specification;
-using Hl7.Fhir.Utility;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -12,8 +11,8 @@ namespace Hl7.Fhir.Validation.Schema
         public ValueElementNode(object value, string location)
         {
             Name = "value";
-            var primitiveTypeName = TypeSpecifier.GetPrimitiveTypeName(value.GetType());
-            InstanceType = $"System.{primitiveTypeName.Capitalize()}";
+            var primitiveTypeName = TypeSpecifier.ForNativeType(value.GetType());
+            InstanceType = primitiveTypeName.FullName;
             Location = $"{location}.value";
             Value = value;
         }
