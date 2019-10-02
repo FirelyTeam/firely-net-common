@@ -33,7 +33,7 @@ namespace Hl7.Fhir.Validation.Impl
         {
             if (input == null) throw Error.ArgumentNull(nameof(input));
 
-            var result = Assertions.Empty;
+            var result = Assertions.Empty + this;
 
             if (Any.ConvertToSystemValue(input.Value) is string serializedValue)
             {
@@ -44,8 +44,10 @@ namespace Hl7.Fhir.Validation.Impl
                     return result + Assertions.Failure + new IssueAssertion(1005, input.Location, "message") + new Trace($"Value '{serializedValue}' is too long (maximum length is {_maxLength})");
                 }
             }
+            else return Assertions.Undecided;
 
             return result + Assertions.Success;
         }
+
     }
 }

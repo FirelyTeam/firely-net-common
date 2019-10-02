@@ -7,13 +7,11 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Hl7.Fhir.Validation.Schema
 {
     public interface ISchemaResolver
     {
         ElementSchema GetSchema(Uri schemaUri);
-        IEnumerable<ElementSchema> GetSchemas();
     }
 }

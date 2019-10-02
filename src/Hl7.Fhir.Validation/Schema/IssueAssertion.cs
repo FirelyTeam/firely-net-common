@@ -5,8 +5,10 @@ namespace Hl7.Fhir.Validation.Schema
 {
     public enum IssueSeverity
     {
+        Fatal,
+        Error,
         Warning,
-        Error
+        Information
     }
 
     public class IssueAssertion : IAssertion
