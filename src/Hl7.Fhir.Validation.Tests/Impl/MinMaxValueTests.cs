@@ -6,7 +6,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
     [TestClass]
     public class MinMaxValueTests : SimpleAssertionTests
     {
-        public MinMaxValueTests() : base(new MinMaxValue(null, MinMax.MinValue))
+        public MinMaxValueTests() : base(new MinMaxValue("MinMaxValueTests", null, MinMax.MinValue))
         {
 
         }

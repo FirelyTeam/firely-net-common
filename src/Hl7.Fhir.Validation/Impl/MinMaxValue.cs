@@ -28,7 +28,7 @@ namespace Hl7.Fhir.Validation.Impl
         private readonly MinMax _minMaxType;
         private readonly string _key;
 
-        public MinMaxValue(ITypedElement minMaxValue, MinMax minMaxType)
+        public MinMaxValue(string location, ITypedElement minMaxValue, MinMax minMaxType) : base(location)
         {
             _minMaxValue = minMaxValue ?? throw new IncorrectElementDefinitionException($"{nameof(minMaxValue)} cannot be null");
             _minMaxType = minMaxType;
@@ -42,7 +42,7 @@ namespace Hl7.Fhir.Validation.Impl
             }
         }
 
-        public MinMaxValue(int minMaxValue, MinMax minMaxType) : this(ElementNode.ForPrimitive(minMaxValue), minMaxType) { }
+        public MinMaxValue(string location, int minMaxValue, MinMax minMaxType) : this(location, ElementNode.ForPrimitive(minMaxValue), minMaxType) { }
 
         protected override string Key => _key;
 

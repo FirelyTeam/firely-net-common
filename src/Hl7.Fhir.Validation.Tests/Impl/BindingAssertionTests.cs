@@ -1,11 +1,11 @@
-﻿using Hl7.Fhir.ElementModel;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Hl7.Fhir.Validation.Tests.Impl
 {
     [TestClass]
     public class BindingAssertionTests
     {
+        /*
         public void TestValueValidation()
         {
             var binding = new ElementDefinition.ElementDefinitionBindingComponent
@@ -50,6 +50,8 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             node = ext.ToTypedElement();
             Assert.False(validator.Validate(node, vc).Success);
         }
+
+    */
 
     }
 }

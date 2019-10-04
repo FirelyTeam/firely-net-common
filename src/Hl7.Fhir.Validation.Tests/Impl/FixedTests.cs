@@ -37,7 +37,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         {
             foreach (var (fixedValue, input, expectedResult, failureMessage) in TestData())
             {
-                var validatable = new Fixed(fixedValue);
+                var validatable = new Fixed("FixedTests.FixedTestcases", fixedValue);
                 var result = validatable.Validate(ElementNode.ForPrimitive(input), new ValidationContext());
 
                 Assert.IsNotNull(result);
@@ -53,7 +53,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             fixedValue.Add("given", "Joe", "string");
             fixedValue.Add("given", "Patrick", "string");
 
-            var validatable = new Fixed(fixedValue);
+            var validatable = new Fixed("FixedTests.FixedHumanName", fixedValue);
             var result = validatable.Validate(ElementNode.ForPrimitive("Brown, Joe Patrick"), new ValidationContext());
 
             Assert.IsNotNull(result);
@@ -73,7 +73,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             fixedValue.Add("given", "Patrick", "string");
             fixedValue.Add("given", "Joe", "string");
 
-            var validatable = new Fixed(fixedValue);
+            var validatable = new Fixed("FixedTests.FixedHumanNameDifferentInstance", fixedValue);
             var result = validatable.Validate(input, new ValidationContext());
 
             Assert.IsNotNull(result);

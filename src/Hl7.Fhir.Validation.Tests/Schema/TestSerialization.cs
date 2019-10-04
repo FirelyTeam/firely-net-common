@@ -39,15 +39,15 @@ namespace Hl7.Fhir.Validation.Tests.Schema
         public void ValidateSchema()
         {
             var stringSchema = new ElementSchema("#string",
-                new MaxLength(1)
+                new MaxLength("TestSerialization.ValidateSchema", 1)
                 );
 
             var familySchema = new ElementSchema("#myHumanName.family",
                 new Assertions(
                     new ReferenceAssertion(stringSchema),
                     new CardinalityAssertion(0, "1"),
-                    new MaxLength(40),
-                    new Fixed("Brown")
+                    new MaxLength("TestSerialization.ValidateSchema", 40),
+                    new Fixed("TestSerialization.ValidateSchema", "Brown")
                 )
             );
 
@@ -55,7 +55,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
                 new Assertions(
                     new ReferenceAssertion(stringSchema),
                     new CardinalityAssertion(0, "*"),
-                    new MaxLength(40)
+                    new MaxLength("TestSerialization.ValidateSchema", 40)
                 )
             );
 

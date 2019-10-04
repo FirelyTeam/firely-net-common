@@ -1,5 +1,4 @@
 ﻿using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Model.Primitives;
 using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation.Schema;
 using Newtonsoft.Json.Linq;
@@ -43,39 +42,42 @@ namespace Hl7.Fhir.Validation.Impl
         public readonly BindingStrength Strength;
         public readonly string Description;
         public readonly bool AbstractAllowed;
+        public readonly string Location;
 
-        public BindingAssertion(string valueSetUri, BindingStrength strength, bool abstractAllowed = true, string description = null)
+        public BindingAssertion(string location, string valueSetUri, BindingStrength strength, bool abstractAllowed = true, string description = null)
         {
             ValueSetUri = valueSetUri ?? throw Error.ArgumentNull(nameof(valueSetUri));
             Strength = strength;
             Description = description;
             AbstractAllowed = abstractAllowed;
+            Location = location;
         }
 
         public Assertions Validate(ITypedElement input, ValidationContext vc)
         {
-            if (input == null) throw Error.ArgumentNull(nameof(input));
-            if (vc?.TerminologyService == null) throw new InvalidValidationContextException($"ValidationContext should have its {nameof(ValidationContext.TerminologyService)} property set.");
-            if (input.InstanceType == null) throw Error.Argument(nameof(input), "Binding validation requires input to have an instance type.");
+            /*            if (input == null) throw Error.ArgumentNull(nameof(input));
+                        if (vc?.TerminologyService == null) throw new InvalidValidationContextException($"ValidationContext should have its {nameof(ValidationContext.TerminologyService)} property set.");
+                        if (input.InstanceType == null) throw Error.Argument(nameof(input), "Binding validation requires input to have an instance type.");
 
-            // This would give informational messages even if the validation was run on a choice type with a binding, which is then
-            // only applicable to an instance which is bindable. So instead of a warning, we should just return as validation is
-            // not applicable to this instance.
-            //if (!ModelInfo.IsBindable(input.InstanceType))
-            //{
-            //    return Issue.CONTENT_TYPE_NOT_BINDEABLE 
-            //        .NewOutcomeWithIssue($"Validation of binding with non-bindable instance type '{input.InstanceType}' always succeeds.", input);
-            //}
-            if (!ModelInfo.IsBindable(input.InstanceType))
-                return new OperationOutcome();  // success
+                        // This would give informational messages even if the validation was run on a choice type with a binding, which is then
+                        // only applicable to an instance which is bindable. So instead of a warning, we should just return as validation is
+                        // not applicable to this instance.
+                        //if (!ModelInfo.IsBindable(input.InstanceType))
+                        //{
+                        //    return Issue.CONTENT_TYPE_NOT_BINDEABLE 
+                        //        .NewOutcomeWithIssue($"Validation of binding with non-bindable instance type '{input.InstanceType}' always succeeds.", input);
+                        //}
+                        if (!ModelInfo.IsBindable(input.InstanceType))
+                            return new OperationOutcome();  // success
 
-            var bindable = parseBindable(input);
-            var outcome = VerifyContentRequirements(input, bindable);
-            if (!outcome.Success) return outcome;
+                        var bindable = parseBindable(input);
+                        var outcome = VerifyContentRequirements(input, bindable);
+                        if (!outcome.Success) return outcome;
 
-            return ValidateCode(input, bindable, vc);
+                        return ValidateCode(input, bindable, vc); */
+            return Assertions.Success;
         }
-
+        /*
         private static Element parseBindable(ITypedElement input)
         {
             var bindable = input.ParseBindable();
@@ -158,7 +160,7 @@ namespace Hl7.Fhir.Validation.Impl
                     .NewOutcomeWithIssue($"Terminology service failed while validating code '{code}' (system '{system}'): {tse.Message}", location);
             }
         }
-
+        */
         public JToken ToJson()
         {
             var props = new JObject(

@@ -20,7 +20,7 @@ namespace Hl7.Fhir.Validation.Impl
         private readonly IssueSeverity? _severity;
         private readonly bool _bestPractice;
 
-        public FhirPathAssertion(string key, string expression, IssueSeverity? severity, bool bestPractice)
+        public FhirPathAssertion(string location, string key, string expression, IssueSeverity? severity, bool bestPractice) : base(location)
         {
             _key = key;
             _expression = expression;

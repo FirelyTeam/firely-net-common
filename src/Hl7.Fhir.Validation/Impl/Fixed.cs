@@ -17,12 +17,12 @@ namespace Hl7.Fhir.Validation.Impl
     {
         private readonly ITypedElement _fixed;
 
-        public Fixed(ITypedElement fixedValue)
+        public Fixed(string location, ITypedElement fixedValue) : base(location)
         {
             this._fixed = fixedValue;
         }
 
-        public Fixed(object fixedValue) : this(ElementNode.ForPrimitive(fixedValue)) { }
+        public Fixed(string location, object fixedValue) : this(location, ElementNode.ForPrimitive(fixedValue)) { }
 
         protected override string Key => "fixed[x]";
 
