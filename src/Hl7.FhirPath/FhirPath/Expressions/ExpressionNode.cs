@@ -40,7 +40,7 @@ namespace Hl7.FhirPath.Expressions
         public override bool Equals(object obj) => Equals(obj as Expression);
         public bool Equals(Expression other) => other != null && EqualityComparer<TypeSpecifier>.Default.Equals(ExpressionType, other.ExpressionType);
         public override int GetHashCode() => -28965461 + EqualityComparer<TypeSpecifier>.Default.GetHashCode(ExpressionType);
-        public static bool operator ==(Expression left, Expression right) => left.GetType() == right.GetType() && EqualityComparer<Expression>.Default.Equals(left, right);
+        public static bool operator ==(Expression left, Expression right) => left?.GetType() == right?.GetType() && EqualityComparer<Expression>.Default.Equals(left, right);
         public static bool operator !=(Expression left, Expression right) => !(left == right);
     }
 
