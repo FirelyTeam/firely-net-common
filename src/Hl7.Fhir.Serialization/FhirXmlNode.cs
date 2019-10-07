@@ -173,7 +173,7 @@ namespace Hl7.Fhir.Serialization
             {
                 if (!PermissiveParsing) verifyXObject(scan, AllowedExternalNamespaces, this, this);
                 
-                if (scan.Name() != "value")
+                if (scan is XElement || scan.Name() != "value")
                 {
                     var scanName = scan.Name().LocalName;
                     bool isMatch = scanName.MatchesPrefix(name);
