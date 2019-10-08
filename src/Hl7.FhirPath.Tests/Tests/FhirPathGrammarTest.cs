@@ -228,5 +228,15 @@ namespace Hl7.FhirPath.Tests
                         });
         }
 
+
+        [Fact]
+        public void FhirPath_Expression_Equals()
+        {
+            Expression x = new ConstantExpression("hi there");
+            Expression y = new VariableRefExpression("hi there");
+
+            Assert.False(x.Equals(y));
+            Assert.False(x == y);
+        }
     }
 }
