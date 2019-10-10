@@ -12,6 +12,7 @@ using Hl7.FhirPath.Expressions;
 using Hl7.FhirPath.Parser;
 using Hl7.FhirPath.Sprache;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Reflection;
 
 namespace Hl7.FhirPath.Tests
 {
@@ -245,20 +246,20 @@ namespace Hl7.FhirPath.Tests
             AssertParser.SucceedsWith(parser, expr,
                     v =>
                         {
-                            Assert.Equal(v.Value, value);
-                            Assert.Equal(v.ExpressionType, expected);
+                            Assert.Equals(v.Value, value);
+                            Assert.Equals(v.ExpressionType, expected);
                         });
         }
 
 
-        [Fact]
+        [TestMethod]
         public void FhirPath_Expression_Equals()
         {
             Expression x = new ConstantExpression("hi there");
             Expression y = new VariableRefExpression("hi there");
 
-            Assert.False(x.Equals(y));
-            Assert.False(x == y);
+            Assert.IsFalse(x.Equals(y));
+            Assert.IsFalse(x == y);
         }
     }
 }
