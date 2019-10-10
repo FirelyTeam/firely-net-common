@@ -239,5 +239,26 @@ namespace Hl7.FhirPath.Tests
 
             AssertParser.FailsMatch(parser, "true implies false and 4 != 5 and 4 <> 6 and ('h' ~ 'H' or 'a' !~ 'b')");
         }
+
+        private void SucceedsConstantValueMatch(Parser<ConstantExpression> parser, string expr, object value, TypeInfo expected)
+        {
+            AssertParser.SucceedsWith(parser, expr,
+                    v =>
+                        {
+                            Assert.Equal(v.Value, value);
+                            Assert.Equal(v.ExpressionType, expected);
+                        });
+        }
+
+
+        [Fact]
+        public void FhirPath_Expression_Equals()
+        {
+            Expression x = new ConstantExpression("hi there");
+            Expression y = new VariableRefExpression("hi there");
+
+            Assert.False(x.Equals(y));
+            Assert.False(x == y);
+        }
     }
 }
