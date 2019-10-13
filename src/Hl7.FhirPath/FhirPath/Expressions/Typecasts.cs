@@ -17,59 +17,49 @@ namespace Hl7.FhirPath.Expressions
     {
         public delegate object Cast(object source);
 
-        private static object id(object source)
+        private static object id(object source) => source;
+
+        private static Cast makeNativeCast(Type to) => 
+            source => Convert.ChangeType(source, to);
+
+        private static ITypedElement any2ValueProvider(object source) => ElementNode.ForPrimitive(source);
+
+        private static IEnumerable<ITypedElement> any2List(object source) => ElementNode.CreateList(source);
+
+        private static object tryQuantity(object source)
         {
-            return source;
+            if (source is ITypedElement element)
+            {
+                if (element.InstanceType == "Quantity")
+                {
+                    // Need to downcast from a FHIR Quantity to a System.Quantity
+                    return ParseQuantity(element);
+                }
+                else
+                    throw new InvalidCastException($"Cannot convert from '{element.InstanceType}' to Quantity");
+            }
+
+            throw new InvalidCastException($"Cannot convert from '{source.GetType().Name}' to Quantity");
+
+         
         }
 
-        //private static object any2bool(object source)
-        //{
-        //    if (source == null) return false;
 
-        //    if (source is IEnumerable<IValueProvider>)
-        //    {
-        //        var list = (IEnumerable<IValueProvider>)source;
-        //        if (!list.Any()) return false;
-
-        //        if (list.Count() == 1)
-        //            source = list.Single();
-        //    }
-
-        //    if (source is IValueProvider)
-        //    {
-        //        var vp = (IValueProvider)source;
-        //        if (vp.Value is bool)
-        //            return (bool)vp.Value;
-        //    }
-
-        //    // Otherwise, we have "some" content, which we'll consider "true"
-        //    return true;
-        //}
-
-        private static Cast makeNativeCast(Type to)
+        internal static Fhir.Model.Primitives.Quantity? ParseQuantity(ITypedElement qe)
         {
-            return source =>
-                Convert.ChangeType(source, to);
-        }
+            var value = qe.Children("value").SingleOrDefault()?.Value as decimal?;
+            if (value == null) return null;
 
-        private static object any2ValueProvider(object source)
-        {
-            return ElementNode.ForPrimitive(source);
-        }
-
-        private static object any2List(object source)
-        {
-            return ElementNode.CreateList(source);
+            var unit = qe.Children("code").SingleOrDefault()?.Value as string;
+            return new Fhir.Model.Primitives.Quantity(value.Value, unit);
         }
 
         private static Cast getImplicitCast(Type from, Type to)
         {
             if (to == typeof(object)) return id;
-
-            //if (to.IsAssignableFrom(from)) return id;
             if (from.CanBeTreatedAsType(to)) return id;
 
-            //if (to == typeof(bool)) return any2bool;
+            if (to == typeof(Fhir.Model.Primitives.Quantity) && from.CanBeTreatedAsType(typeof(ITypedElement))) return tryQuantity;
             if (to == typeof(ITypedElement) && (!from.CanBeTreatedAsType(typeof(IEnumerable<ITypedElement>)))) return any2ValueProvider;
             if (to == typeof(IEnumerable<ITypedElement>)) return any2List;
              
@@ -78,25 +68,32 @@ namespace Hl7.FhirPath.Expressions
             return null;
         }
 
-        internal static object Unbox(object instance, Type to)
+        /// <summary>
+        /// This will unpack the instance 
+        /// </summary>
+        /// <param name="instance"></param>
+        /// <param name="to">The level to unbox to.</param>
+        /// <returns></returns>
+        /// <remarks>The level of unboxing is specified using a type. The highest level
+        /// being an <see cref="IEnumerable{ITypedElement}"/> followed by 
+        /// <see cref="ITypedElement"/> followed by a primitive runtime type.
+        /// </remarks>
+        internal static object UnboxTo(object instance, Type to)
         {
             if (instance == null) return null;
-
-            if (to.CanBeTreatedAsType(typeof(IEnumerable<ITypedElement>))) return instance;
-
-            if (instance is IEnumerable<ITypedElement>)
+           
+            if (instance is IEnumerable<ITypedElement> list)
             {
-                var list = (IEnumerable<ITypedElement>)instance;
+                if (to.CanBeTreatedAsType(typeof(IEnumerable<ITypedElement>))) return instance;
+
                 if (!list.Any()) return null;
                 if (list.Count() == 1)
                     instance = list.Single();
             }
-
-            if (to.CanBeTreatedAsType(typeof(ITypedElement))) return instance;
-
-            if (instance is ITypedElement)
+         
+            if (instance is ITypedElement element)
             {
-                var element = (ITypedElement)instance;
+                if (to.CanBeTreatedAsType(typeof(ITypedElement))) return instance;
 
                 if (element.Value != null)
                     instance = element.Value;
@@ -110,24 +107,13 @@ namespace Hl7.FhirPath.Expressions
             if (source == null)
                 return to.IsNullable();
 
-            var from = Unbox(source, to);
-            if (from == null)
-                return to.IsNullable();
-
-            return getImplicitCast(from.GetType(),to) != null;
+            var from = UnboxTo(source, to);
+            return from == null ? to.IsNullable() : getImplicitCast(from.GetType(),to) != null;
         }
 
-        public static bool CanCastTo(Type from, Type to)
-        {
-            return getImplicitCast(from, to) != null;
-        }
+        public static bool CanCastTo(Type from, Type to) => getImplicitCast(from, to) != null;
 
-
-        public static T CastTo<T>(object source)
-        {
-            return (T)CastTo(source, typeof(T));
-        }
-
+        public static T CastTo<T>(object source) => (T)CastTo(source, typeof(T));
 
         public static object CastTo(object source, Type to)
         {
@@ -135,7 +121,7 @@ namespace Hl7.FhirPath.Expressions
             {
                 if (source.GetType().CanBeTreatedAsType(to)) return source;  // for efficiency
 
-                source = Unbox(source, to);
+                source = UnboxTo(source, to);
 
                 if (source != null)
                 {
@@ -143,9 +129,9 @@ namespace Hl7.FhirPath.Expressions
 
                     if (cast == null)
                     {
-                        //TODO: Spell out why a little bit more explicit than...
-                        throw new InvalidCastException("Cannot cast from '{0}' to '{1}'".FormatWith(Typecasts.ReadableFhirPathName(source.GetType()),
-                            Typecasts.ReadableFhirPathName(to)));
+                        var message = "Cannot cast from '{0}' to '{1}'".FormatWith(Typecasts.ReadableFhirPathName(source),
+                          Typecasts.ReadableTypeName(to));
+                        throw new InvalidCastException(message);
                     }
 
                     return cast(source);
@@ -170,24 +156,28 @@ namespace Hl7.FhirPath.Expressions
 
         public static string ReadableFhirPathName(object value)
         {
-            Type t = value.GetType();
-
             if (value is IEnumerable<ITypedElement> ete)
             {
                 var values = ete.ToList();
                 var types = ete.Select(te => ReadableFhirPathName(te)).Distinct();
 
-                if (values.Count > 1)
-                    return "collection of " + String.Join("/", types);
-                else
-                    return types.Single();
+                return values.Count > 1 ? "collection of " + String.Join("/", types) : types.Single();
             }
             else if (value is ITypedElement te)
                 return te.InstanceType;
             else
-                return t.GetType().Name;
+                return value.GetType().Name;
         }
 
+        public static string ReadableTypeName(Type t)
+        {
+            if (t.CanBeTreatedAsType(typeof(IEnumerable<ITypedElement>)))
+                return "collection";
+            else if (t.CanBeTreatedAsType(typeof(ITypedElement)))
+                return "any type";
+            else
+                return t.Name;
+        }
     }
 
 }

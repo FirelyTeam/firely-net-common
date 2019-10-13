@@ -35,6 +35,9 @@ namespace Hl7.FhirPath.Functions
             return ElementNode.ForPrimitive(me.IndexOf(fragment));
         }
 
+        public static IEnumerable<ITypedElement> ToChars(this string me) =>
+            me.ToCharArray().Select(c => ElementNode.ForPrimitive(c));
+
         public static string FpReplace(this string me, string find, string replace)
         {
             if (find == String.Empty)

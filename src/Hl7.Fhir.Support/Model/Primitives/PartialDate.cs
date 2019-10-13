@@ -6,9 +6,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using Hl7.Fhir.Utility;
 using System;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model.Primitives
@@ -130,7 +128,7 @@ namespace Hl7.Fhir.Model.Primitives
             return DateTimeOffset.TryParse(parseableDT, out value._parsedValue);
         }
 
-        public bool IsEqualTo(PartialDate other) => throw new NotImplementedException();
+        public bool IsEqualTo(PartialDate other) => this == other;
         public bool IsEquivalentTo(PartialDate other) => throw new NotImplementedException();
 
         // TODO: Note, this enables comparisons between values that did or did not have timezones, need to fix.
@@ -140,7 +138,7 @@ namespace Hl7.Fhir.Model.Primitives
         public static bool operator <=(PartialDate a, PartialDate b) => a.toComparable() <= b.toComparable();
         public static bool operator >(PartialDate a, PartialDate b) => a.toComparable() > b.toComparable();
         public static bool operator >=(PartialDate a, PartialDate b) => a.toComparable() >= b.toComparable();
-        public static bool operator ==(PartialDate a, PartialDate b) => Equals(a, b);
+        public static bool operator ==(PartialDate a, PartialDate b) => a.Equals(b);
         public static bool operator !=(PartialDate a, PartialDate b) => !(a == b);
 
         public int CompareTo(object obj)
@@ -157,7 +155,7 @@ namespace Hl7.Fhir.Model.Primitives
                 throw new ArgumentException($"Object is not a {nameof(PartialDate)}");
         }
 
-        public bool Equals(PartialDate other) => other.toComparable() == toComparable();
+        public bool Equals(PartialDate other) => this.Precision == other.Precision && other.toComparable() == toComparable();
         public override int GetHashCode() => toComparable().GetHashCode();
         public override string ToString() => _original;
 

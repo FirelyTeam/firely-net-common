@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using TS = Hl7.Fhir.Language.TypeSpecifier;
 
 namespace Hl7.Fhir.ElementModel
 {
@@ -23,15 +24,24 @@ namespace Hl7.Fhir.ElementModel
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static ITypedElement ForPrimitive(object value) => new PrimitiveElement(value);
+        // HACK: For now, allow a Quantity (which is NOT a primitive) in the .Value property
+        // of ITypedElement. This is a temporary situation to make a quick & dirty upgrade of
+        // FP to Normative (with Quantity support) possible.
+        public static ITypedElement ForPrimitive(object value) =>
+            value is Model.Primitives.Quantity q ? PrimitiveElement.ForQuantity(q) : new PrimitiveElement(value);
 
         /// <summary>
         /// Create a fixed length set of values (but also support variable number of parameter values)
         /// </summary>
         /// <param name="values"></param>
         /// <returns></returns>
-        public static IEnumerable<ITypedElement> CreateList(params object[] values) => values != null
-                ? values.Select(value => value == null ? null : value is ITypedElement ? (ITypedElement)value : ForPrimitive(value))
+        public static IEnumerable<ITypedElement> CreateList(params object[] values) => 
+            values != null
+                ? values.Select(value => value == null 
+                    ? null 
+                    : value is ITypedElement 
+                        ? (ITypedElement)value 
+                        : ForPrimitive(value))
                 : EmptyList;
 
         /// <summary>
@@ -129,11 +139,16 @@ namespace Hl7.Fhir.ElementModel
             {
                 if (child.Definition.IsResource || child.Definition.Type.Length > 1)
                 {
-                    // We are in a situation where we are on an polymorphic element, but the caller did not specify
-                    // the instance type.  We can try to auto-set it by deriving it from the instance's type, if it is a primitive
-                    if (child.Value != null && TypeSpecifier.TryGetPrimitiveTypeName(child.Value.GetType(), out string instanceType))
-                        child.InstanceType = instanceType;
-                    else
+                    // [EK20190822] This functionality has been removed since it heavily depends on knowledge about
+                    // FHIR types, it would automatically try to derive a *FHIR* type from the given child.Value,
+                    // however, this would not work correctly if the model used is something else than FHIR, 
+                    // so this cannot be expected to work correctly in general, and I have chosen to remove
+                    // this.
+                    //// We are in a situation where we are on an polymorphic element, but the caller did not specify
+                    //// the instance type.  We can try to auto-set it by deriving it from the instance's type, if it is a primitive
+                    //if (child.Value != null && IsSupportedValue(child.Value))
+                    //    child.InstanceType = TypeSpecifier.ForNativeType(child.Value.GetType()).Name;
+                    //else
                         throw Error.Argument("The ElementNode given should have its InstanceType property set, since the element is a choice or resource.");
                 }
                 else
@@ -144,6 +159,7 @@ namespace Hl7.Fhir.ElementModel
                 ChildList.Add(child);
             else
                 ChildList.Insert(position.Value, child);
+
         }
 
         public static ElementNode Root(IStructureDefinitionSummaryProvider provider, string type, string name=null, object value=null)

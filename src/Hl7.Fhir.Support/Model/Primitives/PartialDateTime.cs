@@ -8,7 +8,6 @@
 
 
 using System;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model.Primitives
@@ -118,7 +117,7 @@ namespace Hl7.Fhir.Model.Primitives
             return DateTimeOffset.TryParse(parseableDT, out value._parsedValue);
         }
 
-        public bool IsEqualTo(PartialDateTime other) => throw new NotImplementedException();
+        public bool IsEqualTo(PartialDateTime other) => this == other;
 
         public bool IsEquivalentTo(PartialDateTime other) => throw new NotImplementedException();
 
@@ -145,10 +144,9 @@ namespace Hl7.Fhir.Model.Primitives
                 throw new ArgumentException($"Object is not a {nameof(PartialDateTime)}");
         }
 
-        public bool Equals(PartialDateTime other) => other.toComparable() == toComparable();
+        public bool Equals(PartialDateTime other) => this.Precision == other.Precision && other.toComparable() == toComparable();
         public override int GetHashCode() => toComparable().GetHashCode();
         public override string ToString() => _original;
-
         public int CompareTo(PartialDateTime obj) => CompareTo((object)obj);
         public override bool Equals(object obj) => obj is PartialDateTime dt && Equals(dt);
     }

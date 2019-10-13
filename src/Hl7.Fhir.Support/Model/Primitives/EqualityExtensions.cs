@@ -30,19 +30,5 @@ namespace Hl7.Fhir.Model.Primitives
 
         // Boolean: values must be the same
         public static bool IsEqualTo(this bool l, bool r) => l == r;
-
-        // TODO: Move these to the respective classes
-        // Date: must be exactly the same
-        public static bool IsEqualTo(this PartialDate l, PartialDate r) => throw new NotImplementedException();
-
-        // DateTime: must be exactly the same, respecting the timezone offset (though +00:00 = -00:00 = Z)
-        public static bool IsEqualTo(this PartialDateTime l, PartialDateTime r) => throw new NotImplementedException();
-
-        // Time: must be exactly the same
-        public static bool IsEqualTo(this PartialTime l, PartialTime r) => throw new NotImplementedException();
-
-        public static bool IsEqualTo(this Coding l, Coding r) => throw new NotImplementedException();
-
-        public static bool IsEqualTo(this Quantity l, Quantity r) => throw new NotImplementedException();
     }
 }

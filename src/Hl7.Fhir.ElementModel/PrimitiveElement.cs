@@ -7,6 +7,7 @@
  */
 
 using Hl7.Fhir.Language;
+using Hl7.Fhir.Model.Primitives;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Specification;
 using System;
@@ -17,12 +18,35 @@ namespace Hl7.Fhir.ElementModel
 {
     internal class PrimitiveElement : ITypedElement, IElementDefinitionSummary, IStructureDefinitionSummary
     {
-        public PrimitiveElement(object value, string name = null)
+        // [20190827 EK] Hack, allow a Quantity as a "primitive" value in ITypedElement.Value for now, so
+        // we can at least continue to integrate the changes from the dead branch into 2.0
+        // We need to have Quantity implement ITypedElement itself.
+        internal static PrimitiveElement ForQuantity(Quantity value)
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
 
-            Value = TypeSpecifier.ConvertToPrimitiveValue(value);
-            InstanceType = TypeSpecifier.GetPrimitiveTypeName(value.GetType());
+            return new PrimitiveElement
+            {
+                Value = value,
+                InstanceType = TypeSpecifier.Quantity.FullName,
+                Name = "@QuantityAsPrimitiveValue@"
+            };
+        }
+
+        private PrimitiveElement()
+        {            
+        }
+
+        public PrimitiveElement(object value, string name = null, bool useFullTypeName = false)
+        {
+            if (value == null) throw new ArgumentNullException(nameof(value));
+
+            var systemType = TypeSpecifier.ForNativeType(value.GetType());
+            if(!TypeSpecifier.PrimitiveTypes.Contains(systemType))
+                throw new ArgumentException("The supplied value cannot be represented with a System primitive.", nameof(value));
+           
+            Value = Any.ConvertToSystemValue(value);
+            InstanceType = useFullTypeName ? systemType.FullName : systemType.Name;
             Name = name ?? "@primitivevalue@";
         }
 
@@ -70,7 +94,12 @@ namespace Hl7.Fhir.ElementModel
         public ITypedElement Clone() => new PrimitiveElement(Value);
 
         public IEnumerable<ITypedElement> Children(string name = null) => Enumerable.Empty<ITypedElement>();
-        IReadOnlyCollection<IElementDefinitionSummary> IStructureDefinitionSummary.GetElements() => throw new NotImplementedException();
+        IReadOnlyCollection<IElementDefinitionSummary> IStructureDefinitionSummary.GetElements() =>
+#if NET40
+            new ReadOnlyList<IElementDefinitionSummary>();
+#else
+            new List<IElementDefinitionSummary>();
+#endif
 
         public override string ToString() => Value != null ? PrimitiveTypeConverter.ConvertTo<string>(Value) : "";
 

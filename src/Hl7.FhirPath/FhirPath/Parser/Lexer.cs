@@ -13,7 +13,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Xml;
 
 namespace Hl7.FhirPath.Parser
 {
@@ -155,17 +154,17 @@ namespace Hl7.FhirPath.Parser
         //   : [0-9]+('.' [0-9]+)?
         //   ;
         public static readonly Parser<Int64> IntegerNumber =
-            Parse.Number.Select(s => Int64.Parse(s)).Named("IntegerNumber");
+            Parse.Number.Select(s => Integer.Parse(s));
 
         public static readonly Parser<decimal> DecimalNumber =
                    from num in Parse.Number
                    from dot in Parse.Char('.')
                    from fraction in Parse.Number
-                   select XmlConvert.ToDecimal(num + dot + fraction);
+                   select Fhir.Model.Primitives.Decimal.Parse(num + dot + fraction);
 
         // BOOL: 'true' | 'false';
         public static readonly Parser<bool> Bool =
-            Parse.String("true").XOr(Parse.String("false")).Text().Select(s => Boolean.Parse(s));
+            Parse.String("true").XOr(Parse.String("false")).Text().Select(s => Fhir.Model.Primitives.Boolean.Parse(s));
 
         //qualifiedIdentifier
         //   : identifier ('.' identifier)*
@@ -177,6 +176,9 @@ namespace Hl7.FhirPath.Parser
             from _ in Parse.Char('$')
             from name in Parse.String("this").XOr(Parse.String("index")).Or(Parse.String("total")).Text()
             select name;
+
+        public static readonly Parser<string> Quantity =
+           Parse.Regex(Fhir.Model.Primitives.Quantity.QUANTITYREGEX);
     }
 
 
@@ -184,7 +186,7 @@ namespace Hl7.FhirPath.Parser
     {
         public static Parser<string> Unescape(this Parser<IEnumerable<char>> c)
         {
-            return c.Select(chr => new String(Unescape(chr.Single()), 1));
+            return c.Select(chr => new string(Unescape(chr.Single()), 1));
         }
 
         public static char Unescape(char c)
@@ -202,7 +204,7 @@ namespace Hl7.FhirPath.Parser
 
         public static Parser<string> Unescape(this Parser<string> c)
         {
-            return c.Select(s => new String(Unescape(s), 1));
+            return c.Select(s => new string(Unescape(s), 1));
         }
 
         public static char Unescape(string unicodeHex)

@@ -35,8 +35,8 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using Hl7.Fhir.Introspection;
-using System.Runtime.Serialization;
 using Hl7.Fhir.Utility;
+using System.ComponentModel;
 
 namespace Hl7.Fhir.Model
 {
@@ -45,7 +45,7 @@ namespace Hl7.Fhir.Model
 #endif
     [InvokeIValidatableObject]
     [System.Runtime.Serialization.DataContract]
-    public abstract class Base : Hl7.Fhir.Validation.IValidatableObject, IDeepCopyable, IDeepComparable, IAnnotated, IAnnotatable
+    public abstract class Base : Hl7.Fhir.Validation.IValidatableObject, IDeepCopyable, IDeepComparable, IAnnotated, IAnnotatable, INotifyPropertyChanged
     {
         public abstract bool IsExactly(IDeepComparable other);
         public abstract bool Matches(IDeepComparable pattern);
@@ -114,14 +114,24 @@ namespace Hl7.Fhir.Model
             annotations.RemoveOfType(type);
         }
 
-#endregion
+        #endregion
 
-        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+        #region INotifyPropertyChanged
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
         protected void OnPropertyChanged(String property)
         {
-            PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(property));
+            // No need to create event arguments w/o subscribers
+            //PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
+            var handler = PropertyChanged;
+            if (!(handler is null))
+            {
+                handler.Invoke(this, new PropertyChangedEventArgs(property));
+            }
         }
 
+        #endregion
 
         public abstract string TypeName { get; }
 
