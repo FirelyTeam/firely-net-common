@@ -25,6 +25,11 @@ namespace Hl7.Fhir.Rest
         public UnsupportedBodyTypeException BodyException { get; set; }
         public object LastResponse { get; set; }
         public object LastRequest { get; set; }
+
+        public EntryResponse()
+        {
+            Headers = new Dictionary<string, string>();
+        }
     }
 
 
