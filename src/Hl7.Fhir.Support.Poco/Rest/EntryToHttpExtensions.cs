@@ -115,7 +115,11 @@ namespace Hl7.Fhir.Rest
                 // platform does not support UserAgent property...too bad
                 try
                 {
+#if NETSTANDARD1_1
                     request.Headers[HttpRequestHeader.UserAgent] = agent;
+#else
+                    request.UserAgent = agent;
+#endif
                 }
                 catch (ArgumentException)
                 {
