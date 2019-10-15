@@ -120,6 +120,7 @@ namespace Hl7.Fhir.Rest
                 catch (ArgumentException)
                 {
                     SetUserAgentUsingDirectHeaderManipulation = false;
+                    throw;
                 }
             }
         }
