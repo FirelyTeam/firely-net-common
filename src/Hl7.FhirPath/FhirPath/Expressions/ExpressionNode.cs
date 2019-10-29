@@ -118,7 +118,7 @@ namespace Hl7.FhirPath.Expressions
         public Expression Focus { get; private set; }
         public string FunctionName { get; private set; }
 
-        public Expression[] Arguments { get; private set; }
+        public IEnumerable<Expression> Arguments { get; private set; }
 
         public override T Accept<T>(ExpressionVisitor<T> visitor, SymbolTable scope)
         {
