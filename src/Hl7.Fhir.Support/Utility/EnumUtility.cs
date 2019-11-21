@@ -15,10 +15,16 @@ namespace Hl7.Fhir.Utility
 {
     public static class EnumUtility
     {
+        private static Dictionary<object, string> Cache = new Dictionary<object, string>();
         public static string GetLiteral(this Enum e)
         {
-            var attr = e.GetAttributeOnEnum<EnumLiteralAttribute>();
-            return attr?.Literal ?? e.ToString();
+            if (Cache.TryGetValue(e, out string value))
+            {
+                return value;
+            }
+            var attr = e.GetAttributeOnEnum<EnumLiteralAttribute>()?.Literal;
+            Cache.Add(e, attr);
+            return attr ?? e.ToString();
         }
 
         public static string GetSystem(this Enum e)
