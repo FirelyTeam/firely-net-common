@@ -9,7 +9,6 @@
 using System.Diagnostics;
 using Hl7.Fhir.Utility;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Hl7.Fhir.Model;
 
 namespace Hl7.Fhir.Support.Tests.Utils
 {
@@ -92,7 +91,6 @@ namespace Hl7.Fhir.Support.Tests.Utils
             Unknown,
         }
 
-
         [TestMethod]
         public void EnumParsingPerformance()
         {
@@ -119,6 +117,20 @@ namespace Hl7.Fhir.Support.Tests.Utils
             Assert.AreEqual("a", X.a.GetDocumentation()); // default documentation = name of item
         }
 
+        [TestMethod]
+        public void EnumLiteralPerformance()
+        {
+            var result = string.Empty;
+
+            var sw = Stopwatch.StartNew();
+            for (var i = 0; i < 50_000; i++)
+                result = TestAdministrativeGender.Male.GetLiteral();
+            sw.Stop();
+
+            Assert.AreEqual("male", result);
+            Debug.WriteLine(sw.ElapsedMilliseconds);
+            Assert.IsTrue(sw.ElapsedMilliseconds < 500);
+        }
 
         enum X
         {
