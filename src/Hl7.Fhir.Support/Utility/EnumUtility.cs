@@ -17,8 +17,7 @@ namespace Hl7.Fhir.Utility
     {
         public static string GetLiteral(this Enum e)
         {
-            var attr = e.GetAttributeOnEnum<EnumLiteralAttribute>();
-            return attr?.Literal ?? e.ToString();
+            return GetEnumMapping(e.GetType()).GetLiteral(e);
         }
 
         public static string GetSystem(this Enum e)
