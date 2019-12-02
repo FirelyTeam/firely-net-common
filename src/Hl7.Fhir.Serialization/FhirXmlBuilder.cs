@@ -103,7 +103,7 @@ namespace Hl7.Fhir.Serialization
             bool hasTypeInfo = serializationInfo != null;
 
             var value = source.Value != null ?
-                PrimitiveTypeConverter.ConvertTo<string>(source.Value) : null;
+                PrimitiveTypeConverter.ConvertTo<string>(source.Value).Trim() : null;
 
             // xhtml children require special treament:
             // - They don't use an xml "value" attribute to represent the value, instead their Value is inserted verbatim into the parent
