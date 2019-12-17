@@ -6,13 +6,13 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using Hl7.FhirPath.Functions;
-using System.Text.RegularExpressions;
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Model.Primitives;
+using Hl7.FhirPath.Functions;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Hl7.FhirPath.Expressions
 {
@@ -34,6 +34,7 @@ namespace Hl7.FhirPath.Expressions
             t.Add("isDistinct", (IEnumerable<ITypedElement> f) => f.IsDistinct());
             t.Add("subsetOf", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => f.SubsetOf(a));
             t.Add("supersetOf", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => a.SubsetOf(f));
+            t.Add("intersect", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => f.Intersect(a));
 
             t.Add("today", (object f) => PartialDateTime.Today());
             t.Add("now", (object f) => PartialDateTime.Now());
@@ -44,13 +45,13 @@ namespace Hl7.FhirPath.Expressions
             t.Add("iif", (IEnumerable<ITypedElement> f, bool? condition, IEnumerable<ITypedElement> result, IEnumerable<ITypedElement> otherwise) => f.IIf(condition, result, otherwise));
 
             // Functions that use normal null propagation and work with the focus (buy may ignore it)
-            t.Add("not", (IEnumerable<ITypedElement> f) => f.Not(), doNullProp:true);
+            t.Add("not", (IEnumerable<ITypedElement> f) => f.Not(), doNullProp: true);
             t.Add("builtin.children", (IEnumerable<ITypedElement> f, string a) => f.Navigate(a), doNullProp: true);
 
             t.Add("children", (IEnumerable<ITypedElement> f) => f.Children(), doNullProp: true);
             t.Add("descendants", (IEnumerable<ITypedElement> f) => f.Descendants(), doNullProp: true);
 
-            t.Add("binary.=", (object f, IEnumerable<ITypedElement>  a, IEnumerable<ITypedElement> b) => a.IsEqualTo(b), doNullProp: true);
+            t.Add("binary.=", (object f, IEnumerable<ITypedElement> a, IEnumerable<ITypedElement> b) => a.IsEqualTo(b), doNullProp: true);
             t.Add("binary.!=", (object f, IEnumerable<ITypedElement> a, IEnumerable<ITypedElement> b) => !a.IsEqualTo(b), doNullProp: true);
             t.Add("binary.~", (object f, IEnumerable<ITypedElement> a, IEnumerable<ITypedElement> b) => a.IsEquivalentTo(b), doNullProp: true);
             t.Add("binary.!~", (object f, IEnumerable<ITypedElement> a, IEnumerable<ITypedElement> b) => !a.IsEquivalentTo(b), doNullProp: true);
@@ -104,7 +105,7 @@ namespace Hl7.FhirPath.Expressions
             t.Add("binary.>=", (object f, PartialTime a, PartialTime b) => a >= b, doNullProp: true);
 
             t.Add("single", (IEnumerable<ITypedElement> f) => f.Single(), doNullProp: true);
-            t.Add("skip", (IEnumerable<ITypedElement> f, long a) =>  f.Skip((int)a), doNullProp: true);
+            t.Add("skip", (IEnumerable<ITypedElement> f, long a) => f.Skip((int)a), doNullProp: true);
             t.Add("first", (IEnumerable<ITypedElement> f) => f.First(), doNullProp: true);
             t.Add("last", (IEnumerable<ITypedElement> f) => f.Last(), doNullProp: true);
             t.Add("tail", (IEnumerable<ITypedElement> f) => f.Tail(), doNullProp: true);
