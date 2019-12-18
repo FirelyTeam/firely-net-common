@@ -6,8 +6,8 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using System.Collections.Generic;
 using Hl7.Fhir.ElementModel;
+using System.Collections.Generic;
 
 namespace Hl7.FhirPath.Expressions
 {
@@ -52,6 +52,16 @@ namespace Hl7.FhirPath.Expressions
         public static void SetResource(this Closure ctx, IEnumerable<ITypedElement> value)
         {
             ctx.SetValue("resource", value);
+        }
+
+        public static IEnumerable<ITypedElement> GetRootResource(this Closure ctx)
+        {
+            return ctx.ResolveValue("rootResource");
+        }
+
+        public static void SetRootResource(this Closure ctx, IEnumerable<ITypedElement> value)
+        {
+            ctx.SetValue("rootResource", value);
         }
 
         public static Closure Nest(this Closure ctx, IEnumerable<ITypedElement> input)

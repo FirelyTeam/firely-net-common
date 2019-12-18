@@ -5,12 +5,12 @@
  * This file is licensed under the BSD 3-Clause license
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
-using FP = Hl7.FhirPath.Expressions;
+using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Hl7.Fhir.Utility;
-using Hl7.Fhir.ElementModel;
+using FP = Hl7.FhirPath.Expressions;
 
 namespace Hl7.FhirPath.Expressions
 {
@@ -45,7 +45,7 @@ namespace Hl7.FhirPath.Expressions
         public override Invokee VisitVariableRef(FP.VariableRefExpression expression, SymbolTable scope)
         {
             // HACK, for now, $this is special, and we handle in run-time, not compile time...
-            if(expression.Name == "builtin.this")
+            if (expression.Name == "builtin.this")
                 return InvokeeFactory.GetThis;
 
             // HACK, for now, $this is special, and we handle in run-time, not compile time...
@@ -56,10 +56,13 @@ namespace Hl7.FhirPath.Expressions
             if (expression.Name == "context")
                 return InvokeeFactory.GetContext;
 
-            // HACK, for now, %context is special, and we handle in run-time, not compile time...
+            // HACK, for now, %resource is special, and we handle in run-time, not compile time...
             if (expression.Name == "resource")
                 return InvokeeFactory.GetResource;
 
+            // HACK, for now, %rootResource is special, and we handle in run-time, not compile time...
+            if (expression.Name == "rootResource")
+                return InvokeeFactory.GetRootResource;
 
             // Variables are still functions without arguments. For now variables are treated separately here,
             //Functions are handled elsewhere.
@@ -77,7 +80,7 @@ namespace Hl7.FhirPath.Expressions
                 // If we have multiple candidates, delay resolution to runtime
                 return (new DynaDispatcher(name, candidateTable).Dispatcher);
             }
-            else if(count == 1)
+            else if (count == 1)
             {
                 // There's only one candidate, again we don't have the right parameter types at
                 // to match yet.
