@@ -153,9 +153,17 @@ namespace Hl7.Fhir.ElementModel
                 case "xhtml":
                     return TypeSpecifier.String;
                 default:
-                        var summary = Provider.Provide(fhirType);
-                        var type = summary.GetElements().Where(e => e.Type.Equals("value")).FirstOrDefault()?.Type.FirstOrDefault()?.GetTypeName();
-                        return tryMapFhirPrimitiveTypeToSystemType(type);
+                    {
+                        // Check if a logical model uses a custom "primitive" data type based on FHIR data types
+                        if (Uri.IsWellFormedUriString(fhirType, UriKind.Absolute))
+                        {
+                            var summary = Provider.Provide(fhirType);
+                            var type = summary?.GetElements().Where(e => e.ElementName.Equals("value")).FirstOrDefault()?.Type.FirstOrDefault()?.GetTypeName();
+                            return tryMapFhirPrimitiveTypeToSystemType(type);
+                        }
+
+                        return null;
+                    }
             }
         }
 
