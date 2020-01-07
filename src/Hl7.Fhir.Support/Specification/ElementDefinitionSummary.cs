@@ -16,7 +16,7 @@ namespace Hl7.Fhir.Specification
         private ElementDefinitionSummary() { }
 
         public ElementDefinitionSummary(string elementName, bool isCollection, bool isChoice,
-            bool isResource, XmlRepresentation representation, ITypeSerializationInfo[] type,
+            bool isResource, XmlRepresentation representation, string defaultType, ITypeSerializationInfo[] type,
             int order, string nonDefaultNS, bool inSummary, bool isRequired)
         {
             ElementName = elementName ?? throw new ArgumentNullException(nameof(elementName));
@@ -24,6 +24,7 @@ namespace Hl7.Fhir.Specification
             IsChoiceElement = isChoice;
             IsResource = isResource;
             Representation = representation;
+            DefaultTypeName = defaultType;
             Type = type ?? throw new ArgumentNullException(nameof(type));
             Order = order;
             NonDefaultNamespace = nonDefaultNS;
@@ -38,6 +39,7 @@ namespace Hl7.Fhir.Specification
             IsChoiceElement = source.IsChoiceElement;
             IsResource = source.IsResource;
             Representation = source.Representation;
+            DefaultTypeName = source.DefaultTypeName;
             Type = source.Type;
             Order = source.Order;
             NonDefaultNamespace = source.NonDefaultNamespace;
@@ -49,6 +51,7 @@ namespace Hl7.Fhir.Specification
             new ElementDefinitionSummary(rootName ?? rootType.TypeName, isCollection: false, isChoice: false,
                 isResource: rootType.IsResource,
                 representation: XmlRepresentation.XmlElement,
+                defaultType: null,
                 type: new[] { rootType }, order: 0, nonDefaultNS: null, inSummary: true, isRequired: false);
      
         public string ElementName { get; private set; }
@@ -64,6 +67,7 @@ namespace Hl7.Fhir.Specification
         public XmlRepresentation Representation { get; private set; }
 
         public int Order { get; private set; }
+        public string DefaultTypeName { get; private set; }
         public ITypeSerializationInfo[] Type { get; private set; }
 
         public string NonDefaultNamespace { get; }
