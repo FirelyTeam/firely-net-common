@@ -166,6 +166,21 @@ namespace Hl7.Fhir.ElementModel
                         raiseTypeError($"Choice element '{current.Name}' is suffixed with unexpected type '{suffix}'", current, location: current.Location);
                 }
             }
+            else if (info.Representation == XmlRepresentation.TypeAttr) // May be used by models other then FHIR, e.g. CCDA represented by a StructureDefinition
+            {
+                if(info.Type.Count() == 1)
+                {
+                    instanceType = info.Type.Single().GetTypeName();
+                }
+                else
+                {
+                    var typeName = current.Children("type").FirstOrDefault()?.Text;
+                    if (typeName != null)
+                        instanceType = info.Type.Where(type => type.GetTypeName().EndsWith(typeName)).FirstOrDefault().GetTypeName();
+                    else
+                        instanceType = info.DefaultTypeName;
+                }
+            }
             else
             {
                 var tp = info.Type.Single();
