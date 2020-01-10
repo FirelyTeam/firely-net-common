@@ -120,6 +120,14 @@ namespace Hl7.Fhir.ElementModel
                     return null;
                 }
 
+                // Type might still be a custom "primitive" type for logical models
+                if (Uri.IsWellFormedUriString(InstanceType, UriKind.Absolute))
+                {
+                    var summary = Provider.Provide(InstanceType);
+                    var valueType = summary?.GetElements().Where(e => e.ElementName.Equals("value")).FirstOrDefault()?.Type.FirstOrDefault()?.GetTypeName();
+                    return PrimitiveTypeConverter.FromSerializedValue(sourceText, valueType);
+                }
+
                 // Finally, we have a (potentially) unparsed string + type info
                 // parse this primitive into the desired type
                 try
