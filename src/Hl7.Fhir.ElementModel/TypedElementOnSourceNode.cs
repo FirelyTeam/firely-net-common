@@ -176,7 +176,7 @@ namespace Hl7.Fhir.ElementModel
                 {
                     var typeName = current.Children("type").FirstOrDefault()?.Text;
                     if (typeName != null)
-                        instanceType = info.Type.Where(type => type.GetTypeName().EndsWith(typeName)).FirstOrDefault().GetTypeName();
+                        instanceType = info.Type.Where(type => typeFromLogicalModelCanonical(type).Equals(typeName)).FirstOrDefault().GetTypeName();
                     else
                         instanceType = info.DefaultTypeName;
                 }
@@ -188,6 +188,13 @@ namespace Hl7.Fhir.ElementModel
             }
 
             return instanceType;
+        }
+
+        private string typeFromLogicalModelCanonical(this ITypeSerializationInfo info)
+        {
+            var type = info.GetTypeName();
+            var pos = type.LastIndexOf('/'); // Get the typename from the type name of a logical model type (absolute URL) 
+            return pos > -1 ? type.Substring(pos + 1) : type;
         }
 
         private bool tryGetBySuffixedName(Dictionary<string, IElementDefinitionSummary> dis, string name, out IElementDefinitionSummary info)
