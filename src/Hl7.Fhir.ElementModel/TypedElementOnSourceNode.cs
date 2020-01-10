@@ -233,6 +233,7 @@ namespace Hl7.Fhir.ElementModel
 
             foreach (var scan in childSet)
             {
+                ISourceNode source = null;
                 var hit = tryGetBySuffixedName(dis, scan.Name, out var info);
                 string instanceType = info == null ? null :
                     deriveInstanceType(scan, info);
@@ -248,12 +249,23 @@ namespace Hl7.Fhir.ElementModel
                     if (_settings.ErrorMode != TypedElementSettings.TypeErrorMode.Passthrough)
                         continue;
                 }
+                var isXhtmlNode = false;
 
-                if (instanceType == "xhtml")
+                //Special condition for ccda.
+                //If we encounter a xhtml node in a ccda document we will flatten all childnodes
+                //and use there content to build up the xml.
+                //The xml will be put in this node and children will be ignored.
+                if (instanceType == "xhtml" && info.Representation == XmlRepresentation.CdaText)
                 {
-                    var sn = SourceNode.FromNode(scan, false, new[] { typeof(IXHtml) });
-                    var ix = sn.Annotation<IXHtml>();
-                    var xml = ix?.Serialize(scan);
+                    string xml = string.Empty;
+                    foreach (var xmlChild in scan.Children())
+                    {
+                        var ix = xmlChild.Annotation<IXHtml>();
+                        xml += ix?.OriginalElement;
+
+                    }
+                    isXhtmlNode = true;
+                    source = SourceNode.Valued(scan.Name, xml);
                 }
 
                 if (lastName == scan.Name)
@@ -267,12 +279,22 @@ namespace Hl7.Fhir.ElementModel
                 var prettyPath =
                  hit && !info.IsCollection ? $"{ShortPath}.{info.ElementName}" : $"{ShortPath}.{scan.Name}[{_nameIndex}]";
 
-                yield return new TypedElementOnSourceNode(this, scan, info, instanceType, prettyPath);
+                if(!isXhtmlNode) source = scan;
+
+                yield return new TypedElementOnSourceNode(this, source, info, instanceType, prettyPath);
             }
         }
 
         public IEnumerable<ITypedElement> Children(string name = null)
         {
+            //If we have a xhtml typed node and there was not an div tag around the content
+            //the won´t look at the children of this node, since there will be no types
+            //matching the html tags.
+            if (this.InstanceType == "xhtml" && Name != "div")
+            {
+                return new ITypedElement[] { };
+            }
+
             var childElementDefs = this.ChildDefinitions(Provider).ToDictionary(c => c.ElementName);
 
             if (Definition != null && !childElementDefs.Any())
