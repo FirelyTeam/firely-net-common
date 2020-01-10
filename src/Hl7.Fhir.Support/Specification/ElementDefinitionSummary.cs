@@ -16,6 +16,11 @@ namespace Hl7.Fhir.Specification
         private ElementDefinitionSummary() { }
 
         public ElementDefinitionSummary(string elementName, bool isCollection, bool isChoice,
+            bool isResource, XmlRepresentation representation, ITypeSerializationInfo[] type,
+            int order, string nonDefaultNS, bool inSummary, bool isRequired)
+            : this(elementName, isCollection, isChoice, isResource, representation, null, type, order, nonDefaultNS, inSummary, isRequired) { }
+
+        public ElementDefinitionSummary(string elementName, bool isCollection, bool isChoice,
             bool isResource, XmlRepresentation representation, string defaultType, ITypeSerializationInfo[] type,
             int order, string nonDefaultNS, bool inSummary, bool isRequired)
         {
