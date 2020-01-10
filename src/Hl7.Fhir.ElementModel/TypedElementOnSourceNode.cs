@@ -249,6 +249,13 @@ namespace Hl7.Fhir.ElementModel
                         continue;
                 }
 
+                if (instanceType == "xhtml")
+                {
+                    var sn = SourceNode.FromNode(scan, false, new[] { typeof(IXHtml) });
+                    var ix = sn.Annotation<IXHtml>();
+                    var xml = ix?.Serialize(scan);
+                }
+
                 if (lastName == scan.Name)
                     _nameIndex += 1;
                 else
@@ -325,3 +332,4 @@ namespace Hl7.Fhir.ElementModel
     [Obsolete("This class is used for internal purposes and is subject to change without notice. Don't use.")]
     public delegate object AdditionalStructuralRule(ITypedElement node, IExceptionSource ies, object state);
 }
+

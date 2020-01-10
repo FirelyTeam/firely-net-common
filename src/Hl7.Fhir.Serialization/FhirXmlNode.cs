@@ -17,9 +17,9 @@ using System.Xml.Linq;
 
 namespace Hl7.Fhir.Serialization
 {
-    public partial class FhirXmlNode : ISourceNode, IResourceTypeSupplier, IAnnotated, IExceptionSource
-    {  
-        internal FhirXmlNode(XObject node, FhirXmlParsingSettings settings) 
+    public partial class FhirXmlNode : ISourceNode, IResourceTypeSupplier, IAnnotated, IExceptionSource, IXHtml
+    {
+        internal FhirXmlNode(XObject node, FhirXmlParsingSettings settings)
         {
             Current = node;
             Location = Name;
@@ -218,7 +218,7 @@ namespace Hl7.Fhir.Serialization
 
         public IEnumerable<object> Annotations(Type type)
         {
-            if (type == typeof(FhirXmlNode) || type == typeof(ISourceNode) || type == typeof(IResourceTypeSupplier))
+            if (type == typeof(FhirXmlNode) || type == typeof(ISourceNode) || type == typeof(IResourceTypeSupplier) || type == typeof(IXHtml))
                 return new[] { this };
 #pragma warning disable 612, 618
             else if (type == typeof(AdditionalStructuralRule) && !PermissiveParsing)
@@ -437,5 +437,11 @@ namespace Hl7.Fhir.Serialization
 
         private ExceptionNotification buildException(string message) => ExceptionNotification.Error(
                 new StructuralTypeException("Parser: " + message));
+
+        public string Serialize(ISourceNode node)
+        {
+            return node.ToXml();
+        }
     }
 }
+
