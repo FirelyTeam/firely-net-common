@@ -48,6 +48,7 @@ namespace Hl7.Fhir.ElementModel
 
         bool IElementDefinitionSummary.IsResource => false;
 
+        string IElementDefinitionSummary.DefaultTypeName => null;
 
         ITypeSerializationInfo[] IElementDefinitionSummary.Type => new[] { this };
 
