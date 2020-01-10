@@ -249,7 +249,7 @@ namespace Hl7.Fhir.ElementModel
                     if (_settings.ErrorMode != TypedElementSettings.TypeErrorMode.Passthrough)
                         continue;
                 }
-                var isXhtmlNode = false;
+                var isCcdaXhtmlNode = false;
 
                 //Special condition for ccda.
                 //If we encounter a xhtml node in a ccda document we will flatten all childnodes
@@ -264,7 +264,7 @@ namespace Hl7.Fhir.ElementModel
                         xml += ix?.OriginalElement;
 
                     }
-                    isXhtmlNode = true;
+                    isCcdaXhtmlNode = true;
                     source = SourceNode.Valued(scan.Name, xml);
                 }
 
@@ -279,7 +279,7 @@ namespace Hl7.Fhir.ElementModel
                 var prettyPath =
                  hit && !info.IsCollection ? $"{ShortPath}.{info.ElementName}" : $"{ShortPath}.{scan.Name}[{_nameIndex}]";
 
-                if(!isXhtmlNode) source = scan;
+                if(!isCcdaXhtmlNode) source = scan;
 
                 yield return new TypedElementOnSourceNode(this, source, info, instanceType, prettyPath);
             }
