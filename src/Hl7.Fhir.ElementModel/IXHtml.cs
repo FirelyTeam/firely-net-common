@@ -2,6 +2,6 @@
 {
     public interface IXHtml
     {
-        string Serialize(ISourceNode node);
+        string OriginalElement { get; }
     }
 }

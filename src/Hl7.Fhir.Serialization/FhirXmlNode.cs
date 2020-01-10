@@ -438,10 +438,7 @@ namespace Hl7.Fhir.Serialization
         private ExceptionNotification buildException(string message) => ExceptionNotification.Error(
                 new StructuralTypeException("Parser: " + message));
 
-        public string Serialize(ISourceNode node)
-        {
-            return node.ToXml();
-        }
+        public string OriginalElement => ((XElement)Current).ToString(SaveOptions.DisableFormatting);
     }
 }
 
