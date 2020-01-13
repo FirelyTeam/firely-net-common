@@ -198,11 +198,7 @@ namespace Hl7.Fhir.ElementModel
             return instanceType;
         }
 
-<<<<<<< HEAD
         private string typeFromLogicalModelCanonical(ITypeSerializationInfo info)
-=======
-        private string typeFromLogicalModelCanonical(this ITypeSerializationInfo info)
->>>>>>> f8f898f76e1fe71fb7f50309763ee47130edbb3b
         {
             var type = info.GetTypeName();
             var pos = type.LastIndexOf('/'); // Match the "raw" type name from the complete type name of the logical model type (absolute url) 
