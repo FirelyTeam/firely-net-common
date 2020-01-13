@@ -18,6 +18,9 @@ namespace Hl7.Fhir.ElementModel
 {
     internal class TypedElementOnSourceNode : ITypedElement, IAnnotated, IExceptionSource, IShortPathGenerator
     {
+        private readonly string xHtmlInstancetype = "xhtml";
+        private readonly string htmlDivTagName = "div";
+
         public TypedElementOnSourceNode(ISourceNode source, string type, IStructureDefinitionSummaryProvider provider, TypedElementSettings settings = null)
         {
             if (source == null) throw Error.ArgumentNull(nameof(source));
@@ -254,7 +257,7 @@ namespace Hl7.Fhir.ElementModel
                 //If we encounter a xhtml node in a ccda document we will flatten all childnodes
                 //and use there content to build up the xml.
                 //The xml will be put in this node and children will be ignored.
-                if (instanceType == "xhtml" && info.Representation == XmlRepresentation.CdaText)
+                if (instanceType == xHtmlInstancetype && info.Representation == XmlRepresentation.CdaText)
                 {
                     string xml = string.Empty;
                     foreach (var xmlChild in scan.Children())
@@ -289,7 +292,7 @@ namespace Hl7.Fhir.ElementModel
             //If we have a xhtml typed node and there was not an div tag around the content
             //the won´t look at the children of this node, since there will be no types
             //matching the html tags.
-            if (this.InstanceType == "xhtml" && Name != "div")
+            if (this.InstanceType == xHtmlInstancetype && Name != htmlDivTagName)
             {
                 return new ITypedElement[] { };
             }
