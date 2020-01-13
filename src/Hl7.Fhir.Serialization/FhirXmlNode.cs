@@ -438,7 +438,37 @@ namespace Hl7.Fhir.Serialization
         private ExceptionNotification buildException(string message) => ExceptionNotification.Error(
                 new StructuralTypeException("Parser: " + message));
 
-        public string OriginalElement => ((XElement)Current).ToString(SaveOptions.DisableFormatting);
+        public string OriginalElement
+        {
+            get {
+                if (((XElement)Current.Parent).Name.Namespace != ((XElement)Current).Name.Namespace)
+                {
+                    return ((XElement)Current).ToString(SaveOptions.DisableFormatting);
+                }
+                else
+                {
+                    var test = StripNamespaces((XElement)Current);
+                    return (test.ToString(SaveOptions.DisableFormatting));
+                }
+            }
+            
+        }
+
+        private XElement StripNamespaces(XElement rootElement)
+        {
+            foreach (var element in rootElement.DescendantsAndSelf())
+            {
+                // check if the element contains attributes with defined namespaces (ignore xml and empty namespaces)
+                bool hasDefinedNamespaces = element.Attributes().Any(attribute => attribute.IsNamespaceDeclaration ||
+                        (attribute.Name.Namespace != XNamespace.None && attribute.Name.Namespace != XNamespace.Xml));
+                // update element name if a namespace is available and its not explicite defined
+                if (element.Name.Namespace != XNamespace.None && !hasDefinedNamespaces)
+                {
+                    element.Name = XNamespace.None.GetName(element.Name.LocalName);
+                }
+            }
+            return rootElement;
+        }
     }
 }
 
