@@ -183,6 +183,13 @@ namespace Hl7.Fhir.ElementModel
             return instanceType;
         }
 
+        private string typeFromLogicalModelCanonical(ITypeSerializationInfo info)
+        {
+            var type = info.GetTypeName();
+            var pos = type.LastIndexOf('/'); // Match the "raw" type name from the complete type name of the logical model type (absolute url) 
+            return pos > -1 ? type.Substring(pos + 1) : type;
+        }
+
         private bool tryGetBySuffixedName(Dictionary<string, IElementDefinitionSummary> dis, string name, out IElementDefinitionSummary info)
         {
             // Simplest case, one on one match between name and element name
