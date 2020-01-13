@@ -79,9 +79,10 @@ namespace Hl7.Fhir.Serialization
         {
             if (current.AtXhtmlDiv())
                 return ((XElement)current).ToString(SaveOptions.DisableFormatting);
-            else
-                return current is XElement xelem ?
-                    xelem.Attribute("value")?.Value.Trim() : current.Value();
+            if (current.FirstChild() is XText) return current.Value();
+            return current is XElement xelem ?
+                xelem.Attribute("value")?.Value.Trim() : current.Value();
+            
         }
     }
 }
