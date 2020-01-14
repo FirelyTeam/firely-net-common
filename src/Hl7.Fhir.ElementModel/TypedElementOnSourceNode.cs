@@ -168,7 +168,7 @@ namespace Hl7.Fhir.ElementModel
             }
             else if (info.Representation == XmlRepresentation.TypeAttr) // May be used by models other then FHIR, e.g. CCDA represented by a StructureDefinition
             {
-                if(info.Type.Count() == 1)
+                if (info.Type.Count() == 1)
                 {
                     instanceType = info.Type.Single().GetTypeName();
                 }
@@ -190,7 +190,7 @@ namespace Hl7.Fhir.ElementModel
             return instanceType;
         }
 
-        private string typeFromLogicalModelCanonical(this ITypeSerializationInfo info)
+        private string typeFromLogicalModelCanonical(ITypeSerializationInfo info)
         {
             var type = info.GetTypeName();
             var pos = type.LastIndexOf('/'); // Match the "raw" type name from the complete type name of the logical model type (absolute url) 
