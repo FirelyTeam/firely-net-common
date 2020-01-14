@@ -18,8 +18,8 @@ namespace Hl7.Fhir.ElementModel
 {
     internal class TypedElementOnSourceNode : ITypedElement, IAnnotated, IExceptionSource, IShortPathGenerator
     {
-        private readonly string xHtmlInstancetype = "xhtml";
-        private readonly string htmlDivTagName = "div";
+        private const string XHTML_INSTANCETYPE = "xhtml";
+        private const string XHTML_DIV_TAG_NAME = "div";
 
         public TypedElementOnSourceNode(ISourceNode source, string type, IStructureDefinitionSummaryProvider provider, TypedElementSettings settings = null)
         {
@@ -243,7 +243,6 @@ namespace Hl7.Fhir.ElementModel
 
             foreach (var scan in childSet)
             {
-                ISourceNode source = null;
                 var hit = tryGetBySuffixedName(dis, scan.Name, out var info);
                 string instanceType = info == null ? null :
                     deriveInstanceType(scan, info);
@@ -259,24 +258,6 @@ namespace Hl7.Fhir.ElementModel
                     if (_settings.ErrorMode != TypedElementSettings.TypeErrorMode.Passthrough)
                         continue;
                 }
-                var isCcdaXhtmlNode = false;
-
-                //Special condition for ccda.
-                //If we encounter a xhtml node in a ccda document we will flatten all childnodes
-                //and use there content to build up the xml.
-                //The xml will be put in this node and children will be ignored.
-                if (instanceType == xHtmlInstancetype && info.Representation == XmlRepresentation.CdaText)
-                {
-                    string xml = string.Empty;
-                    foreach (var xmlChild in scan.Children())
-                    {
-                        var ix = xmlChild.Annotation<IXHtml>();
-                        xml += ix?.OriginalElement;
-
-                    }
-                    isCcdaXhtmlNode = true;
-                    source = SourceNode.Valued(scan.Name, xml);
-                }
 
                 if (lastName == scan.Name)
                     _nameIndex += 1;
@@ -286,12 +267,28 @@ namespace Hl7.Fhir.ElementModel
                     lastName = scan.Name;
                 }
 
-                var prettyPath =
+                  var prettyPath =
                  hit && !info.IsCollection ? $"{ShortPath}.{info.ElementName}" : $"{ShortPath}.{scan.Name}[{_nameIndex}]";
 
-                if(!isCcdaXhtmlNode) source = scan;
+                //Special condition for ccda.
+                //If we encounter a xhtml node in a ccda document we will flatten all childnodes
+                //and use there content to build up the xml.
+                //The xml will be put in this node and children will be ignored.
+                if (instanceType == XHTML_INSTANCETYPE && info.Representation == XmlRepresentation.CdaText)
+                {
+                    string xml = string.Empty;
+                    foreach (var xmlChild in scan.Children())
+                    {
+                        var ix = xmlChild.Annotation<ICcdaInfoSupplier>();
+                        xml += ix?.XHtmlText;
 
-                yield return new TypedElementOnSourceNode(this, source, info, instanceType, prettyPath);
+                    }
+                    var source = SourceNode.Valued(scan.Name, xml);
+                    yield return new TypedElementOnSourceNode(this, source, info, instanceType, prettyPath);
+                    continue;
+                }
+
+                yield return new TypedElementOnSourceNode(this, scan, info, instanceType, prettyPath);
             }
         }
 
@@ -300,9 +297,9 @@ namespace Hl7.Fhir.ElementModel
             //If we have a xhtml typed node and there was not an div tag around the content
             //the won´t look at the children of this node, since there will be no types
             //matching the html tags.
-            if (this.InstanceType == xHtmlInstancetype && Name != htmlDivTagName)
+            if (this.InstanceType == XHTML_INSTANCETYPE && Name != XHTML_DIV_TAG_NAME)
             {
-                return new ITypedElement[] { };
+                return Enumerable.Empty<ITypedElement>();
             }
 
             var childElementDefs = this.ChildDefinitions(Provider).ToDictionary(c => c.ElementName);

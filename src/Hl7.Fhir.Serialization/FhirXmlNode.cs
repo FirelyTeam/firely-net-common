@@ -17,7 +17,7 @@ using System.Xml.Linq;
 
 namespace Hl7.Fhir.Serialization
 {
-    public partial class FhirXmlNode : ISourceNode, IResourceTypeSupplier, IAnnotated, IExceptionSource, IXHtml
+    public partial class FhirXmlNode : ISourceNode, IResourceTypeSupplier, IAnnotated, IExceptionSource, ICcdaInfoSupplier
     {
         internal FhirXmlNode(XObject node, FhirXmlParsingSettings settings)
         {
@@ -159,7 +159,7 @@ namespace Hl7.Fhir.Serialization
                 yield break;
             }
 
-            foreach(var child in enumerateChildren(firstChild, name)) yield return child;
+            foreach (var child in enumerateChildren(firstChild, name)) yield return child;
         }
 
         private IEnumerable<FhirXmlNode> enumerateChildren(XObject first, string name = null)
@@ -172,14 +172,14 @@ namespace Hl7.Fhir.Serialization
             do
             {
                 if (!PermissiveParsing) verifyXObject(scan, AllowedExternalNamespaces, this, this);
-                
+
                 if (scan is XElement || scan.Name() != "value")
                 {
                     var scanName = scan.Name().LocalName;
                     bool isMatch = scanName.MatchesPrefix(name);
 
                     if (isMatch)
-                    {                        
+                    {
                         if (_names.ContainsKey(scanName))
                         {
                             _names[scanName] += 1;
@@ -218,7 +218,7 @@ namespace Hl7.Fhir.Serialization
 
         public IEnumerable<object> Annotations(Type type)
         {
-            if (type == typeof(FhirXmlNode) || type == typeof(ISourceNode) || type == typeof(IResourceTypeSupplier) || type == typeof(IXHtml))
+            if (type == typeof(FhirXmlNode) || type == typeof(ISourceNode) || type == typeof(IResourceTypeSupplier) || type == typeof(ICcdaInfoSupplier))
                 return new[] { this };
 #pragma warning disable 612, 618
             else if (type == typeof(AdditionalStructuralRule) && !PermissiveParsing)
@@ -438,17 +438,18 @@ namespace Hl7.Fhir.Serialization
         private ExceptionNotification buildException(string message) => ExceptionNotification.Error(
                 new StructuralTypeException("Parser: " + message));
 
-        public string OriginalElement
+        public string XHtmlText
         {
             get {
-                if (((XElement)Current.Parent).Name.Namespace != ((XElement)Current).Name.Namespace)
+                var currentXElement = Current as XElement;
+                if (currentXElement.Parent.Name.Namespace != currentXElement.Name.Namespace)
                 {
-                    return ((XElement)Current).ToString(SaveOptions.DisableFormatting);
+                    return currentXElement.ToString(SaveOptions.DisableFormatting);
                 }
                 else
                 {
-                    var test = StripNamespaces((XElement)Current);
-                    return (test.ToString(SaveOptions.DisableFormatting));
+                    var stripedXElement = StripNamespaces(currentXElement);
+                    return (stripedXElement.ToString(SaveOptions.DisableFormatting));
                 }
             }
             
