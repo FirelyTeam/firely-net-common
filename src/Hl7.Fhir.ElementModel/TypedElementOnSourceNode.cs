@@ -18,6 +18,9 @@ namespace Hl7.Fhir.ElementModel
 {
     internal class TypedElementOnSourceNode : ITypedElement, IAnnotated, IExceptionSource, IShortPathGenerator
     {
+        private const string XHTML_INSTANCETYPE = "xhtml";
+        private const string XHTML_DIV_TAG_NAME = "div";
+
         public TypedElementOnSourceNode(ISourceNode source, string type, IStructureDefinitionSummaryProvider provider, TypedElementSettings settings = null)
         {
             if (source == null) throw Error.ArgumentNull(nameof(source));
@@ -176,7 +179,7 @@ namespace Hl7.Fhir.ElementModel
             }
             else if (info.Representation == XmlRepresentation.TypeAttr) // May be used by models other then FHIR, e.g. CCDA represented by a StructureDefinition
             {
-                if(info.Type.Count() == 1)
+                if (info.Type.Count() == 1)
                 {
                     instanceType = info.Type.Single().GetTypeName();
                 }
@@ -264,8 +267,26 @@ namespace Hl7.Fhir.ElementModel
                     lastName = scan.Name;
                 }
 
-                var prettyPath =
+                  var prettyPath =
                  hit && !info.IsCollection ? $"{ShortPath}.{info.ElementName}" : $"{ShortPath}.{scan.Name}[{_nameIndex}]";
+
+                //Special condition for ccda.
+                //If we encounter a xhtml node in a ccda document we will flatten all childnodes
+                //and use there content to build up the xml.
+                //The xml will be put in this node and children will be ignored.
+                if (instanceType == XHTML_INSTANCETYPE && info.Representation == XmlRepresentation.CdaText)
+                {
+                    string xml = string.Empty;
+                    foreach (var xmlChild in scan.Children())
+                    {
+                        var ix = xmlChild.Annotation<ICcdaInfoSupplier>();
+                        xml += ix?.XHtmlText;
+
+                    }
+                    var source = SourceNode.Valued(scan.Name, xml);
+                    yield return new TypedElementOnSourceNode(this, source, info, instanceType, prettyPath);
+                    continue;
+                }
 
                 yield return new TypedElementOnSourceNode(this, scan, info, instanceType, prettyPath);
             }
@@ -273,6 +294,14 @@ namespace Hl7.Fhir.ElementModel
 
         public IEnumerable<ITypedElement> Children(string name = null)
         {
+            //If we have a xhtml typed node and there was not an div tag around the content
+            //the won´t look at the children of this node, since there will be no types
+            //matching the html tags.
+            if (this.InstanceType == XHTML_INSTANCETYPE && Name != XHTML_DIV_TAG_NAME)
+            {
+                return Enumerable.Empty<ITypedElement>();
+            }
+
             var childElementDefs = this.ChildDefinitions(Provider).ToDictionary(c => c.ElementName);
 
             if (Definition != null && !childElementDefs.Any())
@@ -332,3 +361,4 @@ namespace Hl7.Fhir.ElementModel
     [Obsolete("This class is used for internal purposes and is subject to change without notice. Don't use.")]
     public delegate object AdditionalStructuralRule(ITypedElement node, IExceptionSource ies, object state);
 }
+
