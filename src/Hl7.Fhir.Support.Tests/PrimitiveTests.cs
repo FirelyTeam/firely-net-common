@@ -90,7 +90,7 @@ namespace Hl7.Fhir.Support.Tests.Model
                 { "url", typeof(string) },
                 { "string", typeof(string) },
                 { "time", typeof(PartialTime) },
-                { "positiveInt", typeof(long) },
+                { "positiveInt", typeof(int) },
                 { "integer64", typeof(long) }
             };
 
