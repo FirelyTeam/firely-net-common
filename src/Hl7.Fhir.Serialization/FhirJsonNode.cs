@@ -28,7 +28,7 @@ namespace Hl7.Fhir.Serialization
                     $"Alternatively, specify a {nameof(nodeName)} using the parameter.");
             Location = Name;
 
-            JsonValue = null;           
+            JsonValue = null;
             ArrayIndex = null;
             UsesShadow = false;
             _settings = settings?.Clone() ?? new FhirJsonParsingSettings();
@@ -183,7 +183,7 @@ namespace Hl7.Fhir.Serialization
                     {
                         // Make sure the representation of this Json-typed value is turned
                         // into a string representation compatible with the XML serialization
-                        return JsonValue.Value is string s ? s.Trim() 
+                        return JsonValue.Value is string s ? s.Trim()
                             : PrimitiveTypeConverter.ConvertTo<string>(JsonValue.Value);
                     }
                 }
@@ -312,7 +312,7 @@ namespace Hl7.Fhir.Serialization
             ExceptionHandler.NotifyOrThrow(this, ExceptionNotification.Error(Error.Format("Parser: " + message, lineNumber, linePosition)));
         }
 
-        private (int lineNumber, int linePosition) getPosition(JToken node) => 
+        private (int lineNumber, int linePosition) getPosition(JToken node) =>
             node is IJsonLineInfo jli ? (jli.LineNumber, jli.LinePosition) : (-1, -1);
 
         public IEnumerable<object> Annotations(Type type)
@@ -331,7 +331,7 @@ namespace Hl7.Fhir.Serialization
                 {
                     new JsonSerializationDetails()
                     {
-                        OriginalValue = JsonValue?.Value,
+                        OriginalValue = NormalizeValue(JsonValue),
                         LineNumber = lineNumber,
                         LinePosition = linePosition,
                         ArrayIndex = ArrayIndex,
@@ -341,6 +341,24 @@ namespace Hl7.Fhir.Serialization
             }
             else
                 return Enumerable.Empty<object>();
+
+            object NormalizeValue(JValue value)
+            {
+                if (value is null) return null;
+
+                try
+                {
+                    // Normalize long to int32 data types, because long would be later serialized as strings and 
+                    // not as integer. To serialize it as integer we convert long to integers
+                    if (value.Value is long && value.Type == JTokenType.Integer) return Convert.ToInt32(value.Value);
+                }
+                catch (OverflowException)
+                {
+                    raiseFormatError($"Value {value.Value} is outside the range of the Int32 type.", this.JsonValue);
+                }
+                return value.Value;
+            }
+
         }
 
 #pragma warning disable 612, 618
@@ -361,7 +379,7 @@ namespace Hl7.Fhir.Serialization
                     {
                         try
                         {
-                            doc = SerializationUtil.XDocumentFromXmlText((string) nav.Value);
+                            doc = SerializationUtil.XDocumentFromXmlText((string)nav.Value);
                         }
                         catch (FormatException ex)
                         {
