@@ -1,5 +1,4 @@
-﻿using Hl7.Fhir.Model;
-using Hl7.Fhir.Model.Primitives;
+﻿using Hl7.Fhir.Model.Primitives;
 using Hl7.Fhir.Support.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -39,7 +38,7 @@ namespace Hl7.Fhir.Support.Tests.Model
         [TestMethod]
         public void ConvertPrimitiveValue()
         {
-            var tests = new (object,object)[] { ("a string", "a string"),
+            var tests = new (object, object)[] { ("a string", "a string"),
                             (new DateTimeOffset(2019, 6, 20, 13, 48, 0, TimeSpan.Zero), PartialDateTime.Parse("2019-06-20T13:48:00Z")),
                             (3u, 3L) };
 
@@ -91,10 +90,11 @@ namespace Hl7.Fhir.Support.Tests.Model
                 { "url", typeof(string) },
                 { "string", typeof(string) },
                 { "time", typeof(PartialTime) },
-                { "positiveInt", typeof(long) }
+                { "positiveInt", typeof(int) },
+                { "integer64", typeof(long) }
             };
 
-            foreach(var pair in data)
+            foreach (var pair in data)
             {
                 var fhirType = pair.Key;
                 var native = pair.Value;
