@@ -1,10 +1,6 @@
 ﻿using Hl7.Fhir.Model.Primitives;
 using Hl7.Fhir.Utility;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Support.Model
 {
@@ -30,7 +26,7 @@ namespace Hl7.Fhir.Support.Model
             if (dotNetType == null) throw new ArgumentNullException(nameof(dotNetType));
 
             if (TryGetPrimitiveTypeName(dotNetType, out string result))
-                return result;            
+                return result;
             else
                 throw Error.NotSupported($"Don't know which primitive ITypedElement value represents an instance of .NET type {dotNetType.Name}.");
         }
@@ -55,9 +51,9 @@ namespace Hl7.Fhir.Support.Model
                 typeName = "time";
             else if (t<PartialDateTime>() || t<DateTimeOffset>())
                 typeName = "dateTime";
-            else if (t<float>() || t<double>() || t<Decimal>() )
+            else if (t<float>() || t<double>() || t<Decimal>())
                 typeName = "decimal";
-            else if (t<string>() || t<char>() || t<Uri>() )
+            else if (t<string>() || t<char>() || t<Uri>())
                 typeName = "string";
             else
                 typeName = null;
@@ -129,7 +125,7 @@ namespace Hl7.Fhir.Support.Model
             if (TryGetNativeRepresentation(typeName, out Type result))
                 return result;
             else
-                throw Error.Argument(nameof(typeName), $"Type '{typeName}' is not a primitive type and its value cannot be parsed.");         
+                throw Error.Argument(nameof(typeName), $"Type '{typeName}' is not a primitive type and its value cannot be parsed.");
         }
 
 
@@ -155,6 +151,8 @@ namespace Hl7.Fhir.Support.Model
                     case "integer":
                     case "unsignedInt":
                     case "positiveInt":
+                        return typeof(int);
+                    case "integer64":
                         return typeof(long);
                     case "time":
                         return typeof(PartialTime);

@@ -6,12 +6,10 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using System;
-using Hl7.FhirPath;
-using Hl7.FhirPath.Sprache;
-using Hl7.FhirPath.Parser;
-using Xunit;
 using Hl7.Fhir.Model.Primitives;
+using Hl7.FhirPath.Parser;
+using Hl7.FhirPath.Sprache;
+using Xunit;
 
 namespace Hl7.FhirPath.Tests
 {
@@ -62,9 +60,16 @@ namespace Hl7.FhirPath.Tests
 
             AssertParser.SucceedsMatch(parser, "A34", "A34");
             AssertParser.SucceedsMatch(parser, "\"A\uface%$#34\"", "A\uface%$#34");
+
+            SucceedsDelimitedString(parser, "`_Abcdef_ghijklmnopqrstuvwxyz_`");
+            SucceedsDelimitedString(parser, "\"_Abcdef_ghijklmnopqrstuvwxyz_\"");
+
             AssertParser.FailsMatch(parser, "34");
             AssertParser.FailsMatch(parser, "'Hello'");
             AssertParser.FailsMatch(parser, "@2013");
+            AssertParser.FailsMatch(parser, "`EndsWithDoubleQuote\"");
+
+
             //AssertParser.FailsMatch(parser, "true"); - this is an identifier, parser will only call in right context so no ambiguity
         }
 
@@ -83,7 +88,7 @@ namespace Hl7.FhirPath.Tests
             SucceedsPartialDateTime(parser, "@2015-01-02T12:34:00Z");
             SucceedsPartialDateTime(parser, "@2015-01-03T12:34:34+02:30");
             SucceedsPartialDateTime(parser, "@2015-01-03T12:34:34");
-      //      SucceedsPartialDateTime(parser, "@2015-01-01T23");  TODO: Make this work
+            //      SucceedsPartialDateTime(parser, "@2015-01-01T23");  TODO: Make this work
             AssertParser.FailsMatch(parser, "@2015-32-02T12:34:00Z");
             AssertParser.FailsMatch(parser, "@2015-01-02T28:34:00Z");
             AssertParser.FailsMatch(parser, "T12:34:34+02:30");
@@ -121,7 +126,7 @@ namespace Hl7.FhirPath.Tests
             AssertParser.FailsMatch(parser, "@T12:34:34+48:30");
         }
 
-            [Fact]
+        [Fact]
         public void FhirPath_Lex_Id()
         {
             var parser = Lexer.Id.End();
@@ -164,6 +169,22 @@ namespace Hl7.FhirPath.Tests
             AssertParser.FailsMatch(parser, @"'wrong es\qape'");
         }
 
+        [Fact]
+        public void FhirPath_Lex_DelimitedIdentifier()
+        {
+            var parser = Lexer.DelimitedIdentifier.End();
+
+            SucceedsDelimitedString(parser, "`2a`");
+            SucceedsDelimitedString(parser, "`_`");
+            SucceedsDelimitedString(parser, "`_Abcdef_ghijklmnopqrstuvwxyz_`");
+            SucceedsDelimitedString(parser, "`Hi \uface`");
+            SucceedsDelimitedString(parser, "`@#$%^&*().'`");
+            SucceedsDelimitedString(parser, "`3.1415`");
+
+            AssertParser.FailsMatch(parser, "`EndsWithDoubleQuote\"");
+            AssertParser.FailsMatch(parser, "NoQuotes");
+            AssertParser.FailsMatch(parser, @"'wrong es\qape'");
+        }
 
         [Fact]
         public void FhirPath_Lex_Unicode()
@@ -213,7 +234,7 @@ namespace Hl7.FhirPath.Tests
         [Fact]
         public void FhirPath_Lex_String()
         {
-            var parser = Lexer.String.End();            
+            var parser = Lexer.String.End();
 
             SucceedsDelimitedString(parser, @"'single quotes'");
             SucceedsDelimitedString(parser, @"'""single quotes with doubles""'");

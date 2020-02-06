@@ -6,7 +6,6 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using Hl7.Fhir.Model;
 using Hl7.Fhir.Model.Primitives;
 using Hl7.FhirPath.Sprache;
 using System;
@@ -24,23 +23,30 @@ namespace Hl7.FhirPath.Parser
         //   : ([A-Za-z] | '_')([A-Za-z0-9] | '_')*            // Added _ to support CQL (FHIR could constrain it out)
         //   ;
         public static readonly Parser<string> Id =
-            Parse.Identifier(Parse.Letter.XOr(Parse.Char('_')), Parse.LetterOrDigit.XOr(Parse.Char('_'))).Named("Identifier");
+            Parse.Identifier(
+                Parse.Letter
+                    .XOr(Parse.Char('_')),
+                Parse.LetterOrDigit
+                    .XOr(Parse.Char('_')))
+            .Named("Identifier");
+
+        // DELIMITEDIDENTIFIER
+        //   : '`' (ESC | .)*? '`'
+        //   ;
+        public static readonly Parser<string> DelimitedIdentifier = DelimitedContents('`');
 
         //  QUOTEDIDENTIFIER
         //      : '"' (ESC | ~[\\"])* '"'
         //      ;
-        public static readonly Parser<string> QuotedIdentifier =
-            from openQ in Parse.Char('\"')
-            from id in Parse.CharExcept(@"""\").Many().Text().Or(Escape).Many()
-            from closeQ in Parse.Char('\"')
-            select string.Concat(id);
+        public static readonly Parser<string> QuotedIdentifier = DelimitedContents('\"');
 
         // identifier
         //  : IDENTIFIER
         //  | QUOTEDIDENTIFIER
+        //  | DELIMITEDIDENTIFIER
         //  ;
         public static readonly Parser<string> Identifier =
-            Id.XOr(QuotedIdentifier);
+            Id.XOr(QuotedIdentifier).XOr(DelimitedIdentifier);
 
         // externalConstant
         //  : '%' identifier
@@ -64,9 +70,9 @@ namespace Hl7.FhirPath.Parser
                                             (Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?  #Timezone
                                         )?
                                     )?
-                                )?", RegexOptions.IgnorePatternWhitespace);     
+                                )?", RegexOptions.IgnorePatternWhitespace);
 
-        public static readonly Parser<PartialDateTime> DateTime = 
+        public static readonly Parser<PartialDateTime> DateTime =
             Parse.Regex(DateTimeRegEx).Select(s => PartialDateTime.Parse(s.Substring(1)));
 
         // TIME
@@ -96,7 +102,7 @@ namespace Hl7.FhirPath.Parser
 
 
         // STRING:  '\'' (ESC | ~[\'\\])* '\'';         // ' delineated string
-        // fragment ESC: '\\' (["'\\/fnrt] | UNICODE);    // allow \", \', \\, \/, \b, etc. and \uXXX
+        // fragment ESC: '\\' ([`"'\\/fnrt] | UNICODE);    // allow \`, \", \', \\, \/, \b, etc. and \uXXX
         // fragment UNICODE: 'u' HEX HEX HEX HEX;
         // fragment HEX: [0-9a-fA-F];
         public static readonly Parser<string> Unicode =
@@ -107,16 +113,22 @@ namespace Hl7.FhirPath.Parser
         public static readonly Parser<string> Escape =
             from backslash in Parse.Char('\\')
             from escUnicode in
-                Parse.Chars("\"'\\/fnrt").Once().Unescape().Or(Unicode.Unescape())
+                Parse.Chars("\"'`\\/fnrt").Once().Unescape().Or(Unicode.Unescape())
             select escUnicode;
 
-        public static readonly Parser<string> String =
-            from openQ in Parse.Char('\'')
-            from str in Parse.CharExcept("\'\\").Many().Text().Or(Escape).Many()
-            from closeQ in Parse.Char('\'')
-            select string.Concat(str);
+        // This represents the fragment <delimiter> (ESC | .)*? <delimiter>
+        // as used by DELIMITEDIDENTIFIER and STRING lexers
+        internal static Parser<string> DelimitedContents(char delimiter) =>
+             from openQ in Parse.Char(delimiter)
+             from id in Parse.CharExcept(new[] { delimiter, '\\' }).Many().Text().Or(Escape).Many()
+             from closeQ in Parse.Char(delimiter)
+             select string.Concat(id);
 
-  
+        //STRING
+        //    : '\'' (ESC | .)*? '\''
+        //    ;
+        public static readonly Parser<string> String = DelimitedContents('\'');
+
         // BOOL: 'true' | 'false';
         public static readonly Parser<bool> Bool =
             Parse.String("true").XOr(Parse.String("false")).Text().Select(s => Boolean.Parse(s));
@@ -136,7 +148,7 @@ namespace Hl7.FhirPath.Parser
     {
         public static Parser<string> Unescape(this Parser<IEnumerable<char>> c)
         {
-            return c.Select(chr => new String( Unescape(chr.Single()), 1));
+            return c.Select(chr => new String(Unescape(chr.Single()), 1));
         }
 
         public static char Unescape(char c)

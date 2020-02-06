@@ -9,7 +9,6 @@
   
   <PropertyGroup>
     <Description>This is the support library for working with the POCO representation of HL7's FHIR model data</Description>
-    <RepositoryType>git</RepositoryType>
     <PackageTags>HL7 FHIR REST parse serialize class model</PackageTags>
   </PropertyGroup>
 
