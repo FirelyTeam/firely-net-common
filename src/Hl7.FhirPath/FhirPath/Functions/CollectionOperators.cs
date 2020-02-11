@@ -6,10 +6,10 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using System.Collections.Generic;
-using System.Linq;
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Utility;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Hl7.FhirPath.Functions
 {
@@ -81,6 +81,9 @@ namespace Hl7.FhirPath.Functions
         {
             return focus.All(fitem => other.Contains(fitem));
         }
+
+        public static IEnumerable<ITypedElement> Intersect(this IEnumerable<ITypedElement> focus, IEnumerable<ITypedElement> other)
+            => focus.Intersect(other, new EqualityOperators.ValueProviderEqualityComparer());
 
         public static IEnumerable<ITypedElement> Navigate(this IEnumerable<ITypedElement> elements, string name)
         {

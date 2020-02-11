@@ -6,10 +6,9 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using System.Diagnostics;
 using Hl7.Fhir.Utility;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Hl7.Fhir.Model;
+using System.Diagnostics;
 
 namespace Hl7.Fhir.Support.Tests.Utils
 {
@@ -70,28 +69,27 @@ namespace Hl7.Fhir.Support.Tests.Utils
             /// Male<br/>
             /// (system: http://hl7.org/fhir/administrative-gender)
             /// </summary>
-            [EnumLiteral("male", "http://hl7.org/fhir/administrative-gender"), Utility.Description("Male")]
+            [EnumLiteral("male", "http://hl7.org/fhir/administrative-gender"), Fhir.Utility.Description("Male")]
             Male,
             /// <summary>
             /// Female<br/>
             /// (system: http://hl7.org/fhir/administrative-gender)
             /// </summary>
-            [EnumLiteral("female", "http://hl7.org/fhir/administrative-gender"), Utility.Description("Female")]
+            [EnumLiteral("female", "http://hl7.org/fhir/administrative-gender"), Fhir.Utility.Description("Female")]
             Female,
             /// <summary>
             /// Other<br/>
             /// (system: http://hl7.org/fhir/administrative-gender)
             /// </summary>
-            [EnumLiteral("other", "http://hl7.org/fhir/administrative-gender"), Utility.Description("Other")]
+            [EnumLiteral("other", "http://hl7.org/fhir/administrative-gender"), Fhir.Utility.Description("Other")]
             Other,
             /// <summary>
             /// Unknown<br/>
             /// (system: http://hl7.org/fhir/administrative-gender)
             /// </summary>
-            [EnumLiteral("unknown", "http://hl7.org/fhir/administrative-gender"), Utility.Description("Unknown")]
+            [EnumLiteral("unknown", "http://hl7.org/fhir/administrative-gender"), Fhir.Utility.Description("Unknown")]
             Unknown,
         }
-
 
         [TestMethod]
         public void EnumParsingPerformance()
@@ -115,10 +113,24 @@ namespace Hl7.Fhir.Support.Tests.Utils
             Assert.IsNull(EnumUtility.ParseLiteral<TestAdministrativeGender>("maleX"));
             Assert.AreEqual(X.a, EnumUtility.ParseLiteral<X>("a"));
 
-            Assert.AreEqual("Male",TestAdministrativeGender.Male.GetDocumentation());
+            Assert.AreEqual("Male", TestAdministrativeGender.Male.GetDocumentation());
             Assert.AreEqual("a", X.a.GetDocumentation()); // default documentation = name of item
         }
 
+        [TestMethod]
+        public void EnumLiteralPerformance()
+        {
+            var result = string.Empty;
+
+            var sw = Stopwatch.StartNew();
+            for (var i = 0; i < 50_000; i++)
+                result = TestAdministrativeGender.Male.GetLiteral();
+            sw.Stop();
+
+            Assert.AreEqual("male", result);
+            Debug.WriteLine(sw.ElapsedMilliseconds);
+            Assert.IsTrue(sw.ElapsedMilliseconds < 500);
+        }
 
         enum X
         {
