@@ -267,23 +267,18 @@ namespace Hl7.Fhir.ElementModel
                     lastName = scan.Name;
                 }
 
-                  var prettyPath =
+                var prettyPath =
                  hit && !info.IsCollection ? $"{ShortPath}.{info.ElementName}" : $"{ShortPath}.{scan.Name}[{_nameIndex}]";
 
-                //Special condition for ccda.
-                //If we encounter a xhtml node in a ccda document we will flatten all childnodes
-                //and use there content to build up the xml.
-                //The xml will be put in this node and children will be ignored.
+                // Special condition for ccda.
+                // If we encounter a xhtml node in a ccda document we will flatten all childnodes
+                // and use their content to build up the xml.
+                // The xml will be put in this node and children will be ignored.
                 if (instanceType == XHTML_INSTANCETYPE && info.Representation == XmlRepresentation.CdaText)
                 {
-                    string xml = string.Empty;
-                    foreach (var xmlChild in scan.Children())
-                    {
-                        var ix = xmlChild.Annotation<ICcdaInfoSupplier>();
-                        xml += ix?.XHtmlText;
+                    var xmls = scan.Children().Select(c => c.Annotation<ICdaInfoSupplier>()?.XHtmlText);
 
-                    }
-                    var source = SourceNode.Valued(scan.Name, xml);
+                    var source = SourceNode.Valued(scan.Name, string.Join(string.Empty, xmls));
                     yield return new TypedElementOnSourceNode(this, source, info, instanceType, prettyPath);
                     continue;
                 }
@@ -294,9 +289,9 @@ namespace Hl7.Fhir.ElementModel
 
         public IEnumerable<ITypedElement> Children(string name = null)
         {
-            //If we have a xhtml typed node and there was not an div tag around the content
-            //the won´t look at the children of this node, since there will be no types
-            //matching the html tags.
+            // If we have an xhtml typed node and there is not a div tag around the content
+            // then we will not enumerate through the children of this node, since there will be no types
+            // matching the html tags.
             if (this.InstanceType == XHTML_INSTANCETYPE && Name != XHTML_DIV_TAG_NAME)
             {
                 return Enumerable.Empty<ITypedElement>();

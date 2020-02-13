@@ -17,7 +17,7 @@ using System.Xml.Linq;
 
 namespace Hl7.Fhir.Serialization
 {
-    public partial class FhirXmlNode : ISourceNode, IResourceTypeSupplier, IAnnotated, IExceptionSource, ICcdaInfoSupplier
+    public partial class FhirXmlNode : ISourceNode, IResourceTypeSupplier, IAnnotated, IExceptionSource, ICdaInfoSupplier
     {
         internal FhirXmlNode(XObject node, FhirXmlParsingSettings settings)
         {
@@ -218,7 +218,7 @@ namespace Hl7.Fhir.Serialization
 
         public IEnumerable<object> Annotations(Type type)
         {
-            if (type == typeof(FhirXmlNode) || type == typeof(ISourceNode) || type == typeof(IResourceTypeSupplier) || type == typeof(ICcdaInfoSupplier))
+            if (type == typeof(FhirXmlNode) || type == typeof(ISourceNode) || type == typeof(IResourceTypeSupplier) || type == typeof(ICdaInfoSupplier))
                 return new[] { this };
 #pragma warning disable 612, 618
             else if (type == typeof(AdditionalStructuralRule) && !PermissiveParsing)
@@ -328,7 +328,7 @@ namespace Hl7.Fhir.Serialization
             ies.NotifyOrThrow(source, ExceptionNotification.Error(Error.Format("Parser: " + message, lineNumber, linePosition)));
         }
 
-        private static (int lineNumber, int linePosition) getPosition(XObject node) => 
+        private static (int lineNumber, int linePosition) getPosition(XObject node) =>
             node is IXmlLineInfo xli ? (xli.LineNumber, xli.LinePosition) : (-1, -1);
 
         private static bool verifyContained(XElement contained, IExceptionSource ies, bool permissive)
@@ -440,19 +440,15 @@ namespace Hl7.Fhir.Serialization
 
         public string XHtmlText
         {
-            get {
-                var currentXElement = Current as XElement;
-                if (currentXElement.Parent.Name.Namespace != currentXElement.Name.Namespace)
-                {
-                    return currentXElement.ToString(SaveOptions.DisableFormatting);
-                }
-                else
-                {
-                    var stripedXElement = StripNamespaces(currentXElement);
-                    return (stripedXElement.ToString(SaveOptions.DisableFormatting));
-                }
+            get
+            {
+                if (!(Current is XElement ie)) return null;
+
+                if (ie.Parent.Name.Namespace != ie.Name.Namespace)
+                    return ie.ToString(SaveOptions.DisableFormatting);
+
+                return StripNamespaces(ie).ToString(SaveOptions.DisableFormatting);
             }
-            
         }
 
         private XElement StripNamespaces(XElement rootElement)
