@@ -187,7 +187,7 @@ namespace Hl7.Fhir.ElementModel
                 {
                     var typeName = current.Children("type").FirstOrDefault()?.Text;
                     if (typeName != null)
-                        instanceType = info.Type.Where(type => typeFromLogicalModelCanonical(type).Equals(typeName)).FirstOrDefault().GetTypeName();
+                        instanceType = info.Type.Where(type => typeFromLogicalModelCanonical(type).Equals(typeName)).FirstOrDefault()?.GetTypeName();
                     else
                         instanceType = info.DefaultTypeName;
                 }
