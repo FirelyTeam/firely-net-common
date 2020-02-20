@@ -94,10 +94,6 @@ namespace Hl7.FhirPath.Functions
         {
             if (char.IsUpper(name[0]))
             {
-
-                if (!char.IsUpper(element.Name[0]))
-                    throw Error.InvalidOperation("Resource type name may only appear at the root of a document");
-
                 // If we are at a resource, we should match a path that is possibly not rooted in the resource
                 // (e.g. doing "name.family" on a Patient is equivalent to "Patient.name.family")   
                 // Also we do some poor polymorphism here: Resource.meta.lastUpdated is also allowed.
