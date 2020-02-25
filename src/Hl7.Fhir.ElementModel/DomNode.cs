@@ -21,7 +21,7 @@ namespace Hl7.Fhir.ElementModel
         protected List<T> ChildList = new List<T>();
 
         internal IEnumerable<T> ChildrenInternal(string name = null) =>
-            name == null ? ChildList : ChildList.Where(c => c.Name == name);
+            name == null ? ChildList : ChildList.Where(c => c.Name.MatchesPrefix(name));
 
         public T Parent { get; protected set; }
 
