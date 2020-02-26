@@ -42,7 +42,7 @@ namespace Hl7.Fhir.Model.Primitives
                 // the spec says that this should be false - you can compare
                 // anything to anything!
                 //throw new ArgumentException("Can only compare System primitives string, bool, long, decimal and partial date/dateTime/time.");
-                return false;             
+                return false;
         }
 
         public static bool IsEquivalentTo(object l, object r)
@@ -89,7 +89,7 @@ namespace Hl7.Fhir.Model.Primitives
 
         public static bool TryParse(string value, TypeSpecifier systemType, out object parsed)
         {
-            if(value == null)
+            if (value == null)
             {
                 parsed = null;
                 return true;
@@ -153,7 +153,7 @@ namespace Hl7.Fhir.Model.Primitives
             parsed = result.output;
             return result.succ;
 
-          
+
         }
 
         internal static (bool, T) DoConvert<T>(Func<T> parser)
@@ -199,7 +199,9 @@ namespace Hl7.Fhir.Model.Primitives
             if (value is bool || value is PartialTime || value is PartialDateTime || value is PartialDate || value is Quantity
                     || value is Coding || value is Concept || value is string)
                 primitiveValue = value;
-            else if (value is int || value is short || value is ushort || value is uint || value is long || value is ulong)
+            else if (value is int || value is short || value is ushort || value is uint)
+                primitiveValue = Convert.ToInt32(value);
+            else if (value is long || value is ulong)
                 primitiveValue = Convert.ToInt64(value);
             else if (value is DateTimeOffset dto)
                 primitiveValue = PartialDateTime.FromDateTimeOffset(dto);

@@ -13,12 +13,12 @@ namespace Hl7.Fhir.Model.Primitives
 {
     public abstract class Integer
     {
-        public static long Parse(string value) =>
-            TryParse(value, out long result) ? result : throw new FormatException("Integer value is in an invalid format.");
+        public static int Parse(string value) =>
+            TryParse(value, out int result) ? result : throw new FormatException("Integer value is in an invalid format.");
 
-        public static bool TryParse(string representation, out long value)
+        public static bool TryParse(string representation, out int value)
         {
-            (var succ, var val) = Any.DoConvert(() => XmlConvert.ToInt64(representation));
+            (var succ, var val) = Any.DoConvert(() => XmlConvert.ToInt32(representation));
             value = val;
             return succ;
         }
