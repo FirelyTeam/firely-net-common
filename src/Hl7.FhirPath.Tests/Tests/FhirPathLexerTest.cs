@@ -6,10 +6,9 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using System;
-using Hl7.FhirPath.Sprache;
-using Hl7.FhirPath.Parser;
 using Hl7.Fhir.Model.Primitives;
+using Hl7.FhirPath.Parser;
+using Hl7.FhirPath.Sprache;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Hl7.FhirPath.Tests
@@ -107,11 +106,11 @@ namespace Hl7.FhirPath.Tests
 
             accept("@T12:34:34.345674");
             accept("@T12:34:34");
-            accept("@T12:35"); 
+            accept("@T12:35");
             accept("@T12");
 
             reject("@T12:34:34+02:30");
-            reject("@T12:34:00Z"); 
+            reject("@T12:34:00Z");
             reject("2001-01-01T12:34:34+02:30");
             reject("@2001-01-01T12:34:34+02:30");
             reject("T12:34:34+02:30");
@@ -202,7 +201,6 @@ namespace Hl7.FhirPath.Tests
             AssertParser.FailsMatch(parser, @"'wrong es\qape'");
 
         }
-
 
         [TestMethod]
         public void FhirPath_Lex_Unicode()

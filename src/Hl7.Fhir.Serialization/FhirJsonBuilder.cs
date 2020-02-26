@@ -206,13 +206,13 @@ namespace Hl7.Fhir.Serialization
                 case Int32 i32:
                 case Int16 i16:
                 case ulong ul:
-                case long l:
                 case double db:
                 case BigInteger bi:
                 case float f:
                     return new JValue(value);
                 case string s:
                     return new JValue(s.Trim());
+                case long l:
                 default:
                     return new JValue(PrimitiveTypeConverter.ConvertTo<string>(value));
             }

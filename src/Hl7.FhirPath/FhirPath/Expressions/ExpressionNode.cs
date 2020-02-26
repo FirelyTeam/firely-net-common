@@ -119,7 +119,7 @@ namespace Hl7.FhirPath.Expressions
             if (string.IsNullOrEmpty(name)) throw Error.ArgumentNull("name");
             Focus = focus;
             FunctionName = name;
-            Arguments = arguments ?? throw Error.ArgumentNull("arguments");
+            Arguments = arguments != null ? arguments.ToArray() : throw Error.ArgumentNull("arguments");
         }
 
         public Expression Focus { get; private set; }

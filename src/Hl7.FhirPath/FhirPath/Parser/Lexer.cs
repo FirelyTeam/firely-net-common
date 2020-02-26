@@ -70,6 +70,7 @@ namespace Hl7.FhirPath.Parser
         // identifier
         //  : IDENTIFIER
         //  | QUOTEDIDENTIFIER
+        //  | DELIMITEDIDENTIFIER
         //  ;
         public static readonly Parser<string> Identifier =
             Id.XOr(DelimitedIdentifier);

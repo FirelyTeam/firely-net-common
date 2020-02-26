@@ -5,11 +5,11 @@
  * This file is licensed under the BSD 3-Clause license
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
+using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Utility;
 
 namespace Hl7.FhirPath.Expressions
 {
@@ -62,9 +62,14 @@ namespace Hl7.FhirPath.Expressions
             if (to == typeof(Fhir.Model.Primitives.Quantity) && from.CanBeTreatedAsType(typeof(ITypedElement))) return tryQuantity;
             if (to == typeof(ITypedElement) && (!from.CanBeTreatedAsType(typeof(IEnumerable<ITypedElement>)))) return any2ValueProvider;
             if (to == typeof(IEnumerable<ITypedElement>)) return any2List;
-             
+
             if (from == typeof(long) && (to == typeof(decimal) || to == typeof(decimal?))) return makeNativeCast(typeof(decimal));
             if (from == typeof(long?) && to == typeof(decimal?)) return makeNativeCast(typeof(decimal?));
+
+            // cast ints to longs
+            if (from == typeof(int) && to == typeof(long)) return makeNativeCast(typeof(long));
+            if (from == typeof(int?) && to == typeof(long?)) return makeNativeCast(typeof(long?));
+
             return null;
         }
 
@@ -145,13 +150,13 @@ namespace Hl7.FhirPath.Expressions
                 return null;
             else
                 throw new InvalidCastException("Cannot cast a null value to non-nullable type '{0}'".FormatWith(to.Name));
-        }                  
+        }
 
         public static bool IsNullable(this Type t)
         {
-           if (!t.IsAValueType()) return true; // ref-type
-           if (Nullable.GetUnderlyingType(t) != null) return true; // Nullable<T>
-           return false; // value-type
+            if (!t.IsAValueType()) return true; // ref-type
+            if (Nullable.GetUnderlyingType(t) != null) return true; // Nullable<T>
+            return false; // value-type
         }
 
         public static string ReadableFhirPathName(object value)

@@ -6,13 +6,13 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Model.Primitives;
+using Hl7.FhirPath;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using Hl7.FhirPath;
-using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Model.Primitives;
 using Hl7.FhirPath.Expressions;
 
 namespace Hl7.FhirPath.Functions
@@ -41,8 +41,8 @@ namespace Hl7.FhirPath.Functions
 
             if (compareNames && (left.Name != right.Name)) return false;
 
-            var l = left.Value;
-            var r = right.Value;
+            var l = CastIntToLong(left.Value);
+            var r = CastIntToLong(right.Value);
 
             // TODO: this is actually a cast with knowledge of FHIR->System mappings, we don't want that here anymore
             // Convert quantities
@@ -62,17 +62,22 @@ namespace Hl7.FhirPath.Functions
                 var childrenL = left.Children();
                 var childrenR = right.Children();
 
-                return childrenL.IsEqualTo(childrenR, compareNames:true);    // NOTE: Assumes null will never be returned when any() children exist
+                return childrenL.IsEqualTo(childrenR, compareNames: true);    // NOTE: Assumes null will never be returned when any() children exist
             }
             else
             {
                 // Else, we're comparing a complex (without a value) to a primitive which (probably) should return false
                 return false;
             }
+
+            object CastIntToLong(object val)
+            {
+                // [MV 20200128] Because FhirPath works with longs, integers will be cast to longs
+                return val?.GetType() == typeof(int) ? Convert.ToInt64(val) : val;
+            }
         }
 
 
-    
 
         public static bool IsEquivalentTo(this IEnumerable<ITypedElement> left, IEnumerable<ITypedElement> right, bool compareNames = false)
         {
