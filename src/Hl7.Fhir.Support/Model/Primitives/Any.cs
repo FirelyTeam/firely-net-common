@@ -132,6 +132,11 @@ namespace Hl7.Fhir.Model.Primitives
                 var success = Integer.TryParse(value, out var p);
                 result = (success, p);
             }
+            else if (systemType == TypeSpecifier.Integer64)
+            {
+                var success = Integer64.TryParse(value, out var p);
+                result = (success, p);
+            }
             else if (systemType == TypeSpecifier.Quantity)
             {
                 var success = Quantity.TryParse(value, out var p);

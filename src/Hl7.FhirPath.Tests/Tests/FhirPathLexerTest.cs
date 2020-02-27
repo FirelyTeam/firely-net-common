@@ -298,7 +298,7 @@ namespace Hl7.FhirPath.Tests
             AssertParser.SucceedsMatch(parser, "0", 0);
             AssertParser.SucceedsMatch(parser, "01", 1);
 
-            for (long i = 1; i < 100; i++)
+            for (int i = 1; i < 100; i++)
             {
                 AssertParser.SucceedsMatch(parser, i.ToString(), i);
 

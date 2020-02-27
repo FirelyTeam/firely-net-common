@@ -50,7 +50,7 @@ namespace Hl7.FhirPath.Parser
         // as used by DELIMITEDIDENTIFIER and STRING lexers
         internal static Parser<string> DelimitedContents(char delimiter) =>
              from openQ in Parse.Char(delimiter)
-             from id in Parse.CharExcept(new[] { delimiter, '\\'}).Many().Text().Or(Escape).Many()
+             from id in Parse.CharExcept(new[] { delimiter, '\\' }).Many().Text().Or(Escape).Many()
              from closeQ in Parse.Char(delimiter)
              select string.Concat(id);
 
@@ -117,7 +117,7 @@ namespace Hl7.FhirPath.Parser
                         )
                     ) 
                     | T
-                ) (Z|((\+|-)[0-9][0-9]:[0-9][0-9]))?", 
+                ) (Z|((\+|-)[0-9][0-9]:[0-9][0-9]))?",
                 RegexOptions.IgnorePatternWhitespace);
 
         public static readonly Parser<PartialDateTime> DateTime =
@@ -142,8 +142,9 @@ namespace Hl7.FhirPath.Parser
         //      : [0-9] [0-9] (':'[0-9] [0-9] (':'[0-9] [0-9] ('.'[0-9]+)?)?)?
         //      ;
         private const string TIMEFORMAT = @"([0-9][0-9](:[0-9][0-9](:[0-9][0-9](\.[0-9]+)?)?)?)";
-        
+
         // TIME
+
         //      : '@T'  ....
         // NB: No timezone (as specified in FHIR and FhirPath, CQL incorrectly states that it allows a timezone)
         public static readonly Regex TimeRegEx = new Regex("@T" + TIMEFORMAT, RegexOptions.IgnorePatternWhitespace);
@@ -154,8 +155,8 @@ namespace Hl7.FhirPath.Parser
         // NUMBER
         //   : [0-9]+('.' [0-9]+)?
         //   ;
-        public static readonly Parser<Int64> IntegerNumber =
-            Parse.Number.Select(s => Integer64.Parse(s));
+        public static readonly Parser<Int32> IntegerNumber =
+            Parse.Number.Select(s => Integer.Parse(s));
 
         public static readonly Parser<decimal> DecimalNumber =
                    from num in Parse.Number

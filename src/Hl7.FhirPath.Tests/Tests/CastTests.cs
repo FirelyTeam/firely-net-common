@@ -13,7 +13,6 @@ using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Specification;
 using Hl7.FhirPath.Expressions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -24,7 +23,7 @@ namespace Hl7.FhirPath.Tests
     {
         static readonly ITypedElement complex = new ComplexValue();
         static readonly IEnumerable<ITypedElement> collection = ElementNode.CreateList(4, 5, complex);
-        static readonly IEnumerable<ITypedElement> singleV = ElementNode.CreateList(4);
+        static readonly IEnumerable<ITypedElement> singleV = ElementNode.CreateList(4L);
         static readonly IEnumerable<ITypedElement> singleC = ElementNode.CreateList(complex);
         static readonly IEnumerable<ITypedElement> emptyColl = ElementNode.EmptyList;
 
@@ -37,7 +36,7 @@ namespace Hl7.FhirPath.Tests
             Assert.AreEqual(complex, Typecasts.UnboxTo(singleC, typeof(ITypedElement)));
 
             Assert.AreEqual(4L, Typecasts.UnboxTo(singleV, typeof(long)));
-            Assert.AreEqual(4L, Typecasts.UnboxTo(ElementNode.ForPrimitive(4), typeof(long)));
+            Assert.AreEqual(4L, Typecasts.UnboxTo(ElementNode.ForPrimitive(4L), typeof(long)));
 
             Assert.AreEqual(complex, Typecasts.UnboxTo(complex, typeof(ITypedElement)));
             Assert.IsNull(Typecasts.UnboxTo(null, typeof(string)));

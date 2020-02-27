@@ -41,10 +41,16 @@ namespace Hl7.FhirPath.Tests
 
                 yield return ("hallo", TypeSpecifier.String, true, "hallo");
 
-                yield return ("34", TypeSpecifier.Integer, true, 34L);
-                yield return ("-34", TypeSpecifier.Integer, true, -34L);
-                yield return ("+34", TypeSpecifier.Integer, true, 34L);
+                yield return ("34", TypeSpecifier.Integer, true, 34);
+                yield return ("-34", TypeSpecifier.Integer, true, -34);
+                yield return ("+34", TypeSpecifier.Integer, true, 34);
                 yield return ("34.5", TypeSpecifier.Integer, false, default);
+
+                yield return ("64", TypeSpecifier.Integer64, true, 64L);
+                yield return ("-64", TypeSpecifier.Integer64, true, -64L);
+                yield return ("+64", TypeSpecifier.Integer64, true, 64L);
+                yield return ("64.5", TypeSpecifier.Integer, false, default);
+
 
                 yield return ("34", TypeSpecifier.Decimal, true, 34m);
                 yield return ("0034", TypeSpecifier.Decimal, true, 34m);
@@ -61,7 +67,7 @@ namespace Hl7.FhirPath.Tests
             {
                 Assert.AreEqual(success, Any.TryParse(value, to, out var parsed), $"While parsing {value} for type {to}");
 
-                if(success)
+                if (success)
                     Assert.AreEqual(expected, parsed);
             }
         }
