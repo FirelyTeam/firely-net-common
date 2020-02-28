@@ -270,19 +270,6 @@ namespace Hl7.Fhir.ElementModel
                 var prettyPath =
                  hit && !info.IsCollection ? $"{ShortPath}.{info.ElementName}" : $"{ShortPath}.{scan.Name}[{_nameIndex}]";
 
-                // Special condition for ccda.
-                // If we encounter a xhtml node in a ccda document we will flatten all childnodes
-                // and use their content to build up the xml.
-                // The xml will be put in this node and children will be ignored.
-                if (instanceType == XHTML_INSTANCETYPE && info.Representation == XmlRepresentation.CdaText)
-                {
-                    var xmls = scan.Children().Select(c => c.Annotation<ICdaInfoSupplier>()?.XHtmlText);
-
-                    var source = SourceNode.Valued(scan.Name, string.Join(string.Empty, xmls));
-                    yield return new TypedElementOnSourceNode(this, source, info, instanceType, prettyPath);
-                    continue;
-                }
-
                 yield return new TypedElementOnSourceNode(this, scan, info, instanceType, prettyPath);
             }
         }
@@ -292,10 +279,12 @@ namespace Hl7.Fhir.ElementModel
             // If we have an xhtml typed node and there is not a div tag around the content
             // then we will not enumerate through the children of this node, since there will be no types
             // matching the html tags.
-            if (this.InstanceType == XHTML_INSTANCETYPE && Name != XHTML_DIV_TAG_NAME)
-            {
+            if (this.InstanceType == XHTML_INSTANCETYPE && Name != XHTML_DIV_TAG_NAME) 
                 return Enumerable.Empty<ITypedElement>();
-            }
+
+            // Don't go into CDA text nodes
+            if (Definition?.Representation == XmlRepresentation.CdaText)
+                return Enumerable.Empty<ITypedElement>();
 
             var childElementDefs = this.ChildDefinitions(Provider).ToDictionary(c => c.ElementName);
 

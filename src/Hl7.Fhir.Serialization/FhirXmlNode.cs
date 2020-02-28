@@ -17,7 +17,7 @@ using System.Xml.Linq;
 
 namespace Hl7.Fhir.Serialization
 {
-    public partial class FhirXmlNode : ISourceNode, IResourceTypeSupplier, IAnnotated, IExceptionSource, ICdaInfoSupplier
+    public partial class FhirXmlNode : ISourceNode, IResourceTypeSupplier, IAnnotated, IExceptionSource
     {
         internal FhirXmlNode(XObject node, FhirXmlParsingSettings settings)
         {
@@ -218,7 +218,7 @@ namespace Hl7.Fhir.Serialization
 
         public IEnumerable<object> Annotations(Type type)
         {
-            if (type == typeof(FhirXmlNode) || type == typeof(ISourceNode) || type == typeof(IResourceTypeSupplier) || type == typeof(ICdaInfoSupplier))
+            if (type == typeof(FhirXmlNode) || type == typeof(ISourceNode) || type == typeof(IResourceTypeSupplier))
                 return new[] { this };
 #pragma warning disable 612, 618
             else if (type == typeof(AdditionalStructuralRule) && !PermissiveParsing)
@@ -278,7 +278,8 @@ namespace Hl7.Fhir.Serialization
                         LineNumber = lineNumber,
                         LinePosition = linePosition,
                         SchemaLocation = getSchemaLocation(),
-                        IsXhtml = Current.AtXhtmlDiv()
+                        IsXhtml = Current.AtXhtmlDiv(),
+                        ToXml = () => RawXml
                     }
                 };
 
@@ -438,34 +439,7 @@ namespace Hl7.Fhir.Serialization
         private ExceptionNotification buildException(string message) => ExceptionNotification.Error(
                 new StructuralTypeException("Parser: " + message));
 
-        public string XHtmlText
-        {
-            get
-            {
-                if (!(Current is XElement ie)) return null;
-
-                if (ie.Parent.Name.Namespace != ie.Name.Namespace)
-                    return ie.ToString(SaveOptions.DisableFormatting);
-
-                return StripNamespaces(ie).ToString(SaveOptions.DisableFormatting);
-            }
-        }
-
-        private XElement StripNamespaces(XElement rootElement)
-        {
-            foreach (var element in rootElement.DescendantsAndSelf())
-            {
-                // check if the element contains attributes with defined namespaces (ignore xml and empty namespaces)
-                bool hasDefinedNamespaces = element.Attributes().Any(attribute => attribute.IsNamespaceDeclaration ||
-                        (attribute.Name.Namespace != XNamespace.None && attribute.Name.Namespace != XNamespace.Xml));
-                // update element name if a namespace is available and its not explicite defined
-                if (element.Name.Namespace != XNamespace.None && !hasDefinedNamespaces)
-                {
-                    element.Name = XNamespace.None.GetName(element.Name.LocalName);
-                }
-            }
-            return rootElement;
-        }
+        public string RawXml => !(Current is XElement ie) ? null : ie.ToString(SaveOptions.DisableFormatting);
     }
 }
 

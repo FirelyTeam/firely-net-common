@@ -63,11 +63,9 @@ namespace Hl7.Fhir.Serialization
             return scan;
         }
 
-        public static bool IsRelevantNode(this XObject scan)
-        {
-            return scan.NodeType == XmlNodeType.Element ||
+        public static bool IsRelevantNode(this XObject scan) =>
+            scan.NodeType == XmlNodeType.Element ||
                    (scan is XAttribute attr && isRelevantAttribute(attr));
-        }
 
         private static bool isRelevantAttribute(XAttribute a) =>
             !a.IsNamespaceDeclaration && a.Name != XmlNs.XSCHEMALOCATION;
@@ -77,13 +75,32 @@ namespace Hl7.Fhir.Serialization
 
         public static string GetValue(this XObject current)
         {
+            // If this node has XHTML content, serialize the node into a string as the value
             if (current.AtXhtmlDiv())
                 return ((XElement)current).ToString(SaveOptions.DisableFormatting);
-            if (current.FirstChild() is XText)
-                return current.Value();
-            return current is XElement xelem ?
-                xelem.Attribute("value")?.Value.Trim() : current.Value();
 
+            // If this is an xml attribute, return its value
+            else if (current is XAttribute xattr)
+                return xattr.Value;
+
+            else if (current is XElement xelem)
+            {
+                var valueVal = xelem.Attribute("value")?.Value.Trim();
+
+                // If there is a `value` attribute, return its content (regardless whether there are 
+                // nested nodes).
+                if (valueVal != null)
+                    return valueVal;
+                else
+                {
+                    // If this is an element with text content (or mixed mode), return the text from the first text node
+                    if (current.FirstChild() is XText txt)
+                        return txt.Value;
+                }                
+            }
+
+            // In all other cases, there is no value
+            return null;
         }
     }
 }

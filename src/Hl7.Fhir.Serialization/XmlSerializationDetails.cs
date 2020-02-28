@@ -32,6 +32,7 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public string NodeText;
 
+        public Func<string> ToXml;
         public string OriginalValue;
 
         public int LineNumber { get; internal set; }

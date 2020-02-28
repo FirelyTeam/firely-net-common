@@ -8,11 +8,11 @@
 
 namespace Hl7.Fhir.ElementModel
 {
-    public interface ICdaInfoSupplier
+    public interface ISourceTextSupplier
     {
         /// <summary>
-        /// Retrieves the xHtml text of a cda logic model
+        /// Retrieves the underlying text that represents the node
         /// </summary>
-        string XHtmlText { get; }
+        string SourceText { get; }
     }
 }
