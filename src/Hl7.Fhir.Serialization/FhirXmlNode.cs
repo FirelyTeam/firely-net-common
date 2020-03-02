@@ -438,13 +438,15 @@ namespace Hl7.Fhir.Serialization
         private ExceptionNotification buildException(string message) => ExceptionNotification.Error(
                 new StructuralTypeException("Parser: " + message));
 
+
+        [Obsolete("The XHtmlText property is part of alpha-level support for parsing CDA and should not yet be used in production. This interface is subject to change.")]
         public string XHtmlText
         {
             get
             {
                 if (!(Current is XElement ie)) return null;
 
-                if (ie.Parent.Name.Namespace != ie.Name.Namespace)
+                if (ie.Parent == null || ie.Parent.Name.Namespace != ie.Name.Namespace)
                     return ie.ToString(SaveOptions.DisableFormatting);
 
                 return StripNamespaces(ie).ToString(SaveOptions.DisableFormatting);
