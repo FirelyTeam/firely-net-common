@@ -28,7 +28,7 @@ namespace Hl7.FhirPath.Expressions
 
         protected Expression(TypeSpecifier type, ISourcePositionInfo location) : this(type)
         {
-            Location = location;           
+            Location = location;
         }
 
         public ISourcePositionInfo Location { get; }
@@ -67,7 +67,7 @@ namespace Hl7.FhirPath.Expressions
                 ExpressionType = TypeSpecifier.Boolean;
             else if (Value is string)
                 ExpressionType = TypeSpecifier.String;
-            else if (Value is Int64)
+            else if (Value is Int32)
                 ExpressionType = TypeSpecifier.Integer;
             else if (Value is decimal)
                 ExpressionType = TypeSpecifier.Decimal;
@@ -110,7 +110,7 @@ namespace Hl7.FhirPath.Expressions
 
     public class FunctionCallExpression : Expression
     {
-        public FunctionCallExpression(Expression focus, string name, TypeSpecifier type, params Expression[] arguments) : this(focus, name, type, (IEnumerable<Expression>) arguments)
+        public FunctionCallExpression(Expression focus, string name, TypeSpecifier type, params Expression[] arguments) : this(focus, name, type, (IEnumerable<Expression>)arguments)
         {
         }
 
@@ -119,7 +119,7 @@ namespace Hl7.FhirPath.Expressions
             if (string.IsNullOrEmpty(name)) throw Error.ArgumentNull("name");
             Focus = focus;
             FunctionName = name;
-            Arguments = arguments ?? throw Error.ArgumentNull("arguments");
+            Arguments = arguments != null ? arguments.ToArray() : throw Error.ArgumentNull("arguments");
         }
 
         public Expression Focus { get; private set; }
@@ -153,7 +153,7 @@ namespace Hl7.FhirPath.Expressions
 
     public class ChildExpression : FunctionCallExpression
     {
-        public ChildExpression(Expression focus, string name) : base(focus, OP_PREFIX+"children", TypeSpecifier.Any, new ConstantExpression(name, TypeSpecifier.String))
+        public ChildExpression(Expression focus, string name) : base(focus, OP_PREFIX + "children", TypeSpecifier.Any, new ConstantExpression(name, TypeSpecifier.String))
         {
         }
 
@@ -166,7 +166,7 @@ namespace Hl7.FhirPath.Expressions
 
     public class IndexerExpression : FunctionCallExpression
     {
-        public IndexerExpression(Expression collection, Expression index) : base(collection, OP_PREFIX+"item", TypeSpecifier.Any, index)
+        public IndexerExpression(Expression collection, Expression index) : base(collection, OP_PREFIX + "item", TypeSpecifier.Any, index)
         {
         }
 
@@ -185,7 +185,7 @@ namespace Hl7.FhirPath.Expressions
         internal static readonly int BIN_PREFIX_LEN = BIN_PREFIX.Length;
 
 
-        public BinaryExpression(char op, Expression left, Expression right) : this(new string(op,1), left, right)
+        public BinaryExpression(char op, Expression left, Expression right) : this(new string(op, 1), left, right)
         {
         }
 
@@ -223,7 +223,7 @@ namespace Hl7.FhirPath.Expressions
         internal const string URY_PREFIX = "unary.";
         internal static readonly int URY_PREFIX_LEN = URY_PREFIX.Length;
 
-        public UnaryExpression(char op, Expression operand) : this(new string(op,1), operand)
+        public UnaryExpression(char op, Expression operand) : this(new string(op, 1), operand)
         {
         }
 
@@ -287,7 +287,7 @@ namespace Hl7.FhirPath.Expressions
             Contents = contents ?? throw Error.ArgumentNull("contents");
         }
 
-        public IEnumerable<Expression> Contents { get; private set;  }
+        public IEnumerable<Expression> Contents { get; private set; }
 
         public override T Accept<T>(ExpressionVisitor<T> visitor, SymbolTable scope)
         {
@@ -346,7 +346,7 @@ namespace Hl7.FhirPath.Expressions
 
     public class AxisExpression : VariableRefExpression
     {
-        public AxisExpression(string axisName) : base(OP_PREFIX+axisName)
+        public AxisExpression(string axisName) : base(OP_PREFIX + axisName)
         {
             if (axisName == null) throw Error.ArgumentNull("axisName");
         }

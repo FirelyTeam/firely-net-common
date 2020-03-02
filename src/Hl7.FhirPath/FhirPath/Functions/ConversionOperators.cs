@@ -8,7 +8,6 @@
 
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Model.Primitives;
-using Hl7.Fhir.Utility;
 using System.Xml;
 
 namespace Hl7.FhirPath.Functions
@@ -132,6 +131,8 @@ namespace Hl7.FhirPath.Functions
                     return d;
                 case long l:
                     return l;
+                case int i:
+                    return i;
                 case string s:
                     return convertString(s);
                 case bool b:

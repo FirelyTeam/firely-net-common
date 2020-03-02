@@ -166,3 +166,6 @@ build/runbuild.txt
 
 specification.zip
 dist/
+
+# Local DevOps batch files
+*.bat

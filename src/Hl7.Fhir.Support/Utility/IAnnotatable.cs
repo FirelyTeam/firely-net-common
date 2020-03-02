@@ -24,11 +24,16 @@ namespace Hl7.Fhir.Utility
             annotatable.RemoveAnnotations(typeof(A));
         }
 
+        private static readonly object _lock = new object();
+
         public static void SetAnnotation<A>(this IAnnotatable annotatable, A annotation)
         {
-            annotatable.RemoveAnnotations<A>();
-            if (annotation != null)
-                annotatable.AddAnnotation(annotation);
+            lock (_lock)
+            {
+                annotatable.RemoveAnnotations<A>();
+                if (annotation != null)
+                    annotatable.AddAnnotation(annotation);
+            }
         }
     }
 }

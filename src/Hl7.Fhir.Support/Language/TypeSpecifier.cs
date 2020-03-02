@@ -18,6 +18,7 @@ namespace Hl7.Fhir.Language
         public static readonly TypeSpecifier DateTime = new TypeSpecifier(SYSTEM_NAMESPACE, "DateTime");
         public static readonly TypeSpecifier Decimal = new TypeSpecifier(SYSTEM_NAMESPACE, "Decimal");
         public static readonly TypeSpecifier Integer = new TypeSpecifier(SYSTEM_NAMESPACE, "Integer");
+        public static readonly TypeSpecifier Integer64 = new TypeSpecifier(SYSTEM_NAMESPACE, "Integer64");
         public static readonly TypeSpecifier Quantity = new TypeSpecifier(SYSTEM_NAMESPACE, "Quantity");
         public static readonly TypeSpecifier String = new TypeSpecifier(SYSTEM_NAMESPACE, "String");
         public static readonly TypeSpecifier Time = new TypeSpecifier(SYSTEM_NAMESPACE, "Time");
@@ -26,13 +27,13 @@ namespace Hl7.Fhir.Language
         public static readonly TypeSpecifier Void = new TypeSpecifier(SYSTEM_NAMESPACE, "Void");
 
         public static readonly TypeSpecifier[] AllTypes = new[] { Any, Boolean, Code, Concept,
-                Date, DateTime, Decimal, Integer, Quantity, String, Time };
+                Date, DateTime, Decimal, Integer, Integer64, Quantity, String, Time };
 
         /// <summary>
         /// This is the list of supported types for the primitive values in ITypedElement.Value
         /// </summary>
         public static readonly TypeSpecifier[] PrimitiveTypes =
-            new[] { Boolean, Date, DateTime, Decimal, Integer, String, Time };
+            new[] { Boolean, Date, DateTime, Decimal, Integer, Integer64, String, Time };
 
 
         protected TypeSpecifier(string @namespace, string name)
@@ -68,6 +69,7 @@ namespace Hl7.Fhir.Language
                     case "DateTime": return DateTime;
                     case "Decimal": return Decimal;
                     case "Integer": return Integer;
+                    case "Integer64": return Integer64;
                     case "Quantity": return Quantity;
                     case "String": return String;
                     case "Time": return Time;
@@ -110,8 +112,10 @@ namespace Hl7.Fhir.Language
             // NOTE: Keep Any.TryConvertToSystemValue, TypeSpecifier.TryGetNativeType and TypeSpecifier.ForNativeType in sync
             if (t<bool>())
                 return Boolean;
-            else if (t<int>() || t<short>() || t<long>() || t<ushort>() || t<uint>() || t<ulong>())
+            else if (t<int>() || t<short>() || t<ushort>() || t<uint>())
                 return Integer;
+            else if (t<long>() || t<ulong>())
+                return Integer64;
             else if (t<PartialTime>())
                 return Time;
             else if (t<PartialDate>())
@@ -188,6 +192,8 @@ namespace Hl7.Fhir.Language
                 else if (this == Decimal)
                     return typeof(decimal);
                 else if (this == Integer)
+                    return typeof(int);
+                else if (this == Integer64)
                     return typeof(long);
                 else if (this == Quantity)
                     return typeof(Quantity);

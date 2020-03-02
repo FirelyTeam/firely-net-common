@@ -7,8 +7,8 @@
  */
 
 
-using System.Collections.Generic;
 using Hl7.Fhir.ElementModel;
+using System.Collections.Generic;
 
 namespace Hl7.FhirPath.Expressions
 {
@@ -20,7 +20,7 @@ namespace Hl7.FhirPath.Expressions
 
         public EvaluationContext EvaluationContext { get; private set; }
 
-        public static Closure Root(ITypedElement root, EvaluationContext ctx=null)
+        public static Closure Root(ITypedElement root, EvaluationContext ctx = null)
         {
             var newContext = new Closure() { EvaluationContext = ctx ?? EvaluationContext.CreateDefault() };
 
@@ -28,7 +28,8 @@ namespace Hl7.FhirPath.Expressions
             newContext.SetThis(input);
             newContext.SetThat(input);
             newContext.SetOriginalContext(input);
-            if(ctx.Container != null) newContext.SetResource(new[] { ctx.Container } );
+            if (ctx.Container != null) newContext.SetResource(new[] { ctx.Container });
+            if (ctx.RootContainer != null) newContext.SetRootResource(new[] { ctx.RootContainer });
 
             return newContext;
         }

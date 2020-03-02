@@ -6,13 +6,12 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Utility;
 using Hl7.FhirPath.Functions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Utility;
-using System.Reflection;
 
 namespace Hl7.FhirPath.Expressions
 {
@@ -36,6 +35,10 @@ namespace Hl7.FhirPath.Expressions
         public static IEnumerable<ITypedElement> GetResource(Closure context, IEnumerable<Invokee> _)
         {
             return context.GetResource();
+        }
+        public static IEnumerable<ITypedElement> GetRootResource(Closure context, IEnumerable<Invokee> arguments)
+        {
+            return context.GetRootResource();
         }
 
         public static IEnumerable<ITypedElement> GetThat(Closure context, IEnumerable<Invokee> _)
