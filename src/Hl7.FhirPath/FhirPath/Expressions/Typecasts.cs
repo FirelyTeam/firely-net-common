@@ -19,7 +19,7 @@ namespace Hl7.FhirPath.Expressions
 
         private static object id(object source) => source;
 
-        private static Cast makeNativeCast(Type to) => 
+        private static Cast makeNativeCast(Type to) =>
             source => Convert.ChangeType(source, to);
 
         private static ITypedElement any2ValueProvider(object source) => ElementNode.ForPrimitive(source);
@@ -41,7 +41,7 @@ namespace Hl7.FhirPath.Expressions
 
             throw new InvalidCastException($"Cannot convert from '{source.GetType().Name}' to Quantity");
 
-         
+
         }
 
 
@@ -66,6 +66,9 @@ namespace Hl7.FhirPath.Expressions
             if (from == typeof(long) && (to == typeof(decimal) || to == typeof(decimal?))) return makeNativeCast(typeof(decimal));
             if (from == typeof(long?) && to == typeof(decimal?)) return makeNativeCast(typeof(decimal?));
 
+            if (from == typeof(int) && (to == typeof(decimal) || to == typeof(decimal?))) return makeNativeCast(typeof(decimal));
+            if (from == typeof(int?) && to == typeof(decimal?)) return makeNativeCast(typeof(decimal?));
+
             // cast ints to longs
             if (from == typeof(int) && to == typeof(long)) return makeNativeCast(typeof(long));
             if (from == typeof(int?) && to == typeof(long?)) return makeNativeCast(typeof(long?));
@@ -86,7 +89,7 @@ namespace Hl7.FhirPath.Expressions
         internal static object UnboxTo(object instance, Type to)
         {
             if (instance == null) return null;
-           
+
             if (instance is IEnumerable<ITypedElement> list)
             {
                 if (to.CanBeTreatedAsType(typeof(IEnumerable<ITypedElement>))) return instance;
@@ -95,7 +98,7 @@ namespace Hl7.FhirPath.Expressions
                 if (list.Count() == 1)
                     instance = list.Single();
             }
-         
+
             if (instance is ITypedElement element)
             {
                 if (to.CanBeTreatedAsType(typeof(ITypedElement))) return instance;
@@ -113,7 +116,7 @@ namespace Hl7.FhirPath.Expressions
                 return to.IsNullable();
 
             var from = UnboxTo(source, to);
-            return from == null ? to.IsNullable() : getImplicitCast(from.GetType(),to) != null;
+            return from == null ? to.IsNullable() : getImplicitCast(from.GetType(), to) != null;
         }
 
         public static bool CanCastTo(Type from, Type to) => getImplicitCast(from, to) != null;
