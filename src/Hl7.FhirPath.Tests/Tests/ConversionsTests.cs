@@ -9,12 +9,12 @@
 // To introduce the DSTU2 FHIR specification
 // extern alias dstu2;
 
-using System;
-using System.Linq;
-using Hl7.FhirPath.Functions;
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Model.Primitives;
+using Hl7.FhirPath.Functions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using System.Linq;
 using Quantity = Hl7.Fhir.Model.Primitives.Quantity;
 
 namespace Hl7.FhirPath.Tests
@@ -159,11 +159,12 @@ namespace Hl7.FhirPath.Tests
         [TestMethod]
         public void TestItemSelection()
         {
-            var values = ElementNode.CreateList(1, 2, 3, 4, 5, 6, 7);
+            var values = ElementNode.CreateList(1L, 2, 3L, 4, 5, 6, 7);
 
-            Assert.AreEqual((Int64)1, values.Item(0).Single().Value);
-            Assert.AreEqual((Int64)3, values.Item(2).Single().Value);
-            Assert.AreEqual((Int64)1, values.First().Value);
+            Assert.AreEqual(1L, values.Item(0).Single().Value);
+            Assert.AreEqual(2, values.Item(1).Single().Value);
+            Assert.AreEqual(3L, values.Item(2).Single().Value);
+            Assert.AreEqual(1L, values.First().Value);
             Assert.IsFalse(values.Item(100).Any());
         }
 
