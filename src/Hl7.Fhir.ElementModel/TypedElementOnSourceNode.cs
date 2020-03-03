@@ -18,6 +18,9 @@ namespace Hl7.Fhir.ElementModel
 {
     internal class TypedElementOnSourceNode : ITypedElement, IAnnotated, IExceptionSource, IShortPathGenerator
     {
+        private const string XHTML_INSTANCETYPE = "xhtml";
+        private const string XHTML_DIV_TAG_NAME = "div";
+
         public TypedElementOnSourceNode(ISourceNode source, string type, IStructureDefinitionSummaryProvider provider, TypedElementSettings settings = null)
         {
             if (source == null) throw Error.ArgumentNull(nameof(source));
@@ -120,6 +123,14 @@ namespace Hl7.Fhir.ElementModel
                     return null;
                 }
 
+                // Type might still be a custom "primitive" type for logical models
+                if (Uri.IsWellFormedUriString(InstanceType, UriKind.Absolute))
+                {
+                    var summary = Provider.Provide(InstanceType);
+                    var valueType = summary?.GetElements().Where(e => e.ElementName.Equals("value")).FirstOrDefault()?.Type.FirstOrDefault()?.GetTypeName();
+                    return PrimitiveTypeConverter.FromSerializedValue(sourceText, valueType);
+                }
+
                 // Finally, we have a (potentially) unparsed string + type info
                 // parse this primitive into the desired type
                 try
@@ -166,6 +177,21 @@ namespace Hl7.Fhir.ElementModel
                         raiseTypeError($"Choice element '{current.Name}' is suffixed with unexpected type '{suffix}'", current, location: current.Location);
                 }
             }
+            else if (info.Representation == XmlRepresentation.TypeAttr) // May be used by models other then FHIR, e.g. CCDA represented by a StructureDefinition
+            {
+                if (info.Type.Count() == 1)
+                {
+                    instanceType = info.Type.Single().GetTypeName();
+                }
+                else
+                {
+                    var typeName = current.Children("type").FirstOrDefault()?.Text;
+                    if (typeName != null)
+                        instanceType = info.Type.Where(type => typeFromLogicalModelCanonical(type).Equals(typeName)).FirstOrDefault()?.GetTypeName();
+                    else
+                        instanceType = info.DefaultTypeName;
+                }
+            }
             else
             {
                 var tp = info.Type.Single();
@@ -173,6 +199,13 @@ namespace Hl7.Fhir.ElementModel
             }
 
             return instanceType;
+        }
+
+        private string typeFromLogicalModelCanonical(ITypeSerializationInfo info)
+        {
+            var type = info.GetTypeName();
+            var pos = type.LastIndexOf('/'); // Match the "raw" type name from the complete type name of the logical model type (absolute url) 
+            return pos > -1 ? type.Substring(pos + 1) : type;
         }
 
         private bool tryGetBySuffixedName(Dictionary<string, IElementDefinitionSummary> dis, string name, out IElementDefinitionSummary info)
@@ -237,12 +270,33 @@ namespace Hl7.Fhir.ElementModel
                 var prettyPath =
                  hit && !info.IsCollection ? $"{ShortPath}.{info.ElementName}" : $"{ShortPath}.{scan.Name}[{_nameIndex}]";
 
+                // Special condition for ccda.
+                // If we encounter a xhtml node in a ccda document we will flatten all childnodes
+                // and use their content to build up the xml.
+                // The xml will be put in this node and children will be ignored.
+                if (instanceType == XHTML_INSTANCETYPE && info.Representation == XmlRepresentation.CdaText)
+                {
+                    var xmls = scan.Children().Select(c => c.Annotation<ICdaInfoSupplier>()?.XHtmlText);
+
+                    var source = SourceNode.Valued(scan.Name, string.Join(string.Empty, xmls));
+                    yield return new TypedElementOnSourceNode(this, source, info, instanceType, prettyPath);
+                    continue;
+                }
+
                 yield return new TypedElementOnSourceNode(this, scan, info, instanceType, prettyPath);
             }
         }
 
         public IEnumerable<ITypedElement> Children(string name = null)
         {
+            // If we have an xhtml typed node and there is not a div tag around the content
+            // then we will not enumerate through the children of this node, since there will be no types
+            // matching the html tags.
+            if (this.InstanceType == XHTML_INSTANCETYPE && Name != XHTML_DIV_TAG_NAME)
+            {
+                return Enumerable.Empty<ITypedElement>();
+            }
+
             var childElementDefs = this.ChildDefinitions(Provider).ToDictionary(c => c.ElementName);
 
             if (Definition != null && !childElementDefs.Any())
@@ -302,3 +356,4 @@ namespace Hl7.Fhir.ElementModel
     [Obsolete("This class is used for internal purposes and is subject to change without notice. Don't use.")]
     public delegate object AdditionalStructuralRule(ITypedElement node, IExceptionSource ies, object state);
 }
+
