@@ -180,7 +180,8 @@ namespace Hl7.Fhir.ElementModel
                 {
                     var summary = Provider.Provide(InstanceType);
                     var valueType = summary?.GetElements().Where(e => e.ElementName.Equals("value")).FirstOrDefault()?.Type.FirstOrDefault()?.GetTypeName();
-                    return PrimitiveTypeConverter.FromSerializedValue(sourceText, valueType);
+                    var specifier = TypeSpecifier.GetByName(valueType);
+                    return Any.Parse(sourceText, specifier);
                 }
 
                 // Finally, we have a (potentially) unparsed string + type info
