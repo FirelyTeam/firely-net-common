@@ -27,8 +27,6 @@
   
 */
 
-
-
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Support.Utility;
 using Hl7.Fhir.Utility;
