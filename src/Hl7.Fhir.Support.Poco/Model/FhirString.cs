@@ -49,6 +49,9 @@ namespace Hl7.Fhir.Model
         [NotMapped]
         public override string TypeName { get { return "string"; } }
         
+        // Must conform to the pattern "[ \r\n\t\S]+"
+        public const string PATTERN = @"[ \r\n\t\S]+";
+
 		public FhirString(string value)
 		{
 			Value = value;

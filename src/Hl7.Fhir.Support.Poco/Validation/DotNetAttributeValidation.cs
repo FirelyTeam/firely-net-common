@@ -15,7 +15,7 @@ using System.Text;
 
 namespace Hl7.Fhir.Validation
 {
-    public class DotNetAttributeValidation
+    public static class DotNetAttributeValidation
     {
         public static ValidationContext BuildContext(object value=null)
         {

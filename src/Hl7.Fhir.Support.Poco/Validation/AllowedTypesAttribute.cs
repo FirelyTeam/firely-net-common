@@ -11,6 +11,7 @@ using System;
 using System.Collections;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Reflection;
 
 namespace Hl7.Fhir.Validation
 {

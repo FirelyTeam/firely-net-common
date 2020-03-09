@@ -64,9 +64,6 @@ namespace Hl7.Fhir.Model
             public Uri Base;
         }
 
-
-        public abstract void AddDefaultConstraints();
-
         /// <summary>
         /// This object is internally used for locking the resource in a multithreaded environment.
         /// </summary>
@@ -78,20 +75,15 @@ namespace Hl7.Fhir.Model
 
         public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            throw new NotImplementedException();
+            var result = new List<ValidationResult>();
 
-            //var result = new List<ValidationResult>();
+            if (Meta != null)
+            {
+                if (Meta.Tag != null && validationContext.ValidateRecursively())
+                    DotNetAttributeValidation.TryValidate(Meta.Tag, result, true);
+            }
 
-            //if (Meta != null)
-            //{
-            //    if (Meta.Tag != null && validationContext.ValidateRecursively())
-            //        DotNetAttributeValidation.TryValidate(Meta.Tag, result, true);
-            //}
-
-            //// and process all the invariants from the resource
-            //ValidateInvariants(validationContext, result);
-
-            //return result;
+            return result;
         }
 
 

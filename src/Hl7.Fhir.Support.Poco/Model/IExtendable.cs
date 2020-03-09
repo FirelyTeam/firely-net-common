@@ -49,6 +49,63 @@ namespace Hl7.Fhir.Model
 
     public static class ExtensionExtensions
     {
+        /// <summary>
+        /// Return the first extension with the given uri as a string, or null if none was found
+        /// </summary>
+        /// <param name="extendable"></param>
+        /// <param name="uri"></param>
+        /// <returns>The first uri, or null if no extension with the given uri was found.</returns>
+        public static string GetStringExtension(this IExtendable extendable, string uri)
+        {
+            var ext = extendable.GetExtension(uri);
+
+            if (ext != null && ext.Value != null && ext.Value is FhirString)
+                return ((FhirString)ext.Value).Value;
+
+            return null;
+        }
+
+        public static void SetStringExtension(this IExtendable extendable, string uri, string value)
+        {
+            extendable.SetExtension(uri, new FhirString(value));
+        }
+
+
+        public static bool? GetBoolExtension(this IExtendable extendable, string uri)
+        {
+            var ext = extendable.GetExtension(uri);
+
+            if (ext != null && ext.Value != null && ext.Value is FhirBoolean)
+                return ((FhirBoolean)ext.Value).Value;
+
+            return null;
+        }
+
+
+        public static void SetBoolExtension(this IExtendable extendable, string uri, bool value)
+        {
+            extendable.SetExtension(uri, new FhirBoolean(value));
+        }
+
+
+        public static int? GetIntegerExtension(this IExtendable extendable, string uri)
+        {
+            var value = extendable.GetExtensionValue<Integer>(uri);
+
+            if (value != null)
+                return value.Value;
+            else
+                return null;
+        }
+
+
+        public static void SetIntegerExtension(this IExtendable extendable, string uri, int value)
+        {
+            extendable.SetExtension(uri, new Integer(value));
+        }
+
+
+
         public static IEnumerable<Extension> AllExtensions(this IExtendable extendable)
         {
             if (extendable is IModifierExtendable)
@@ -104,6 +161,7 @@ namespace Hl7.Fhir.Model
 
             return null;
         }
+
 
         public static bool HasExtensions(this IExtendable extendable)
         {
