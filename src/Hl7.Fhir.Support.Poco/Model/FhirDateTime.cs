@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Validation;
-using System.Linq;
-using System.Runtime.Serialization;
-using Hl7.Fhir.Serialization;
-using Hl7.Fhir.Utility;
-using Hl7.Fhir.Specification;
-
-/*
+﻿/*
   Copyright (c) 2011+, HL7, Inc.
   All rights reserved.
   
@@ -38,18 +28,33 @@ using Hl7.Fhir.Specification;
 
 */
 
-//
-// Generated for FHIR v3.0.2
-//
+using Hl7.Fhir.Introspection;
+using Hl7.Fhir.Validation;
+using System.Runtime.Serialization;
+using Hl7.Fhir.Specification;
+using System;
+using Hl7.Fhir.Serialization;
+using System.Text.RegularExpressions;
+
 namespace Hl7.Fhir.Model
 {
     /// <summary>
     /// Primitive Type dateTime
     /// </summary>
+#if !NETSTANDARD1_1
+    [Serializable]
+#endif
+    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("dateTime")]
     [DataContract]
-    public partial class FhirDateTime : Hl7.Fhir.Model.Primitive<string>, System.ComponentModel.INotifyPropertyChanged
+    public partial class FhirDateTime : Primitive<string>, IStringValue
     {
+        public const string FMT_FULL = "yyyy-MM-dd'T'HH:mm:ssK";
+        public const string FMT_YEAR = "{0:D4}";
+        public const string FMT_YEARMONTH = "{0:D4}-{1:D2}";
+        public const string FMT_YEARMONTHDAY = "{0:D4}-{1:D2}-{2:D2}";
+
+
         [NotMapped]
         public override string TypeName { get { return "dateTime"; } }
 
@@ -61,7 +66,43 @@ namespace Hl7.Fhir.Model
 			Value = value;
 		}
 
-		public FhirDateTime(): this((string)null) {}
+		public FhirDateTime(): this(null) {}
+
+        public FhirDateTime(DateTimeOffset dt) : this(PrimitiveTypeConverter.ConvertTo<string>(dt))
+        {
+        }
+
+        [Obsolete("Use FhirDateTime(DateTimeOffset dt) instead")]
+        public FhirDateTime(DateTime dt) : this(new DateTimeOffset(dt))
+        {
+        }
+
+        [Obsolete("Use FhirDateTime(int year, int month, int day, int hr, int min, int sec, TimeSpan offset) instead")]
+        public FhirDateTime(int year, int month, int day, int hr, int min, int sec = 0)
+            : this(new DateTime(year, month, day, hr, min, sec, DateTimeKind.Local))
+        {
+        }
+
+        public FhirDateTime(int year, int month, int day, int hr, int min, int sec, TimeSpan offset)
+            : this(new DateTimeOffset(year, month, day, hr, min, sec, offset))
+        {
+        }
+
+
+        public FhirDateTime(int year, int month, int day)
+            : this(String.Format(System.Globalization.CultureInfo.InvariantCulture, FMT_YEARMONTHDAY, year, month, day))
+        {
+        }
+
+        public FhirDateTime(int year, int month)
+            : this(String.Format(System.Globalization.CultureInfo.InvariantCulture, FMT_YEARMONTH, year, month))
+        {
+        }
+
+        public FhirDateTime(int year)
+            : this(String.Format(System.Globalization.CultureInfo.InvariantCulture, FMT_YEAR, year))
+        {
+        }
 
         /// <summary>
         /// Primitive value of the element
@@ -74,9 +115,61 @@ namespace Hl7.Fhir.Model
             get { return (string)ObjectValue; }
             set { ObjectValue = value; OnPropertyChanged("Value"); }
         }
-        
 
-    
+        public static bool IsValidValue(string value)
+        {
+            return Regex.IsMatch(value as string, "^" + PATTERN + "$", RegexOptions.Singleline);
+
+            //TODO: Additional checks not implementable by the regex
+        }
+
+
+        public static FhirDateTime Now()
+        {
+            return new FhirDateTime(PrimitiveTypeConverter.ConvertTo<string>(DateTimeOffset.Now));
+        }
+
+        [Obsolete("Use ToDateTimeOffset(TimeSpan zone) instead. Obsolete since 2018-11-22")]
+        public DateTimeOffset ToDateTimeOffset(TimeSpan? zone = null) =>
+            ToDateTimeOffset(zone ?? TimeSpan.Zero);
+
+        /// <summary>
+        /// Converts this Fhir DateTime as a .NET DateTimeOffset
+        /// </summary>
+        /// <param name="zone">Ensures the returned DateTimeOffset uses the the specified zone.</param>
+        /// <remarks>In .NET the minimal value for DateTimeOffset is 1/1/0001 12:00:00 AM +00:00. That means,for example, 
+        /// a FhirDateTime of "0001-01-01T00:00:00+01:00" could not be converted to a DateTimeOffset. In that case a 
+        /// ArgumentOutOfRangeException will be thrown.</remarks>
+        /// <returns>A DateTimeOffset filled out to midnight, january 1 (UTC) in case of a partial date/time. If the Fhir DateTime
+        /// does not specify a timezone, the UTC (Coordinated Universal Time) is assumed. Note that the zone parameter has no 
+        /// effect on this, this merely converts the given Fhir datetime to the desired timezone</returns>
+        public DateTimeOffset ToDateTimeOffset(TimeSpan zone)
+        {
+            if (this.Value == null) throw new InvalidOperationException("FhirDateTime's value is null");
+
+            // ToDateTimeOffset() will convert partial date/times by filling out to midnight/january 1 UTC
+            // When there's no timezone, the UTC is assumed
+            var dto = PrimitiveTypeConverter.ConvertTo<DateTimeOffset>(this.Value);
+
+            return dto.ToOffset(zone);
+        }
+
+
+        [Obsolete("Use ToDateTimeOffset(TimeSpan zone) instead")]
+        public DateTime? ToDateTime()
+        {
+            if (this.Value == null) return null;
+
+            return PrimitiveTypeConverter.ConvertTo<DateTime>(this.Value);
+        }
+
+        public Primitives.PartialDateTime? ToPartialDateTime()
+        {
+            if (Value != null)
+                return Primitives.PartialDateTime.Parse(Value);
+            else
+                return null;
+        }
     }
-    
+
 }

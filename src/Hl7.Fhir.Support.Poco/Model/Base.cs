@@ -36,6 +36,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Runtime.Serialization;
 
 namespace Hl7.Fhir.Model
 {
@@ -43,8 +44,8 @@ namespace Hl7.Fhir.Model
     [Serializable]
 #endif
     [InvokeIValidatableObject]
-    [System.Runtime.Serialization.DataContract]
-    public abstract class Base : Hl7.Fhir.Validation.IValidatableObject, IDeepCopyable, IDeepComparable, IAnnotated, IAnnotatable, INotifyPropertyChanged
+    [DataContract]
+    public abstract class Base : Validation.IValidatableObject, IDeepCopyable, IDeepComparable, IAnnotated, IAnnotatable, INotifyPropertyChanged
     {
         public abstract bool IsExactly(IDeepComparable other);
         public abstract bool Matches(IDeepComparable pattern);

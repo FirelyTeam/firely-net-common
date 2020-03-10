@@ -1,10 +1,4 @@
-﻿using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Specification;
-using Hl7.Fhir.Validation;
-using System.Runtime.Serialization;
-using System.Text.RegularExpressions;
-
-/*
+﻿/*
   Copyright (c) 2011+, HL7, Inc.
   All rights reserved.
   
@@ -30,21 +24,29 @@ using System.Text.RegularExpressions;
   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
   POSSIBILITY OF SUCH DAMAGE.
-  
 
 */
 
-//
-// Generated for FHIR v3.0.2
-//
+using Hl7.Fhir.Introspection;
+using Hl7.Fhir.Specification;
+using Hl7.Fhir.Validation;
+using System;
+using System.Runtime.Serialization;
+using System.Text.RegularExpressions;
+
 namespace Hl7.Fhir.Model
 {
     /// <summary>
     /// Primitive Type oid
     /// </summary>
+#if !NETSTANDARD1_1
+    [Serializable]
+#endif
+    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
+
     [FhirType("oid")]
     [DataContract]
-    public class Oid : Hl7.Fhir.Model.Primitive<string>, System.ComponentModel.INotifyPropertyChanged, IStringValue
+    public class Oid : Primitive<string>, IStringValue
     {
         [NotMapped]
         public override string TypeName { get { return "oid"; } }
@@ -71,15 +73,9 @@ namespace Hl7.Fhir.Model
             set { ObjectValue = value; OnPropertyChanged("Value"); }
         }
 
-        public static bool IsValidValue(string value)
-        {
-            return Regex.IsMatch(value, "^" + Oid.PATTERN + "$", RegexOptions.Singleline);
-        }
+        public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
 
-        public FhirUri AsUri()
-        {
-            return new Model.FhirUri(Value);
-        }
+        public FhirUri AsUri() => new FhirUri(Value);
     }
 
 }

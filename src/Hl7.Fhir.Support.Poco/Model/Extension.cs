@@ -44,7 +44,7 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value} Url={_Url}}")]
     [FhirType("Extension")]
     [DataContract]
-    public class Extension : Hl7.Fhir.Model.Element, System.ComponentModel.INotifyPropertyChanged
+    public class Extension : Element
     {
         public Extension()
         {

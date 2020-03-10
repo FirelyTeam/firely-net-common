@@ -44,12 +44,29 @@ namespace Hl7.Fhir.Model
     /// </summary>
     [FhirType("Coding")]
     [DataContract]
-    [System.Diagnostics.DebuggerDisplay(@"\{{DebuggerDisplay,nq}}")]
-    public partial class Coding : Hl7.Fhir.Model.Element, System.ComponentModel.INotifyPropertyChanged
+    [DebuggerDisplay(@"\{{DebuggerDisplay,nq}}")]
+    public class Coding : Element
     {
         [NotMapped]
         public override string TypeName { get { return "Coding"; } }
-        
+
+        public Coding()
+        {
+        }
+
+        public Coding(string system, string code)
+        {
+            this.System = system;
+            this.Code = code;
+        }
+
+        public Coding(string system, string code, string display)
+        {
+            this.System = system;
+            this.Code = code;
+            this.Display = display;
+        }
+
         /// <summary>
         /// Identity of the terminology system
         /// </summary>
@@ -164,7 +181,7 @@ namespace Hl7.Fhir.Model
         /// </summary>
         /// <remarks>This uses the native .NET datatype, rather than the FHIR equivalent</remarks>
         [NotMapped]
-        [IgnoreDataMemberAttribute]
+        [IgnoreDataMember]
         public string Display
         {
             get { return DisplayElement != null ? DisplayElement.Value : null; }
@@ -196,7 +213,7 @@ namespace Hl7.Fhir.Model
         /// </summary>
         /// <remarks>This uses the native .NET datatype, rather than the FHIR equivalent</remarks>
         [NotMapped]
-        [IgnoreDataMemberAttribute]
+        [IgnoreDataMember]
         public bool? UserSelected
         {
             get { return UserSelectedElement != null ? UserSelectedElement.Value : null; }
@@ -311,27 +328,5 @@ namespace Hl7.Fhir.Model
                 return sb.ToString();
             }
         }
-    }
-
-
-    public partial class Coding
-    {
-        public Coding()
-        {
-        }
-
-        public Coding(string system, string code)
-        {
-            this.System = system;
-            this.Code = code;
-        }
-
-        public Coding(string system, string code, string display)
-        {
-            this.System = system;
-            this.Code = code;
-            this.Display = display;
-        }
-    }
-
+   }
 }

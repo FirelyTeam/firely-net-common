@@ -30,16 +30,20 @@
 using Hl7.Fhir.Introspection;
 using System.Runtime.Serialization;
 using Hl7.Fhir.Specification;
+using System;
 
 namespace Hl7.Fhir.Model
 {
     /// <summary>
     /// Primitive Type boolean
     /// </summary>
+#if !NETSTANDARD1_1
+    [Serializable]
+#endif
     [FhirType("boolean")]
     [DataContract]
-    [System.Diagnostics.DebuggerDisplay(@"\{{Value}}")]
-    public partial class FhirBoolean : Hl7.Fhir.Model.Primitive<bool?>, System.ComponentModel.INotifyPropertyChanged, INullableValue<bool>
+    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
+    public class FhirBoolean : Primitive<bool?>, INullableValue<bool>
     {
         [NotMapped]
         public override string TypeName { get { return "boolean"; } }
@@ -49,7 +53,7 @@ namespace Hl7.Fhir.Model
 			Value = value;
 		}
 
-		public FhirBoolean(): this((bool?)null) {}
+		public FhirBoolean(): this(null) {}
 
         /// <summary>
         /// Primitive value of the element
@@ -62,10 +66,7 @@ namespace Hl7.Fhir.Model
             set { ObjectValue = value; OnPropertyChanged("Value"); }
         }
 
-        public static bool IsValidValue(string value)
-        {
-            return value == "false" || value == "true";
-        }
+        public static bool IsValidValue(string value) => value == "false" || value == "true";
     }
 
 }

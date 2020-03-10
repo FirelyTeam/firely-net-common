@@ -1,5 +1,5 @@
 ﻿/*
-  Copyright (c) 2011+, HL7, Inc.
+  Copyright (c) 2011-2012, HL7, Inc
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without modification, 
@@ -28,51 +28,15 @@
 
 */
 
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Validation;
-using System.Runtime.Serialization;
-using Hl7.Fhir.Specification;
-using System;
-using System.Text.RegularExpressions;
-
 namespace Hl7.Fhir.Model
 {
     /// <summary>
-    /// Primitive Type code
+    /// Provides a way to access the system and code from a Code&lt;T&gt; derived class, without having to mess
+    /// about with the generic types/additional nasty reflection
     /// </summary>
-#if !NETSTANDARD1_1
-    [Serializable]
-#endif
-    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    [FhirType("code")]
-    [DataContract]
-    public class Code : Primitive<string>, IStringValue
+    public interface ISystemAndCode
     {
-        [NotMapped]
-        public override string TypeName { get { return "code"; } }
-        
-        // Must conform to the pattern "[^\s]+(\s[^\s]+)*"
-        public const string PATTERN = @"[^\s]+(\s[^\s]+)*";
-
-		public Code(string value)
-		{
-			Value = value;
-		}
-
-		public Code(): this(null) {}
-
-        /// <summary>
-        /// Primitive value of the element
-        /// </summary>
-        [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
-        [CodePattern]
-        [DataMember]
-        public string Value
-        {
-            get { return (string)ObjectValue; }
-            set { ObjectValue = value; OnPropertyChanged("Value"); }
-        }
-
-        public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
+        string System { get; }
+        string Code { get; }
     }
 }

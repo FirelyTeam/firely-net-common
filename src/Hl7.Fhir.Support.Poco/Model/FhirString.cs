@@ -41,10 +41,10 @@ namespace Hl7.Fhir.Model
 #if !NETSTANDARD1_1
     [Serializable]
 #endif
+    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("string")]
-    [DataContract]
-    [System.Diagnostics.DebuggerDisplay(@"{Value}")]
-    public class FhirString : Hl7.Fhir.Model.Primitive<string>, System.ComponentModel.INotifyPropertyChanged, IStringValue
+    [DataContract]    
+    public class FhirString : Primitive<string>, IStringValue
     {
         [NotMapped]
         public override string TypeName { get { return "string"; } }
@@ -57,7 +57,7 @@ namespace Hl7.Fhir.Model
 			Value = value;
 		}
 
-		public FhirString(): this((string)null) {}
+		public FhirString(): this(null) {}
 
         /// <summary>
         /// Primitive value of the element
@@ -70,10 +70,7 @@ namespace Hl7.Fhir.Model
             set { ObjectValue = value; OnPropertyChanged("Value"); }
         }
 
-        public static bool IsValidValue(string value)
-        {
-            return value.Length <= 1024 * 1024;    // Note that strings SHALL NOT exceed 1MB in size
-        }
+        public static bool IsValidValue(string value) => value.Length <= 1024 * 1024;    // Note that strings SHALL NOT exceed 1MB in size
     }
 
 }

@@ -28,87 +28,17 @@
 
 */
 
-using Hl7.Fhir.Serialization;
 using System;
-using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model
 {
-    [System.Diagnostics.DebuggerDisplay(@"\{{Value}}")]
-    public partial class Date : IStringValue
+
+    public partial class FhirDateTime
     {
-        public Date(int year, int month, int day)
-            : this(String.Format(Model.FhirDateTime.FMT_YEARMONTHDAY, year, month, day))
+        public static bool operator >(FhirDateTime a, FhirDateTime b)
         {
-        }
-
-        public Date(int year, int month)
-            : this( String.Format(Model.FhirDateTime.FMT_YEARMONTH,year,month) )
-        {
-        }
-
-        public Date(int year): this( String.Format(Model.FhirDateTime.FMT_YEAR, year))
-        {
-        }
-
-        /// <summary>
-        /// Gets the current date in the local timezone
-        /// </summary>
-        /// <returns>Gets the current date in the local timezone</returns>
-        public static Date Today()
-        {
-            return new Date(DateTimeOffset.Now.ToString("yyyy-MM-dd"));
-        }
-
-        /// <summary>
-        /// Gets the current date in the timezone UTC
-        /// </summary>
-        /// <returns>Gets the current date in the timezone UTC</returns>
-        public static Date UtcToday()
-        {
-            return new Date(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd"));
-        }
-
-        [Obsolete("Use ToDateTimeOffset instead")]
-        public DateTime? ToDateTime()
-        {
-            if (this.Value == null) return null;
-
-            return PrimitiveTypeConverter.ConvertTo<DateTimeOffset>(this.Value).DateTime;
-        }
-
-        public DateTimeOffset? ToDateTimeOffset()
-        {
-            if (this.Value == null) return null;
-
-            return PrimitiveTypeConverter.ConvertTo<DateTimeOffset>(this.Value);
-        }
-
-        public Primitives.PartialDate? ToPartialDate()
-        {
-            if (Value != null)
-                return Primitives.PartialDate.Parse(Value);
-            else
-                return null;
-        }
-
-        public Primitives.PartialDateTime? ToPartialDateTime()
-        {
-            if (Value != null)
-                return Primitives.PartialDateTime.Parse(Value);
-            else
-                return null;
-        }
-
-        public static bool IsValidValue(string value)
-        {
-            return Regex.IsMatch(value, "^" + Date.PATTERN + "$", RegexOptions.Singleline);
-        }
-
-        public static bool operator >(Date a, Date b)
-        {
-            var aValue = !Object.ReferenceEquals(a,null) ? a.Value : null;
-            var bValue = !Object.ReferenceEquals(b, null) ? b.Value : null;
+            var aValue = a?.Value;
+            var bValue = b?.Value;
 
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
@@ -116,10 +46,10 @@ namespace Hl7.Fhir.Model
             return Primitives.PartialDateTime.Parse(a.Value) > Primitives.PartialDateTime.Parse(b.Value);
         }
 
-        public static bool operator >=(Date a, Date b)
+        public static bool operator >=(FhirDateTime a, FhirDateTime b)
         {
-            var aValue = !Object.ReferenceEquals(a, null) ? a.Value : null;
-            var bValue = !Object.ReferenceEquals(b, null) ? b.Value : null;
+            var aValue = a?.Value;
+            var bValue = b?.Value;
 
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
@@ -127,10 +57,10 @@ namespace Hl7.Fhir.Model
             return Primitives.PartialDateTime.Parse(a.Value) >= Primitives.PartialDateTime.Parse(b.Value);
         }
 
-        public static bool operator <(Date a, Date b)
+        public static bool operator <(FhirDateTime a, FhirDateTime b)
         {
-            var aValue = !Object.ReferenceEquals(a, null) ? a.Value : null;
-            var bValue = !Object.ReferenceEquals(b, null) ? b.Value : null;
+            var aValue = a?.Value;
+            var bValue = b?.Value;
 
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
@@ -138,10 +68,10 @@ namespace Hl7.Fhir.Model
             return Primitives.PartialDateTime.Parse(a.Value) < Primitives.PartialDateTime.Parse(b.Value);
         }
 
-        public static bool operator <=(Date a, Date b)
+        public static bool operator <=(FhirDateTime a, FhirDateTime b)
         {
-            var aValue = !Object.ReferenceEquals(a, null) ? a.Value : null;
-            var bValue = !Object.ReferenceEquals(b, null) ? b.Value : null;
+            var aValue = a?.Value;
+            var bValue = b?.Value;
 
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
@@ -155,10 +85,7 @@ namespace Hl7.Fhir.Model
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
-        public static bool operator ==(Date a, Date b)
-        {
-            return Object.Equals(a, b);
-        }
+        public static bool operator ==(FhirDateTime a, FhirDateTime b) => Equals(a, b);
 
         /// <summary>
         /// If you use this operator, you should check that a modifierExtension isn't changing the meaning
@@ -166,16 +93,14 @@ namespace Hl7.Fhir.Model
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
-        public static bool operator !=(Date a, Date b)
-        {
-            return !Object.Equals(a, b);
-        }
+        public static bool operator !=(FhirDateTime a, FhirDateTime b) => !Equals(a, b);
 
         public override bool Equals(object obj)
         {
-            if (obj is Date other)
+            if (obj is FhirDateTime)
             {
-                var otherValue = !Object.ReferenceEquals(other, null) ? other.Value : null;
+                var other = (FhirDateTime)obj;
+                var otherValue = other?.Value;
 
                 if (Value == null) return otherValue == null;
                 if (otherValue == null) return false;
@@ -191,9 +116,6 @@ namespace Hl7.Fhir.Model
                 return false;
         }
 
-        public override int GetHashCode()
-        {
-            return Value.GetHashCode();
-        }
+        public override int GetHashCode() => Value.GetHashCode();
     }
 }

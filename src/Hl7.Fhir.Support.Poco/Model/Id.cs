@@ -33,16 +33,21 @@ using Hl7.Fhir.Validation;
 using System.Runtime.Serialization;
 using Hl7.Fhir.Specification;
 using System.Text.RegularExpressions;
+using System;
 
 namespace Hl7.Fhir.Model
 {
     /// <summary>
     /// Primitive Type id
     /// </summary>
-    [FhirType("id")]
-    [DataContract]
+    /// 
+#if !NETSTANDARD1_1
+    [Serializable]
+#endif
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    public class Id : Hl7.Fhir.Model.Primitive<string>, System.ComponentModel.INotifyPropertyChanged, IStringValue
+    [FhirType("id")]
+    [DataContract]    
+    public class Id : Primitive<string>, IStringValue
     {
         [NotMapped]
         public override string TypeName { get { return "id"; } }
@@ -55,7 +60,7 @@ namespace Hl7.Fhir.Model
 			Value = value;
 		}
 
-		public Id(): this((string)null) {}
+		public Id(): this(null) {}
 
         /// <summary>
         /// Primitive value of the element
@@ -69,10 +74,7 @@ namespace Hl7.Fhir.Model
             set { ObjectValue = value; OnPropertyChanged("Value"); }
         }
 
-        public static bool IsValidValue(string value)
-        {
-            return Regex.IsMatch(value, "^" + Hl7.Fhir.Model.Id.PATTERN + "$", RegexOptions.Singleline);
-        }
+        public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
     }
 
 }

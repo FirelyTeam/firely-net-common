@@ -30,12 +30,10 @@
 
 
 using System;
-using System.Text.RegularExpressions;
 
 using Hl7.Fhir.Introspection;
 using System.Runtime.Serialization;
 using Hl7.Fhir.Utility;
-using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Specification;
 
 namespace Hl7.Fhir.Model
@@ -43,31 +41,9 @@ namespace Hl7.Fhir.Model
 #if !NETSTANDARD1_1
     [Serializable]
 #endif
-    [System.Diagnostics.DebuggerDisplay(@"\{{Value}}")] // http://blogs.msdn.com/b/jaredpar/archive/2011/03/18/debuggerdisplay-attribute-best-practices.aspx
-    public partial class Code : IStringValue
-    {
-        public static bool IsValidValue(string value)
-        {
-            return Regex.IsMatch(value, "^" + Code.PATTERN + "$", RegexOptions.Singleline);
-        }
-    }
-
-    /// <summary>
-    /// Provides a way to access the system and code from a Code&lt;T&gt; derived class, without having to mess
-    /// about with the generic types/additional nasty reflection
-    /// </summary>
-    public interface ISystemAndCode
-    {
-        string System { get; }
-        string Code { get; }
-    }
-
-#if !NETSTANDARD1_1
-    [Serializable]
-#endif
     [FhirType("codeOfT")]
     [DataContract]
-    [System.Diagnostics.DebuggerDisplay(@"\{{Value}}")] // http://blogs.msdn.com/b/jaredpar/archive/2011/03/18/debuggerdisplay-attribute-best-practices.aspx
+    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     public class Code<T> : Primitive<T>, INullableValue<T>, ISystemAndCode where T : struct
     {
         static Code()
@@ -76,6 +52,18 @@ namespace Hl7.Fhir.Model
                 throw new ArgumentException("T must be an enumerated type");
         }
 
+        [NotMapped]
+        public override string TypeName
+        {
+            get { return "code"; }
+        }
+
+        public Code() : this(null) { }
+
+        public Code(T? value)
+        {
+            Value = value;
+        }
 
         // Primitive value of element
         [FhirElement("value", IsPrimitiveValue = true, XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 30)]
@@ -99,18 +87,7 @@ namespace Hl7.Fhir.Model
             }
         }
 
-        public Code() : this(null) {}
 
-        public Code(T? value)
-        {
-            Value = value;
-        }
-
-        [NotMapped]
-        public override string TypeName
-        {
-            get { return "code"; }
-        }
 
         string ISystemAndCode.System => ((Enum)(object)Value).GetSystem();
 

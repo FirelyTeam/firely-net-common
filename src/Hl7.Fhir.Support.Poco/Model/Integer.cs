@@ -31,16 +31,21 @@
 using Hl7.Fhir.Introspection;
 using System.Runtime.Serialization;
 using Hl7.Fhir.Specification;
-using System.Xml;
+using System;
+using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model
 {
     /// <summary>
     /// Primitive Type integer
     /// </summary>
+#if !NETSTANDARD1_1
+    [Serializable]
+#endif
+    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("integer")]
     [DataContract]
-    public class Integer : Hl7.Fhir.Model.Primitive<int?>, System.ComponentModel.INotifyPropertyChanged, INullableIntegerValue
+    public class Integer : Primitive<int?>, INullableIntegerValue
     {
         [NotMapped]
         public override string TypeName { get { return "integer"; } }
@@ -66,21 +71,7 @@ namespace Hl7.Fhir.Model
             set { ObjectValue = value; OnPropertyChanged("Value"); }
         }
 
-        public static bool IsValidValue(string value)
-        {
-            try
-            {
-                var dummy = XmlConvert.ToInt32(value);
-            }
-            catch
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-
+        public static bool IsValidValue(string value) => Regex.IsMatch(value as string, "^" + PATTERN + "$", RegexOptions.Singleline);
     }
 
 }

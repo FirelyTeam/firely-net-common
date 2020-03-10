@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Validation;
-using System.Linq;
-using System.Runtime.Serialization;
-using Hl7.Fhir.Serialization;
-using Hl7.Fhir.Utility;
-using Hl7.Fhir.Specification;
-
-/*
+﻿/*
   Copyright (c) 2011+, HL7, Inc.
   All rights reserved.
   
@@ -38,17 +28,26 @@ using Hl7.Fhir.Specification;
 
 */
 
-//
-// Generated for FHIR v3.0.2
-//
+using Hl7.Fhir.Introspection;
+using Hl7.Fhir.Validation;
+using System.Runtime.Serialization;
+using Hl7.Fhir.Specification;
+using System;
+using System.Text.RegularExpressions;
+using Hl7.Fhir.Serialization;
+
 namespace Hl7.Fhir.Model
 {
     /// <summary>
     /// Primitive Type date
     /// </summary>
+#if !NETSTANDARD1_1
+    [Serializable]
+#endif
+    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("date")]
     [DataContract]
-    public partial class Date : Hl7.Fhir.Model.Primitive<string>, System.ComponentModel.INotifyPropertyChanged
+    public partial class Date : Primitive<string>, IStringValue
     {
         [NotMapped]
         public override string TypeName { get { return "date"; } }
@@ -61,12 +60,26 @@ namespace Hl7.Fhir.Model
 			Value = value;
 		}
 
-		public Date(): this((string)null) {}
+		public Date(): this(null) {}
+
+        public Date(int year, int month, int day)
+            : this(String.Format(Model.FhirDateTime.FMT_YEARMONTHDAY, year, month, day))
+        {
+        }
+
+        public Date(int year, int month)
+            : this(String.Format(Model.FhirDateTime.FMT_YEARMONTH, year, month))
+        {
+        }
+
+        public Date(int year) : this(String.Format(Model.FhirDateTime.FMT_YEAR, year))
+        {
+        }
 
         /// <summary>
         /// Primitive value of the element
         /// </summary>
-        [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
+        [FhirElement("value", IsPrimitiveValue = true, XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 30)]
         [DatePattern]
         [DataMember]
         public string Value
@@ -74,9 +87,34 @@ namespace Hl7.Fhir.Model
             get { return (string)ObjectValue; }
             set { ObjectValue = value; OnPropertyChanged("Value"); }
         }
-        
 
-    
+        public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
+
+        /// <summary>
+        /// Gets the current date in the local timezone
+        /// </summary>
+        /// <returns>Gets the current date in the local timezone</returns>
+        public static Date Today() => new Date(DateTimeOffset.Now.ToString("yyyy-MM-dd"));
+
+        /// <summary>
+        /// Gets the current date in the timezone UTC
+        /// </summary>
+        /// <returns>Gets the current date in the timezone UTC</returns>
+        public static Date UtcToday() => new Date(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd"));
+
+        [Obsolete("Use ToDateTimeOffset instead")]
+        public DateTime? ToDateTime() => 
+            Value == null ? null : (DateTime?)PrimitiveTypeConverter.ConvertTo<DateTimeOffset>(Value).DateTime;
+
+        public DateTimeOffset? ToDateTimeOffset() =>
+            Value == null ? null : (DateTimeOffset?)PrimitiveTypeConverter.ConvertTo<DateTimeOffset>(Value);
+
+        public Primitives.PartialDate? ToPartialDate() =>
+            Value != null ? (Primitives.PartialDate?)Primitives.PartialDate.Parse(Value) : null;
+
+        public Primitives.PartialDateTime? ToPartialDateTime() =>
+            Value != null ? (Primitives.PartialDateTime?)Primitives.PartialDateTime.Parse(Value) : null;
+
     }
-    
+
 }

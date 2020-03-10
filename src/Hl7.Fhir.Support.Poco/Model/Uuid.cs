@@ -33,15 +33,20 @@ using Hl7.Fhir.Validation;
 using System.Runtime.Serialization;
 using Hl7.Fhir.Specification;
 using System.Text.RegularExpressions;
+using System;
 
 namespace Hl7.Fhir.Model
 {
     /// <summary>
     /// Primitive Type uuid
     /// </summary>
+#if !NETSTANDARD1_1
+    [Serializable]
+#endif
+    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("uuid")]
     [DataContract]
-    public class Uuid : Hl7.Fhir.Model.Primitive<string>, System.ComponentModel.INotifyPropertyChanged, IStringValue
+    public class Uuid : Primitive<string>, IStringValue
     {
         [NotMapped]
         public override string TypeName { get { return "uuid"; } }
@@ -68,10 +73,7 @@ namespace Hl7.Fhir.Model
             set { ObjectValue = value; OnPropertyChanged("Value"); }
         }
 
-        public static bool IsValidValue(string value)
-        {
-            return Regex.IsMatch(value, "^" + Uuid.PATTERN + "$", RegexOptions.Singleline);
-        }
+        public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
 
         public static Uuid Generate()
         {
@@ -79,10 +81,7 @@ namespace Hl7.Fhir.Model
             return new Uuid(newUuid);
         }
 
-        public FhirUri AsUri()
-        {
-            return new FhirUri(Value);
-        }
+        public FhirUri AsUri() => new FhirUri(Value);
     }
 
 }

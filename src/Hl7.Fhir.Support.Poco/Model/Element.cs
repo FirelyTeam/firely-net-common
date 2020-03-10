@@ -70,11 +70,11 @@ namespace Hl7.Fhir.Model
         [DataMember]
         public List<Hl7.Fhir.Model.Extension> Extension
         {
-            get { if(_Extension==null) _Extension = new List<Hl7.Fhir.Model.Extension>(); return _Extension; }
+            get { if(_Extension==null) _Extension = new List<Extension>(); return _Extension; }
             set { _Extension = value; OnPropertyChanged("Extension"); }
         }
         
-        private List<Hl7.Fhir.Model.Extension> _Extension;
+        private List<Extension> _Extension;
         
         public override IDeepCopyable CopyTo(IDeepCopyable other)
         {
@@ -82,7 +82,7 @@ namespace Hl7.Fhir.Model
             {
                 base.CopyTo(dest);
                 if (ElementId != null) dest.ElementId = ElementId;
-                if (Extension != null) dest.Extension = new List<Hl7.Fhir.Model.Extension>(Extension.DeepCopy());
+                if (Extension != null) dest.Extension = new List<Extension>(Extension.DeepCopy());
                 return dest;
             }
             else

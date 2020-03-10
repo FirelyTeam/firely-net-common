@@ -39,9 +39,13 @@ namespace Hl7.Fhir.Model
     /// <summary>
     /// Primitive Type uri
     /// </summary>
+#if !NETSTANDARD1_1
+    [Serializable]
+#endif
+    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("uri")]
     [DataContract]
-    public class FhirUri : Hl7.Fhir.Model.Primitive<string>, System.ComponentModel.INotifyPropertyChanged, IStringValue
+    public class FhirUri : Primitive<string>, IStringValue
     {
         [NotMapped]
         public override string TypeName { get { return "uri"; } }
@@ -96,8 +100,5 @@ namespace Hl7.Fhir.Model
 
             return true;
         }
-
-
     }
-
 }

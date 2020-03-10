@@ -32,41 +32,10 @@ using System;
 
 namespace Hl7.Fhir.Model
 {
-    public partial class Instant : INullableValue<DateTimeOffset>
+
+    public partial class Date
     {
-        public static Instant FromLocalDateTime(int year, int month, int day,
-                            int hour, int min, int sec, int millis = 0)
-        {
-            return new Instant( new DateTimeOffset(year, month, day, hour, min, sec, millis,
-                            DateTimeOffset.Now.Offset) );
-        }
-
-
-        public static Instant FromDateTimeUtc(int year, int month, int day,
-                                            int hour, int min, int sec, int millis=0)
-        {
-            return new Instant(new DateTimeOffset(year, month, day, hour, min, sec, millis,
-                                   TimeSpan.Zero));
-        }
-
-        public static Instant Now()
-        {
-            return new Instant(DateTimeOffset.Now);
-        }
-
-        public Primitives.PartialDateTime? ToPartialDateTime() => Value != null ? (Primitives.PartialDateTime?)Primitives.PartialDateTime.FromDateTimeOffset(Value.Value) : null;
-
-
-        public static bool IsValidValue(string value)
-        {
-            if (!DateTimeOffset.TryParse(value, out DateTimeOffset _))
-                return false;
-
-            //TODO: Implement useful validation functionality
-            return true;
-        }
-
-        public static bool operator >(Instant a, Instant b)
+        public static bool operator >(Date a, Date b)
         {
             var aValue = a?.Value;
             var bValue = b?.Value;
@@ -74,10 +43,10 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return Primitives.PartialDateTime.FromDateTimeOffset(a.Value.Value) > Primitives.PartialDateTime.FromDateTimeOffset(b.Value.Value);
+            return Primitives.PartialDateTime.Parse(a.Value) > Primitives.PartialDateTime.Parse(b.Value);
         }
 
-        public static bool operator >=(Instant a, Instant b)
+        public static bool operator >=(Date a, Date b)
         {
             var aValue = a?.Value;
             var bValue = b?.Value;
@@ -85,10 +54,10 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return Primitives.PartialDateTime.FromDateTimeOffset(a.Value.Value) >= Primitives.PartialDateTime.FromDateTimeOffset(b.Value.Value);
+            return Primitives.PartialDateTime.Parse(a.Value) >= Primitives.PartialDateTime.Parse(b.Value);
         }
 
-        public static bool operator <(Instant a, Instant b)
+        public static bool operator <(Date a, Date b)
         {
             var aValue = a?.Value;
             var bValue = b?.Value;
@@ -96,10 +65,10 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return Primitives.PartialDateTime.FromDateTimeOffset(a.Value.Value) < Primitives.PartialDateTime.FromDateTimeOffset(b.Value.Value);
+            return Primitives.PartialDateTime.Parse(a.Value) < Primitives.PartialDateTime.Parse(b.Value);
         }
 
-        public static bool operator <=(Instant a, Instant b)
+        public static bool operator <=(Date a, Date b)
         {
             var aValue = a?.Value;
             var bValue = b?.Value;
@@ -107,7 +76,7 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return Primitives.PartialDateTime.FromDateTimeOffset(a.Value.Value) <= Primitives.PartialDateTime.FromDateTimeOffset(b.Value.Value);
+            return Primitives.PartialDateTime.Parse(a.Value) <= Primitives.PartialDateTime.Parse(b.Value);
         }
 
         /// <summary>
@@ -116,10 +85,7 @@ namespace Hl7.Fhir.Model
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
-        public static bool operator ==(Instant a, Instant b)
-        {
-            return Object.Equals(a, b);
-        }
+        public static bool operator ==(Date a, Date b) => Equals(a, b);
 
         /// <summary>
         /// If you use this operator, you should check that a modifierExtension isn't changing the meaning
@@ -127,14 +93,11 @@ namespace Hl7.Fhir.Model
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
-        public static bool operator !=(Instant a, Instant b)
-        {
-            return !Object.Equals(a, b);
-        }
+        public static bool operator !=(Date a, Date b) => !Equals(a, b);
 
         public override bool Equals(object obj)
         {
-            if (obj is Instant other)
+            if (obj is Date other)
             {
                 var otherValue = other?.Value;
 
@@ -143,8 +106,8 @@ namespace Hl7.Fhir.Model
 
                 if (this.Value == otherValue) return true; // Default reference/string comparison works in most cases
 
-                var left = Primitives.PartialDateTime.FromDateTimeOffset(Value.Value);
-                var right = Primitives.PartialDateTime.FromDateTimeOffset(otherValue.Value);
+                var left = Primitives.PartialDateTime.Parse(Value);
+                var right = Primitives.PartialDateTime.Parse(otherValue);
 
                 return left == right;
             }
@@ -152,9 +115,6 @@ namespace Hl7.Fhir.Model
                 return false;
         }
 
-        public override int GetHashCode()
-        {
-            return Value.GetHashCode();
-        }
+        public override int GetHashCode() => Value.GetHashCode();
     }
 }

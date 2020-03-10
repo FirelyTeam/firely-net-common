@@ -42,7 +42,7 @@ namespace Hl7.Fhir.Model
     /// </summary>
     [FhirType("Meta")]
     [DataContract]
-    public class Meta : Hl7.Fhir.Model.Element, System.ComponentModel.INotifyPropertyChanged
+    public class Meta : Element
     {
         [NotMapped]
         public override string TypeName { get { return "Meta"; } }

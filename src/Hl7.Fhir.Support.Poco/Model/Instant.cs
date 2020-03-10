@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Validation;
-using System.Linq;
-using System.Runtime.Serialization;
-using Hl7.Fhir.Serialization;
-using Hl7.Fhir.Utility;
-using Hl7.Fhir.Specification;
-
-/*
+﻿/*
   Copyright (c) 2011+, HL7, Inc.
   All rights reserved.
   
@@ -35,20 +25,27 @@ using Hl7.Fhir.Specification;
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
   POSSIBILITY OF SUCH DAMAGE.
   
-
 */
 
-//
-// Generated for FHIR v3.0.2
-//
+using System;
+using Hl7.Fhir.Introspection;
+using System.Runtime.Serialization;
+using Hl7.Fhir.Specification;
+using System.Text.RegularExpressions;
+
 namespace Hl7.Fhir.Model
 {
     /// <summary>
     /// Primitive Type instant
     /// </summary>
+    /// 
+#if !NETSTANDARD1_1
+    [Serializable]
+#endif
+    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("instant")]
     [DataContract]
-    public partial class Instant : Hl7.Fhir.Model.Primitive<DateTimeOffset?>, System.ComponentModel.INotifyPropertyChanged
+    public partial class Instant : Primitive<DateTimeOffset?>, INullableValue<DateTimeOffset>
     {
         [NotMapped]
         public override string TypeName { get { return "instant"; } }
@@ -73,9 +70,36 @@ namespace Hl7.Fhir.Model
             get { return (DateTimeOffset?)ObjectValue; }
             set { ObjectValue = value; OnPropertyChanged("Value"); }
         }
-        
 
-    
+        public static bool IsValidValue(string value)
+        {
+            return Regex.IsMatch(value as string, "^" + PATTERN + "$", RegexOptions.Singleline);
+
+            //TODO: Additional checks not implementable by the regex
+        }
+
+        public static Instant FromLocalDateTime(int year, int month, int day,
+                    int hour, int min, int sec, int millis = 0)
+        {
+            return new Instant(new DateTimeOffset(year, month, day, hour, min, sec, millis,
+                            DateTimeOffset.Now.Offset));
+        }
+
+
+        public static Instant FromDateTimeUtc(int year, int month, int day,
+                                            int hour, int min, int sec, int millis = 0)
+        {
+            return new Instant(new DateTimeOffset(year, month, day, hour, min, sec, millis,
+                                   TimeSpan.Zero));
+        }
+
+        public static Instant Now()
+        {
+            return new Instant(DateTimeOffset.Now);
+        }
+
+        public Primitives.PartialDateTime? ToPartialDateTime() => 
+            Value != null ? (Primitives.PartialDateTime?)Primitives.PartialDateTime.FromDateTimeOffset(Value.Value) : null;
+
     }
-    
 }
