@@ -47,8 +47,6 @@ namespace Hl7.Fhir.Model
     public abstract partial class Resource : Base
     {
         [NotMapped]
-        public virtual ResourceType ResourceType { get { return ResourceType.Resource; } }
-        [NotMapped]
         public override string TypeName { get { return "Resource"; } }
         
         /// <summary>
