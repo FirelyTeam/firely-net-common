@@ -17,9 +17,9 @@ using System.Xml.Linq;
 
 namespace Hl7.Fhir.Serialization
 {
-    public partial class FhirXmlNode : ISourceNode, IResourceTypeSupplier, IAnnotated, IExceptionSource
-    {  
-        internal FhirXmlNode(XObject node, FhirXmlParsingSettings settings) 
+    public partial class FhirXmlNode : ISourceNode, IResourceTypeSupplier, IAnnotated, IExceptionSource, ICdaInfoSupplier
+    {
+        internal FhirXmlNode(XObject node, FhirXmlParsingSettings settings)
         {
             Current = node;
             Location = Name;
@@ -159,7 +159,7 @@ namespace Hl7.Fhir.Serialization
                 yield break;
             }
 
-            foreach(var child in enumerateChildren(firstChild, name)) yield return child;
+            foreach (var child in enumerateChildren(firstChild, name)) yield return child;
         }
 
         private IEnumerable<FhirXmlNode> enumerateChildren(XObject first, string name = null)
@@ -172,14 +172,14 @@ namespace Hl7.Fhir.Serialization
             do
             {
                 if (!PermissiveParsing) verifyXObject(scan, AllowedExternalNamespaces, this, this);
-                
+
                 if (scan is XElement || scan.Name() != "value")
                 {
                     var scanName = scan.Name().LocalName;
                     bool isMatch = scanName.MatchesPrefix(name);
 
                     if (isMatch)
-                    {                        
+                    {
                         if (_names.ContainsKey(scanName))
                         {
                             _names[scanName] += 1;
@@ -211,7 +211,7 @@ namespace Hl7.Fhir.Serialization
 
         public IEnumerable<object> Annotations(Type type)
         {
-            if (type == typeof(FhirXmlNode) || type == typeof(ISourceNode) || type == typeof(IResourceTypeSupplier))
+            if (type == typeof(FhirXmlNode) || type == typeof(ISourceNode) || type == typeof(IResourceTypeSupplier) || type == typeof(ICdaInfoSupplier))
                 return new[] { this };
 #pragma warning disable 612, 618
             else if (type == typeof(AdditionalStructuralRule) && !PermissiveParsing)
@@ -321,7 +321,7 @@ namespace Hl7.Fhir.Serialization
             ies.NotifyOrThrow(source, ExceptionNotification.Error(Error.Format("Parser: " + message, lineNumber, linePosition)));
         }
 
-        private static (int lineNumber, int linePosition) getPosition(XObject node) => 
+        private static (int lineNumber, int linePosition) getPosition(XObject node) =>
             node is IXmlLineInfo xli ? (xli.LineNumber, xli.LinePosition) : (-1, -1);
 
         private static bool verifyContained(XElement contained, IExceptionSource ies, bool permissive)
@@ -430,5 +430,37 @@ namespace Hl7.Fhir.Serialization
 
         private ExceptionNotification buildException(string message) => ExceptionNotification.Error(
                 new StructuralTypeException("Parser: " + message));
+
+
+        [Obsolete("The XHtmlText property is part of alpha-level support for parsing CDA and should not yet be used in production. This interface is subject to change.")]
+        public string XHtmlText
+        {
+            get
+            {
+                if (!(Current is XElement ie)) return null;
+
+                if (ie.Parent == null || ie.Parent.Name.Namespace != ie.Name.Namespace)
+                    return ie.ToString(SaveOptions.DisableFormatting);
+
+                return StripNamespaces(ie).ToString(SaveOptions.DisableFormatting);
+            }
+        }
+
+        private XElement StripNamespaces(XElement rootElement)
+        {
+            foreach (var element in rootElement.DescendantsAndSelf())
+            {
+                // check if the element contains attributes with defined namespaces (ignore xml and empty namespaces)
+                bool hasDefinedNamespaces = element.Attributes().Any(attribute => attribute.IsNamespaceDeclaration ||
+                        (attribute.Name.Namespace != XNamespace.None && attribute.Name.Namespace != XNamespace.Xml));
+                // update element name if a namespace is available and its not explicite defined
+                if (element.Name.Namespace != XNamespace.None && !hasDefinedNamespaces)
+                {
+                    element.Name = XNamespace.None.GetName(element.Name.LocalName);
+                }
+            }
+            return rootElement;
+        }
     }
 }
+
