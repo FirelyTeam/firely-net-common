@@ -330,7 +330,9 @@ namespace Hl7.Fhir.ElementModel
                 // The xml will be put in this node and children will be ignored.
                 if (instanceType == XHTML_INSTANCETYPE && info.Representation == XmlRepresentation.CdaText)
                 {
+#pragma warning disable CS0618 // Type or member is obsolete
                     var xmls = scan.Children().Select(c => c.Annotation<ICdaInfoSupplier>()?.XHtmlText);
+#pragma warning restore CS0618 // Type or member is obsolete
 
                     var source = SourceNode.Valued(scan.Name, string.Join(string.Empty, xmls));
                     yield return new TypedElementOnSourceNode(this, source, info, instanceType, prettyPath);

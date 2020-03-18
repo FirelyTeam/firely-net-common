@@ -27,7 +27,7 @@ namespace Hl7.Fhir.Validation
        
         public Type[] Types { get; set; }
 
-        public bool AllowOpenTypes { get; set; } = false;
+        public bool IsOpen { get; set; } = false;
 
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
@@ -54,7 +54,7 @@ namespace Hl7.Fhir.Validation
 
         private ValidationResult validateValue(object item, ValidationContext context)
         {
-            if (AllowOpenTypes == false && item != null)
+            if (IsOpen == false && item != null)
             {
                 if (!Types.Any(type => type.GetTypeInfo().IsAssignableFrom(item.GetType().GetTypeInfo())))
                     return DotNetAttributeValidation.BuildResult(context, "Value is of type {0}, which is not an allowed choice", item.GetType());
