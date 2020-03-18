@@ -82,13 +82,11 @@ namespace Hl7.Fhir.Introspection
             // This may differ from the ImplementingType in several ways:
             // * for a choice, ImplementingType = Any, but FhirType[] contains the possible choices
             // * some elements (e.g. Extension.url) have ImplementingType = string, but FhirType = FhirUri, etc.
-            if (allowedTypes.IsOpen)
+            if (allowedTypes != null)
             {
-                result.IsOpen = true;
-                result.FhirType = new[] { typeof(Element) };
+                result.IsOpen = allowedTypes.IsOpen;
+                result.FhirType = allowedTypes.IsOpen ? (new[] { typeof(Element) }) : allowedTypes.Types;
             }
-            else if (allowedTypes != null)
-                result.FhirType = allowedTypes.Types;
             else if (elementAttr?.TypeRedirect != null)
                 result.FhirType = new[] { elementAttr.TypeRedirect };
             else
