@@ -1,4 +1,4 @@
-﻿/*
+/*
   Copyright (c) 2011-2013, HL7, Inc.
   All rights reserved.
   
@@ -28,45 +28,50 @@
 
 */
 
-using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Specification;
+using Hl7.Fhir.Support.Utility;
 using Hl7.Fhir.Validation;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Text;
 
 namespace Hl7.Fhir.Introspection
 {
-    [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
-    public sealed class FhirElementAttribute : ValidationAttribute
+    [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
+    public sealed class FhirElementAttribute : VersionedValidationAttribute, IFhirVersionDependent
     {
-        readonly string name;
-
         public FhirElementAttribute(string name)
         {
-            this.name = name;
-            this.XmlSerialization = XmlRepresentation.None;
-            this.Choice = ChoiceType.None;
+            Name = name;
         }
 
-        public ChoiceType Choice { get; set; }
+        public ChoiceType Choice { get; set; } = ChoiceType.None;
 
-        public string Name
-        {
-            get { return name; }
-        }
+        /// <summary>
+        /// The name of the element in FHIR this property represents.
+        /// </summary>
+        public string Name { get; private set; }
 
+        /// <summary>
+        /// The element represents the primitive `value` attribute/property in the FHIR serialization
+        /// </summary>
         public bool IsPrimitiveValue { get; set; }
 
-        public XmlRepresentation XmlSerialization { get; set; }
+        /// <summary>
+        /// How this value is represented in XML.
+        /// </summary>
+        public XmlRepresentation XmlSerialization { get; set; } = XmlRepresentation.None;
 
         public int Order { get; set; }
 
         public bool InSummary { get; set; }
 
+        /// <summary>
+        /// When set, this Type will be used to determine the FHIR type of the element, instead
+        /// of the declared type of the property.
+        /// </summary>
         public Type TypeRedirect { get; set; }
 
         // This attribute is a subclass of ValidationAttribute so that IsValid() is called on every 

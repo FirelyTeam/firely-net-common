@@ -28,19 +28,24 @@
 
 */
 
-using System;
+using Hl7.Fhir.Support.Utility;
 
 namespace Hl7.Fhir.Introspection
 {
-    [CLSCompliant(false)]
-    [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
-    public class ReferencesAttribute : VersionedAttribute
+    public interface IFhirVersionDependent
     {
-        public ReferencesAttribute(params string[] resources)
+        SemVersion SinceVersion { get; }
+    }
+
+    public static class FhirVersionDependentExtensions
+    {
+        public static bool AppliesToVersion(this IFhirVersionDependent me, string fhirVersion)
         {
-            Resources = resources;
+            if (me.SinceVersion == null) return true;
+            if (!SemVersion.TryParse(fhirVersion, out var parsedVersion)) return false;
+
+            return me.SinceVersion <= parsedVersion;
         }
 
-        public string[] Resources { get; set; }
     }
 }
