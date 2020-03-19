@@ -34,24 +34,15 @@ using System;
 
 namespace Hl7.Fhir.Introspection
 {
-    [AttributeUsage(AttributeTargets.Class, Inherited = true, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
     public sealed class FhirTypeAttribute : InvokeIValidatableObjectAttribute
     {
-        public FhirTypeAttribute()
-        {
-            // No arg constructor - use defaults
-        }
-
         public FhirTypeAttribute(string name)
         {
-            Name = name;
+            Name = name ?? throw new ArgumentNullException(nameof(name));
         }
 
         public string Name { get; private set; }
-
-        public string Profile { get; set; }
-
-        public bool IsResource { get; set; }
 
         public bool NamedBackboneElement { get; set; }
     }

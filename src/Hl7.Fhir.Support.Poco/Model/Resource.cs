@@ -45,7 +45,7 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay("\\{\"{TypeName,nq}/{Id,nq}\"}")]
     [InvokeIValidatableObject]
     [DataContract]
-    [FhirType("Resource", IsResource = true)]
+    [FhirType("Resource")]
     public abstract class Resource : Base
     {
         [NotMapped]

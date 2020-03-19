@@ -48,7 +48,7 @@ namespace Hl7.Fhir.Model
 #if !NETSTANDARD1_1
     [Serializable]
 #endif
-    [FhirType("BackboneElement", IsResource = false)]
+    [FhirType("BackboneElement")]
     [DataContract]
     public abstract partial class BackboneElement : Element, IModifierExtendable, IBackboneElement
     {

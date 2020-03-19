@@ -141,7 +141,12 @@ namespace Hl7.Fhir.Utility
 
         public T GetCustomAttribute<T>() where T : Attribute
         {
-            return (T) Type.GetCustomAttributes(typeof(T), true).FirstOrDefault();
+            return (T)Type.GetCustomAttributes(typeof(T), true).FirstOrDefault();
+        }
+
+        public IEnumerable<T> GetCustomAttributes<T>() where T : Attribute
+        {
+            return Type.GetCustomAttributes(typeof(T), true).Cast<T>();
         }
 
         public bool IsDefined(Type type, bool inherit)
@@ -170,14 +175,14 @@ namespace Hl7.Fhir.Utility
             return type.GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
         }
 
-        public static T GetCustomAttribute<T>(this MemberInfo memberInfo) where T: Attribute
+        public static T GetCustomAttribute<T>(this MemberInfo memberInfo) where T : Attribute
         {
-            return (T) memberInfo.GetCustomAttributes(typeof(T), true).FirstOrDefault();
+            return (T)memberInfo.GetCustomAttributes(typeof(T), true).FirstOrDefault();
         }
 
         public static T GetCustomAttribute<T>(this Assembly assembly) where T : Attribute
         {
-            return (T) assembly.GetCustomAttributes(typeof(T), true).FirstOrDefault();
+            return (T)assembly.GetCustomAttributes(typeof(T), true).FirstOrDefault();
         }
 
         public static Type[] GetExportedTypes(this Assembly assembly)
@@ -185,7 +190,7 @@ namespace Hl7.Fhir.Utility
             return assembly.GetTypes().Where(t => t.IsVisible).ToArray();
         }
 
-        public static IEnumerable<T> GetCustomAttributes<T>(this MemberInfo memberInfo) where T: Attribute
+        public static IEnumerable<T> GetCustomAttributes<T>(this MemberInfo memberInfo) where T : Attribute
         {
             return memberInfo.GetCustomAttributes(typeof(T), true).Cast<T>();
         }
@@ -247,22 +252,6 @@ namespace Hl7.Fhir.Utility
 #endif
         }
 
-//        public static PropertyInfo FindPublicProperty(Type t, string name)
-//        {
-//            if (t == null) throw Error.ArgumentNull("t");
-//            if (name == null) throw Error.ArgumentNull("name");
-
-//            return t.GetProperty(name, BindingFlags.Instance | BindingFlags.Public);
-//        }
-
-//        internal static MethodInfo FindPublicStaticMethod(Type t, string name, params Type[] arguments)
-//        {
-//            if (t == null) throw Error.ArgumentNull("t");
-//            if (name == null) throw Error.ArgumentNull("name");
-
-//            return t.GetMethod(name, arguments);
-//        }
-
         public static bool HasDefaultPublicConstructor(Type t)
         {
             if (t == null) throw Error.ArgumentNull("t");
@@ -315,16 +304,10 @@ namespace Hl7.Fhir.Utility
         }
 
 
-        public static bool IsClosedGenericType(Type type)
-        {
-            return type.GetTypeInfo().IsGenericType && !type.GetTypeInfo().ContainsGenericParameters;
-        }
+        public static bool IsClosedGenericType(Type type) => type.GetTypeInfo().IsGenericType && !type.GetTypeInfo().ContainsGenericParameters;
 
 
-        public static bool IsOpenGenericTypeDefinition(Type type)
-        {
-           return type.GetTypeInfo().IsGenericTypeDefinition;
-        }
+        public static bool IsOpenGenericTypeDefinition(Type type) => type.GetTypeInfo().IsGenericTypeDefinition;
 
         public static bool IsConstructedFromGenericTypeDefinition(Type type, Type genericBase)
         {
@@ -372,7 +355,7 @@ namespace Hl7.Fhir.Utility
             if (!genericInterfaceDefinition.GetTypeInfo().IsInterface || !genericInterfaceDefinition.GetTypeInfo().IsGenericTypeDefinition)
                 throw Error.Argument("genericInterfaceDefinition", "'{0}' is not a generic interface definition.".FormatWith(genericInterfaceDefinition.Name));
 
-           if (type.GetTypeInfo().IsInterface)
+            if (type.GetTypeInfo().IsInterface)
             {
                 if (type.GetTypeInfo().IsGenericType)
                 {
@@ -404,31 +387,16 @@ namespace Hl7.Fhir.Utility
             return false;
         }
 
-        #region << Extension methods to make the handling of PCL easier >>
-
-       public static bool IsEnum(this Type t)
-        {
-			return t.GetTypeInfo().IsEnum;
-        }
-        #endregion
+        public static bool IsEnum(this Type t) => t.GetTypeInfo().IsEnum;
 
 #if NET40
-        public static T GetAttribute<T>(TypeInfoPolyfill typeInfo) where T : Attribute
-        {
-            return typeInfo.GetCustomAttribute<T>();
-        }
+        public static T GetAttribute<T>(TypeInfoPolyfill typeInfo) where T : Attribute => typeInfo.GetCustomAttribute<T>();
+        public static IEnumerable<T> GetAttributes<T>(TypeInfoPolyfill typeInfo) where T : Attribute => typeInfo.GetCustomAttributes<T>();
 #endif
 
-        public static T GetAttribute<T>(MemberInfo member) where T : Attribute
-        {
-            return member.GetCustomAttribute<T>();
-        }
+        public static T GetAttribute<T>(MemberInfo member) where T : Attribute => member.GetCustomAttribute<T>();
 
-        internal static ICollection<T> GetAttributes<T>(MemberInfo member) where T : Attribute
-        {
-            var attr = member.GetCustomAttributes<T>();
-            return (ICollection<T>)attr.Cast<T>();
-        }
+        public static IEnumerable<T> GetAttributes<T>(MemberInfo member) where T : Attribute => member.GetCustomAttributes<T>();
 
 
         internal static IEnumerable<FieldInfo> FindEnumFields(Type t)
@@ -448,9 +416,9 @@ namespace Hl7.Fhir.Utility
         public static string PrettyTypeName(Type t)
         {
             // http://stackoverflow.com/questions/1533115/get-generictype-name-in-good-format-using-reflection-on-c-sharp#answer-25287378 
-            return t.GetTypeInfo().IsGenericType ? string.Format( 
-                "{0}<{1}>", t.Name.Substring(0, t.Name.LastIndexOf("`", StringComparison.CurrentCulture)), 
-                string.Join(", ", t.GetTypeInfo().GenericTypeParameters.ToList().Select(PrettyTypeName))) 
+            return t.GetTypeInfo().IsGenericType ? string.Format(
+                "{0}<{1}>", t.Name.Substring(0, t.Name.LastIndexOf("`", StringComparison.CurrentCulture)),
+                string.Join(", ", t.GetTypeInfo().GenericTypeParameters.ToList().Select(PrettyTypeName)))
             : t.Name;
         }
     }

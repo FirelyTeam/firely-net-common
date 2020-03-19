@@ -43,7 +43,7 @@ namespace Hl7.Fhir.Model
     [Serializable]
 #endif
     [DataContract]
-    [FhirType("Element", IsResource=false)]
+    [FhirType("Element")]
     public abstract class Element : Base, IExtendable
     {
         [NotMapped]

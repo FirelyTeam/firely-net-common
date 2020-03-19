@@ -41,9 +41,17 @@ namespace Hl7.Fhir.Introspection
         public Type[] FhirType { get; private set; }        // may be multiple if this is a choice
         public bool IsOpen { get; private set; }
 
-        public static PropertyMapping Create(PropertyInfo prop) => Create(prop, out IEnumerable<Type> dummy);
+
+        private static T getAttribute<T>(PropertyInfo p, string version) where T : Attribute
+        {
+            return ReflectionHelper.GetAttributes<T>(p).LastOrDefault(isRelevant);
+
+            bool isRelevant(Attribute a) => a is IFhirVersionDependent vd ? vd.AppliesToVersion(version) : true;
+        }
+
+        public static PropertyMapping Create(PropertyInfo prop, string version=null) => Create(prop, out var _, version);
         
-        internal static PropertyMapping Create(PropertyInfo prop, out IEnumerable<Type> referredTypes)        
+        internal static PropertyMapping Create(PropertyInfo prop, out IEnumerable<Type> referredTypes, string version)
         {
             if (prop == null) throw Error.ArgumentNull(nameof(prop));
 
@@ -51,15 +59,15 @@ namespace Hl7.Fhir.Introspection
 
             PropertyMapping result = new PropertyMapping();
 
-            var elementAttr = prop.GetCustomAttribute<FhirElementAttribute>();
-            var cardinalityAttr = prop.GetCustomAttribute<Validation.CardinalityAttribute>();
-            var allowedTypes = prop.GetCustomAttribute<Validation.AllowedTypesAttribute>();
-
-            result.Name = determinePropertyName(prop);
+            var elementAttr = getAttribute<FhirElementAttribute>(prop, version);
+            result.Name = determinePropertyName(elementAttr,prop);
             result.ElementType = prop.PropertyType;
 
             result.InSummary = elementAttr?.InSummary ?? false;
+            
+            var cardinalityAttr = getAttribute<Validation.CardinalityAttribute>(prop, version);
             result.IsMandatoryElement = cardinalityAttr != null ? cardinalityAttr.Min > 0 : false;
+            
             result.Choice = elementAttr?.Choice ?? ChoiceType.None;
 
             if (elementAttr != null)
@@ -82,6 +90,7 @@ namespace Hl7.Fhir.Introspection
             // This may differ from the ImplementingType in several ways:
             // * for a choice, ImplementingType = Any, but FhirType[] contains the possible choices
             // * some elements (e.g. Extension.url) have ImplementingType = string, but FhirType = FhirUri, etc.
+            var allowedTypes = getAttribute<Validation.AllowedTypesAttribute>(prop, version);
             if (allowedTypes != null)
             {
                 result.IsOpen = allowedTypes.IsOpen;
@@ -95,7 +104,7 @@ namespace Hl7.Fhir.Introspection
             // Check wether this property represents a native .NET type
             // marked to receive the class' primitive value in the fhir serialization
             // (e.g. the value from the Xml 'value' attribute or the Json primitive member value)
-            if (result.IsPrimitive) result.RepresentsValueElement = isPrimitiveValueElement(prop);
+            if (result.IsPrimitive) result.RepresentsValueElement = isPrimitiveValueElement(elementAttr,prop);
 
             referredTypes = foundTypes;
 
@@ -109,10 +118,8 @@ namespace Hl7.Fhir.Introspection
             return result;
         }
 
-        private static string determinePropertyName(PropertyInfo prop)
+        private static string determinePropertyName(FhirElementAttribute elementAttr, PropertyInfo prop)
         {
-            var elementAttr = prop.GetCustomAttribute<FhirElementAttribute>();
-
             if(elementAttr != null && elementAttr.Name != null)
                 return elementAttr.Name;
             else
@@ -135,9 +142,8 @@ namespace Hl7.Fhir.Introspection
         }
 
 
-        private static bool isPrimitiveValueElement(PropertyInfo prop)
+        private static bool isPrimitiveValueElement(FhirElementAttribute valueElementAttr, PropertyInfo prop)
         {
-            var valueElementAttr = prop.GetCustomAttribute<FhirElementAttribute>();
             var isValueElement = valueElementAttr != null && valueElementAttr.IsPrimitiveValue;
 
             if(isValueElement && !isAllowedNativeTypeForDataTypeValue(prop.PropertyType))
@@ -145,21 +151,6 @@ namespace Hl7.Fhir.Introspection
 
             return isValueElement;
         }
-
-
-         //// Special case: this is a member that uses the closed generic Code<T> type - 
-         //       // do mapping for its open, defining type instead
-         //       if (elementType.IsGenericType)
-         //       {
-         //           if (ReflectionHelper.IsClosedGenericType(elementType) &&  
-         //               ReflectionHelper.IsConstructedFromGenericTypeDefinition(elementType, typeof(Code<>)) )
-         //           {
-         //               result.CodeOfTEnumType = elementType.GetGenericArguments()[0];
-         //               elementType = elementType.GetGenericTypeDefinition();
-         //           }
-         //           else
-         //               throw Error.NotSupported("Property {0} on type {1} uses an open generic type, which is not yet supported", prop.Name, prop.DeclaringType.Name);
-         //       }
 
         public bool MatchesSuffixedName(string suffixedName)
         {
@@ -178,19 +169,6 @@ namespace Hl7.Fhir.Introspection
                 throw Error.Argument(nameof(suffixedName), "The given suffixed name {0} does not match this property's name {1}".FormatWith(suffixedName, Name));
         }
      
-        //public Type GetChoiceType(string choiceSuffix)
-        //{
-        //    string suffix = choiceSuffix.ToUpperInvariant();
-
-        //    if(!HasChoices) return null;
-
-        //    return _choices
-        //                .Where(cattr => cattr.TypeName.ToUpperInvariant() == suffix)
-        //                .Select(cattr => cattr.Type)
-        //                .FirstOrDefault(); 
-        //}
-   
-
         private static bool isAllowedNativeTypeForDataTypeValue(Type type)
         {
             // Special case, allow Nullable<enum>
@@ -200,7 +178,6 @@ namespace Hl7.Fhir.Introspection
             return type.IsEnum() ||
                     PrimitiveTypeConverter.CanConvert(type);
         }
-
 
         private Func<object, object> _getter;
         private Action<object, object> _setter;

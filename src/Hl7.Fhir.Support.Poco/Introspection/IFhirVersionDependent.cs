@@ -42,6 +42,8 @@ namespace Hl7.Fhir.Introspection
         public static bool AppliesToVersion(this IFhirVersionDependent me, string fhirVersion)
         {
             if (me.SinceVersion == null) return true;
+            if (fhirVersion == null) return true;
+
             if (!SemVersion.TryParse(fhirVersion, out var parsedVersion)) return false;
 
             return me.SinceVersion <= parsedVersion;

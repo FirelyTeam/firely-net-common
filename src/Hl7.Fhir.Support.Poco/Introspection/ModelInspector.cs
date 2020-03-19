@@ -63,16 +63,15 @@ namespace Hl7.Fhir.Introspection
                 mapping = FindClassMappingByType(type);
                 if (mapping != null) return mapping;
 
-                if (!ClassMapping.IsMappableType(type))
+                if (!ClassMapping.TryCreate(type, out mapping))
                     throw Error.Argument(nameof(type), "Type {0} is not a mappable Fhir datatype or resource".FormatWith(type.Name));
 
-                mapping = ClassMapping.Create(type);
                 _classMappingsByType[type] = mapping;
                 Message.Info("Created Class mapping for newly encountered type {0} (FHIR type {1})", type.Name, mapping.Name);
 
                 if (mapping.IsResource)
                 {
-                    var key = buildResourceKey(mapping.Name, mapping.Profile);
+                    var key = buildResourceKey(mapping.Name, null);
                     _resourceClasses[key] = mapping;
                 }
                 else
@@ -160,7 +159,7 @@ namespace Hl7.Fhir.Introspection
             // was found.
             if (entry.IsResource)
             {
-                return FindClassMappingForResource(entry.Name, entry.Profile);
+                return FindClassMappingForResource(entry.Name, null);
             }
             else
                 return entry;   // NB: no extra lookup for non-resource types

@@ -23,11 +23,6 @@ namespace Hl7.Fhir.Introspection
         public string Name { get; private set; }
 
         /// <summary>
-        /// Profile scope within this Name and mapping are applicable
-        /// </summary>
-        public string Profile { get; private set; }
-
-        /// <summary>
         /// The .NET class that implements the FHIR datatype/resource
         /// </summary>
         public Type NativeType { get; private set; }
@@ -41,8 +36,6 @@ namespace Hl7.Fhir.Introspection
         public bool IsCodeOfT { get; private set; }
 
         public bool IsBackbone { get; private set; }
-
-        public bool IsAbstract { get; private set; }
 
         public bool IsNamedBackboneElement { get; private set; }
 
@@ -75,128 +68,99 @@ namespace Hl7.Fhir.Introspection
 
             // Direct success
             if (success) return prop;
-            
+
             // Not found, maybe a polymorphic name
-            // TODO: specify possible polymorhpic variations using attributes
-            // to speedup look up & aid validation
-            return PropertyMappings.SingleOrDefault(p => p.MatchesSuffixedName(name));            
+            return PropertyMappings.SingleOrDefault(p => p.MatchesSuffixedName(name));
         }
 
 
-        public static ClassMapping Create(Type type)
+        private static T getAttribute<T>(Type t, string version) where T : Attribute
         {
-            // checkMutualExclusiveAttributes(type);
+            return ReflectionHelper.GetAttributes<T>(t.GetTypeInfo()).LastOrDefault(isRelevant);
 
-            var result = new ClassMapping
-            {
-                NativeType = type
-            };
-
-            if (IsMappableType(type))
-            {
-                result.Name = collectTypeName(type);
-                result.Profile = getProfile(type);
-                result.IsResource = IsFhirResource(type);
-                result.IsAbstract = type.GetTypeInfo().IsAbstract;
-                result.IsNamedBackboneElement = isNamedBackbone(type);
-                result.IsCodeOfT = ReflectionHelper.IsClosedGenericType(type) &&
-                                    ReflectionHelper.IsConstructedFromGenericTypeDefinition(type, typeof(Code<>));
-
-                result.IsBackbone = type.CanBeTreatedAsType(typeof(IBackboneElement));
-
-                if (!result.IsResource && !String.IsNullOrEmpty(result.Profile))
-                    throw Error.Argument(nameof(type), "Type {0} is not a resource, so its FhirType attribute may not specify a profile".FormatWith(type.Name));
-
-                inspectProperties(result);
-
-                return result;
-            }
-            else
-                throw Error.Argument(nameof(type), "Type {0} is not marked as a Fhir Resource or datatype using [FhirType]".FormatWith(type.Name));
+            bool isRelevant(Attribute a) => a is IFhirVersionDependent vd ? vd.AppliesToVersion(version) : true;
         }
 
-
-        /// <summary>
-        /// Enumerate this class' properties using reflection, create PropertyMappings
-        /// for them and add them to the PropertyMappings.
-        /// </summary>
-        private static void inspectProperties(ClassMapping me)
+        public static bool TryCreate(Type type, out ClassMapping result, string fhirVersion = null)
         {
-            foreach (var property in ReflectionHelper.FindPublicProperties(me.NativeType))
-            {
-                // Skip properties that are marked as NotMapped
-                if (ReflectionHelper.GetAttribute<NotMappedAttribute>(property) != null) continue;
+            result = null;
 
-                var propMapping = PropertyMapping.Create(property);      
-                var propKey = propMapping.Name.ToUpperInvariant();
+            var typeAttribute = getAttribute<FhirTypeAttribute>(type, fhirVersion);
+            if (typeAttribute == null) return false;
 
-                if (me._propMappings.ContainsKey(propKey))
-                    throw Error.InvalidOperation($"Class has multiple properties that are named '{propKey}'. The property name must be unique");
-
-                me._propMappings.Add(propKey, propMapping);
-
-                // Keep a pointer to this property if this is a primitive value element ("Value" in primitive types)
-                if (propMapping.RepresentsValueElement)
-                    me.PrimitiveValueProperty = propMapping;
-            }
-
-            me.PropertyMappings = me._propMappings.Values.OrderBy(prop => prop.Order).ToList();
-        }
-
-        private static bool isNamedBackbone(Type type) => 
-            type.GetTypeInfo().GetCustomAttribute<FhirTypeAttribute>()?.NamedBackboneElement == true;
-
-
-        private static string getProfile(Type type) => 
-            type.GetTypeInfo().GetCustomAttribute<FhirTypeAttribute>()?.Profile;
-
-        private static string collectTypeName(Type type)
-        {
-            var attr = type.GetTypeInfo().GetCustomAttribute<FhirTypeAttribute>();
-            string name = attr?.Name ?? type.Name;
-           
-            if(ReflectionHelper.IsClosedGenericType(type))
-            {
-                name += "<";
-                name += String.Join(",", type.GetTypeInfo().GenericTypeArguments.Select(arg => arg.FullName));
-				name += ">";
-			}
-
-            return name;
-        }
-
-        public static bool IsFhirResource(Type type)
-        {
-            var attr = ReflectionHelper.GetAttribute<FhirTypeAttribute>(type.GetTypeInfo());
-            return typeof(Resource).GetTypeInfo().IsAssignableFrom(type.GetTypeInfo())
-                   || (attr != null && attr.IsResource);
-            //var attr = ReflectionHelper.GetAttribute<FhirTypeAttribute>(type);
-            //return typeof(Resource).IsAssignableFrom(type)
-            //       || (attr != null && attr.IsResource);
-        }
-
-
-        public static bool IsMappableType(Type type)
-        {
-            var hasAttribute = type.GetTypeInfo().IsDefined(typeof(FhirTypeAttribute), false);
-
-            if (!hasAttribute) return false;
-
-            //if (type.GetTypeInfo().IsAbstract)
-            //    throw Error.Argument(nameof(type), "Type {0} is marked as a mappable tpe, but is abstract so cannot be used directly to represent a FHIR datatype".FormatWith(type.Name));
-
-            // Open generic type definitions can never appear as roots of objects
-            // to parse. In instances, they will either have been used in closed type definitions
-            // or as the closed type of a property. However, the FhirType attribute propagates to
-            // these closed definitions, so we will allow having this attribute on an open generic,
-            // it's not going to be directly mappable however.
             if (ReflectionHelper.IsOpenGenericTypeDefinition(type))
             {
                 Message.Info("Type {0} is marked as a FhirType and is an open generic type, which cannot be used directly to represent a FHIR datatype", type.Name);
                 return false;
             }
 
+            result = new ClassMapping
+            {
+                Name = collectTypeName(typeAttribute, type),
+                IsResource = type.CanBeTreatedAsType(typeof(Resource)),
+                IsNamedBackboneElement = typeAttribute.NamedBackboneElement,
+                IsCodeOfT = ReflectionHelper.IsClosedGenericType(type) &&
+                                ReflectionHelper.IsConstructedFromGenericTypeDefinition(type, typeof(Code<>)),
+                IsBackbone = type.CanBeTreatedAsType(typeof(IBackboneElement)),
+                NativeType = type,
+            };
+
+            result.inspectProperties(fhirVersion);
+
             return true;
         }
+
+        [Obsolete("Create is obsolete, call TryCreate instead, passing in a fhirVersion")]
+        public static ClassMapping Create(Type type)
+        {
+            if(TryCreate(type, out var result, fhirVersion:null))
+                return result;
+
+            throw Error.Argument($"Type {nameof(type)} is not marked with the FhirTypeAttribute or is an open generic type");
+        }
+
+        /// <summary>
+        /// Enumerate this class' properties using reflection, create PropertyMappings
+        /// for them and add them to the PropertyMappings.
+        /// </summary>
+        private void inspectProperties(string fhirVersion)
+        {
+            foreach (var property in ReflectionHelper.FindPublicProperties(NativeType))
+            {
+                // Skip properties that are marked as NotMapped
+                if (ReflectionHelper.GetAttribute<NotMappedAttribute>(property) != null) continue;
+
+                var propMapping = PropertyMapping.Create(property, fhirVersion);
+                var propKey = propMapping.Name.ToUpperInvariant();
+
+                if (_propMappings.ContainsKey(propKey))
+                    throw Error.InvalidOperation($"Class has multiple properties that are named '{propKey}'. The property name must be unique");
+
+                _propMappings.Add(propKey, propMapping);
+
+                // Keep a pointer to this property if this is a primitive value element ("Value" in primitive types)
+                if (propMapping.RepresentsValueElement)
+                    PrimitiveValueProperty = propMapping;
+            }
+
+            PropertyMappings = _propMappings.Values.OrderBy(prop => prop.Order).ToList();
+        }
+
+        private static string collectTypeName(FhirTypeAttribute attr, Type type)
+        {
+            var name = attr.Name;
+
+            if (ReflectionHelper.IsClosedGenericType(type))
+            {
+                name += "<";
+                name += String.Join(",", type.GetTypeInfo().GenericTypeArguments.Select(arg => arg.FullName));
+                name += ">";
+            }
+
+            return name;
+        }
+
+        [Obsolete("ClassMapping.IsMappable() is obsolete, use ClassMapping.TryCreate() instead.")]
+        public static bool IsMappableType(Type type) => TryCreate(type, out var _, fhirVersion: null);
     }
 }
