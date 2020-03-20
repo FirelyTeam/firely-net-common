@@ -48,7 +48,6 @@ namespace Hl7.Fhir.Model
     [FhirType("Resource")]
     public abstract class Resource : Base
     {
-        [NotMapped]
         public override string TypeName { get { return "Resource"; } }
         
         /// <summary>
@@ -91,7 +90,6 @@ namespace Hl7.Fhir.Model
         /// Logical id of this artifact
         /// </summary>
         /// <remarks>This uses the native .NET datatype, rather than the FHIR equivalent</remarks>
-        [NotMapped]
         [IgnoreDataMemberAttribute]
         public string Id
         {
@@ -136,7 +134,6 @@ namespace Hl7.Fhir.Model
         /// A set of rules under which this content was created
         /// </summary>
         /// <remarks>This uses the native .NET datatype, rather than the FHIR equivalent</remarks>
-        [NotMapped]
         [IgnoreDataMemberAttribute]
         public string ImplicitRules
         {
@@ -168,7 +165,6 @@ namespace Hl7.Fhir.Model
         /// Language of the resource content
         /// </summary>
         /// <remarks>This uses the native .NET datatype, rather than the FHIR equivalent</remarks>
-        [NotMapped]
         [IgnoreDataMemberAttribute]
         public string Language
         {
@@ -226,7 +222,6 @@ namespace Hl7.Fhir.Model
             return true;
         }
 
-        [NotMapped]
         public override IEnumerable<Base> Children
         {
             get
@@ -239,7 +234,6 @@ namespace Hl7.Fhir.Model
             }
         }
 
-        [NotMapped]
         public override IEnumerable<ElementValue> NamedChildren
         {
             get
@@ -253,13 +247,11 @@ namespace Hl7.Fhir.Model
         }
 
         [Obsolete("Use the TypeMember member instead, or TryDeriveResourceType() to derive the ResourceType from this name.")]
-        [NotMapped]
         public object ResourceType => throw new NotSupportedException($"{nameof(ResourceType)} is obsolete and no longer supported.");
 
         /// <summary>
         /// This is the base URL of the FHIR server that this resource is hosted on
         /// </summary>
-        [NotMapped]
         public Uri ResourceBase
         {
             get
@@ -286,7 +278,6 @@ namespace Hl7.Fhir.Model
         /// <remarks>
         /// As a consumer of this API, please do not use this object.
         /// </remarks>
-        [NotMapped]
         public readonly object SyncLock = new object();
 
         public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -302,8 +293,6 @@ namespace Hl7.Fhir.Model
             return result;
         }
 
-
-        [NotMapped]
         public string VersionId
         {
             get => HasVersionId ? Meta.VersionId : null;
@@ -314,10 +303,7 @@ namespace Hl7.Fhir.Model
             }
         }
 
-        [NotMapped]
         public bool HasVersionId => Meta?.VersionId != null;
-
-
     }
 
 }

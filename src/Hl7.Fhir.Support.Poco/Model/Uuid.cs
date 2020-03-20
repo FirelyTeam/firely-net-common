@@ -48,7 +48,6 @@ namespace Hl7.Fhir.Model
     [DataContract]
     public class Uuid : Primitive<string>, IStringValue
     {
-        [NotMapped]
         public override string TypeName { get { return "uuid"; } }
         
         // Must conform to the pattern "urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"

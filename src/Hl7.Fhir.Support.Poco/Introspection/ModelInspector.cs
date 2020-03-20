@@ -13,7 +13,6 @@ using System.Reflection;
 
 namespace Hl7.Fhir.Introspection
 {
-    //TODO: Find out the right way to handle named resource-local component types (i.e. Patient.AnimalComponent)
     public class ModelInspector
     {
         // Index for easy lookup of resources, key is Tuple<upper resourcename, upper profile>
@@ -63,7 +62,7 @@ namespace Hl7.Fhir.Introspection
                 mapping = FindClassMappingByType(type);
                 if (mapping != null) return mapping;
 
-                if (!ClassMapping.TryCreate(type, out mapping))
+                if (!ClassMapping.TryCreate(type, out mapping, "3.0.2"))
                     throw Error.Argument(nameof(type), "Type {0} is not a mappable Fhir datatype or resource".FormatWith(type.Name));
 
                 _classMappingsByType[type] = mapping;

@@ -20,10 +20,8 @@ namespace Hl7.Fhir.Model
 #endif
     public abstract class Primitive : Element
     {
-        [NotMapped]
         public object ObjectValue { get; set; }
 
-        [NotMapped]
         public override string TypeName
         {
             get { return "Primitive"; }

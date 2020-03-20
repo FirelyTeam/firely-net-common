@@ -46,7 +46,6 @@ namespace Hl7.Fhir.Model
     [DataContract]    
     public class FhirString : Primitive<string>, IStringValue
     {
-        [NotMapped]
         public override string TypeName { get { return "string"; } }
         
         // Must conform to the pattern "[ \r\n\t\S]+"

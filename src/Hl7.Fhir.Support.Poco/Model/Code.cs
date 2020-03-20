@@ -48,7 +48,6 @@ namespace Hl7.Fhir.Model
     [DataContract]
     public class Code : Primitive<string>, IStringValue
     {
-        [NotMapped]
         public override string TypeName { get { return "code"; } }
         
         // Must conform to the pattern "[^\s]+(\s[^\s]+)*"

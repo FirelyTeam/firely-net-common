@@ -43,7 +43,6 @@ namespace Hl7.Fhir.Model
     [DataContract]
     public class Meta : Element
     {
-        [NotMapped]
         public override string TypeName { get { return "Meta"; } }
         
         /// <summary>
@@ -63,7 +62,6 @@ namespace Hl7.Fhir.Model
         /// Version specific identifier
         /// </summary>
         /// <remarks>This uses the native .NET datatype, rather than the FHIR equivalent</remarks>
-        [NotMapped]
         [IgnoreDataMember]
         public string VersionId
         {
@@ -95,7 +93,6 @@ namespace Hl7.Fhir.Model
         /// When the resource version last changed
         /// </summary>
         /// <remarks>This uses the native .NET datatype, rather than the FHIR equivalent</remarks>
-        [NotMapped]
         [IgnoreDataMemberAttribute]
         public DateTimeOffset? LastUpdated
         {
@@ -127,7 +124,6 @@ namespace Hl7.Fhir.Model
         /// Identifies where the resource comes from
         /// </summary>
         /// <remarks>This uses the native .NET datatype, rather than the FHIR equivalent</remarks>
-        [NotMapped]
         [IgnoreDataMemberAttribute]
         public string Source
         {
@@ -161,7 +157,6 @@ namespace Hl7.Fhir.Model
         /// Profiles this resource claims to conform to
         /// </summary>
         /// <remarks>This uses the native .NET datatype, rather than the FHIR equivalent</remarks>
-        [NotMapped]
         [IgnoreDataMemberAttribute]
         public IEnumerable<string> Profile
         {
@@ -261,7 +256,6 @@ namespace Hl7.Fhir.Model
             return true;
         }
 
-        [NotMapped]
         public override IEnumerable<Base> Children
         {
             get
@@ -276,7 +270,6 @@ namespace Hl7.Fhir.Model
             }
         }
 
-        [NotMapped]
         public override IEnumerable<ElementValue> NamedChildren 
         { 
             get 
@@ -290,9 +283,6 @@ namespace Hl7.Fhir.Model
                 foreach (var elem in Tag) { if (elem != null) yield return new ElementValue("tag", elem); }
  
             } 
-        } 
-    
-    
-    }
-    
+        }       
+    }    
 }

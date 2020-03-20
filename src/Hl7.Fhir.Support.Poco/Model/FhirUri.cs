@@ -47,7 +47,6 @@ namespace Hl7.Fhir.Model
     [DataContract]
     public class FhirUri : Primitive<string>, IStringValue
     {
-        [NotMapped]
         public override string TypeName { get { return "uri"; } }
         
 		public FhirUri(string value)

@@ -47,7 +47,6 @@ namespace Hl7.Fhir.Model
     [DebuggerDisplay(@"\{{DebuggerDisplay,nq}}")]
     public class Coding : Element
     {
-        [NotMapped]
         public override string TypeName { get { return "Coding"; } }
 
         public Coding()
@@ -84,7 +83,6 @@ namespace Hl7.Fhir.Model
         /// Identity of the terminology system
         /// </summary>
         /// <remarks>This uses the native .NET datatype, rather than the FHIR equivalent</remarks>
-        [NotMapped]
         [IgnoreDataMemberAttribute]
         public string System
         {
@@ -116,7 +114,6 @@ namespace Hl7.Fhir.Model
         /// Version of the system - if relevant
         /// </summary>
         /// <remarks>This uses the native .NET datatype, rather than the FHIR equivalent</remarks>
-        [NotMapped]
         [IgnoreDataMemberAttribute]
         public string Version
         {
@@ -148,7 +145,6 @@ namespace Hl7.Fhir.Model
         /// Symbol in syntax defined by the system
         /// </summary>
         /// <remarks>This uses the native .NET datatype, rather than the FHIR equivalent</remarks>
-        [NotMapped]
         [IgnoreDataMemberAttribute]
         public string Code
         {
@@ -180,7 +176,6 @@ namespace Hl7.Fhir.Model
         /// Representation defined by the system
         /// </summary>
         /// <remarks>This uses the native .NET datatype, rather than the FHIR equivalent</remarks>
-        [NotMapped]
         [IgnoreDataMember]
         public string Display
         {
@@ -212,7 +207,6 @@ namespace Hl7.Fhir.Model
         /// If this coding was chosen directly by the user
         /// </summary>
         /// <remarks>This uses the native .NET datatype, rather than the FHIR equivalent</remarks>
-        [NotMapped]
         [IgnoreDataMember]
         public bool? UserSelected
         {
@@ -225,8 +219,7 @@ namespace Hl7.Fhir.Model
                   UserSelectedElement = new Hl7.Fhir.Model.FhirBoolean(value);
                 OnPropertyChanged("UserSelected");
             }
-        }
-        
+        }      
 
         public override IDeepCopyable CopyTo(IDeepCopyable other)
         {
@@ -281,7 +274,6 @@ namespace Hl7.Fhir.Model
             return true;
         }
 
-        [NotMapped]
         public override IEnumerable<Base> Children
         {
             get
@@ -295,7 +287,6 @@ namespace Hl7.Fhir.Model
             }
         }
 
-        [NotMapped]
         public override IEnumerable<ElementValue> NamedChildren 
         { 
             get 
@@ -305,14 +296,12 @@ namespace Hl7.Fhir.Model
                 if (VersionElement != null) yield return new ElementValue("version", VersionElement);
                 if (CodeElement != null) yield return new ElementValue("code", CodeElement);
                 if (DisplayElement != null) yield return new ElementValue("display", DisplayElement);
-                if (UserSelectedElement != null) yield return new ElementValue("userSelected", UserSelectedElement);
- 
+                if (UserSelectedElement != null) yield return new ElementValue("userSelected", UserSelectedElement); 
             } 
         }
 
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        [NotMapped]
         public string DebuggerDisplay
         {
             get

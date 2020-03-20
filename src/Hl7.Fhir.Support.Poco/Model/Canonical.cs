@@ -44,9 +44,8 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay(@"\{{Value}}")] // http://blogs.msdn.com/b/jaredpar/archive/2011/03/18/debuggerdisplay-attribute-best-practices.aspx
     [FhirType("canonical")]
     [DataContract]
-    public partial class Canonical : Primitive<string>, IStringValue
+    public class Canonical : Primitive<string>, IStringValue
     {
-        [NotMapped]
         public override string TypeName { get { return "canonical"; } }
         
         // Must conform to the pattern "\S*"

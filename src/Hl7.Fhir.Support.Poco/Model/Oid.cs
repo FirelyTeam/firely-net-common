@@ -48,7 +48,6 @@ namespace Hl7.Fhir.Model
     [DataContract]
     public class Oid : Primitive<string>, IStringValue
     {
-        [NotMapped]
         public override string TypeName { get { return "oid"; } }
 
         // Must conform to the pattern "urn:oid:[0-2](\.(0|[1-9][0-9]*))+"

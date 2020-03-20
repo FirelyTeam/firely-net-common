@@ -46,7 +46,6 @@ namespace Hl7.Fhir.Model
     [DataContract]
     public partial class FhirUrl : Primitive<string>, IStringValue
     {
-        [NotMapped]
         public override string TypeName { get { return "url"; } }
         
         // Must conform to the pattern "\S*"

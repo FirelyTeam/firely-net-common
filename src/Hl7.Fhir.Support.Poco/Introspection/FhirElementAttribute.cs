@@ -44,7 +44,7 @@ namespace Hl7.Fhir.Introspection
     {
         public FhirElementAttribute(string name)
         {
-            Name = name;
+            Name = name ?? throw new ArgumentNullException(nameof(name));
         }
 
         public ChoiceType Choice { get; set; } = ChoiceType.None;

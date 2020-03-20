@@ -47,7 +47,6 @@ namespace Hl7.Fhir.Model
     [DataContract]
     public class Integer : Primitive<int?>, INullableIntegerValue
     {
-        [NotMapped]
         public override string TypeName { get { return "integer"; } }
         
         // Must conform to the pattern "-?([0]|([1-9][0-9]*))"

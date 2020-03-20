@@ -52,7 +52,6 @@ namespace Hl7.Fhir.Model
                 throw new ArgumentException("T must be an enumerated type");
         }
 
-        [NotMapped]
         public override string TypeName
         {
             get { return "code"; }

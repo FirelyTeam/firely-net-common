@@ -49,7 +49,6 @@ namespace Hl7.Fhir.Model
     [DataContract]    
     public class Id : Primitive<string>, IStringValue
     {
-        [NotMapped]
         public override string TypeName { get { return "id"; } }
         
         // Must conform to the pattern "[A-Za-z0-9\-\.]{1,64}"

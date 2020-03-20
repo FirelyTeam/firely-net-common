@@ -87,7 +87,6 @@ namespace Hl7.Fhir.Model
         #region << Annotations and UserData >>
         private Dictionary<string, object> _userData = new Dictionary<string, object>();
 
-        [NotMapped]
         [Obsolete("Use the typed interface provided by IAnnotatable instead")]
         public Dictionary<string, object> UserData
         {
@@ -141,7 +140,6 @@ namespace Hl7.Fhir.Model
         /// First returns child nodes inherited from any base class(es), recursively.
         /// Finally returns child nodes defined by the current class.
         /// </summary>
-        [NotMapped]
         public virtual IEnumerable<Base> Children { get { return Enumerable.Empty<Base>(); } }
 
         /// <summary>
@@ -152,7 +150,6 @@ namespace Hl7.Fhir.Model
         /// First returns child nodes inherited from any base class(es), recursively.
         /// Finally returns child nodes defined by the current class.
         /// </summary>
-        [NotMapped]
         public virtual IEnumerable<ElementValue> NamedChildren => Enumerable.Empty<ElementValue>();
     }
 }

@@ -52,7 +52,6 @@ namespace Hl7.Fhir.Model
     [DataContract]
     public abstract partial class BackboneElement : Element, IModifierExtendable, IBackboneElement
     {
-        [NotMapped]
         public override string TypeName { get { return "BackboneElement"; } }
         
         /// <summary>
@@ -106,7 +105,6 @@ namespace Hl7.Fhir.Model
             return true;
         }
 
-        [NotMapped]
         public override IEnumerable<Base> Children
         {
             get
@@ -116,7 +114,6 @@ namespace Hl7.Fhir.Model
             }
         }
 
-        [NotMapped]
         public override IEnumerable<ElementValue> NamedChildren 
         { 
             get 
@@ -126,8 +123,5 @@ namespace Hl7.Fhir.Model
  
             } 
         } 
-    
-    
     }
-    
 }

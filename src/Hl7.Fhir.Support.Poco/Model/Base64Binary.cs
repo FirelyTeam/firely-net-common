@@ -25,47 +25,60 @@
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
   POSSIBILITY OF SUCH DAMAGE.
   
+
 */
 
+using System;
 using Hl7.Fhir.Introspection;
 using System.Runtime.Serialization;
 using Hl7.Fhir.Specification;
-using System;
+
 
 namespace Hl7.Fhir.Model
 {
     /// <summary>
-    /// Primitive Type boolean
+    /// Primitive Type base64Binary
     /// </summary>
 #if !NETSTANDARD1_1
     [Serializable]
 #endif
-    [FhirType("boolean")]
-    [DataContract]
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    public class FhirBoolean : Primitive<bool?>, INullableValue<bool>
+    [FhirType("base64Binary")]
+    [DataContract]
+    public class Base64Binary : Primitive<byte[]>, IValue<byte[]>
     {
-        public override string TypeName { get { return "boolean"; } }
-        
-		public FhirBoolean(bool? value)
-		{
-			Value = value;
-		}
+        public override string TypeName { get { return "base64Binary"; } }
 
-		public FhirBoolean(): this(null) {}
+        public Base64Binary(byte[] value)
+        {
+            Value = value;
+        }
+
+        public Base64Binary() : this(null) { }
 
         /// <summary>
         /// Primitive value of the element
         /// </summary>
-        [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
+        [FhirElement("value", IsPrimitiveValue = true, XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 30)]
         [DataMember]
-        public bool? Value
+        public byte[] Value
         {
-            get { return (bool?)ObjectValue; }
+            get { return (byte[])ObjectValue; }
             set { ObjectValue = value; OnPropertyChanged("Value"); }
         }
 
-        public static bool IsValidValue(string value) => value == "false" || value == "true";
-    }
+        public static bool IsValidValue(string value)
+        {
+            try
+            {
+                System.Convert.FromBase64String(value);
+            }
+            catch
+            {
+                return false;
+            }
 
+            return true;
+        }
+    }
 }

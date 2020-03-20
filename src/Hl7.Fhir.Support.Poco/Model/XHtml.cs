@@ -53,7 +53,6 @@ namespace Hl7.Fhir.Model
     [DataContract]
     public class XHtml : Primitive<string>, IStringValue
     {
-        [NotMapped]
         public override string TypeName { get { return "xhtml"; } }
 
         public XHtml(string value)

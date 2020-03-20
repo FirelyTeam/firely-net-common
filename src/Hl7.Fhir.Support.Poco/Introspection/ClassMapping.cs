@@ -59,15 +59,17 @@ namespace Hl7.Fhir.Introspection
 
         public bool HasPrimitiveValueMember => PrimitiveValueProperty != null;
 
+        /// <summary>
+        /// Returns the mapping for an element of this class.
+        /// </summary>
+        /// <param name="name">The name of the element, may include the type suffix for choice elements.</param>
+        /// <returns></returns>
         public PropertyMapping FindMappedElementByName(string name)
         {
             if (name == null) throw Error.ArgumentNull(nameof(name));
 
             var normalizedName = name.ToUpperInvariant();
-            bool success = _propMappings.TryGetValue(normalizedName, out PropertyMapping prop);
-
-            // Direct success
-            if (success) return prop;
+            if( _propMappings.TryGetValue(normalizedName, out PropertyMapping prop)) return prop;
 
             // Not found, maybe a polymorphic name
             return PropertyMappings.SingleOrDefault(p => p.MatchesSuffixedName(name));
@@ -127,10 +129,8 @@ namespace Hl7.Fhir.Introspection
         {
             foreach (var property in ReflectionHelper.FindPublicProperties(NativeType))
             {
-                // Skip properties that are marked as NotMapped
-                if (ReflectionHelper.GetAttribute<NotMappedAttribute>(property) != null) continue;
+                if (!PropertyMapping.TryCreate(property, out var propMapping, fhirVersion)) continue;
 
-                var propMapping = PropertyMapping.Create(property, fhirVersion);
                 var propKey = propMapping.Name.ToUpperInvariant();
 
                 if (_propMappings.ContainsKey(propKey))
