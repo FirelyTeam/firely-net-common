@@ -160,7 +160,7 @@ namespace Hl7.Fhir.Introspection
             return name;
         }
 
-        [Obsolete("ClassMapping.IsMappable() is obsolete, use ClassMapping.TryCreate() instead.")]
+        [Obsolete("ClassMapping.IsMappable() is slow and obsolete, use ClassMapping.TryCreate() instead.")]
         public static bool IsMappableType(Type type) => TryCreate(type, out var _, fhirVersion: null);
     }
 }

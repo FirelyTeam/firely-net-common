@@ -15,11 +15,23 @@ namespace Hl7.Fhir.Introspection
 {
     public class ModelInspector
     {
-        // Index for easy lookup of resources, key is Tuple<upper resourcename, upper profile>
-        private Dictionary<Tuple<string,string>,ClassMapping> _resourceClasses = new Dictionary<Tuple<string,string>,ClassMapping>();
+        public const string R3_VERSION = "3.0.0";
+        public const string R4_VERSION = "4.0.0";
+        public const string R5_VERSION = "5.0.0";
 
+        public ModelInspector(string fhirVersion)
+        {
+            if (string.IsNullOrEmpty(fhirVersion))
+            {
+                throw new ArgumentException("message", nameof(fhirVersion));
+            }
+
+            _fhirVersion = fhirVersion;
+        }
+
+        private readonly string _fhirVersion;
         // Index for easy lookup of datatypes, key is upper typenanme
-        private readonly Dictionary<string, ClassMapping> _dataTypeClasses = new Dictionary<string,ClassMapping>();
+        private readonly Dictionary<string, ClassMapping> _classMappingsByName = new Dictionary<string,ClassMapping>();
 
         // Index for easy lookup of classmappings, key is Type
         private readonly Dictionary<Type, ClassMapping> _classMappingsByType = new Dictionary<Type, ClassMapping>();
@@ -28,8 +40,6 @@ namespace Hl7.Fhir.Introspection
         {
             if (assembly == null) throw Error.ArgumentNull(nameof(assembly));
 
-            if (assembly.GetCustomAttribute<NotMappedAttribute>() != null) return;
-
 #if NET40
             IEnumerable<Type> exportedTypes = assembly.GetExportedTypes();
 #else
@@ -37,132 +47,46 @@ namespace Hl7.Fhir.Introspection
 #endif
 
             foreach (Type type in exportedTypes)
-            {
-                // Don't import types marked with [NotMapped]
-
-                if (type.GetTypeInfo().GetCustomAttribute<NotMappedAttribute>() != null) continue;
-
-                // Map a Fhir Datatype
-                if (ClassMapping.IsMappableType(type))
-                    ImportType(type);
-                else
-                    Message.Info("Skipped type {0} while doing inspection: not recognized as representing a FHIR type", type.Name);
-            }
+                ImportType(type);
         }
 
 
-        private object lockObject = new object();
+        private readonly object importLockObject = new object();
 
         public ClassMapping ImportType(Type type)
         {
-            ClassMapping mapping = null;
-
-            lock (lockObject)
+            lock (importLockObject)
             {
-                mapping = FindClassMappingByType(type);
+                var mapping = FindClassMappingByType(type);
                 if (mapping != null) return mapping;
 
-                if (!ClassMapping.TryCreate(type, out mapping, "3.0.2"))
-                    throw Error.Argument(nameof(type), "Type {0} is not a mappable Fhir datatype or resource".FormatWith(type.Name));
-
-                _classMappingsByType[type] = mapping;
-                Message.Info("Created Class mapping for newly encountered type {0} (FHIR type {1})", type.Name, mapping.Name);
-
-                if (mapping.IsResource)
+                if (!ClassMapping.TryCreate(type, out mapping, _fhirVersion))
                 {
-                    var key = buildResourceKey(mapping.Name, null);
-                    _resourceClasses[key] = mapping;
+                    Message.Info("Skipped type {0} while doing inspection: not recognized as representing a FHIR type", type.Name);
+                    return null;
                 }
                 else
                 {
-                    var key = mapping.Name.ToUpperInvariant();
-                    if (_dataTypeClasses.TryGetValue(key, out var currentMapping))
-                    {
-#if NETSTANDARD1_1
-                        if (currentMapping.NativeType.GetTypeInfo().IsSubclassOf(mapping.NativeType))
-                            _dataTypeClasses[key] = mapping;
-#else
-                        if (currentMapping.NativeType.IsSubclassOf(mapping.NativeType))
-                            _dataTypeClasses[key] = mapping;
-#endif
-                    }
-                    else
-                    {
-                        _dataTypeClasses[key] = mapping;
-                    }
+                    addClassMapping(mapping);
+                    Message.Info("Created Class mapping for newly encountered type {0} (FHIR type {1})", type.Name, mapping.Name);
+                    return mapping;
                 }
             }
-
-            return mapping;
         }
 
-
-        private static Tuple<string, string> buildResourceKey(string name, string profile)
+        private void addClassMapping(ClassMapping mapping)
         {
-            var normalizedName = name.ToUpperInvariant();
-            var normalizedProfile = profile != null ? profile.ToUpperInvariant() : null;
+            var type = mapping.NativeType;
+            _classMappingsByType[type] = mapping;
 
-            return Tuple.Create(normalizedName, normalizedProfile);
+            var key = mapping.Name.ToUpperInvariant();
+            _classMappingsByName[key] = mapping;
         }
 
-        public ClassMapping FindClassMappingForResource(string name, string profile = null)
-        {
-            var key = buildResourceKey(name, profile);
-            var noProfileKey = buildResourceKey(name, null);
+        public ClassMapping FindClassMappingByName(string name) =>
+            _classMappingsByName.TryGetValue(name.ToUpperInvariant(), out var entry) ? entry : null;
 
-            ClassMapping entry = null;
-
-            // Try finding a resource with the specified profile first
-            var success = _resourceClasses.TryGetValue(key, out entry);
-
-            // If that didn't work, try again with no profile
-            if(!success)
-                success = _resourceClasses.TryGetValue(noProfileKey, out entry);
-
-            if (success)
-                return entry;
-            else
-                return null;
-        }
-
-        public ClassMapping FindClassMappingForFhirDataType(string name)
-        {
-            var key = name.ToUpperInvariant();
-
-            ClassMapping entry = null;
-            var success = _dataTypeClasses.TryGetValue(key, out entry);
-
-            if (success)
-                return entry;
-            else
-                return null;
-        }
-
-        public ClassMapping FindClassMappingByType(string typeName)
-        {
-            var result = FindClassMappingForResource(typeName);
-            if (result != null) return result;
-
-            return FindClassMappingForFhirDataType(typeName);
-        }
-
-        public ClassMapping FindClassMappingByType(Type type)
-        {
-            ClassMapping entry = null;
-            var success = _classMappingsByType.TryGetValue(type, out entry);
-
-            if (!success) return null;
-
-            // Do an extra lookup via this mapping's name when this is a Resource. This will find possible
-            // replacement mappings, when a later import for the same Fhir typename
-            // was found.
-            if (entry.IsResource)
-            {
-                return FindClassMappingForResource(entry.Name, null);
-            }
-            else
-                return entry;   // NB: no extra lookup for non-resource types
-        }
+        public ClassMapping FindClassMappingByType(Type type) =>
+            _classMappingsByType.TryGetValue(type, out var entry) ? entry : null;
     }
-
 }

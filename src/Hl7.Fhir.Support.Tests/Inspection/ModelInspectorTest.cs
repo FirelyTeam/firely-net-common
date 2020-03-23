@@ -20,20 +20,20 @@ namespace Hl7.Fhir.Tests.Introspection
         [TestMethod]
         public void TestResourceNameResolving()
         {
-            var inspector = new ModelInspector();
+            var inspector = new ModelInspector(ModelInspector.R3_VERSION);
 
             inspector.ImportType(typeof(Way));
             inspector.ImportType(typeof(Way2));
 
-            var way = inspector.FindClassMappingForResource("wAy");
+            var way = inspector.FindClassMappingByName("wAy");
             Assert.IsNotNull(way);
             Assert.AreEqual(way.NativeType, typeof(Way));
 
-            var way2 = inspector.FindClassMappingForResource("Way2");
+            var way2 = inspector.FindClassMappingByName("Way2");
             Assert.IsNotNull(way2);
             Assert.AreEqual(way2.NativeType, typeof(Way2));
 
-            var noway = inspector.FindClassMappingForResource("nonexistent");
+            var noway = inspector.FindClassMappingByName("nonexistent");
             Assert.IsNull(noway);
         }
 
@@ -41,19 +41,19 @@ namespace Hl7.Fhir.Tests.Introspection
         [TestMethod]
         public void TestAssemblyInspection()
         {
-            var inspector = new ModelInspector();
+            var inspector = new ModelInspector(ModelInspector.R3_VERSION);
 
             // Inspect the HL7.Fhir.Model common assembly
             inspector.Import(typeof(Resource).GetTypeInfo().Assembly);
 
             // Check for presence of some basic ingredients
-            Assert.IsNotNull(inspector.FindClassMappingForFhirDataType("Meta"));
-            Assert.IsNotNull(inspector.FindClassMappingForFhirDataType("code"));
-            Assert.IsNotNull(inspector.FindClassMappingForFhirDataType("boolean"));
+            Assert.IsNotNull(inspector.FindClassMappingByName("Meta"));
+            Assert.IsNotNull(inspector.FindClassMappingByType(typeof(Code)));
+            Assert.IsNotNull(inspector.FindClassMappingByName("boolean"));
 
             // Should also have found the abstract classes
-            Assert.IsNotNull(inspector.FindClassMappingForFhirDataType("Element"));
-            Assert.IsNotNull(inspector.FindClassMappingForResource("Resource"));
+            Assert.IsNotNull(inspector.FindClassMappingByName("Element"));
+            Assert.IsNotNull(inspector.FindClassMappingByType(typeof(Resource)));
            
             // The open generic Code<> should not be there
             var codeOfT = inspector.FindClassMappingByType(typeof(Code<>));
