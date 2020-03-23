@@ -66,5 +66,36 @@ namespace Hl7.Fhir.Tests
             return Assert.ThrowsException<T>(action);
 #endif
         }
+        
+        public static System.Threading.Tasks.Task<T> Throws<T>(Func<System.Threading.Tasks.Task> action, string message = null) where T : Exception
+        {
+#if NET40
+            if (action == null)
+            {
+                throw new ArgumentNullException(nameof(action));
+            }
+
+            try
+            {
+                action();
+            }
+
+            catch (Exception ex)
+            {
+                if (!typeof(T).Equals(ex.GetType()))
+                {
+                    Assert.Fail(String.Format("Test method threw exception {0}, but exception {1} was expected. Exception message: {2}", ex.GetType().Name, typeof(T).Name, message));
+                }
+
+                throw ex;
+            }
+
+            Assert.Fail(String.Format("Test method did not throw expected exception {0}. {1}", typeof(T).Name, message));
+            return default (System.Threading.Tasks.Task<T>);
+            
+#else
+            return Assert.ThrowsExceptionAsync<T>(action);
+#endif
+        }
     }
 }

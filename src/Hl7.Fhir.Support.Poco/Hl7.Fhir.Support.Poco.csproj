@@ -10,6 +10,7 @@
   <PropertyGroup>
     <Description>This is the support library for working with the POCO representation of HL7's FHIR model data</Description>
     <PackageTags>HL7 FHIR REST parse serialize class model</PackageTags>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
   </PropertyGroup>
 
     <ItemGroup>
@@ -39,7 +40,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Hl7.Fhir.ElementModel\Hl7.Fhir.ElementModel.csproj" />
     <ProjectReference Include="..\Hl7.Fhir.Support\Hl7.Fhir.Support.csproj" />
+    <ProjectReference Include="..\Hl7.Fhir.Serialization\Hl7.Fhir.Serialization.csproj" />
   </ItemGroup>
 
 </Project>
