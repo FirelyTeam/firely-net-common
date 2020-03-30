@@ -1,5 +1,5 @@
 ﻿/*
-  Copyright (c) 2011-2013, HL7, Inc.
+  Copyright (c) 2011+, HL7, Inc.
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without modification, 
@@ -25,20 +25,47 @@
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
   POSSIBILITY OF SUCH DAMAGE.
   
-
 */
 
-using Hl7.Fhir.Support.Utility;
+using Hl7.Fhir.Introspection;
+using System.Runtime.Serialization;
+using Hl7.Fhir.Specification;
 using System;
 
-namespace Hl7.Fhir.Introspection
+namespace Hl7.Fhir.Model
 {
-    [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
-    public sealed class NotMappedAttribute : VersionedAttribute
+    /// <summary>
+    /// Primitive Type boolean
+    /// </summary>
+#if !NETSTANDARD1_1
+    [Serializable]
+#endif
+    [FhirType("boolean")]
+    [DataContract]
+    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
+    public class FhirBoolean : Primitive<bool?>, INullableValue<bool>
     {
-        public NotMappedAttribute()
+        public override string TypeName { get { return "boolean"; } }
+        
+		public FhirBoolean(bool? value)
+		{
+			Value = value;
+		}
+
+		public FhirBoolean(): this(null) {}
+
+        /// <summary>
+        /// Primitive value of the element
+        /// </summary>
+        [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
+        [DataMember]
+        public bool? Value
         {
-            // This attribute is just a marker, no functionality or data
+            get { return (bool?)ObjectValue; }
+            set { ObjectValue = value; OnPropertyChanged("Value"); }
         }
+
+        public static bool IsValidValue(string value) => value == "false" || value == "true";
     }
+
 }

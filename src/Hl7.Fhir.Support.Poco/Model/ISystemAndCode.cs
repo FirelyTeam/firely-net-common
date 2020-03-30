@@ -1,5 +1,5 @@
 ﻿/*
-  Copyright (c) 2011-2013, HL7, Inc.
+  Copyright (c) 2011-2012, HL7, Inc
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without modification, 
@@ -28,17 +28,15 @@
 
 */
 
-using Hl7.Fhir.Support.Utility;
-using System;
-
-namespace Hl7.Fhir.Introspection
+namespace Hl7.Fhir.Model
 {
-    [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
-    public sealed class NotMappedAttribute : VersionedAttribute
+    /// <summary>
+    /// Provides a way to access the system and code from a Code&lt;T&gt; derived class, without having to mess
+    /// about with the generic types/additional nasty reflection
+    /// </summary>
+    public interface ISystemAndCode
     {
-        public NotMappedAttribute()
-        {
-            // This attribute is just a marker, no functionality or data
-        }
+        string System { get; }
+        string Code { get; }
     }
 }
