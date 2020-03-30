@@ -27,8 +27,6 @@
   
 */
 
-
-
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Support.Utility;
 using Hl7.Fhir.Utility;
@@ -38,6 +36,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Runtime.Serialization;
 
 namespace Hl7.Fhir.Model
 {
@@ -45,8 +44,8 @@ namespace Hl7.Fhir.Model
     [Serializable]
 #endif
     [InvokeIValidatableObject]
-    [System.Runtime.Serialization.DataContract]
-    public abstract class Base : Hl7.Fhir.Validation.IValidatableObject, IDeepCopyable, IDeepComparable, IAnnotated, IAnnotatable, INotifyPropertyChanged
+    [DataContract]
+    public abstract class Base : Validation.IValidatableObject, IDeepCopyable, IDeepComparable, IAnnotated, IAnnotatable, INotifyPropertyChanged
     {
         public abstract bool IsExactly(IDeepComparable other);
         public abstract bool Matches(IDeepComparable pattern);
@@ -88,7 +87,6 @@ namespace Hl7.Fhir.Model
         #region << Annotations and UserData >>
         private Dictionary<string, object> _userData = new Dictionary<string, object>();
 
-        [NotMapped]
         [Obsolete("Use the typed interface provided by IAnnotatable instead")]
         public Dictionary<string, object> UserData
         {
@@ -142,7 +140,6 @@ namespace Hl7.Fhir.Model
         /// First returns child nodes inherited from any base class(es), recursively.
         /// Finally returns child nodes defined by the current class.
         /// </summary>
-        [NotMapped]
         public virtual IEnumerable<Base> Children { get { return Enumerable.Empty<Base>(); } }
 
         /// <summary>
@@ -153,7 +150,6 @@ namespace Hl7.Fhir.Model
         /// First returns child nodes inherited from any base class(es), recursively.
         /// Finally returns child nodes defined by the current class.
         /// </summary>
-        [NotMapped]
         public virtual IEnumerable<ElementValue> NamedChildren => Enumerable.Empty<ElementValue>();
     }
 }

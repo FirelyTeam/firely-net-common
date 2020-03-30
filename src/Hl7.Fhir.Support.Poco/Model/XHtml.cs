@@ -1,5 +1,5 @@
 ﻿/*
-  Copyright (c) 2011-2013, HL7, Inc.
+  Copyright (c) 2011-2012, HL7, Inc
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without modification, 
@@ -28,17 +28,56 @@
 
 */
 
-using Hl7.Fhir.Support.Utility;
 using System;
+using System.Linq;
+using System.Runtime.Serialization;
+using Hl7.Fhir.Introspection;
+using Hl7.Fhir.Specification;
+using Hl7.Fhir.Utility;
 
-namespace Hl7.Fhir.Introspection
+namespace Hl7.Fhir.Model
 {
-    [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
-    public sealed class NotMappedAttribute : VersionedAttribute
+
+    /// <summary>
+    /// Primitive Type xhtml
+    /// </summary>
+    /// <remarks>
+    /// Note that this type is not actually used in the POCO model - it is just here to provide
+    /// reflectable metadata for the xhtml type, and as a home for XHTML validation.
+    /// </remarks>
+#if !NETSTANDARD1_1
+    [Serializable]
+#endif
+    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
+    [FhirType("xhtml")]
+    [DataContract]
+    public class XHtml : Primitive<string>, IStringValue
     {
-        public NotMappedAttribute()
+        public override string TypeName { get { return "xhtml"; } }
+
+        public XHtml(string value)
         {
-            // This attribute is just a marker, no functionality or data
+            Value = value;
         }
+
+        public XHtml() : this(null) { }
+
+        /// <summary>
+        /// Primitive value of the element
+        /// </summary>
+        [FhirElement("value", IsPrimitiveValue = true, XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 30)]
+        public string Value
+        {
+            get { return (string)ObjectValue; }
+            set { ObjectValue = value; OnPropertyChanged("Value"); }
+        }
+
+#if NETSTANDARD1_1
+        public static bool IsValidValue(string value) => true;
+#else
+        public static bool IsValidValue(string value) => !SerializationUtil.RunFhirXhtmlSchemaValidation(value).Any();
+#endif
+
     }
+
 }

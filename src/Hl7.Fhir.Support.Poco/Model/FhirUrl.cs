@@ -1,5 +1,5 @@
 ﻿/*
-  Copyright (c) 2011-2013, HL7, Inc.
+  Copyright (c) 2011+, HL7, Inc.
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without modification, 
@@ -25,20 +25,54 @@
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
   POSSIBILITY OF SUCH DAMAGE.
   
-
 */
 
-using Hl7.Fhir.Support.Utility;
 using System;
+using Hl7.Fhir.Introspection;
+using System.Runtime.Serialization;
+using Hl7.Fhir.Specification;
 
-namespace Hl7.Fhir.Introspection
+
+namespace Hl7.Fhir.Model
 {
-    [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
-    public sealed class NotMappedAttribute : VersionedAttribute
+    /// <summary>
+    /// Primitive Type url
+    /// </summary>
+#if !NETSTANDARD1_1
+    [Serializable]
+#endif
+    [System.Diagnostics.DebuggerDisplay(@"\{{Value,nq}}")] // http://blogs.msdn.com/b/jaredpar/archive/2011/03/18/debuggerdisplay-attribute-best-practices.aspx
+    [FhirType("url")]
+    [DataContract]
+    public partial class FhirUrl : Primitive<string>, IStringValue
     {
-        public NotMappedAttribute()
+        public override string TypeName { get { return "url"; } }
+        
+        // Must conform to the pattern "\S*"
+        public const string PATTERN = @"\S*";
+
+		public FhirUrl(string value)
+		{
+			Value = value;
+		}
+
+		public FhirUrl(): this((string)null) {}
+
+        public FhirUrl(Uri uri)
         {
-            // This attribute is just a marker, no functionality or data
+            Value = uri.OriginalString;
         }
+
+        /// <summary>
+        /// Primitive value of the element
+        /// </summary>
+        [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
+        [DataMember]
+        public string Value
+        {
+            get { return (string)ObjectValue; }
+            set { ObjectValue = value; OnPropertyChanged("Value"); }
+        }           
     }
+    
 }

@@ -1,5 +1,5 @@
 ﻿/*
-  Copyright (c) 2011-2013, HL7, Inc.
+  Copyright (c) 2011+, HL7, Inc.
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without modification, 
@@ -28,17 +28,49 @@
 
 */
 
-using Hl7.Fhir.Support.Utility;
+using Hl7.Fhir.Introspection;
+using System.Runtime.Serialization;
+using Hl7.Fhir.Specification;
 using System;
+using System.Text.RegularExpressions;
 
-namespace Hl7.Fhir.Introspection
+namespace Hl7.Fhir.Model
 {
-    [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
-    public sealed class NotMappedAttribute : VersionedAttribute
+    /// <summary>
+    /// Primitive Type integer
+    /// </summary>
+#if !NETSTANDARD1_1
+    [Serializable]
+#endif
+    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
+    [FhirType("integer")]
+    [DataContract]
+    public class Integer : Primitive<int?>, INullableIntegerValue
     {
-        public NotMappedAttribute()
+        public override string TypeName { get { return "integer"; } }
+        
+        // Must conform to the pattern "-?([0]|([1-9][0-9]*))"
+        public const string PATTERN = @"-?([0]|([1-9][0-9]*))";
+
+		public Integer(int? value)
+		{
+			Value = value;
+		}
+
+		public Integer(): this((int?)null) {}
+
+        /// <summary>
+        /// Primitive value of the element
+        /// </summary>
+        [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
+        [DataMember]
+        public int? Value
         {
-            // This attribute is just a marker, no functionality or data
+            get { return (int?)ObjectValue; }
+            set { ObjectValue = value; OnPropertyChanged("Value"); }
         }
+
+        public static bool IsValidValue(string value) => Regex.IsMatch(value as string, "^" + PATTERN + "$", RegexOptions.Singleline);
     }
+
 }

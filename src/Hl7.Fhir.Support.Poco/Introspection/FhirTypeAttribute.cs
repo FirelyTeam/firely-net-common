@@ -29,16 +29,21 @@
 */
 
 using Hl7.Fhir.Support.Utility;
+using Hl7.Fhir.Validation;
 using System;
 
 namespace Hl7.Fhir.Introspection
 {
-    [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
-    public sealed class NotMappedAttribute : VersionedAttribute
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
+    public sealed class FhirTypeAttribute : InvokeIValidatableObjectAttribute
     {
-        public NotMappedAttribute()
+        public FhirTypeAttribute(string name)
         {
-            // This attribute is just a marker, no functionality or data
+            Name = name ?? throw new ArgumentNullException(nameof(name));
         }
+
+        public string Name { get; private set; }
+
+        public bool NamedBackboneElement { get; set; }
     }
 }
