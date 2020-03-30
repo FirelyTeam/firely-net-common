@@ -1,5 +1,5 @@
 ﻿/*
-  Copyright (c) 2011-2013, HL7, Inc.
+  Copyright (c) 2011+, HL7, Inc.
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without modification, 
@@ -28,17 +28,57 @@
 
 */
 
-using Hl7.Fhir.Support.Utility;
 using System;
+using Hl7.Fhir.Introspection;
+using System.Runtime.Serialization;
+using Hl7.Fhir.Specification;
 
-namespace Hl7.Fhir.Introspection
+
+namespace Hl7.Fhir.Model
 {
-    [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
-    public sealed class NotMappedAttribute : VersionedAttribute
+    /// <summary>
+    /// Primitive Type base64Binary
+    /// </summary>
+#if !NETSTANDARD1_1
+    [Serializable]
+#endif
+    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
+    [FhirType("base64Binary")]
+    [DataContract]
+    public class Base64Binary : Primitive<byte[]>, IValue<byte[]>
     {
-        public NotMappedAttribute()
+        public override string TypeName { get { return "base64Binary"; } }
+
+        public Base64Binary(byte[] value)
         {
-            // This attribute is just a marker, no functionality or data
+            Value = value;
+        }
+
+        public Base64Binary() : this(null) { }
+
+        /// <summary>
+        /// Primitive value of the element
+        /// </summary>
+        [FhirElement("value", IsPrimitiveValue = true, XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 30)]
+        [DataMember]
+        public byte[] Value
+        {
+            get { return (byte[])ObjectValue; }
+            set { ObjectValue = value; OnPropertyChanged("Value"); }
+        }
+
+        public static bool IsValidValue(string value)
+        {
+            try
+            {
+                System.Convert.FromBase64String(value);
+            }
+            catch
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

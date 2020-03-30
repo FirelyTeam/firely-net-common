@@ -6,7 +6,6 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using System;
 using System.Collections.Generic;
@@ -17,17 +16,20 @@ using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Validation
 {
-    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-    public class InvokeIValidatableObjectAttribute : VersionedValidationAttribute
-    {
+    [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+    public class IdPatternAttribute : ValidationAttribute
+    {      
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
-            var validatable = value as IValidatableObject;
+            if (value == null) return ValidationResult.Success;
 
-            if (validatable != null)
-                return validatable.Validate(validationContext).FirstOrDefault();
+            if (value.GetType() != typeof(string))
+                throw new ArgumentException("IdPatternAttribute can only be applied to string properties");
+
+            if (Id.IsValidValue(value as string))
+                return ValidationResult.Success;
             else
-                return null;
+                return DotNetAttributeValidation.BuildResult(validationContext, "{0} is not a correctly formatted Id", value as string);
         }
     }
 }

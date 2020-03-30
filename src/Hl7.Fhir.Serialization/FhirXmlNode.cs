@@ -17,7 +17,9 @@ using System.Xml.Linq;
 
 namespace Hl7.Fhir.Serialization
 {
+#pragma warning disable CS0618 // Type or member is obsolete
     public partial class FhirXmlNode : ISourceNode, IResourceTypeSupplier, IAnnotated, IExceptionSource, ICdaInfoSupplier
+#pragma warning restore CS0618 // Type or member is obsolete
     {
         internal FhirXmlNode(XObject node, FhirXmlParsingSettings settings)
         {
@@ -211,7 +213,9 @@ namespace Hl7.Fhir.Serialization
 
         public IEnumerable<object> Annotations(Type type)
         {
+#pragma warning disable CS0618 // Type or member is obsolete
             if (type == typeof(FhirXmlNode) || type == typeof(ISourceNode) || type == typeof(IResourceTypeSupplier) || type == typeof(ICdaInfoSupplier))
+#pragma warning restore CS0618 // Type or member is obsolete
                 return new[] { this };
 #pragma warning disable 612, 618
             else if (type == typeof(AdditionalStructuralRule) && !PermissiveParsing)

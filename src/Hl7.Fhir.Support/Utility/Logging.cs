@@ -117,7 +117,7 @@ namespace Hl7.Fhir.Utility
         /// <summary> 
         /// Creates an <see cref="FormatException"/> with the provided properties. 
         /// </summary> 
-        public static FormatException Format(string message, string location, Exception innerException = null)
+        public static FormatException Format(string message, string location)
         {
             if (location != null)
                 message += $" (at {location})";
@@ -128,23 +128,18 @@ namespace Hl7.Fhir.Utility
         /// <summary> 
         /// Creates an <see cref="FormatException"/> with the provided properties. 
         /// </summary> 
-        public static FormatException Format(string message, IPositionInfo pos, Exception innerException = null)
-        {
-            if (pos != null)
-                return Format(message, pos.LineNumber, pos.LinePosition, innerException);
-            else
-                return Format(message, (string)null, innerException);
-        }
+        public static FormatException Format(string message, IPositionInfo pos) =>
+            pos != null ? 
+                Format(message, pos.LineNumber, pos.LinePosition) : 
+                Format(message, (string)null);
 
         /// <summary> 
         /// Creates an <see cref="FormatException"/> with the provided properties. 
         /// </summary> 
-        public static FormatException Format(string message, int lineNumber, int linePosition, Exception innerException = null)
+        public static FormatException Format(string message, int lineNumber, int linePosition)
         {
-            string location = null;
-            location = $"line {lineNumber}, {linePosition}";
-
-            return Format(message, location, innerException);
+            string location = $"line {lineNumber}, {linePosition}";
+            return Format(message, location);
         }
     }
 }

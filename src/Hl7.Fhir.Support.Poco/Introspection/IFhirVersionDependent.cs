@@ -29,16 +29,25 @@
 */
 
 using Hl7.Fhir.Support.Utility;
-using System;
 
 namespace Hl7.Fhir.Introspection
 {
-    [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
-    public sealed class NotMappedAttribute : VersionedAttribute
+    public interface IFhirVersionDependent
     {
-        public NotMappedAttribute()
+        SemVersion SinceVersion { get; }
+    }
+
+    public static class FhirVersionDependentExtensions
+    {
+        public static bool AppliesToVersion(this IFhirVersionDependent me, string fhirVersion)
         {
-            // This attribute is just a marker, no functionality or data
+            if (me.SinceVersion == null) return true;
+            if (fhirVersion == null) return true;
+
+            if (!SemVersion.TryParse(fhirVersion, out var parsedVersion)) return false;
+
+            return me.SinceVersion <= parsedVersion;
         }
+
     }
 }
