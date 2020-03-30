@@ -8,6 +8,8 @@
 
 using Hl7.Fhir.Utility;
 using Hl7.FhirPath;
+using System;
+using System.Linq;
 
 namespace Hl7.Fhir.Validation.Schema
 {
@@ -30,5 +32,20 @@ namespace Hl7.Fhir.Validation.Schema
         public FhirPathCompiler FhirPathCompiler;
 
         public ValidateBestPractices ConstraintBestPractices = ValidateBestPractices.Ignore;
+
+        public Type[] ValidateAssertions;
+
+        public Func<IAssertion, bool> Filter;
+
+    }
+
+    public static class ValidationContextExtensions
+    {
+        public static bool Foo(this ValidationContext vc, IAssertion assertion)
+        {
+
+            return vc?.ValidateAssertions?.Any(a => a == assertion.GetType()) ?? false;
+
+        }
     }
 }

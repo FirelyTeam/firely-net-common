@@ -10,6 +10,7 @@ using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Validation.Schema;
 using Hl7.FhirPath;
 using Hl7.FhirPath.Expressions;
+using System;
 
 namespace Hl7.Fhir.Validation.Impl
 {
@@ -17,7 +18,7 @@ namespace Hl7.Fhir.Validation.Impl
     {
         private readonly string _key;
         private readonly string _expression;
-        private readonly IssueSeverity? _severity;
+        private IssueSeverity? _severity;
         private readonly bool _bestPractice;
 
         public FhirPathAssertion(string location, string key, string expression, IssueSeverity? severity, bool bestPractice) : base(location)
@@ -34,22 +35,46 @@ namespace Hl7.Fhir.Validation.Impl
 
         public override Assertions Validate(ITypedElement input, ValidationContext vc)
         {
-            var node = input as ScopedNode ?? new ScopedNode(input);
+            //if (!vc.Filter.Invoke(this)) return Assertions.Empty + new Trace("Not executed");
 
+            var result = Assertions.Empty;
+
+            var node = input as ScopedNode ?? new ScopedNode(input);
             var context = node.ResourceContext;
 
-            if (_bestPractice && vc.ConstraintBestPractices == ValidateBestPractices.Ignore)
-                return Assertions.Success;
+            if (_bestPractice)
+            {
+                switch (vc.ConstraintBestPractices)
+                {
+                    case ValidateBestPractices.Ignore:
+                        return Assertions.Success;
+                    case ValidateBestPractices.Enabled:
+                        _severity = IssueSeverity.Error;
+                        break;
+                    case ValidateBestPractices.Disabled:
+                        _severity = IssueSeverity.Warning;
+                        break;
+                    default:
+                        break;
+                }
+            }
 
+            bool success = false;
             var compiler = GetFhirPathCompiler(vc);
-
-            var compiledExpression = compiler.Compile(_expression);
-            var success = compiledExpression.Predicate(input, new EvaluationContext(context));
+            try
+            {
+                var compiledExpression = compiler.Compile(_expression);
+                success = compiledExpression.Predicate(input, new EvaluationContext(context));
+            }
+            catch (Exception e)
+            {
+                result += new TraceText($"Evaluation of FhirPath for constraint '{_key}' failed: {e.Message}");
+            }
 
             if (!success)
             {
-                var result = Assertions.Failure;
-                result += new IssueAssertion((_severity == IssueSeverity.Error) ? 1012 : 1013, input.Location, $"Instance failed constraint '{Key}'", _severity);
+                result += Assertions.Failure;
+                result += new IssueAssertion(_severity == IssueSeverity.Error ? 1012 : 1013, input.Location, $"Instance failed constraint '{Key}'", _severity);
                 return result;
             }
 

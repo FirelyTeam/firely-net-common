@@ -96,14 +96,8 @@ namespace Hl7.Fhir.Validation.Schema
                         result += validatable.Validate(childElements.SingleOrDefault(), vc);
                         break;
                     case IGroupValidatable groupvalidatable:
-                        {
-                            var a = groupvalidatable.Validate(childElements, vc);
-                            foreach (var item in a)
-                            {
-                                result += item.Item1;
-                            }
-                            break;
-                        }
+                        result += groupvalidatable.Validate(childElements, vc);
+                        break;
                 }
             }
 
@@ -141,7 +135,7 @@ namespace Hl7.Fhir.Validation.Schema
                 yield return child;
 
             }
-            if (instance.InstanceType == "string" || instance.InstanceType == "instant")
+            if ((instance.Value is object) && Char.IsLower(instance.InstanceType[0]))
             {
                 yield return new ValueElementNode(instance.Value, instance.Location);
             }

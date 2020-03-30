@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json.Linq;
-using System;
 
 namespace Hl7.Fhir.Validation.Schema
 {
@@ -28,7 +27,12 @@ namespace Hl7.Fhir.Validation.Schema
 
         public JToken ToJson()
         {
-            throw new NotImplementedException();
+            var props = new JObject(
+                      new JProperty("issueNumber", IssueNumber),
+                      new JProperty("location", Location),
+                      new JProperty("severity", Severity),
+                      new JProperty("message", Message));
+            return new JProperty("issue", props);
         }
     }
 }

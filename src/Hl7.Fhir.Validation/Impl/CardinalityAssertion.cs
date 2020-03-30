@@ -9,7 +9,6 @@
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Validation.Schema;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -18,30 +17,42 @@ namespace Hl7.Fhir.Validation.Impl
     public class CardinalityAssertion : IAssertion, IGroupValidatable
     {
         private readonly int? _min;
-        private readonly string _max;
+        private readonly int _max;
+        private readonly string _maxInText;
+        private readonly string _location;
 
-        public CardinalityAssertion(int? min, string max)
+
+        public CardinalityAssertion(int? min, string max, string location = null)
         {
+            _location = location;
             if (min.HasValue && min.Value < 0)
                 throw new IncorrectElementDefinitionException("min cannot be lower than 0");
 
-            if (max != null && ((!int.TryParse(max, out int maximum) && max != "*") || maximum < 0))
+            int maximum = 0;
+            if (max != null && ((!int.TryParse(max, out maximum) && max != "*") || maximum < 0))
                 throw new IncorrectElementDefinitionException("max SHALL be a positive number or '*'");
 
             _min = min;
-            _max = max;
+            _max = maximum;
+            _maxInText = max;
         }
 
-        public IList<(Assertions, ITypedElement)> Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
+        public Assertions Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
         {
-            var result = new List<(Assertions, ITypedElement)>();
+            if (vc.Foo(this))
+            {
+
+            }
+
+            var assertions = Assertions.Empty + new Trace("[CardinalityAssertion] Validating");
 
             var count = input.Count();
             if (!InRange(count))
             {
-                result.Add((Assertions.Failure + new IssueAssertion(1028, "TODO: Unknow location", "message"), null));
+                assertions += Assertions.Failure + new IssueAssertion(1028, _location, "message");
             }
-            return result;
+
+            return assertions;
         }
 
         private bool InRange(int x)
@@ -49,16 +60,15 @@ namespace Hl7.Fhir.Validation.Impl
             if (_min.HasValue && x < _min.Value)
                 return false;
 
-            if (_max == "*" || _max == null)
+            if (_maxInText == "*" || _maxInText == null)
                 return true;
 
-            int max = Convert.ToInt16(_max);
-            return x <= max;
+            return x <= _max;
         }
 
         public JToken ToJson()
         {
-            return new JProperty("Cardinality", $"{_min?.ToString() ?? "<-"}..{_max ?? "->"}");
+            return new JProperty("cardinality", $"{_min?.ToString() ?? "<-"}..{_maxInText ?? "->"}");
         }
     }
 }

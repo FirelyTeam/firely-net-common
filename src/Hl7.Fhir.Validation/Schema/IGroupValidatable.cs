@@ -13,6 +13,6 @@ namespace Hl7.Fhir.Validation.Schema
 {
     public interface IGroupValidatable
     {
-        IList<(Assertions, ITypedElement)> Validate(IEnumerable<ITypedElement> input, ValidationContext vc);
+        Assertions Validate(IEnumerable<ITypedElement> input, ValidationContext vc);
     }
 }

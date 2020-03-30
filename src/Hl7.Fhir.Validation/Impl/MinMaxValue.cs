@@ -7,6 +7,7 @@
  */
 
 using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation.Schema;
 using Newtonsoft.Json.Linq;
@@ -70,7 +71,7 @@ namespace Hl7.Fhir.Validation.Impl
 
         public override JToken ToJson()
         {
-            return new JProperty(Key, (Value as ITypedElement)?.Value.ToString());
+            return new JProperty(Key, _minMaxValue.ToJObject());
         }
 
         /// <summary>

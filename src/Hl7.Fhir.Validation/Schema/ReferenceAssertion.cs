@@ -39,11 +39,10 @@ namespace Hl7.Fhir.Validation.Schema
         // TODO: Risk of loop (if a referenced schema refers back to this schema - which is nonsense, but possible)
         //public IEnumerable<Assertions> Collect() => ReferencedSchema.Collect();
 
-        public IList<(Assertions, ITypedElement)> Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
+        public Assertions Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
             => ReferencedSchema.Validate(input, vc);
 
         public JToken ToJson() => new JProperty("$ref", ReferencedUri?.ToString() ??
             throw Error.InvalidOperation("Cannot convert to Json: reference refers to a schema without an identifier"));
     }
 }
-    

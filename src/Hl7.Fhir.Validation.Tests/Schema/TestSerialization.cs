@@ -39,13 +39,13 @@ namespace Hl7.Fhir.Validation.Tests.Schema
         public void ValidateSchema()
         {
             var stringSchema = new ElementSchema("#string",
-                new MaxLength("TestSerialization.ValidateSchema", 1)
+                new MaxLength("TestSerialization.ValidateSchema", 50)
                 );
 
             var familySchema = new ElementSchema("#myHumanName.family",
                 new Assertions(
                     new ReferenceAssertion(stringSchema),
-                    new CardinalityAssertion(0, "1"),
+                    new CardinalityAssertion(0, "1", "myHumanName.family"),
                     new MaxLength("TestSerialization.ValidateSchema", 40),
                     new Fixed("TestSerialization.ValidateSchema", "Brown")
                 )
@@ -54,7 +54,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
             var givenSchema = new ElementSchema("#myHumanName.given",
                 new Assertions(
                     new ReferenceAssertion(stringSchema),
-                    new CardinalityAssertion(0, "*"),
+                    new CardinalityAssertion(0, "*", "myHumanName.given"),
                     new MaxLength("TestSerialization.ValidateSchema", 40)
                 )
             );
@@ -69,14 +69,17 @@ namespace Hl7.Fhir.Validation.Tests.Schema
 
             var humanName = ElementNode.Root("HumanName");
             humanName.Add("family", "Brown", "string");
+            humanName.Add("family", "Brown2", "string");
             humanName.Add("given", "Joe", "string");
             humanName.Add("given", "Patrick", "string");
 
             var result = myHumanNameSchema.ToJson().ToString();
 
-            var validationResults = myHumanNameSchema.Validate(new[] { humanName }, null);
+            var vc = new ValidationContext() { ValidateAssertions = new[] { typeof(CardinalityAssertion) } };
 
-            var issues = validationResults[0].Item1.OfType<IssueAssertion>();
+            var validationResults = myHumanNameSchema.Validate(new[] { humanName }, vc);
+
+            var issues = validationResults.OfType<IssueAssertion>();
 
         }
     }

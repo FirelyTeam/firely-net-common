@@ -1,4 +1,5 @@
-﻿using Hl7.Fhir.Validation.Impl;
+﻿using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Validation.Impl;
 using Hl7.Fhir.Validation.Schema;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -66,6 +67,18 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         public void IncorrectConstructorArguments8()
         {
             _ = new CardinalityAssertion(0, "-1");
+        }
+
+        [TestMethod]
+        public void InRange()
+        {
+            var cardinality = new CardinalityAssertion(0, "3");
+
+            var list = cardinality.Validate(ElementNode.CreateList("1", 1, 9L), null);
+
+
+
+
         }
     }
 }

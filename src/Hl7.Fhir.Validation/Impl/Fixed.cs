@@ -8,6 +8,7 @@
 
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.ElementModel.Functions;
+using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Validation.Schema;
 using Newtonsoft.Json.Linq;
 
@@ -32,7 +33,7 @@ namespace Hl7.Fhir.Validation.Impl
         {
             if (!EqualityOperators.IsEqualTo(_fixed, input))
             {
-                return new Assertions(Assertions.Failure + new TraceText($"Value is not exactly equal to fixed value '{_fixed.Value}'"));
+                return Assertions.Failure + new IssueAssertion(121, Location, $"Value is not exactly equal to fixed value '{_fixed.Value}'", IssueSeverity.Error);
             }
 
             return Assertions.Success;
@@ -40,7 +41,7 @@ namespace Hl7.Fhir.Validation.Impl
 
         public override JToken ToJson()
         {
-            return new JProperty(Key, _fixed.Value);
+            return new JProperty(Key, _fixed.ToJObject());
         }
     }
 }

@@ -56,18 +56,18 @@ namespace Hl7.Fhir.Validation.Schema
 
         public bool IsEmpty => !Members.Any();
 
-        public IList<(Assertions, ITypedElement)> Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
+        public Assertions Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
         {
             var multiAssertions = Members.OfType<IGroupValidatable>();
             var singleAssertions = Members.OfType<IValidatable>();
 
             var multiResults = multiAssertions
-                                .SelectMany(ma => ma.Validate(input, vc));
+                                .Select(ma => ma.Validate(input, vc));
 
             var singleResults = input
-                            .Select(elt => (collectPerInstance(elt), elt));
+                            .Select(elt => collectPerInstance(elt));
 
-            return multiResults.Union(singleResults).ToList();
+            return collect(multiResults.Union(singleResults));
 
             Assertions collectPerInstance(ITypedElement elt) =>
                 collect(from assert in singleAssertions

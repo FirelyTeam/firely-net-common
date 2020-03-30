@@ -38,7 +38,7 @@ namespace Hl7.Fhir.Validation.Impl
 
                 if (!success)
                 {
-                    return Assertions.Failure + new IssueAssertion(1006, input.Location, $"Value '{value}' does not match regex '{regex}'");
+                    return Assertions.Failure + new IssueAssertion(1006, input.Location, $"Value '{value}' does not match regex '{regex}'", IssueSeverity.Error);
                 }
             }
 
