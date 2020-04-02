@@ -33,7 +33,7 @@ namespace Hl7.Fhir.Validation.Impl
         {
             if (!EqualityOperators.IsEqualTo(_fixed, input))
             {
-                return Assertions.Failure + new IssueAssertion(121, Location, $"Value is not exactly equal to fixed value '{_fixed.Value}'", IssueSeverity.Error);
+                return Assertions.Failure + new IssueAssertion(121, input.Location, $"Value is not exactly equal to fixed value '{_fixed.Value}'", IssueSeverity.Error);
             }
 
             return Assertions.Success;

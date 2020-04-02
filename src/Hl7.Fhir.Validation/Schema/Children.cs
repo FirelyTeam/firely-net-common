@@ -86,6 +86,11 @@ namespace Hl7.Fhir.Validation.Schema
         {
             var result = Assertions.Empty;
 
+            if (input.Value is null && !input.Children().Any())
+            {
+                result += new IssueAssertion(1000, input.Location, "Element must not be empty", IssueSeverity.Error);
+            }
+
             foreach (var assertion in ChildList)
             {
                 var childElements = input.ChildrenIncValue().Where(child => NameMatches(assertion.Key, child)).ToList();

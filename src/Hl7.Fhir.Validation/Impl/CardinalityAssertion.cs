@@ -49,7 +49,7 @@ namespace Hl7.Fhir.Validation.Impl
             var count = input.Count();
             if (!InRange(count))
             {
-                assertions += Assertions.Failure + new IssueAssertion(1028, _location, "message");
+                assertions += Assertions.Failure + new IssueAssertion(1028, _location, $"Instance count for '{_location}' is { count }, which is not within the specified cardinality of { CardinalityDisplay}", IssueSeverity.Error);
             }
 
             return assertions;
@@ -66,9 +66,11 @@ namespace Hl7.Fhir.Validation.Impl
             return x <= _max;
         }
 
+        private string CardinalityDisplay => $"{_min?.ToString() ?? "<-"}..{_maxInText ?? "->"}";
+
         public JToken ToJson()
         {
-            return new JProperty("cardinality", $"{_min?.ToString() ?? "<-"}..{_maxInText ?? "->"}");
+            return new JProperty("cardinality", CardinalityDisplay);
         }
     }
 }

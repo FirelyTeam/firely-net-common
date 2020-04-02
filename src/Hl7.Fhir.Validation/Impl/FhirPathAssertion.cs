@@ -17,13 +17,15 @@ namespace Hl7.Fhir.Validation.Impl
     public class FhirPathAssertion : SimpleAssertion
     {
         private readonly string _key;
+        private readonly string _humanDescription;
         private readonly string _expression;
         private IssueSeverity? _severity;
         private readonly bool _bestPractice;
 
-        public FhirPathAssertion(string location, string key, string expression, IssueSeverity? severity, bool bestPractice) : base(location)
+        public FhirPathAssertion(string location, string key, string expression, string humanDescription, IssueSeverity? severity, bool bestPractice) : base(location)
         {
             _key = key;
+            _humanDescription = humanDescription;
             _expression = expression;
             _severity = severity;
             _bestPractice = bestPractice;
@@ -74,12 +76,23 @@ namespace Hl7.Fhir.Validation.Impl
             if (!success)
             {
                 result += Assertions.Failure;
-                result += new IssueAssertion(_severity == IssueSeverity.Error ? 1012 : 1013, input.Location, $"Instance failed constraint '{Key}'", _severity);
+                result += new IssueAssertion(_severity == IssueSeverity.Error ? 1012 : 1013, input.Location, $"Instance failed constraint {GetDescription()}", _severity);
                 return result;
             }
 
             return Assertions.Success;
         }
+
+        private string GetDescription()
+        {
+            var desc = _key;
+
+            if (!string.IsNullOrEmpty(_humanDescription))
+                desc += " \"" + _humanDescription + "\"";
+
+            return desc;
+        }
+
 
         private FhirPathCompiler GetFhirPathCompiler(ValidationContext context)
         {

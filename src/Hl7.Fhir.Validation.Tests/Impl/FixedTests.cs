@@ -69,9 +69,9 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             fixedValue.Add("given", "Patrick", "string");
 
             var input = ElementNode.Root("HumanName");
-            fixedValue.Add("family", "Brown", "string");
-            fixedValue.Add("given", "Patrick", "string");
-            fixedValue.Add("given", "Joe", "string");
+            input.Add("family", "Brown", "string");
+            input.Add("given", "Patrick", "string");
+            input.Add("given", "Joe", "string");
 
             var validatable = new Fixed("FixedTests.FixedHumanNameDifferentInstance", fixedValue);
             var result = validatable.Validate(input, new ValidationContext());

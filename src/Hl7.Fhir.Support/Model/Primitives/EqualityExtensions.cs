@@ -6,8 +6,6 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using System;
-
 namespace Hl7.Fhir.Model.Primitives
 {
     /// <summary>
@@ -23,7 +21,10 @@ namespace Hl7.Fhir.Model.Primitives
         public static bool IsEqualTo(this string l, string r) => l == r;
 
         // Integer: values must be exactly equal
-        public static bool IsEqualTo(this long l, long r) => l == r;          
+        public static bool IsEqualTo(this int l, int r) => l == r;
+
+        // Long: values must be exactly equal
+        public static bool IsEqualTo(this long l, long r) => l == r;
 
         // Decimal: values must be equal, trailing zeroes after the decimal are ignored
         public static bool IsEqualTo(this decimal l, decimal r) => l == r;   // aligns with .NET decimal behaviour

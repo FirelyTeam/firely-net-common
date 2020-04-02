@@ -22,7 +22,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         [TestMethod]
         public void ValidateWithoutSettings()
         {
-            var validatable = new FhirPathAssertion("FhirPathAssertionTests.ValidateWithoutSettings", "test-1", "hasValue()", IssueSeverity.Error, false);
+            var validatable = new FhirPathAssertion("FhirPathAssertionTests.ValidateWithoutSettings", "test-1", "hasValue()", "human description", IssueSeverity.Error, false);
 
             var input = ElementNode.ForPrimitive("test");
 
@@ -32,7 +32,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         [TestMethod]
         public void ValidateSuccess()
         {
-            var validatable = new FhirPathAssertion("FhirPathAssertionTests.ValidateSuccess", "test-1", "$this = 'test'", IssueSeverity.Error, false);
+            var validatable = new FhirPathAssertion("FhirPathAssertionTests.ValidateSuccess", "test-1", "$this = 'test'", "human description", IssueSeverity.Error, false);
 
             var input = ElementNode.ForPrimitive("test");
 
@@ -45,7 +45,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         [TestMethod]
         public void ValidateIncorrectFhirPath()
         {
-            var validatable = new FhirPathAssertion("FhirPathAssertionTests.ValidateIncorrectFhirPath", "test -1", "this is not a fhirpath expression", IssueSeverity.Error, false);
+            var validatable = new FhirPathAssertion("FhirPathAssertionTests.ValidateIncorrectFhirPath", "test -1", "this is not a fhirpath expression", "human description", IssueSeverity.Error, false);
 
             var input = ElementNode.ForPrimitive("test");
 
@@ -63,7 +63,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             humanName.Add("given", "Joe", "string");
             humanName.Add("given", "Patrick", "string");
 
-            var validatable = new FhirPathAssertion("FhirPathAssertionTests.ValidateChildrenExists", "test-1", "children().count() = 3", IssueSeverity.Error, false);
+            var validatable = new FhirPathAssertion("FhirPathAssertionTests.ValidateChildrenExists", "test-1", "children().count() = 3", "human description", IssueSeverity.Error, false);
 
             var result = validatable.Validate(humanName, new ValidationContext() { FhirPathCompiler = fpCompiler });
 

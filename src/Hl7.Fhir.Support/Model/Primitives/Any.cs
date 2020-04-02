@@ -24,6 +24,8 @@ namespace Hl7.Fhir.Model.Primitives
                 return lbl.IsEqualTo(rbl);
             else if (l is long llng && r is long rlng)
                 return llng.IsEqualTo(rlng);
+            else if (l is int lint && r is int rint)
+                return lint.IsEqualTo(rint);
             else if (l is decimal ldec && r is decimal rdec)
                 return ldec.IsEqualTo(rdec);
             else if (l is long llng2 && r is decimal rdec2)     // this really should be handled by casts outside this func (and in the engine?)
