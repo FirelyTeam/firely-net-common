@@ -230,6 +230,21 @@ namespace Hl7.Fhir.Utility
         }
 
 
+        public static PropertyInfo FindProperty(Type t, string name)
+        {
+#if NETSTANDARD1_1
+            return t.GetRuntimeProperties().FirstOrDefault(rtp => rtp.Name == name);
+#else
+            return t.GetProperty(name,BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+#endif
+
+        }
+
+        /// <summary>
+        /// Returns all public, non-static properties for the given type.
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
         public static IEnumerable<PropertyInfo> FindPublicProperties(Type t)
         {
             if (t == null) throw Error.ArgumentNull("t");
