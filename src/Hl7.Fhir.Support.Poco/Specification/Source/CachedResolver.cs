@@ -209,7 +209,7 @@ namespace Hl7.Fhir.Specification.Source
 
 
             public bool Contains(string identifier) =>
-                _cache.TryGetValue(identifier, out var entry) && !entry.IsExpired;
+                _cache.TryGetValue(identifier, out var entry) && !entry.IsExpired && entry.Data != null;
 
             public async Task<T> Get(string identifier, CachedResolverLoadingStrategy strategy)
             {
@@ -242,18 +242,22 @@ namespace Hl7.Fhir.Specification.Source
                     {
                         // finally double check whether some other thread has not created and added it by now, 
                         // since we had to release the lock to run the async onCacheMiss.
-                        if (_cache.TryGetValue(identifier, out CacheEntry<T> existingEntry))
+                        if (strategy != CachedResolverLoadingStrategy.LoadFromSource &&
+                            _cache.TryGetValue(identifier, out CacheEntry<T> existingEntry))
                             return existingEntry.Data;
                         else
                         {
-                            // Add new entry or update existing entry
+                            // Add new entry or update existing entry.
+                            // Note that an entry is created, even if the newData is null. 
+                            // This ensures we don't keep trying to fetch the same url over and over again,
+                            // even if the source cannot resolve it.
                             _cache[identifier] = new CacheEntry<T>(newData, identifier, DateTimeOffset.UtcNow.AddSeconds(_duration));
                             return newData;
                         }
                     }
                 }
 
-                return default(T);
+                return default;
             }
 
             public bool Invalidate(string identifier)

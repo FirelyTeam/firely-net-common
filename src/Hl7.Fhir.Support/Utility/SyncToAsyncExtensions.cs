@@ -16,8 +16,7 @@ namespace Hl7.Fhir.Utility
         public static T Await<T>(Func<Task<T>> asyncFunc)
         {
 #if NET40
-            // return TaskEx.Run(asyncFunc).Result;
-            return default;
+            return TaskEx.Run(asyncFunc).Result;
 #else
             return Task.Run(asyncFunc).Result;
 #endif
@@ -26,7 +25,7 @@ namespace Hl7.Fhir.Utility
         public static void Await<T>(Func<Task> asyncFunc)
         {
 #if NET40
-           // TaskEx.Run(asyncFunc).Wait();
+            TaskEx.Run(asyncFunc).Wait();
 #else
             Task.Run(asyncFunc).Wait();
 #endif

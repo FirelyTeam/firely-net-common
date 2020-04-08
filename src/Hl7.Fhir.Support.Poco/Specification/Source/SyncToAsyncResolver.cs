@@ -26,10 +26,9 @@ namespace Hl7.Fhir.Specification.Source
             var result = SyncResolver.ResolveByUri(uri);
 
 #if NET40
-            //return TaskEx.FromResult(result);
-            return null;
+            return TaskEx.FromResult(result);
 #else
-            return System.Threading.Tasks.Task.FromResult(result);
+            return Task.FromResult(result);
 #endif
         }
 
@@ -37,10 +36,9 @@ namespace Hl7.Fhir.Specification.Source
         {
             var result = SyncResolver.ResolveByCanonicalUri(uri);
 #if NET40
-            //return TaskEx.FromResult(result);
-            return null;
+            return TaskEx.FromResult(result);
 #else
-            return System.Threading.Tasks.Task.FromResult(result);
+            return Task.FromResult(result);
 #endif
         }
     }
