@@ -53,6 +53,6 @@ namespace Hl7.Fhir.Rest
         /// </summary>
         public bool CompressRequestBody;
 
-        public ParserSettings ParserSettings = Hl7.Fhir.Serialization.ParserSettings.Default;
+        public ParserSettings ParserSettings = ParserSettings.Default;
     }
 }

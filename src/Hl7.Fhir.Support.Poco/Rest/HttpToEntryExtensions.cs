@@ -6,16 +6,67 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+
 using System;
-using System.IO;
+using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 
 namespace Hl7.Fhir.Rest
 {
     public static class HttpToEntryExtensions
     {
-        //private const string USERDATA_BODY = "$body";
+        
+
+        private const string USERDATA_BODY = "$body";
+        private const string EXTENSION_RESPONSE_HEADER = "http://hl7.org/fhir/StructureDefinition/http-response-header";
+
+        internal static EntryResponse ToEntryResponse(this HttpResponseMessage response, byte[] body)
+        {
+            var result = new EntryResponse();
+
+            
+            result.Status = ((int)response.StatusCode).ToString();
+            result.SetHeaders(response.Headers);      
+
+            
+            result.Body = body;
+            result.Location = response.Headers.Location?.AbsoluteUri ?? response.Content.Headers.ContentLocation?.AbsoluteUri;
+
+            result.LastModified = response.Content.Headers.LastModified;
+            result.Etag = response.Headers.ETag?.Tag.Trim('\"');
+            result.ContentType = response.Content.Headers.ContentType.MediaType;           
+
+
+            return result;
+        }
+
+        internal static void SetHeaders(this EntryResponse interaction, HttpResponseHeaders headers)
+        {
+            foreach (var header in headers)
+            {
+                //TODO: check multiple values for a header??
+                interaction.Headers.Add(header.Key, header.Value.ToList().FirstOrDefault());
+            }
+        }
+
+        public static bool IsSuccessful(this EntryResponse response)
+        {
+            int.TryParse(response.Status, out int code);
+            return code >= 200 && code < 300;
+        }
+
+        public static string GetBodyAsText(this EntryResponse interaction)
+        {
+            var body = interaction.Body;
+
+            if (body != null)
+                return HttpUtil.DecodeBody(body, Encoding.UTF8);
+            else
+                return null;
+        }
 
         internal static EntryResponse ToEntryResponse(this HttpWebResponse response, byte[] body, ref EntryResponse result)
         {
@@ -30,14 +81,14 @@ namespace Hl7.Fhir.Rest
             result.Location = response.Headers[HttpUtil.LOCATION] ?? response.Headers[HttpUtil.CONTENTLOCATION];
 
 #if NETSTANDARD1_1
-            if (!String.IsNullOrEmpty(response.Headers[HttpUtil.LASTMODIFIED]))
-            {
-                DateTimeOffset dateTimeOffset = new DateTimeOffset();
-                bool success = DateTimeOffset.TryParse(response.Headers[HttpUtil.LASTMODIFIED], out dateTimeOffset);
-                if (!success)
-                    throw new FormatException($"Last-Modified header has value '{response.Headers[HttpUtil.LASTMODIFIED]}', which is not recognized as a valid DateTime");
-                result.LastModified = dateTimeOffset;
-            }
+                    if (!String.IsNullOrEmpty(response.Headers[HttpUtil.LASTMODIFIED]))
+                    {
+                        DateTimeOffset dateTimeOffset = new DateTimeOffset();
+                        bool success = DateTimeOffset.TryParse(response.Headers[HttpUtil.LASTMODIFIED], out dateTimeOffset);
+                        if (!success)
+                            throw new FormatException($"Last-Modified header has value '{response.Headers[HttpUtil.LASTMODIFIED]}', which is not recognized as a valid DateTime");
+                        result.LastModified = dateTimeOffset;
+                    }
 #else
             result.LastModified = response.LastModified;
 #endif
@@ -71,20 +122,6 @@ namespace Hl7.Fhir.Rest
                 return null;
         }
 
-        public static bool IsSuccessful(this EntryResponse response)
-        {
-            int.TryParse(response.Status, out int code);
-            return code >= 200 && code < 300;
-        }
-        
-        public static string GetBodyAsText(this EntryResponse interaction)
-        {
-            var body = interaction.Body;
 
-            if (body != null)
-                return HttpUtil.DecodeBody(body, Encoding.UTF8);
-            else
-                return null;
-        }
     }
 }

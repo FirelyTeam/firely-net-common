@@ -11,12 +11,85 @@ using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Reflection;
 
 namespace Hl7.Fhir.Rest
 {
     internal static class EntryToHttpExtensions
     {
+        public static HttpRequestMessage ToHttpRequest(this EntryRequest entry, FhirClientSettings settings)
+        {
+
+            System.Diagnostics.Debug.WriteLine("{0}: {1}", entry.Method, entry.Url);           
+
+            if (entry.RequestBodyContent != null && !(entry.Method == HTTPVerb.POST || entry.Method == HTTPVerb.PUT))
+                throw Error.InvalidOperation("Cannot have a body on an Http " + entry.Method.ToString());
+
+            var location = new RestUrl(entry.Url);
+
+            if (settings.UseFormatParameter)
+                location.AddParam(HttpUtil.RESTPARAM_FORMAT, ContentType.BuildFormatParam(settings.PreferredFormat));
+
+            var request = new HttpRequestMessage(getMethod(entry.Method), location.Uri);
+
+            if (!settings.UseFormatParameter)
+                request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse(ContentType.BuildContentType(settings.PreferredFormat, forBundle: false)));
+
+            if (entry.Headers.IfMatch != null) request.Headers.Add("If-Match", entry.Headers.IfMatch);
+            if (entry.Headers.IfNoneMatch != null) request.Headers.Add("If-None-Match", entry.Headers.IfNoneMatch);
+            if (entry.Headers.IfModifiedSince != null) request.Headers.IfModifiedSince = entry.Headers.IfModifiedSince.Value.UtcDateTime;
+            if (entry.Headers.IfNoneExist != null) request.Headers.Add("If-None-Exist", entry.Headers.IfNoneExist);
+
+            var interactionType = entry.Type;
+
+            if (interactionType == InteractionType.Create && settings.PreferredReturn != null)
+                request.Headers.Add("Prefer", "return=" + PrimitiveTypeConverter.ConvertTo<string>(settings.PreferredReturn));
+            else if (interactionType == InteractionType.Search && settings.PreferredParameterHandling != null)
+                request.Headers.Add("Prefer", "handling=" + PrimitiveTypeConverter.ConvertTo<string>(settings.PreferredParameterHandling));
+
+            if (entry.RequestBodyContent != null)
+                setBodyAndContentType(request, entry.RequestBodyContent, settings.PreferredFormat, settings.CompressRequestBody);
+
+            return request;
+        }
+
+        /// <summary>
+        /// Converts bundle http verb to corresponding <see cref="HttpMethod"/>.
+        /// </summary>
+        /// <param name="verb"><see cref="HTTPVerb"/> specified by input bundle.</param>
+        /// <returns><see cref="HttpMethod"/> corresponding to verb specified in input bundle.</returns>
+        private static HttpMethod getMethod(HTTPVerb? verb)
+        {
+            switch (verb)
+            {
+                case HTTPVerb.GET:
+                    return HttpMethod.Get;
+                case HTTPVerb.POST:
+                    return HttpMethod.Post;
+                case HTTPVerb.PUT:
+                    return HttpMethod.Put;
+                case HTTPVerb.DELETE:
+                    return HttpMethod.Delete;
+            }
+            throw new HttpRequestException($"Valid HttpVerb could not be found for verb type: [{verb}]");
+        }
+
+        private static void setBodyAndContentType(HttpRequestMessage request, byte[] data, ResourceFormat format, bool CompressRequestBody)
+        {
+            if (data == null) throw Error.ArgumentNull(nameof(data));
+
+            // This is done by the caller after the OnBeforeRequest is called so that other properties
+            // can be set before the content is committed
+            // request.WriteBody(CompressRequestBody, data);
+
+            var contentType = ContentType.BuildContentType(format, forBundle: false);
+            request.Content = new ByteArrayContent(data);
+            request.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
+        }
+
+
         public static HttpWebRequest ToHttpRequest(this EntryRequest entry, Uri baseUrl, FhirClientSettings settings)
         {
             System.Diagnostics.Debug.WriteLine("{0}: {1}", entry.Method, entry.Url);
@@ -76,10 +149,10 @@ namespace Hl7.Fhir.Rest
             bool canHaveReturnPreference() => entry.Type == InteractionType.Create ||
                  entry.Type == InteractionType.Update ||
                  entry.Type == InteractionType.Patch;
-            
+
             // PCL doesn't support setting the length (and in this case will be empty anyway)
 #if !NETSTANDARD1_1
-            if(entry.RequestBodyContent == null)
+            if (entry.RequestBodyContent == null)
                 request.ContentLength = 0;
 #endif
             return request;
@@ -98,7 +171,7 @@ namespace Hl7.Fhir.Rest
             {
                 try
                 {
-					System.Reflection.PropertyInfo prop = request.GetType().GetRuntimeProperty("UserAgent");
+                    System.Reflection.PropertyInfo prop = request.GetType().GetRuntimeProperty("UserAgent");
 
                     if (prop != null)
                         prop.SetValue(request, agent, null);

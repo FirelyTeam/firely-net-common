@@ -13,7 +13,7 @@ using System.Net;
 using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Rest
-{
+{    
     public class Requester : IRequester
     {
         public Uri BaseUrl { get; private set; }
@@ -28,7 +28,7 @@ namespace Hl7.Fhir.Rest
             BaseUrl = baseUrl;
             Settings = settings;
         }
-        
+
         public EntryResponse Execute(EntryRequest interaction)
         {
             return ExecuteAsync(interaction).WaitResult();
@@ -40,7 +40,9 @@ namespace Hl7.Fhir.Rest
             bool compressRequestBody = false;
 
             var request = interaction.ToHttpRequest(BaseUrl, Settings);
-            request.ContentType = interaction.ContentType;
+
+            //Handled in ToHttpRequest
+            //request.ContentType = interaction.ContentType;
 
 #if !NETSTANDARD1_1
             request.Timeout = Settings.Timeout;
@@ -70,7 +72,7 @@ namespace Hl7.Fhir.Rest
 
                     result.LastResponse = webResponse;
                     AfterResponse?.Invoke(webResponse, inBody);
-                    
+
                     webResponse.ToEntryResponse(inBody, ref result);
                     return result;
                 }
@@ -82,7 +84,7 @@ namespace Hl7.Fhir.Rest
         }
 
         private static byte[] readBody(HttpWebResponse response)
-        {  
+        {
             if (response.ContentLength != 0)
             {
                 byte[] body = null;
@@ -90,7 +92,7 @@ namespace Hl7.Fhir.Rest
 #if !DOTNETFW
                 var contentEncoding = response.Headers["Content-Encoding"];
 #else
-                var contentEncoding = response.ContentEncoding;
+                    var contentEncoding = response.ContentEncoding;
 #endif
                 if (contentEncoding == "gzip")
                 {
