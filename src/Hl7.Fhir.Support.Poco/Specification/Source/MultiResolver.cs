@@ -58,16 +58,21 @@ namespace Hl7.Fhir.Specification.Source
         /// <summary>
         /// Return all child resolvers that support synchronous resolution.
         /// </summary>
+        /// <remarks>The collections returned by the <see cref="Sources"/> and <see cref="AsyncSources" /> properties are 
+        /// not necessarily disjunct.</remarks>
         public IList<IResourceResolver> Sources => _sources.OfType<IResourceResolver>().ToList();
 
         /// <summary>
         /// Return all child resolvers that support asynchronous resolution.
         /// </summary>
+        /// <remarks>The collections returned by the <see cref="AsyncSources"/> and <see cref="Sources" /> properties are 
+        /// not necessarily disjunct.</remarks>
         public IList<IAsyncResourceResolver> AsyncSources => _sources.OfType<IAsyncResourceResolver>().ToList();
 
         private IEnumerable<IAsyncResourceResolver> allSourcesAsAsync() => _sources.Select(src => src.AsAsync());
 
 
+        [Obsolete("MultiResolver now works best with asynchronous resolvers. Use ResolveByUriAsync() instead.")]
         public Resource ResolveByUri(string uri) => TaskHelper.Await(() => ResolveByUriAsync(uri));
 
         public async Task<Resource> ResolveByUriAsync(string uri)
@@ -92,7 +97,9 @@ namespace Hl7.Fhir.Specification.Source
             return null;
         }
 
+        [Obsolete("MultiResolver now works best with asynchronous resolvers. Use ResolveByCanonicalUriAsync() instead.")]
         public Resource ResolveByCanonicalUri(string uri) => TaskHelper.Await(() => ResolveByCanonicalUriAsync(uri));
+
         public async Task<Resource> ResolveByCanonicalUriAsync(string uri)
         {
             if (uri == null) throw Error.ArgumentNull(nameof(uri));

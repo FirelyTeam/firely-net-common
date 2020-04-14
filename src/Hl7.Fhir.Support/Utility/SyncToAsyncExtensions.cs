@@ -7,6 +7,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Utility
@@ -22,13 +23,21 @@ namespace Hl7.Fhir.Utility
 #endif
         }
 
-        public static void Await<T>(Func<Task> asyncFunc)
+        public static void Await(Func<Task> asyncFunc)
         {
 #if NET40
             TaskEx.Run(asyncFunc).Wait();
 #else
             Task.Run(asyncFunc).Wait();
 #endif
+        }
+
+        public static async Task<bool> AnyAsync<TSource>(this IEnumerable<TSource> source, Func<TSource, Task<bool>> predicate)
+        {
+            foreach (var elem in source)
+                if (await predicate(elem)) return true;
+
+            return false;
         }
     }
 }

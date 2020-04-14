@@ -40,8 +40,9 @@ namespace Hl7.Fhir.Specification.Source
         /// <param name="cacheDuration">Default expiration time of a cache entry, in seconds.</param>
 #pragma warning disable CS0618 // Type or member is obsolete
         public CachedResolver(ISyncOrAsyncResourceResolver source, int cacheDuration = DEFAULT_CACHE_DURATION)
-#pragma warning restore CS0618 // Type or member is obsolete
         {
+            Source = source as IResourceResolver;
+#pragma warning restore CS0618 // Type or member is obsolete
             AsyncSource = source.AsAsync();
             CacheDuration = cacheDuration;
 
@@ -50,16 +51,18 @@ namespace Hl7.Fhir.Specification.Source
         }
 
         /// <summary>
-        /// Returns the child source, if it was an synchronous resolver, otherwise <c>null</c>.
+        /// Returns the child source, as specified in the constructor.
         /// </summary>
+        /// <remarks>May return <code>null</code> if the source is an exclusively asynchronous resolver.</remarks>
         [Obsolete("CachedResolver now works best with asynchronous resolvers. Use the AsyncSource property instead.")]
-        public IResourceResolver Source { get; }
+        public IResourceResolver Source { get; private set; }
 
         public IAsyncResourceResolver AsyncSource { get; }
 
         /// <summary>Gets the default expiration time of a cache entry.</summary>
         public int CacheDuration { get; }
 
+        /// <inheritdoc cref="ResolveByUriAsync(string)"/>
         [Obsolete("CachedResolver now works best with asynchronous resolvers. Use ResolveByUriAsync() instead.")]
         public Resource ResolveByUri(string url) => TaskHelper.Await(() => ResolveByUriAsync(url));
       
@@ -73,6 +76,7 @@ namespace Hl7.Fhir.Specification.Source
             return await _resourcesByUri.Get(url, CachedResolverLoadingStrategy.LoadOnDemand);
         }
 
+        /// <inheritdoc cref="ResolveByUriAsync(string, CachedResolverLoadingStrategy)"/>
         [Obsolete("CachedResolver now works best with asynchronous resolvers. Use ResolveByUriAsync() instead.")]
         public Resource ResolveByUri(string url, CachedResolverLoadingStrategy strategy) =>
                 TaskHelper.Await(() => ResolveByUriAsync(url, strategy));
@@ -88,6 +92,7 @@ namespace Hl7.Fhir.Specification.Source
             return await _resourcesByUri.Get(url, strategy);
         }
 
+        /// <inheritdoc cref="ResolveByCanonicalUriAsync(string)" />
         [Obsolete("CachedResolver now works best with asynchronous resolvers. Use ResolveByCanonicalUriAsync() instead.")]
         public Resource ResolveByCanonicalUri(string url) => TaskHelper.Await(() => ResolveByCanonicalUriAsync(url));
 
@@ -101,6 +106,7 @@ namespace Hl7.Fhir.Specification.Source
             return await _resourcesByCanonical.Get(url, CachedResolverLoadingStrategy.LoadOnDemand);
         }
 
+        /// <inheritdoc cref="ResolveByCanonicalUriAsync(string, CachedResolverLoadingStrategy)" />
         [Obsolete("CachedResolver now works best with asynchronous resolvers. Use ResolveByCanonicalUriAsync() instead.")]
         public Resource ResolveByCanonicalUri(string url, CachedResolverLoadingStrategy strategy) =>
                 TaskHelper.Await(() => ResolveByCanonicalUriAsync(url, strategy));
