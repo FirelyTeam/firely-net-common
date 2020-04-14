@@ -30,7 +30,5 @@ namespace Hl7.Fhir.Utility
             Task.Run(asyncFunc).Wait();
 #endif
         }
-
     }
-
 }

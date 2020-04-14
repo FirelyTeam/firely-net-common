@@ -38,19 +38,20 @@ namespace Hl7.Fhir.Specification.Source
         /// <summary>Creates a new artifact resolver that caches loaded resources in memory.</summary>
         /// <param name="source">Resolver from which artifacts are initially resolved on a cache miss.</param>
         /// <param name="cacheDuration">Default expiration time of a cache entry, in seconds.</param>
-        public CachedResolver(IResourceResolver source, int cacheDuration = DEFAULT_CACHE_DURATION)
-        {
-            AsyncSource = source.ToAsync();
 #pragma warning disable CS0618 // Type or member is obsolete
-            Source = source;
+        public CachedResolver(ISyncOrAsyncResourceResolver source, int cacheDuration = DEFAULT_CACHE_DURATION)
 #pragma warning restore CS0618 // Type or member is obsolete
+        {
+            AsyncSource = source.AsAsync();
             CacheDuration = cacheDuration;
 
             _resourcesByUri = new Cache<Resource>(id => InternalResolveByUri(id), CacheDuration);
             _resourcesByCanonical = new Cache<Resource>(id => InternalResolveByCanonicalUri(id), CacheDuration);
         }
 
-        /// <summary>Returns a reference to the internal artifact source.</summary>
+        /// <summary>
+        /// Returns the child source, if it was an synchronous resolver, otherwise <c>null</c>.
+        /// </summary>
         [Obsolete("CachedResolver now works best with asynchronous resolvers. Use the AsyncSource property instead.")]
         public IResourceResolver Source { get; }
 

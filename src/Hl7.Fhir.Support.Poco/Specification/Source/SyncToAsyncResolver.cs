@@ -44,7 +44,7 @@ namespace Hl7.Fhir.Specification.Source
     }
 
     public static class SyncToAsyncResolverExtensions
-    { 
+    {
         /// <summary>
         /// Converts a (possibly non-async) resource resolver to an async one.
         /// </summary>
@@ -52,8 +52,13 @@ namespace Hl7.Fhir.Specification.Source
         /// <returns></returns>
         /// <remarks>Note that this async method will block on the possibly synchronous source. This method
         /// is meant for temporary backwards-compatiblity reasons only.</remarks>
-        public static IAsyncResourceResolver ToAsync(this IResourceResolver source) =>
-            source is IAsyncResourceResolver ar ? ar : new SyncToAsyncResolver(source);
+#pragma warning disable CS0618 // Type or member is obsolete
+        public static IAsyncResourceResolver AsAsync(this ISyncOrAsyncResourceResolver source) =>
+#pragma warning restore CS0618 // Type or member is obsolete
+            source is IAsyncResourceResolver ar ? ar
+                : source is IResourceResolver sr ? new SyncToAsyncResolver(sr)
+                    : throw new ArgumentException($"Argument {nameof(source)} is neither a {nameof(IResourceResolver)} nor " +
+                        $"a {nameof(IAsyncResourceResolver)}");
     }
 
 }
