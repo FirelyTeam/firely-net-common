@@ -43,7 +43,7 @@ namespace Hl7.Fhir.Specification.Source
         {
             Source = source as IResourceResolver;
 #pragma warning restore CS0618 // Type or member is obsolete
-            AsyncSource = source.AsAsync();
+            AsyncResolver = source.AsAsync();
             CacheDuration = cacheDuration;
 
             _resourcesByUri = new Cache<Resource>(id => InternalResolveByUri(id), CacheDuration);
@@ -51,13 +51,16 @@ namespace Hl7.Fhir.Specification.Source
         }
 
         /// <summary>
-        /// Returns the child source, as specified in the constructor.
+        /// Returns the resolver for which access is cached, as specified in the constructor.
         /// </summary>
         /// <remarks>May return <code>null</code> if the source is an exclusively asynchronous resolver.</remarks>
         [Obsolete("CachedResolver now works best with asynchronous resolvers. Use the AsyncSource property instead.")]
         public IResourceResolver Source { get; private set; }
 
-        public IAsyncResourceResolver AsyncSource { get; }
+        /// <summary>
+        /// Returns the resolver for which access is cached, as specified in the constructor.
+        /// </summary>
+        public IAsyncResourceResolver AsyncResolver { get; }
 
         /// <summary>Gets the default expiration time of a cache entry.</summary>
         public int CacheDuration { get; }
@@ -182,14 +185,14 @@ namespace Hl7.Fhir.Specification.Source
 
         internal async Task<Resource> InternalResolveByUri(string url)
         {
-            var resource = await AsyncSource.ResolveByUriAsync(url);
+            var resource = await AsyncResolver.ResolveByUriAsync(url);
             OnLoad(url, resource);
             return resource;
         }
 
         internal async Task<Resource> InternalResolveByCanonicalUri(string url)
         {
-            var resource = await AsyncSource.ResolveByCanonicalUriAsync(url);
+            var resource = await AsyncResolver.ResolveByCanonicalUriAsync(url);
             OnLoad(url, resource);
             return resource;
         }
@@ -198,7 +201,7 @@ namespace Hl7.Fhir.Specification.Source
         // http://blogs.msdn.com/b/jaredpar/archive/2011/03/18/debuggerdisplay-attribute-best-practices.aspx
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         internal protected virtual string DebuggerDisplay
-            => $"{GetType().Name} for {AsyncSource.DebuggerDisplayString()}";
+            => $"{GetType().Name} for {AsyncResolver.DebuggerDisplayString()}";
 
         private class Cache<T>
         {

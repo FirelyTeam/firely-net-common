@@ -17,18 +17,20 @@ namespace Hl7.Fhir.Utility
         public static T Await<T>(Func<Task<T>> asyncFunc)
         {
 #if NET40
-            return TaskEx.Run(asyncFunc).Result;
+            return TaskEx.Run(asyncFunc).GetAwaiter().GetResult();
 #else
-            return Task.Run(asyncFunc).Result;
+            // Call GetAwaiter() rather then .Result to unwrap the AggregateException
+            return Task.Run(asyncFunc).GetAwaiter().GetResult();
 #endif
         }
 
         public static void Await(Func<Task> asyncFunc)
         {
 #if NET40
-            TaskEx.Run(asyncFunc).Wait();
+            TaskEx.Run(asyncFunc).GetAwaiter().GetResult();
 #else
-            Task.Run(asyncFunc).Wait();
+            // Call GetAwaiter() rather then .Result to unwrap the AggregateException
+            Task.Run(asyncFunc).GetAwaiter().GetResult();
 #endif
         }
 
