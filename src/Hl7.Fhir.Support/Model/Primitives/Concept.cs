@@ -12,17 +12,23 @@ using System.Linq;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public struct Concept : IEquatable<Concept>
+    public struct Concept : IEquatable<Concept>, IConcept
     {
-        public Concept(Coding[] codes, string display=null)
+        public Concept(Coding[] codes, string display = null)
         {
             Codes = codes;
             Display = display;
         }
 
+        public Concept(IEnumerable<ICoding> codes, string display = null) : this(codes.Cast<Coding>().ToArray(), display)
+        {
+        }
+
         public Coding[] Codes { get; }
 
         public string Display { get; }
+
+        IEnumerable<ICoding> IConcept.Codes => Codes.Cast<ICoding>();
 
         public override bool Equals(object obj) => obj is Concept concept && Equals(concept);
         public bool Equals(Concept other) =>

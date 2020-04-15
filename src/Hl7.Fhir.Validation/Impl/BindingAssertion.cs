@@ -1,11 +1,14 @@
 ﻿using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Model.Primitives;
 using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation.Schema;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Linq;
 
 namespace Hl7.Fhir.Validation.Impl
 {
-    class BindingAssertion : IAssertion, IValidatable
+    public class BindingAssertion : IAssertion, IValidatable
     {
         public enum BindingStrength
         {
@@ -55,8 +58,10 @@ namespace Hl7.Fhir.Validation.Impl
 
         public Assertions Validate(ITypedElement input, ValidationContext vc)
         {
+            var result = Assertions.Empty;
+
             if (input == null) throw Error.ArgumentNull(nameof(input));
-            if (vc?.TerminologyService == null) throw new InvalidValidationContextException($"ValidationContext should have its {nameof(ValidationContext.TerminologyService)} property set.");
+            //if (vc?.TerminologyService == null) throw new InvalidValidationContextException($"ValidationContext should have its {nameof(ValidationContext.TerminologyService)} property set.");
             if (input.InstanceType == null) throw Error.Argument(nameof(input), "Binding validation requires input to have an instance type.");
 
             // This would give informational messages even if the validation was run on a choice type with a binding, which is then
@@ -64,21 +69,44 @@ namespace Hl7.Fhir.Validation.Impl
             // not applicable to this instance.
             //if (!ModelInfo.IsBindable(input.InstanceType))
             //{
-            //    return Issue.CONTENT_TYPE_NOT_BINDEABLE 
+            //  return Issue.CONTENT_TYPE_NOT_BINDEABLE
             //        .NewOutcomeWithIssue($"Validation of binding with non-bindable instance type '{input.InstanceType}' always succeeds.", input);
             //}
-            if (!ModelInfo.IsBindable(input.InstanceType))
-                return new OperationOutcome();  // success
+
+
+            if (!IsBindable(input.InstanceType))
+            {
+                return result + new Trace($"Validation of binding with non-bindable instance type '{input.InstanceType}' always succeeds.") + ResultAssertion.Success;
+            }
+
 
             var bindable = parseBindable(input);
-            var outcome = VerifyContentRequirements(input, bindable);
-            if (!outcome.Success) return outcome;
+            var assertions = VerifyContentRequirements(input, bindable);
+
+            if (!assertions.Result.IsSuccessful) return assertions;
 
             return ValidateCode(input, bindable, vc);
-            return Assertions.Success;
         }
 
-        private static Element parseBindable(ITypedElement input)
+        private bool IsBindable(string type)
+        {
+            switch (type)
+            {
+                // This is the fixed list, for all FHIR versions
+                case "code":
+                case "Coding":
+                case "CodeableConcept":
+                case "Quantity":
+                case "string":
+                case "uri":
+                case "Extension":       // for backwards compat with DSTU2
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private static object parseBindable(ITypedElement input)
         {
             var bindable = input.ParseBindable();
             if (bindable == null)    // should never happen, since we already checked IsBindable
@@ -91,46 +119,50 @@ namespace Hl7.Fhir.Validation.Impl
         /// Validates whether the instance has the minimum required coded content, depending on the binding.
         /// </summary>
         /// <remarks>Will throw an <c>InvalidOperationException</c> when the input is not of a bindeable type.</remarks>
-        internal OperationOutcome VerifyContentRequirements(ITypedElement source, Element bindable)
+        private Assertions VerifyContentRequirements(ITypedElement source, object bindable)
         {
+            var result = Assertions.Empty;
+
             switch (bindable)
             {
-                // Note: parseBindable with translate all bindable types to just code/Coding/CodeableConcept,
+                // Note: parseBindable with translate all bindable types to just code/Coding/Concept,
                 // so that's all we need to expect here.
-                case Code co when String.IsNullOrEmpty(co.Value) && Strength == BindingStrength.Required:
-                case Coding cd when String.IsNullOrEmpty(cd.Code) && Strength == BindingStrength.Required:
-                case CodeableConcept cc when !codeableConceptHasCode(cc) && Strength == BindingStrength.Required:
-                    return Issue.TERMINOLOGY_NO_CODE_IN_INSTANCE
-                        .NewOutcomeWithIssue($"No code found in {source.InstanceType} with a required binding.", source);
-                case CodeableConcept cc when !codeableConceptHasCode(cc) && String.IsNullOrEmpty(cc.Text) &&
+                case string co when string.IsNullOrEmpty(co) && Strength == BindingStrength.Required:
+                case Coding cd when string.IsNullOrEmpty(cd.Code) && Strength == BindingStrength.Required:
+                case Concept cc when !codeableConceptHasCode(cc) && Strength == BindingStrength.Required:
+                    result += new IssueAssertion(6005, Location, $"No code found in {source.InstanceType} with a required binding.", IssueSeverity.Error);
+                    break;
+                case Concept cc when !codeableConceptHasCode(cc) && string.IsNullOrEmpty(cc.Display) &&
                                 Strength == BindingStrength.Extensible:
-                    return Issue.TERMINOLOGY_NO_CODE_IN_INSTANCE
-                        .NewOutcomeWithIssue($"Extensible binding requires code or text.", source);
+                    result += new IssueAssertion(6005, Location, $"Extensible binding requires code or text.", IssueSeverity.Error);
+                    break;
                 default:
-                    return new OperationOutcome();      // nothing wrong then
+                    return new Assertions(ResultAssertion.Success);      // nothing wrong then
             }
+
+            return result + ResultAssertion.Failure;
         }
 
-        private bool codeableConceptHasCode(CodeableConcept cc) =>
-            cc.Coding.Any(cd => !String.IsNullOrEmpty(cd.Code));
+        private bool codeableConceptHasCode(Concept cc) =>
+            cc.Codes.Any(cd => !string.IsNullOrEmpty(cd.Code));
 
-        internal Assertions ValidateCode(ITypedElement source, Element bindable, ValidationContext vc)
+        internal Assertions ValidateCode(ITypedElement source, object bindable, ValidationContext vc)
         {
-            OperationOutcome outcome;
+            var result = Assertions.Empty;
 
             switch (bindable)
             {
-                case Code co:
-                    outcome = callService(vc.TerminologyService, source.Location, ValueSetUri, co?.Value, system: null, display: null, abstractAllowed: AbstractAllowed);
+                case string code:
+                    result += callService(vc.TerminologyService, source.Location, ValueSetUri, code: code, system: null, display: null, abstractAllowed: AbstractAllowed); ;
                     break;
                 case Coding cd:
-                    outcome = callService(vc.TerminologyService, source.Location, ValueSetUri, coding: cd, abstractAllowed: AbstractAllowed);
+                    result += callService(vc.TerminologyService, source.Location, ValueSetUri, coding: cd, abstractAllowed: AbstractAllowed);
                     break;
-                case CodeableConcept cc:
-                    outcome = callService(vc.TerminologyService, source.Location, ValueSetUri, cc: cc, abstractAllowed: AbstractAllowed);
+                case Concept cc:
+                    result += callService(vc.TerminologyService, source.Location, ValueSetUri, cc: cc, abstractAllowed: AbstractAllowed);
                     break;
                 default:
-                    throw Error.InvalidOperation($"Parsed bindable was of unexpected instance type '{bindable.TypeName}'.");
+                    throw Error.InvalidOperation($"Parsed bindable was of unexpected instance type '{bindable.GetType().Name}'.");
             }
 
             //EK 20170605 - disabled inclusion of warnings/errors for all but required bindings since this will 
@@ -138,27 +170,26 @@ namespace Hl7.Fhir.Validation.Impl
             // 2) add the validateResult as warnings for preferred bindings, which are confusing in the case where the slicing entry is 
             //    validating the binding against the core and slices will refine it: if it does not generate warnings against the slice, 
             //    it should not generate warnings against the slicing entry.
-            return Strength == BindingStrength.Required ? outcome : new OperationOutcome();
+            return Strength == BindingStrength.Required ? result : Assertions.Empty;
         }
 
         private Assertions callService(ITerminologyServiceNEW svc, string location, string canonical, string code = null, string system = null, string display = null,
                 Coding? coding = null, Concept? cc = null, bool? abstractAllowed = null)
         {
+            var result = Assertions.Empty;
             try
             {
-                // TODO MV: validation: still todo
-                //                
-                //var outcome = new OperationOutcome();
-                var outcome = svc.ValidateCode(canonical: canonical, code: code, system: system, display: display,
-                                                coding: coding, codeableConcept: cc, @abstract: abstractAllowed);
-                foreach (var issue in outcome.Issue) issue.Location = new string[] { location };
-                return outcome;
+                result += svc.ValidateCode(canonical: canonical, code: code, system: system, display: display,
+                                               coding: coding, codeableConcept: cc, @abstract: abstractAllowed);
+
+                // add location to IssueAssertions, if there are any.
+                return new Assertions(result.Select(r => r is IssueAssertion ia ? new IssueAssertion(ia.IssueNumber, location, ia.Message, ia.Severity) : r).ToList());
             }
-            catch (TerminologyServiceException tse)
+            catch (Exception tse)
             {
-                return Issue.TERMINOLOGY_SERVICE_FAILED
-                    .NewOutcomeWithIssue($"Terminology service failed while validating code '{code}' (system '{system}'): {tse.Message}", location);
+                result += new Assertions(new IssueAssertion(1, location, $"Terminology service failed while validating code '{code}' (system '{system}'): {tse.Message}", IssueSeverity.Fatal));
             }
+            return result;
         }
 
         public JToken ToJson()

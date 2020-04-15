@@ -12,9 +12,9 @@ using System.Collections.Generic;
 namespace Hl7.Fhir.Model.Primitives
 {
 
-    public struct Coding : IEquatable<Coding>
+    public struct Coding : IEquatable<Coding>, ICoding
     {
-        public Coding(string system, string code, string display=null)
+        public Coding(string system, string code, string display = null)
         {
             System = system;
             Code = code ?? throw new ArgumentNullException(nameof(code));
