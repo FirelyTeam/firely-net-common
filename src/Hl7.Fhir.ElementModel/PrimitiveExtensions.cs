@@ -21,14 +21,14 @@ namespace Hl7.Fhir.ElementModel
                 case "CodeableConcept":
                     return instance.ParseConcept();
                 case "Quantity":
-                    return parseQuantity(instance);
+                    return convertQuantityToCoding(instance);
                 case "Extension":
                     return parseExtension(instance);
                 default:
                     return null;
             }
 
-            Coding parseQuantity(ITypedElement inst)
+            ICoding convertQuantityToCoding(ITypedElement inst)
             {
                 var q = inst.ParseQuantity();
                 return new Coding(code: q.Unit, system: q.System ?? "http://unitsofmeasure.org");

@@ -1,5 +1,5 @@
 ﻿using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Model.Primitives;
+using Hl7.Fhir.Model;
 using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation.Schema;
 using Newtonsoft.Json.Linq;
@@ -61,31 +61,25 @@ namespace Hl7.Fhir.Validation.Impl
             var result = Assertions.Empty;
 
             if (input == null) throw Error.ArgumentNull(nameof(input));
-            //if (vc?.TerminologyService == null) throw new InvalidValidationContextException($"ValidationContext should have its {nameof(ValidationContext.TerminologyService)} property set.");
+            if (vc?.TerminologyService == null) throw new InvalidValidationContextException($"ValidationContext should have its {nameof(ValidationContext.TerminologyService)} property set.");
             if (input.InstanceType == null) throw Error.Argument(nameof(input), "Binding validation requires input to have an instance type.");
 
             // This would give informational messages even if the validation was run on a choice type with a binding, which is then
             // only applicable to an instance which is bindable. So instead of a warning, we should just return as validation is
             // not applicable to this instance.
-            //if (!ModelInfo.IsBindable(input.InstanceType))
-            //{
-            //  return Issue.CONTENT_TYPE_NOT_BINDEABLE
-            //        .NewOutcomeWithIssue($"Validation of binding with non-bindable instance type '{input.InstanceType}' always succeeds.", input);
-            //}
-
-
             if (!IsBindable(input.InstanceType))
             {
                 return result + new Trace($"Validation of binding with non-bindable instance type '{input.InstanceType}' always succeeds.") + ResultAssertion.Success;
             }
 
-
             var bindable = parseBindable(input);
-            var assertions = VerifyContentRequirements(input, bindable);
+            result += VerifyContentRequirements(input, bindable);
 
-            if (!assertions.Result.IsSuccessful) return assertions;
+            if (!result.Result.IsSuccessful) return result;
 
-            return ValidateCode(input, bindable, vc);
+            result += ValidateCode(input, bindable, vc);
+
+            return result.AddResultAssertion();
         }
 
         private bool IsBindable(string type)
@@ -128,11 +122,11 @@ namespace Hl7.Fhir.Validation.Impl
                 // Note: parseBindable with translate all bindable types to just code/Coding/Concept,
                 // so that's all we need to expect here.
                 case string co when string.IsNullOrEmpty(co) && Strength == BindingStrength.Required:
-                case Coding cd when string.IsNullOrEmpty(cd.Code) && Strength == BindingStrength.Required:
-                case Concept cc when !codeableConceptHasCode(cc) && Strength == BindingStrength.Required:
+                case ICoding cd when string.IsNullOrEmpty(cd.Code) && Strength == BindingStrength.Required:
+                case IConcept cc when !codeableConceptHasCode(cc) && Strength == BindingStrength.Required:
                     result += new IssueAssertion(6005, Location, $"No code found in {source.InstanceType} with a required binding.", IssueSeverity.Error);
                     break;
-                case Concept cc when !codeableConceptHasCode(cc) && string.IsNullOrEmpty(cc.Display) &&
+                case IConcept cc when !codeableConceptHasCode(cc) && string.IsNullOrEmpty(cc.Display) &&
                                 Strength == BindingStrength.Extensible:
                     result += new IssueAssertion(6005, Location, $"Extensible binding requires code or text.", IssueSeverity.Error);
                     break;
@@ -143,7 +137,7 @@ namespace Hl7.Fhir.Validation.Impl
             return result + ResultAssertion.Failure;
         }
 
-        private bool codeableConceptHasCode(Concept cc) =>
+        private bool codeableConceptHasCode(IConcept cc) =>
             cc.Codes.Any(cd => !string.IsNullOrEmpty(cd.Code));
 
         internal Assertions ValidateCode(ITypedElement source, object bindable, ValidationContext vc)
@@ -155,10 +149,10 @@ namespace Hl7.Fhir.Validation.Impl
                 case string code:
                     result += callService(vc.TerminologyService, source.Location, ValueSetUri, code: code, system: null, display: null, abstractAllowed: AbstractAllowed); ;
                     break;
-                case Coding cd:
+                case ICoding cd:
                     result += callService(vc.TerminologyService, source.Location, ValueSetUri, coding: cd, abstractAllowed: AbstractAllowed);
                     break;
-                case Concept cc:
+                case IConcept cc:
                     result += callService(vc.TerminologyService, source.Location, ValueSetUri, cc: cc, abstractAllowed: AbstractAllowed);
                     break;
                 default:
@@ -174,12 +168,13 @@ namespace Hl7.Fhir.Validation.Impl
         }
 
         private Assertions callService(ITerminologyServiceNEW svc, string location, string canonical, string code = null, string system = null, string display = null,
-                Coding? coding = null, Concept? cc = null, bool? abstractAllowed = null)
+                ICoding coding = null, IConcept cc = null, bool? abstractAllowed = null)
         {
             var result = Assertions.Empty;
             try
             {
-                result += svc.ValidateCode(canonical: canonical, code: code, system: system, display: display,
+
+                result = svc.ValidateCode(canonical: canonical, code: code, system: system, display: display,
                                                coding: coding, codeableConcept: cc, @abstract: abstractAllowed);
 
                 // add location to IssueAssertions, if there are any.
