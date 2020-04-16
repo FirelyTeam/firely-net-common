@@ -25,9 +25,9 @@ namespace Hl7.Fhir.Validation.Impl
 
         public Fixed(string location, object fixedValue) : this(location, ElementNode.ForPrimitive(fixedValue)) { }
 
-        protected override string Key => "fixed[x]";
+        public override string Key => "fixed[x]";
 
-        protected override object Value => _fixed;
+        public override object Value => _fixed;
 
         public override Assertions Validate(ITypedElement input, ValidationContext vc)
         {

@@ -25,9 +25,9 @@ namespace Hl7.Fhir.Validation.Impl
             _maxLength = maxLength;
         }
 
-        protected override string Key => "maxLength";
+        public override string Key => "maxLength";
 
-        protected override object Value => _maxLength;
+        public override object Value => _maxLength;
 
         public override Assertions Validate(ITypedElement input, ValidationContext vc)
         {

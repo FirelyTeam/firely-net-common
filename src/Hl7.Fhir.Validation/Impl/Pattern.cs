@@ -17,9 +17,9 @@ namespace Hl7.Fhir.Validation.Impl
 
         public Pattern(string location, object fixedValue) : this(location, ElementNode.ForPrimitive(fixedValue)) { }
 
-        protected override string Key => "pattern[x]";
+        public override string Key => "pattern[x]";
 
-        protected override object Value => _pattern;
+        public override object Value => _pattern;
 
         public override Assertions Validate(ITypedElement input, ValidationContext vc)
         {

@@ -17,7 +17,7 @@ namespace Hl7.Fhir.Validation.Schema
         public abstract Assertions Validate(ITypedElement input, ValidationContext vc);
 
         public string Location { get; }
-        protected abstract string Key { get; }
-        protected abstract object Value { get; }
+        public abstract string Key { get; }
+        public abstract object Value { get; }
     }
 }

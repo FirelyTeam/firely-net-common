@@ -39,11 +39,6 @@ namespace Hl7.Fhir.Validation.Impl
 
         public Assertions Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
         {
-            if (vc.Foo(this))
-            {
-
-            }
-
             var assertions = Assertions.Empty + new Trace("[CardinalityAssertion] Validating");
 
             var count = input.Count();

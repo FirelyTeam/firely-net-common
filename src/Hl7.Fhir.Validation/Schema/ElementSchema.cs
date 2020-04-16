@@ -58,8 +58,9 @@ namespace Hl7.Fhir.Validation.Schema
 
         public Assertions Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
         {
-            var multiAssertions = Members.OfType<IGroupValidatable>();
-            var singleAssertions = Members.OfType<IValidatable>();
+            var members = Members.Where(vc?.IncludeFilter ?? (assertion => true));
+            var multiAssertions = members.OfType<IGroupValidatable>();
+            var singleAssertions = members.OfType<IValidatable>();
 
             var multiResults = multiAssertions
                                 .Select(ma => ma.Validate(input, vc));

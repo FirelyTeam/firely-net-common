@@ -9,7 +9,6 @@
 using Hl7.Fhir.Utility;
 using Hl7.FhirPath;
 using System;
-using System.Linq;
 
 namespace Hl7.Fhir.Validation.Schema
 {
@@ -35,17 +34,11 @@ namespace Hl7.Fhir.Validation.Schema
 
         public Type[] ValidateAssertions;
 
-        public Func<IAssertion, bool> Filter;
+        /// <summary>
+        /// A function to include the assertion in the validation or not. If the function is left empty (null) then all the 
+        /// assertions are processed in the validation.
+        /// </summary>
+        public Func<IAssertion, bool> IncludeFilter;
 
-    }
-
-    public static class ValidationContextExtensions
-    {
-        public static bool Foo(this ValidationContext vc, IAssertion assertion)
-        {
-
-            return vc?.ValidateAssertions?.Any(a => a == assertion.GetType()) ?? false;
-
-        }
     }
 }

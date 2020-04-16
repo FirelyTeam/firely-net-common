@@ -31,14 +31,12 @@ namespace Hl7.Fhir.Validation.Impl
             _bestPractice = bestPractice;
         }
 
-        protected override string Key => _key;
+        public override string Key => _key;
 
-        protected override object Value => _expression;
+        public override object Value => _expression;
 
         public override Assertions Validate(ITypedElement input, ValidationContext vc)
         {
-            //if (!vc.Filter.Invoke(this)) return Assertions.Empty + new Trace("Not executed");
-
             var result = Assertions.Empty;
 
             var node = input as ScopedNode ?? new ScopedNode(input);

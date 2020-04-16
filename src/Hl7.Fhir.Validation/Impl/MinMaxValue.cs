@@ -45,9 +45,9 @@ namespace Hl7.Fhir.Validation.Impl
 
         public MinMaxValue(string location, int minMaxValue, MinMax minMaxType) : this(location, ElementNode.ForPrimitive(minMaxValue), minMaxType) { }
 
-        protected override string Key => _key;
+        public override string Key => _key;
 
-        protected override object Value => _minMaxValue;
+        public override object Value => _minMaxValue;
 
         public override Assertions Validate(ITypedElement input, ValidationContext vc)
         {

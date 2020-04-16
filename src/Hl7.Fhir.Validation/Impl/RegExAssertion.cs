@@ -24,9 +24,9 @@ namespace Hl7.Fhir.Validation.Impl
             _regex = new Regex(pattern);
         }
 
-        protected override string Key => "regex";
+        public override string Key => "regex";
 
-        protected override object Value => _pattern;
+        public override object Value => _pattern;
 
         public override Assertions Validate(ITypedElement input, ValidationContext vc)
         {

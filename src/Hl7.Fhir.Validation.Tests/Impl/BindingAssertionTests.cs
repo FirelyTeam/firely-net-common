@@ -1,4 +1,4 @@
-﻿using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Model.Primitives;
 using Hl7.Fhir.Validation.Schema;
@@ -46,7 +46,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         [ExpectedException(typeof(ArgumentNullException), "No input is present")]
         public void NoInputPresent()
         {
-            var result = _bindingAssertion.Validate(null, _validationContext);
+            _ = _bindingAssertion.Validate(null, _validationContext);
         }
 
         [TestMethod()]

@@ -20,9 +20,9 @@ namespace Hl7.Fhir.Validation.Impl
             Order = order;
         }
 
-        protected override string Key => "xml-order";
+        public override string Key => "xml-order";
 
-        protected override object Value => Order;
+        public override object Value => Order;
 
         public override Assertions Validate(ITypedElement input, ValidationContext vc) => Assertions.Empty;
     }

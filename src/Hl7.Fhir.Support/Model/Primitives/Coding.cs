@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * Copyright (c) 2015, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
@@ -17,7 +17,7 @@ namespace Hl7.Fhir.Model.Primitives
         public Coding(string system, string code, string display = null)
         {
             System = system;
-            Code = code ?? throw new ArgumentNullException(nameof(code));
+            Code = code ?? throw new ArgumentNullException(nameof(code)); // TODO MV Valdation: remove this Exception
             Display = display;
         }
 
