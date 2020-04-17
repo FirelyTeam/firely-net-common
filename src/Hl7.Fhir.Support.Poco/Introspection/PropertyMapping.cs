@@ -39,7 +39,6 @@ namespace Hl7.Fhir.Introspection
         public bool IsMandatoryElement { get; private set; }
 
         public Type ElementType { get; private set; }
-        public bool IsBackboneElement { get; private set; }
 
         public int Order { get; private set; }
 
@@ -101,8 +100,6 @@ namespace Hl7.Fhir.Introspection
             if (result.IsCollection) result.ElementType = ReflectionHelper.GetCollectionItemType(prop.PropertyType);
             if (ReflectionHelper.IsNullableType(result.ElementType)) result.ElementType = ReflectionHelper.GetNullableArgument(result.ElementType);
             result.IsPrimitive = isAllowedNativeTypeForDataTypeValue(result.ElementType);
-
-            result.IsBackboneElement = result.ElementType.CanBeTreatedAsType(typeof(IBackboneElement));
             referredTypes.Add(result.ElementType);
 
             // Derive the C# type that represents which types are allowed for this element.

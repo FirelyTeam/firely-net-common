@@ -43,7 +43,7 @@ namespace Hl7.Fhir.Model
     [FhirType("boolean")]
     [DataContract]
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    public class FhirBoolean : Primitive<bool?>, INullableValue<bool>
+    public class FhirBoolean : PrimitiveType<bool?>, INullableValue<bool>
     {
         public override string TypeName { get { return "boolean"; } }
         

@@ -44,7 +44,7 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay(@"\{{Value,nq}}")] // http://blogs.msdn.com/b/jaredpar/archive/2011/03/18/debuggerdisplay-attribute-best-practices.aspx
     [FhirType("url")]
     [DataContract]
-    public partial class FhirUrl : Primitive<string>, IStringValue
+    public partial class FhirUrl : PrimitiveType<string>, IStringValue
     {
         public override string TypeName { get { return "url"; } }
         

@@ -51,7 +51,7 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("xhtml")]
     [DataContract]
-    public class XHtml : Primitive<string>, IStringValue
+    public class XHtml : PrimitiveType<string>, IStringValue
     {
         public override string TypeName { get { return "xhtml"; } }
 
