@@ -126,6 +126,7 @@ namespace Hl7.FhirPath.Expressions
             t.Add("replaceMatches", (string f, string regex, string subst) => Regex.Replace(f, regex, subst), doNullProp: true);
             t.Add("replace", (string f, string regex, string subst) => f.FpReplace(regex, subst), doNullProp: true);
             t.Add("length", (string f) => f.Length, doNullProp: true);
+            t.Add("split", (string f, string seperator) => f.FpSplit(seperator), doNullProp: true);
 
             // The next two functions existed pre-normative, so we have kept them.
             t.Add("is", (ITypedElement f, string name) => f.Is(name), doNullProp: true);
