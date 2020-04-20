@@ -42,8 +42,14 @@ namespace Hl7.Fhir.Introspection
             Name = name ?? throw new ArgumentNullException(nameof(name));
         }
 
+        /// <summary>
+        /// The name of the FHIR type this class represents.
+        /// </summary>
         public string Name { get; private set; }
 
-        public bool NamedBackboneElement { get; set; }
+        /// <summary>
+        /// Indicates whether this class represents the nested complex type for a (backbone) element.
+        /// </summary>
+        public bool IsNestedType { get; set; }
     }
 }

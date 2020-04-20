@@ -56,6 +56,11 @@ namespace Hl7.Fhir.Introspection
         public bool HasPrimitiveValueMember => PrimitiveValueProperty != null;
 
         /// <summary>
+        /// Indicates whether this class represents the nested complex type for a (backbone) element.
+        /// </summary>
+        public bool IsNestedType { get; private set; }
+
+        /// <summary>
         /// Returns the mapping for an element of this class.
         /// </summary>
         /// <param name="name">The name of the element, may include the type suffix for choice elements.</param>
@@ -99,6 +104,7 @@ namespace Hl7.Fhir.Introspection
                 IsCodeOfT = ReflectionHelper.IsClosedGenericType(type) &&
                                 ReflectionHelper.IsConstructedFromGenericTypeDefinition(type, typeof(Code<>)),
                 NativeType = type,
+                IsNestedType = typeAttribute.IsNestedType
             };
 
             result.inspectProperties(fhirVersion);
@@ -157,19 +163,4 @@ namespace Hl7.Fhir.Introspection
         [Obsolete("ClassMapping.IsMappable() is slow and obsolete, use ClassMapping.TryCreate() instead.")]
         public static bool IsMappableType(Type type) => TryCreate(type, out var _, fhirVersion: null);
     }
-
-    public static class IntrospectionTypeExtensions
-    {
-        /// <summary>
-        /// Determines whether the given type is a POCO type representing a complex substructure in a Resource or datatype.
-        /// </summary>
-        /// <param name="me"></param>
-        /// <returns></returns>
-        /// <remarks>These are sometimes called <c>BackboneElements</c>, but may actually also be <c>Elements</c>,
-        /// dependent on whether <c>modifier extensions</c> are allowed at that point.</remarks>
-        public static bool RepresentsComplexElementType(this Type me) => !(me.CanBeTreatedAsType(typeof(DataType)))
-            && (me.CanBeTreatedAsType(typeof(Element)) || me.CanBeTreatedAsType(typeof(BackboneElement)))
-            && (me != typeof(Element)) && (me != typeof(BackboneElement));
-    }
-
 }
