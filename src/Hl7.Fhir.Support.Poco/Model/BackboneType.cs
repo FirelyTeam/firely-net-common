@@ -45,7 +45,7 @@ namespace Hl7.Fhir.Model
 #endif
     [FhirType("BackboneType")]
     [DataContract]
-    public abstract class BackboneType : Element, IModifierExtendable
+    public abstract class BackboneType : DataType, IModifierExtendable
     {
         public override string TypeName { get { return "BackboneType"; } }
         
