@@ -30,33 +30,33 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         }
 
         [TestMethod]
-        public void ValidateSuccess()
+        public async void ValidateSuccess()
         {
             var validatable = new FhirPathAssertion("FhirPathAssertionTests.ValidateSuccess", "test-1", "$this = 'test'", "human description", IssueSeverity.Error, false);
 
             var input = ElementNode.ForPrimitive("test");
 
-            var result = validatable.Validate(input, new ValidationContext() { FhirPathCompiler = fpCompiler });
+            var result = await validatable.Validate(input, new ValidationContext() { FhirPathCompiler = fpCompiler });
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Result.IsSuccessful, "the FhirPath Expression must be valid for this input");
         }
 
         [TestMethod]
-        public void ValidateIncorrectFhirPath()
+        public async void ValidateIncorrectFhirPath()
         {
             var validatable = new FhirPathAssertion("FhirPathAssertionTests.ValidateIncorrectFhirPath", "test -1", "this is not a fhirpath expression", "human description", IssueSeverity.Error, false);
 
             var input = ElementNode.ForPrimitive("test");
 
-            var result = validatable.Validate(input, new ValidationContext() { FhirPathCompiler = fpCompiler });
+            var result = await validatable.Validate(input, new ValidationContext() { FhirPathCompiler = fpCompiler });
 
             Assert.IsNotNull(result);
             Assert.IsFalse(result.Result.IsSuccessful, "the FhirPath Expression must not be valid for this input");
         }
 
         [TestMethod]
-        public void ValidateChildrenExists()
+        public async void ValidateChildrenExists()
         {
             var humanName = ElementNode.Root("HumanName");
             humanName.Add("family", "Brown", "string");
@@ -65,7 +65,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
 
             var validatable = new FhirPathAssertion("FhirPathAssertionTests.ValidateChildrenExists", "test-1", "children().count() = 3", "human description", IssueSeverity.Error, false);
 
-            var result = validatable.Validate(humanName, new ValidationContext() { FhirPathCompiler = fpCompiler });
+            var result = await validatable.Validate(humanName, new ValidationContext() { FhirPathCompiler = fpCompiler });
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Result.IsSuccessful, "the FhirPath Expression must not be valid for this input");

@@ -12,6 +12,7 @@ using Hl7.Fhir.Utility;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Schema
 {
@@ -39,7 +40,7 @@ namespace Hl7.Fhir.Validation.Schema
         // TODO: Risk of loop (if a referenced schema refers back to this schema - which is nonsense, but possible)
         //public IEnumerable<Assertions> Collect() => ReferencedSchema.Collect();
 
-        public Assertions Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
+        public Task<Assertions> Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
             => ReferencedSchema.Validate(input, vc);
 
         public JToken ToJson() => new JProperty("$ref", ReferencedUri?.ToString() ??

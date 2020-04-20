@@ -12,6 +12,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Schema
 {
@@ -82,7 +83,7 @@ namespace Hl7.Fhir.Validation.Schema
             new JProperty("children", new JObject() { ChildList.Select(child =>
                 new JProperty(child.Key, child.Value.ToJson().MakeNestedProp())) });
 
-        public Assertions Validate(ITypedElement input, ValidationContext vc)
+        public async Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
         {
             var result = Assertions.Empty;
 
@@ -98,10 +99,10 @@ namespace Hl7.Fhir.Validation.Schema
                 switch (assertion.Value)
                 {
                     case IValidatable validatable:
-                        result += validatable.Validate(childElements.SingleOrDefault(), vc);
+                        result += await validatable.Validate(childElements.SingleOrDefault(), vc);
                         break;
                     case IGroupValidatable groupvalidatable:
-                        result += groupvalidatable.Validate(childElements, vc);
+                        result += await groupvalidatable.Validate(childElements, vc);
                         break;
                 }
             }

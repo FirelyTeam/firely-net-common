@@ -33,12 +33,12 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         }
 
         [TestMethod]
-        public void PrimitivePatternTestcases()
+        public async void PrimitivePatternTestcases()
         {
             foreach (var (patternValue, input, expectedResult, failureMessage) in TestData())
             {
                 var validatable = new Fixed("PatternTests.PatternTestcases", patternValue);
-                var result = validatable.Validate(ElementNode.ForPrimitive(input), new ValidationContext());
+                var result = await validatable.Validate(ElementNode.ForPrimitive(input), new ValidationContext());
 
                 Assert.IsNotNull(result);
                 Assert.IsTrue(result.Result.IsSuccessful == expectedResult, failureMessage);
@@ -46,7 +46,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         }
 
         [TestMethod]
-        public void PatternHumanName()
+        public async void PatternHumanName()
         {
             var patternValue = ElementNode.Root("HumanName");
             patternValue.Add("family", "Brown", "string");
@@ -54,14 +54,14 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             patternValue.Add("given", "Patrick", "string");
 
             var validatable = new Fixed("PatternTests.PatternHumanName", patternValue);
-            var result = validatable.Validate(ElementNode.ForPrimitive("Brown, Joe Patrick"), new ValidationContext());
+            var result = await validatable.Validate(ElementNode.ForPrimitive("Brown, Joe Patrick"), new ValidationContext());
 
             Assert.IsNotNull(result);
             Assert.IsFalse(result.Result.IsSuccessful, "String and HumanName are different");
         }
 
         [TestMethod]
-        public void ComplexTypePattern()
+        public async void ComplexTypePattern()
         {
             var patternValue = ElementNode.Root("HumanName");
             patternValue.Add("family", "Brown", "string");
@@ -73,14 +73,14 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             input.Add("given", "Patrick", "string");
 
             var validatable = new Pattern("PatternTests.ComplexTypePattern", patternValue);
-            var result = validatable.Validate(input, new ValidationContext());
+            var result = await validatable.Validate(input, new ValidationContext());
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Result.IsSuccessful, "The input should match the pattern: family name should be Brown, and given name is Joe");
         }
 
         [TestMethod]
-        public void NotMatchingComplexTypePattern()
+        public async void NotMatchingComplexTypePattern()
         {
             var patternValue = ElementNode.Root("HumanName");
             patternValue.Add("family", "Brown", "string");
@@ -92,7 +92,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             input.Add("given", "Joe", "string");
 
             var validatable = new Pattern("PatternTests.NotMatchingComplexTypePattern", patternValue);
-            var result = validatable.Validate(input, new ValidationContext());
+            var result = await validatable.Validate(input, new ValidationContext());
 
             Assert.IsNotNull(result);
             Assert.IsFalse(result.Result.IsSuccessful, "The input should not match the pattern");

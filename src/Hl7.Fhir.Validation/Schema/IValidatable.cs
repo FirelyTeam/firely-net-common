@@ -7,6 +7,9 @@
  */
 
 using Hl7.Fhir.ElementModel;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Schema
 {
@@ -15,6 +18,20 @@ namespace Hl7.Fhir.Validation.Schema
     /// </summary>
     public interface IValidatable
     {
-        Assertions Validate(ITypedElement input, ValidationContext vc);
+        Task<Assertions> Validate(ITypedElement input, ValidationContext vc);
+    }
+
+    public static class IValidatableExtensions
+    {
+        public async static Task<Assertions> ValidateAsync(this IEnumerable<IValidatable> validatables, ITypedElement elt, ValidationContext vc)
+        {
+            return await validatables.Select(v => v.Validate(elt, vc)).AggregateAsync();
+        }
+
+        public async static Task<Assertions> AggregateAsync(this IEnumerable<Task<Assertions>> tasks)
+        {
+            var result = await Task.WhenAll(tasks);
+            return result.Aggregate(Assertions.Empty, (sum, other) => sum += other);
+        }
     }
 }
