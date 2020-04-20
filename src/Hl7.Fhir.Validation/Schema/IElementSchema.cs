@@ -7,15 +7,11 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Schema
 {
-    public interface IElementSchema: IAssertion
+    public interface IElementSchema: IAssertion, IGroupValidatable
     {
         Uri Id { get; }
 
         Assertions Members { get; }
-
-        IElementSchema With(IEnumerable<IAssertion> additional);
-
-        Assertions Validate(IEnumerable<ITypedElement> input, ValidationContext vc);
     }
 
     public static class IElementSchemaExtensions
@@ -23,7 +19,10 @@ namespace Hl7.Fhir.Validation.Schema
         public static bool IsEmpty(this IElementSchema elementSchema) 
             => !elementSchema.Members.Any();
 
-        public static IElementSchema With(this IElementSchema elementSchema, params IAssertion[] additional) 
-            => elementSchema.With(additional);
+        public static IElementSchema With(this IElementSchema elementSchema, IAssertionFactory factory, IEnumerable<IAssertion> additional) =>
+            factory.CreateElementSchemaAssertion(elementSchema.Id, elementSchema.Members.Union(additional));
+
+        public static IElementSchema With(this IElementSchema elementSchema, IAssertionFactory factory, params IAssertion[] additional) 
+            => elementSchema.With(factory, additional);
     }
 }
