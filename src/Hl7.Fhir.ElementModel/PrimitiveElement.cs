@@ -41,7 +41,7 @@ namespace Hl7.Fhir.ElementModel
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
 
-            var systemType = TypeSpecifier.ForNativeType(value.GetType());
+            var systemType = NamedTypeSpecifier.ForNativeType(value.GetType());
             if(!TypeSpecifier.PrimitiveTypes.Contains(systemType))
                 throw new ArgumentException("The supplied value cannot be represented with a System primitive.", nameof(value));
            

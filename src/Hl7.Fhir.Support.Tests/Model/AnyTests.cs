@@ -19,7 +19,7 @@ namespace Hl7.FhirPath.Tests
         [TestMethod]
         public void AnyParse()
         {
-            IEnumerable<(string value, TypeSpecifier to, bool success, object expected)> tests()
+            IEnumerable<(string value, NamedTypeSpecifier to, bool success, object expected)> tests()
             {
                 yield return ("true", TypeSpecifier.Boolean, true, true);
                 yield return ("True", TypeSpecifier.Boolean, false, default);

@@ -120,7 +120,7 @@ namespace Hl7.Fhir.ElementModel
         // R3 and R4, these value (and url and id elements by the way) will indicate which type
         // of "universal" primitive there are, implicitly specifying the mapping between primitive
         // FHIR types and primitive System types.
-        private static TypeSpecifier tryMapFhirPrimitiveTypeToSystemType(string fhirType)
+        private static NamedTypeSpecifier tryMapFhirPrimitiveTypeToSystemType(string fhirType)
         {
             switch (fhirType)
             {
@@ -180,7 +180,7 @@ namespace Hl7.Fhir.ElementModel
                 {
                     var summary = Provider.Provide(InstanceType);
                     var valueType = summary?.GetElements().Where(e => e.ElementName.Equals("value")).FirstOrDefault()?.Type.FirstOrDefault()?.GetTypeName();
-                    var specifier = TypeSpecifier.GetByName(valueType);
+                    var specifier = NamedTypeSpecifier.GetByName(valueType);
                     return Any.Parse(sourceText, specifier);
                 }
 

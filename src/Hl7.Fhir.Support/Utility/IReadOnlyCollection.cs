@@ -1,9 +1,11 @@
-﻿#if NET40
+﻿
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace System.Collections.Generic
 {
+#if NET40
     public interface IReadOnlyCollection<out T> : IEnumerable<T>, IEnumerable
     {
         //
@@ -35,5 +37,12 @@ namespace System.Collections.Generic
             return new ReadOnlyList<T>(collection);
         }
     }
-}
+
+#else
+    public static class ListExtensions
+    {
+        public static IReadOnlyCollection<T> ToReadOnlyCollection<T>(this IEnumerable<T> collection) => collection.ToList();
+    }
+
 #endif
+}
