@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Hl7.Fhir.Validation.Schema
 {
-    public interface IAssertionFactory
+    public interface IElementDefinitionAssertionFactory
     {
         IElementSchema CreateElementSchemaAssertion(Uri id, IEnumerable<IAssertion> assertions = null);
 

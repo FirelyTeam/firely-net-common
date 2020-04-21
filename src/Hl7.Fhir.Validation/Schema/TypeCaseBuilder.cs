@@ -12,10 +12,10 @@ namespace Hl7.Fhir.Validation.Schema
 {
     public class TypeCaseBuilder
     {
-        private readonly IAssertionFactory _assertionFactory;
+        private readonly IElementDefinitionAssertionFactory _assertionFactory;
         public readonly ISchemaResolver Resolver;
 
-        public TypeCaseBuilder(ISchemaResolver resolver, IAssertionFactory assertionFactory)
+        public TypeCaseBuilder(ISchemaResolver resolver, IElementDefinitionAssertionFactory assertionFactory)
         {
             Resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
             _assertionFactory = assertionFactory;

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Hl7.Fhir.Validation.Impl
 {
-    public class ValidationAssertionFactory : IAssertionFactory
+    public class ValidationElementDefinitionAssertionFactory : IElementDefinitionAssertionFactory
     {
         public IAssertion CreateBindingAssertion(string location, string valueSetUri, BindingAssertion.BindingStrength strength, bool abstractAllowed = true, string description = null)
             => new BindingAssertion(location, valueSetUri, strength, abstractAllowed, description);
