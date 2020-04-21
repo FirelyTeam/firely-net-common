@@ -14,59 +14,14 @@ namespace Hl7.Fhir.Introspection
 {
     public abstract class VersionedAttribute : Attribute, IFhirVersionDependent
     {
-        /// <summary>
-        /// First version of FHIR for which this attribute applies, as a semver string.
-        /// </summary>
-        public string Since
-        {
-            get => _originalSince;
-            set
-            {
-                _originalSince = value;
-                if (!string.IsNullOrEmpty(value))
-                {
-                    if (SemVersion.TryParse(value, out var semver))
-                        SinceVersion = semver;
-                    else
-                        SinceVersion = null;
-                }
-            }
-        }
-
-        private string _originalSince;
-
-        /// <summary>
-        /// First version of FHIR for which this attribute applies, as a semver value.
-        /// </summary>
-        public SemVersion SinceVersion { get; private set; }
+        /// <inheritdoc cref="IFhirVersionDependent.Since" />
+        public int Since { get; set; } = Int32.MinValue;
     }
 
     public abstract class VersionedValidationAttribute : ValidationAttribute, IFhirVersionDependent
     {
-        /// <summary>
-        /// First version of FHIR for which this attribute applies, as a semver string.
-        /// </summary>
-        public string Since
-        {
-            get => _originalSince;
-            set
-            {
-                _originalSince = value;
-                if (!string.IsNullOrEmpty(value))
-                {
-                    if (SemVersion.TryParse(value, out var semver))
-                        SinceVersion = semver;
-                    else
-                        SinceVersion = null;
-                }
-            }
-        }
+        /// <inheritdoc cref="IFhirVersionDependent.Since" />
+        public int Since { get; set; } = Int32.MinValue;
 
-        private string _originalSince;
-
-        /// <summary>
-        /// First version of FHIR for which this attribute applies, as a semver value.
-        /// </summary>
-        public SemVersion SinceVersion { get; private set; }
     }
 }

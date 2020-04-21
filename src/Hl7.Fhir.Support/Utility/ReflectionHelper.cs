@@ -345,7 +345,7 @@ namespace Hl7.Fhir.Utility
             }
         }
         public static bool ImplementsGenericDefinition(Type type, Type genericInterfaceDefinition) =>
-            ImplementsGenericDefinition(type, genericInterfaceDefinition, out Type implementingType);
+            ImplementsGenericDefinition(type, genericInterfaceDefinition, out _);
 
         public static bool ImplementsGenericDefinition(Type type, Type genericInterfaceDefinition, out Type implementingType)
         {

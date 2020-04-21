@@ -28,26 +28,20 @@
 
 */
 
-using Hl7.Fhir.Support.Utility;
-
 namespace Hl7.Fhir.Introspection
 {
     public interface IFhirVersionDependent
     {
-        SemVersion SinceVersion { get; }
+        /// <summary>
+        /// First version of FHIR for which this attribute applies, as a major FHIR release number
+        /// (2=DSTU2, 3=STU3, 4=R4, 5=R5).
+        /// </summary>
+        int Since { get; }
     }
 
     public static class FhirVersionDependentExtensions
     {
-        public static bool AppliesToVersion(this IFhirVersionDependent me, string fhirVersion)
-        {
-            if (me.SinceVersion == null) return true;
-            if (fhirVersion == null) return true;
-
-            if (!SemVersion.TryParse(fhirVersion, out var parsedVersion)) return false;
-
-            return me.SinceVersion <= parsedVersion;
-        }
-
+        public static bool AppliesToVersion(this IFhirVersionDependent me, int fhirVersion) 
+            => me.Since <= fhirVersion;      
     }
 }
