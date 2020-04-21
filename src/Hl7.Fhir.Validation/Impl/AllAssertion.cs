@@ -3,6 +3,7 @@ using Hl7.Fhir.Validation.Schema;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl
 {
@@ -31,13 +32,13 @@ namespace Hl7.Fhir.Validation.Impl
                 mem is JObject ? new JProperty("nested", mem) : mem;
         }
 
-        public Assertions Validate(ITypedElement input, ValidationContext vc)
+        public async Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
         {
             var result = Assertions.Empty;
 
             foreach (var member in _members.OfType<IValidatable>())
             {
-                var memberResult = member.Validate(input, vc);
+                var memberResult = await member.Validate(input, vc);
                 if (memberResult.Result.IsSuccessful)
                 {
                     // we have found a result, so we do not continue with the rest anymore

@@ -10,6 +10,7 @@ using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Model.Primitives;
 using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation.Schema;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl
 {
@@ -29,7 +30,7 @@ namespace Hl7.Fhir.Validation.Impl
 
         public override object Value => _maxLength;
 
-        public override Assertions Validate(ITypedElement input, ValidationContext vc)
+        public override Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
         {
             if (input == null) throw Error.ArgumentNull(nameof(input));
 
@@ -41,12 +42,12 @@ namespace Hl7.Fhir.Validation.Impl
 
                 if (serializedValue.Length > _maxLength)
                 {
-                    return result + Assertions.Failure + new IssueAssertion(1005, input.Location, "message") + new Trace($"Value '{serializedValue}' is too long (maximum length is {_maxLength})");
+                    return Task.FromResult(result + Assertions.Failure + new IssueAssertion(1005, input.Location, "message") + new Trace($"Value '{serializedValue}' is too long (maximum length is {_maxLength})"));
                 }
             }
-            else return Assertions.Undecided;
+            else return Task.FromResult(Assertions.Undecided);
 
-            return result + Assertions.Success;
+            return Task.FromResult(result + Assertions.Success);
         }
 
     }

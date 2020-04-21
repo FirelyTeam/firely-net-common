@@ -3,6 +3,7 @@ using Hl7.Fhir.ElementModel.Functions;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Validation.Schema;
 using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl
 {
@@ -21,16 +22,16 @@ namespace Hl7.Fhir.Validation.Impl
 
         public override object Value => _pattern;
 
-        public override Assertions Validate(ITypedElement input, ValidationContext vc)
+        public override Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
         {
             var result = Assertions.Empty + new Trace($"Validate with pattern {_pattern.ToJson()}");
             if (!input.Matches(_pattern))
             {
-                return result + Assertions.Failure + new IssueAssertion(1009, Location, $"Value does not match pattern '{_pattern.ToJson()}", IssueSeverity.Error);
+                return Task.FromResult(result + Assertions.Failure + new IssueAssertion(1009, Location, $"Value does not match pattern '{_pattern.ToJson()}", IssueSeverity.Error));
 
             }
 
-            return result + Assertions.Success;
+            return Task.FromResult(result + Assertions.Success);
         }
 
 
