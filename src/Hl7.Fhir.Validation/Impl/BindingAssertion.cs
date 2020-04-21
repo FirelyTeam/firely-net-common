@@ -5,6 +5,7 @@ using Hl7.Fhir.Validation.Schema;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl
 {
@@ -56,7 +57,7 @@ namespace Hl7.Fhir.Validation.Impl
             Location = location;
         }
 
-        public Assertions Validate(ITypedElement input, ValidationContext vc)
+        public async Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
         {
             var result = Assertions.Empty;
 
@@ -77,7 +78,7 @@ namespace Hl7.Fhir.Validation.Impl
 
             if (!result.Result.IsSuccessful) return result;
 
-            result += ValidateCode(input, bindable, vc);
+            result += await ValidateCode(input, bindable, vc);
 
             return result.AddResultAssertion();
         }
@@ -140,20 +141,20 @@ namespace Hl7.Fhir.Validation.Impl
         private bool codeableConceptHasCode(IConcept cc) =>
             cc.Codes.Any(cd => !string.IsNullOrEmpty(cd.Code));
 
-        internal Assertions ValidateCode(ITypedElement source, object bindable, ValidationContext vc)
+        internal async Task<Assertions> ValidateCode(ITypedElement source, object bindable, ValidationContext vc)
         {
             var result = Assertions.Empty;
 
             switch (bindable)
             {
                 case string code:
-                    result += callService(vc.TerminologyService, source.Location, ValueSetUri, code: code, system: null, display: null, abstractAllowed: AbstractAllowed); ;
+                    result += await callService(vc.TerminologyService, source.Location, ValueSetUri, code: code, system: null, display: null, abstractAllowed: AbstractAllowed); ;
                     break;
                 case ICoding cd:
-                    result += callService(vc.TerminologyService, source.Location, ValueSetUri, coding: cd, abstractAllowed: AbstractAllowed);
+                    result += await callService(vc.TerminologyService, source.Location, ValueSetUri, coding: cd, abstractAllowed: AbstractAllowed);
                     break;
                 case IConcept cc:
-                    result += callService(vc.TerminologyService, source.Location, ValueSetUri, cc: cc, abstractAllowed: AbstractAllowed);
+                    result += await callService(vc.TerminologyService, source.Location, ValueSetUri, cc: cc, abstractAllowed: AbstractAllowed);
                     break;
                 default:
                     throw Error.InvalidOperation($"Parsed bindable was of unexpected instance type '{bindable.GetType().Name}'.");
@@ -167,14 +168,14 @@ namespace Hl7.Fhir.Validation.Impl
             return Strength == BindingStrength.Required ? result : Assertions.Empty;
         }
 
-        private Assertions callService(ITerminologyServiceNEW svc, string location, string canonical, string code = null, string system = null, string display = null,
+        private async Task<Assertions> callService(ITerminologyServiceNEW svc, string location, string canonical, string code = null, string system = null, string display = null,
                 ICoding coding = null, IConcept cc = null, bool? abstractAllowed = null)
         {
             var result = Assertions.Empty;
             try
             {
 
-                result = svc.ValidateCode(canonical: canonical, code: code, system: system, display: display,
+                result = await svc.ValidateCode(canonical: canonical, code: code, system: system, display: display,
                                                coding: coding, codeableConcept: cc, @abstract: abstractAllowed);
 
                 // add location to IssueAssertions, if there are any.

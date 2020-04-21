@@ -12,6 +12,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Schema
 {
@@ -56,25 +57,17 @@ namespace Hl7.Fhir.Validation.Schema
 
         public bool IsEmpty => !Members.Any();
 
-        public Assertions Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
+        public async Task<Assertions> Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
         {
             var members = Members.Where(vc?.IncludeFilter ?? (assertion => true));
             var multiAssertions = members.OfType<IGroupValidatable>();
             var singleAssertions = members.OfType<IValidatable>();
 
-            var multiResults = multiAssertions
-                                .Select(ma => ma.Validate(input, vc));
+            var multiResults = await multiAssertions
+                                        .Select(ma => ma.Validate(input, vc)).AggregateAsync();
 
-            var singleResults = input
-                            .Select(elt => collectPerInstance(elt));
-
-            return collect(multiResults.Union(singleResults));
-
-            Assertions collectPerInstance(ITypedElement elt) =>
-                collect(from assert in singleAssertions
-                        select assert.Validate(elt, vc));
-
-            Assertions collect(IEnumerable<Assertions> bunch) => bunch.Aggregate(Assertions.Empty, (sum, other) => sum += other);
+            var singleResult = await input.Select(elt => singleAssertions.ValidateAsync(elt, vc)).AggregateAsync();
+            return multiResults + singleResult;
         }
 
         public JToken ToJson()

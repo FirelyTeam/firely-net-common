@@ -10,12 +10,13 @@
 
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Model.Primitives;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Schema
 {
     public interface ITerminologyServiceNEW
     {
-        Assertions ValidateCode(string canonical = null, string context = null, string code = null,
+        Task<Assertions> ValidateCode(string canonical = null, string context = null, string code = null,
                     string system = null, string version = null, string display = null,
                     ICoding coding = null, IConcept codeableConcept = null, PartialDateTime? date = null,
                     bool? @abstract = null, string displayLanguage = null);

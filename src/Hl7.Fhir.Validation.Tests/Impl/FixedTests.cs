@@ -33,12 +33,12 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         }
 
         [TestMethod]
-        public void FixedTestcases()
+        public async void FixedTestcases()
         {
             foreach (var (fixedValue, input, expectedResult, failureMessage) in TestData())
             {
                 var validatable = new Fixed("FixedTests.FixedTestcases", fixedValue);
-                var result = validatable.Validate(ElementNode.ForPrimitive(input), new ValidationContext());
+                var result = await validatable.Validate(ElementNode.ForPrimitive(input), new ValidationContext());
 
                 Assert.IsNotNull(result);
                 Assert.IsTrue(result.Result.IsSuccessful == expectedResult, failureMessage);
@@ -46,7 +46,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         }
 
         [TestMethod]
-        public void FixedHumanName()
+        public async void FixedHumanName()
         {
             var fixedValue = ElementNode.Root("HumanName");
             fixedValue.Add("family", "Brown", "string");
@@ -54,14 +54,14 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             fixedValue.Add("given", "Patrick", "string");
 
             var validatable = new Fixed("FixedTests.FixedHumanName", fixedValue);
-            var result = validatable.Validate(ElementNode.ForPrimitive("Brown, Joe Patrick"), new ValidationContext());
+            var result = await validatable.Validate(ElementNode.ForPrimitive("Brown, Joe Patrick"), new ValidationContext());
 
             Assert.IsNotNull(result);
             Assert.IsFalse(result.Result.IsSuccessful, "String and HumanName are different");
         }
 
         [TestMethod]
-        public void FixedHumanNameDifferentInstance()
+        public async void FixedHumanNameDifferentInstance()
         {
             var fixedValue = ElementNode.Root("HumanName");
             fixedValue.Add("family", "Brown", "string");
@@ -74,7 +74,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             input.Add("given", "Joe", "string");
 
             var validatable = new Fixed("FixedTests.FixedHumanNameDifferentInstance", fixedValue);
-            var result = validatable.Validate(input, new ValidationContext());
+            var result = await validatable.Validate(input, new ValidationContext());
 
             Assert.IsNotNull(result);
             Assert.IsFalse(result.Result.IsSuccessful, "The input (HumanName) is slightly different than the fixed value");
