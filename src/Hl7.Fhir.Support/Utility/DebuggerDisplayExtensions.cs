@@ -14,7 +14,7 @@ namespace Hl7.Fhir.Utility
         public static string DebuggerDisplayString(this object target)
         {
             var debuggerDisplay = ReflectionHelper.FindProperty(target.GetType(), DEBUGGER_DISPLAY_PROP_NAME);
-            if (debuggerDisplay == null) return null;
+            if (debuggerDisplay is null) return null;
 
             return debuggerDisplay.GetValue(target, null) as string;
         }
