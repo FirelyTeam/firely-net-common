@@ -12,6 +12,6 @@ namespace Hl7.Fhir.Validation.Schema
 {
     public interface ISchemaResolver
     {
-        ElementSchema GetSchema(Uri schemaUri);
+        IElementSchema GetSchema(Uri schemaUri);
     }
 }

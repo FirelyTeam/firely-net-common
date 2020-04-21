@@ -16,11 +16,11 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Schema
 {
-    public class ElementSchema : IAssertion, IMergeable, IGroupValidatable
+    public class ElementSchema : IElementSchema, IMergeable
     {
         public Uri Id { get; private set; }
 
-        public readonly Assertions Members;
+        public Assertions Members { get; private set; }
 
 
         public ElementSchema(Assertions assertions)
@@ -80,11 +80,6 @@ namespace Hl7.Fhir.Validation.Schema
             JToken nest(JToken mem) =>
                 mem is JObject ? new JProperty("nested", mem) : mem;
         }
-
-        public ElementSchema With(params IAssertion[] additional) => With(additional.AsEnumerable());
-
-        public ElementSchema With(IEnumerable<IAssertion> additional) =>
-            new ElementSchema(this.Id, this.Members.Union(additional));
 
         public IMergeable Merge(IMergeable other) =>
             other is ElementSchema schema ? new ElementSchema(this.Members + schema.Members)
