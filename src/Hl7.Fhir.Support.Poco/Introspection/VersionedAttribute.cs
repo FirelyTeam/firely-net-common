@@ -15,13 +15,13 @@ namespace Hl7.Fhir.Introspection
     public abstract class VersionedAttribute : Attribute, IFhirVersionDependent
     {
         /// <inheritdoc cref="IFhirVersionDependent.Since" />
-        public int Since { get; set; } = Int32.MinValue;
+        public int Since { get; set; } = int.MinValue;
     }
 
     public abstract class VersionedValidationAttribute : ValidationAttribute, IFhirVersionDependent
     {
         /// <inheritdoc cref="IFhirVersionDependent.Since" />
-        public int Since { get; set; } = Int32.MinValue;
+        public int Since { get; set; } = int.MinValue;
 
     }
 }

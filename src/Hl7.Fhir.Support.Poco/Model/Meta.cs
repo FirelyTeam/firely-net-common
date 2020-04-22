@@ -142,7 +142,7 @@ namespace Hl7.Fhir.Model
         /// Profiles this resource claims to conform to
         /// </summary>
         [FhirElement("profile", InSummary=true, Order=60)]
-        [FhirElement("profile", InSummary=true, Order=60, TypeRedirect=typeof(Canonical), Since=4)]
+        [DeclaredType(Type = typeof(Canonical), Since=4)]
         [Cardinality(Min=0,Max=-1)]
         [DataMember]
         public List<Hl7.Fhir.Model.FhirUri> ProfileElement

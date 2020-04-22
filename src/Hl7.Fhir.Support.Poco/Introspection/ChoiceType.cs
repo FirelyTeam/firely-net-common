@@ -38,7 +38,6 @@ namespace Hl7.Fhir.Introspection
     public enum ChoiceType
     {
         None,
-        ResourceChoice,
         DatatypeChoice
     }
 }

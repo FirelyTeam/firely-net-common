@@ -6,7 +6,9 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Utility;
+using Hl7.Fhir.Validation;
 using System;
 using System.Collections;
 using System.ComponentModel.DataAnnotations;
@@ -23,11 +25,10 @@ namespace Hl7.Fhir.Validation
         {
             Types = types;
         }
-
        
         public Type[] Types { get; set; }
 
-        public bool IsOpen { get; set; } = false;
+        public bool IsOpen { get; set; }
 
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
@@ -36,7 +37,8 @@ namespace Hl7.Fhir.Validation
             var list = value as IEnumerable;
             ValidationResult result = ValidationResult.Success;
 
-            if (list != null)
+            // Avoid interpreting this as a collection just because string is IEnumerable<char>.
+            if (list != null && !(value is string))
             {
                 foreach (var item in list)
                 {
@@ -54,7 +56,7 @@ namespace Hl7.Fhir.Validation
 
         private ValidationResult validateValue(object item, ValidationContext context)
         {
-            if (IsOpen == false && item != null)
+            if (item != null)
             {
                 if (!Types.Any(type => type.GetTypeInfo().IsAssignableFrom(item.GetType().GetTypeInfo())))
                     return DotNetAttributeValidation.BuildResult(context, "Value is of type {0}, which is not an allowed choice", item.GetType());

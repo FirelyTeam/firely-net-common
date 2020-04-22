@@ -29,7 +29,6 @@
 */
 
 using Hl7.Fhir.Specification;
-using Hl7.Fhir.Support.Utility;
 using Hl7.Fhir.Validation;
 using System;
 using System.Collections;
@@ -46,8 +45,6 @@ namespace Hl7.Fhir.Introspection
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
         }
-
-        public ChoiceType Choice { get; set; } = ChoiceType.None;
 
         /// <summary>
         /// The name of the element in FHIR this property represents.
@@ -67,12 +64,6 @@ namespace Hl7.Fhir.Introspection
         public int Order { get; set; }
 
         public bool InSummary { get; set; }
-
-        /// <summary>
-        /// When set, this Type will be used to determine the FHIR type of the element, instead
-        /// of the declared type of the property.
-        /// </summary>
-        public Type TypeRedirect { get; set; }
 
         // This attribute is a subclass of ValidationAttribute so that IsValid() is called on every 
         // FhirElement while validating. This allows us to extend validation into each FhirElement,
