@@ -45,5 +45,11 @@ namespace Hl7.FhirPath.Functions
             else
                 return me.Replace(find, replace);
         }
+
+        public static IEnumerable<ITypedElement> FpSplit(this string me, string seperator)
+        {
+            var results = me.Split(new[] { seperator }, StringSplitOptions.RemoveEmptyEntries);
+            return results.Select(s => ElementNode.ForPrimitive(s));
+        }
     }
 }

@@ -12,6 +12,7 @@
 using Hl7.Fhir.ElementModel;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Hl7.FhirPath.Tests
 {
@@ -49,6 +50,29 @@ namespace Hl7.FhirPath.Tests
             Assert.AreEqual("ABC", dummy.Scalar("'ABC' & {}"));
 
             Assert.IsNull(dummy.Scalar("'ABC' & {} & 'DEF' + {}"));
+        }
+
+        [TestMethod]
+        public void TestStringSplit()
+        {
+            ITypedElement dummy = ElementNode.ForPrimitive("a,b,c,d");
+            var result = dummy.Select("split(',')");
+            Assert.IsNotNull(result);
+            CollectionAssert.AreEqual(new[] { "a", "b", "c", "d" }, result.Select(r => r.Value.ToString()).ToArray());
+
+            dummy = ElementNode.ForPrimitive("a,,b,c,d"); // Empty element should be removed
+            result = dummy.Select("split(',')");
+            Assert.IsNotNull(result);
+            CollectionAssert.AreEqual(new[] { "a", "b", "c", "d" }, result.Select(r => r.Value.ToString()).ToArray());
+
+            dummy = ElementNode.ForPrimitive("");
+            result = dummy.Select("split(',')");
+            Assert.IsNotNull(result);
+
+            dummy = ElementNode.ForPrimitive("[stop]ONE[stop][stop]TWO[stop][stop][stop]THREE[stop][stop]");
+            result = dummy.Select("split('[stop]')");
+            Assert.IsNotNull(result);
+            CollectionAssert.AreEqual(new[] { "ONE", "TWO", "THREE" }, result.Select(r => r.Value.ToString()).ToArray());
         }
     }
         
