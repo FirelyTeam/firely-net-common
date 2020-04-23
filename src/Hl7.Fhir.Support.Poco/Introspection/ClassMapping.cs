@@ -7,6 +7,7 @@
  */
 
 using Hl7.Fhir.Model;
+using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
@@ -16,7 +17,7 @@ using System.Threading;
 
 namespace Hl7.Fhir.Introspection
 {
-    public class ClassMapping
+    public class ClassMapping : IStructureDefinitionSummary
     {
         private ClassMapping()
         {
@@ -86,6 +87,20 @@ namespace Hl7.Fhir.Introspection
         /// Indicates whether this class represents the nested complex type for a (backbone) element.
         /// </summary>
         public bool IsNestedType { get; private set; }
+
+        string IStructureDefinitionSummary.TypeName =>
+            !IsNestedType ? 
+                Name
+                : NativeType.CanBeTreatedAsType(typeof(BackboneElement)) ?
+                    "BackboneElement" 
+                    : "Element";
+
+        bool IStructureDefinitionSummary.IsAbstract => NativeType.GetTypeInfo().IsAbstract;
+
+        bool IStructureDefinitionSummary.IsResource => IsResource;
+
+        IReadOnlyCollection<IElementDefinitionSummary> IStructureDefinitionSummary.GetElements() =>
+            PropertyMappings.ToReadOnlyCollection();
 
         /// <summary>
         /// Returns the mapping for an element of this class.
@@ -183,5 +198,6 @@ namespace Hl7.Fhir.Introspection
 
         [Obsolete("ClassMapping.IsMappable() is slow and obsolete, use ClassMapping.TryCreate() instead.")]
         public static bool IsMappableType(Type type) => TryCreate(type, out var _);
+        
     }
 }

@@ -20,7 +20,7 @@ using System.Threading;
 namespace Hl7.Fhir.Introspection
 {
     [System.Diagnostics.DebuggerDisplay(@"\{Name={Name} ElementType={ElementType.Name}}")]
-    public class PropertyMapping
+    public class PropertyMapping : IElementDefinitionSummary
     {
         private PropertyMapping()
         {
@@ -93,6 +93,7 @@ namespace Hl7.Fhir.Introspection
         public bool IsOpen { get; private set; }
 
         private PropertyInfo _propInfo;
+        private int _createdVersion;
 
         [Obsolete("Use TryCreate() instead.")]
         public static PropertyMapping Create(PropertyInfo prop, int version = int.MaxValue)
@@ -118,11 +119,13 @@ namespace Hl7.Fhir.Introspection
             result.SerializationHint = elementAttr.XmlSerialization;
             result.Order = elementAttr.Order;
             result._propInfo = prop;
+            result._createdVersion = version;
 
             var cardinalityAttr = getAttribute<Validation.CardinalityAttribute>(prop, version);
             result.IsMandatoryElement = cardinalityAttr != null ? cardinalityAttr.Min > 0 : false;
 
-            result.IsCollection = ReflectionHelper.IsTypedCollection(prop.PropertyType) && !prop.PropertyType.IsArray;
+            result.IsCollection = ReflectionHelper.IsTypedCollection(prop.PropertyType) &&
+                prop.PropertyType != typeof(string);           // prevent silly string:char[] confusion
 
             // Get to the actual (native) type representing this element
             result.ElementType = prop.PropertyType;
@@ -182,23 +185,6 @@ namespace Hl7.Fhir.Introspection
             string buildQualifiedPropName(PropertyInfo p) => p.DeclaringType.Name + "." + p.Name;
         }
 
-        //public bool MatchesSuffixedName(string suffixedName)
-        //{
-        //    if (suffixedName == null) throw Error.ArgumentNull(nameof(suffixedName));
-
-        //    return Choice == ChoiceType.DatatypeChoice && suffixedName.ToUpperInvariant().StartsWith(Name.ToUpperInvariant());
-        //}
-
-        //public string GetChoiceSuffixFromName(string suffixedName)
-        //{
-        //    if (suffixedName == null) throw Error.ArgumentNull(nameof(suffixedName));
-
-        //    if (MatchesSuffixedName(suffixedName))
-        //        return suffixedName.Remove(0, Name.Length);
-        //    else
-        //        throw Error.Argument(nameof(suffixedName), "The given suffixed name {0} does not match this property's name {1}".FormatWith(suffixedName, Name));
-        //}
-
         private static bool isAllowedNativeTypeForDataTypeValue(Type type)
         {
             // Special case, allow Nullable<enum>
@@ -237,11 +223,71 @@ namespace Hl7.Fhir.Introspection
             }
         }
 
+        string IElementDefinitionSummary.ElementName => this.Name;
+
+        bool IElementDefinitionSummary.IsCollection => this.IsCollection;
+
+        bool IElementDefinitionSummary.IsRequired => this.IsMandatoryElement;
+
+        bool IElementDefinitionSummary.InSummary => this.InSummary;
+
+        bool IElementDefinitionSummary.IsChoiceElement => this.IsDatatypeChoice;
+
+        bool IElementDefinitionSummary.IsResource => this.IsResourceChoice;
+
+        string IElementDefinitionSummary.DefaultTypeName => null;
+            
+        ITypeSerializationInfo[] IElementDefinitionSummary.Type => throw new NotImplementedException();
+
+        string IElementDefinitionSummary.NonDefaultNamespace => null;
+
+        XmlRepresentation IElementDefinitionSummary.Representation =>
+            SerializationHint != XmlRepresentation.None ?
+            SerializationHint : XmlRepresentation.XmlElement;
+
+        int IElementDefinitionSummary.Order => Order;
+
         private Action<object, object> _setter;
 
 
         public object GetValue(object instance) => Getter(instance);
 
         public void SetValue(object instance, object value) => Setter(instance, value);
+
+        private ITypeSerializationInfo[] buildTypes()
+        {
+            var success = ClassMapping.TryCreate(FhirType[0], out var elementTypeMapping, _createdVersion);
+
+            if (elementTypeMapping.IsNestedType)
+            {
+                var info = elementTypeMapping;
+                return new ITypeSerializationInfo[] { info };
+            }
+            else
+            {
+                var names = FhirType.Select(ft => getFhirTypeName(ft));
+                return names.Select(n => (ITypeSerializationInfo)new PocoTypeReferenceInfo(n)).ToArray();
+            }
+
+            string getFhirTypeName(Type ft)
+            {
+                if (ClassMapping.TryCreate(ft, out var tm, _createdVersion))
+                    return tm.IsCodeOfT ? "code" : tm.Name;
+                else
+                    throw new NotSupportedException($"Type '{ft.Name}' is an allowed type for property " +
+                        $"'{_propInfo.Name}' in '{_propInfo.DeclaringType.Name}', but it does not seem to" +
+                        $"be a valid FHIR type POCO.");
+            }
+        }
+
+        struct PocoTypeReferenceInfo : IStructureDefinitionReference
+        {
+            public PocoTypeReferenceInfo(string canonical)
+            {
+                ReferredType = canonical;
+            }
+
+            public string ReferredType { get; private set; }
+        }
     }
 }
