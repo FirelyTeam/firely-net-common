@@ -19,7 +19,7 @@ namespace Hl7.Fhir.Validation.Impl
         public IAssertion CreateConditionsAssertion()
             => null; // todo
 
-        public void CreateDefaultValue(ITypedElement defaultValue) 
+        public void CreateDefaultValue(ITypedElement defaultValue)
         { }
 
         public void CreateDocumentation(string label, string shortDescription, string definition, string comment, string requirements, string meaningWhenMissing, string orderMeaning, IEnumerable<string> aliases, IEnumerable<(string system, string systemVersion, string code, string codeDisplay, bool isUserSelected)> codings)
@@ -54,6 +54,9 @@ namespace Hl7.Fhir.Validation.Impl
 
         public IAssertion CreateReferenceAssertion(Func<IElementSchema> getSchema, Uri uri)
             => new ReferenceAssertion(getSchema, uri);
+
+        public IAssertion CreateExtensionAssertion(Func<Uri, IElementSchema> getSchema, Uri uri)
+            => new ExtensionAssertion(getSchema, uri);
 
         public IAssertion CreateRegexAssertion(string location, string pattern)
             => new RegExAssertion(location, pattern);

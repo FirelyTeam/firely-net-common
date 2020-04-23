@@ -21,10 +21,12 @@ namespace Hl7.Fhir.Validation.Schema
             _assertionFactory = assertionFactory;
         }
 
-        public IAssertion BuildProfileRef(string profile)
+        public IAssertion BuildProfileRef(string type, string profile)
         {
             var uri = new Uri(profile, UriKind.Absolute);
-            return _assertionFactory.CreateReferenceAssertion(() => Resolver.GetSchema(uri), uri);
+            return type == "Extension"
+                ? _assertionFactory.CreateExtensionAssertion((u) => Resolver.GetSchema(u), uri)
+                : _assertionFactory.CreateReferenceAssertion(() => Resolver.GetSchema(uri), uri);
         }
     }
 }

@@ -38,6 +38,8 @@ namespace Hl7.Fhir.Validation.Schema
 
         IAssertion CreateReferenceAssertion(Func<IElementSchema> getSchema, Uri uri);
 
+        IAssertion CreateExtensionAssertion(Func<Uri, IElementSchema> getSchema, Uri uri);
+
         IAssertion CreateRegexAssertion(string location, string pattern);
 
         IAssertion CreateTypesAssertion(IEnumerable<(string code, IEnumerable<string> profileCanonicals)> types);

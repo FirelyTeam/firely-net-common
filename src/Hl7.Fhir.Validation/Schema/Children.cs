@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * Copyright (c) 2019, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
@@ -106,6 +106,8 @@ namespace Hl7.Fhir.Validation.Schema
                         break;
                 }
             }
+
+            // todo restanten, which are not part of the definition?
 
             return result;
         }

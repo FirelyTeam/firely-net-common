@@ -25,6 +25,6 @@ namespace Hl7.Fhir.Validation.Impl
 
         public override object Value => Order;
 
-        public override Task<Assertions> Validate(ITypedElement input, ValidationContext vc) => Task.FromResult(Assertions.Empty);
+        public override Task<Assertions> Validate(ITypedElement input, ValidationContext vc) => Task.FromResult(Assertions.Success);
     }
 }

@@ -4,6 +4,7 @@ using Hl7.Fhir.Validation.Schema;
 using Hl7.FhirPath;
 using Hl7.FhirPath.Expressions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Tests.Impl
 {
@@ -30,7 +31,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         }
 
         [TestMethod]
-        public async void ValidateSuccess()
+        public async Task ValidateSuccess()
         {
             var validatable = new FhirPathAssertion("FhirPathAssertionTests.ValidateSuccess", "test-1", "$this = 'test'", "human description", IssueSeverity.Error, false);
 
@@ -43,7 +44,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         }
 
         [TestMethod]
-        public async void ValidateIncorrectFhirPath()
+        public async Task ValidateIncorrectFhirPath()
         {
             var validatable = new FhirPathAssertion("FhirPathAssertionTests.ValidateIncorrectFhirPath", "test -1", "this is not a fhirpath expression", "human description", IssueSeverity.Error, false);
 
@@ -56,7 +57,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         }
 
         [TestMethod]
-        public async void ValidateChildrenExists()
+        public async Task ValidateChildrenExists()
         {
             var humanName = ElementNode.Root("HumanName");
             humanName.Add("family", "Brown", "string");

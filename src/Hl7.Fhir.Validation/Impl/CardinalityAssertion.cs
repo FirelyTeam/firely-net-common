@@ -45,10 +45,10 @@ namespace Hl7.Fhir.Validation.Impl
             var count = input.Count();
             if (!InRange(count))
             {
-                assertions += Assertions.Failure + new IssueAssertion(1028, _location, $"Instance count for '{_location}' is { count }, which is not within the specified cardinality of { CardinalityDisplay}", IssueSeverity.Error);
+                assertions += new IssueAssertion(1028, _location, $"Instance count for '{_location}' is { count }, which is not within the specified cardinality of { CardinalityDisplay}", IssueSeverity.Error);
             }
 
-            return Task.FromResult(assertions);
+            return Task.FromResult(assertions.AddResultAssertion());
         }
 
         private bool InRange(int x)

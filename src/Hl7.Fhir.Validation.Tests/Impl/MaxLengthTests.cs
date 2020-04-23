@@ -4,6 +4,7 @@ using Hl7.Fhir.Validation.Schema;
 using Hl7.Fhir.Validation.Tests.Impl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Tests.Schema
 {
@@ -13,7 +14,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
         public MaxLengthTests() : base(new MaxLength("MaxLengthTests", 10)) { }
 
         [TestMethod]
-        public async void LengthTooLong()
+        public async Task LengthTooLong()
         {
             var node = ElementNode.ForPrimitive("12345678901");
 
@@ -27,7 +28,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
         }
 
         [TestMethod]
-        public async void LengthCorrect()
+        public async Task LengthCorrect()
         {
             var node = ElementNode.ForPrimitive("1234567890");
 
@@ -38,7 +39,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
         }
 
         [TestMethod]
-        public async void ValidateWithOtherThanString()
+        public async Task ValidateWithOtherThanString()
         {
             var node = ElementNode.ForPrimitive(90);
 
@@ -48,7 +49,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
         }
 
         [TestMethod]
-        public async void ValidateWithEmptyString()
+        public async Task ValidateWithEmptyString()
         {
             var node = ElementNode.ForPrimitive("");
 

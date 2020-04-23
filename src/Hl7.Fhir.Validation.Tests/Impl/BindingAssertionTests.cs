@@ -91,7 +91,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         }
 
         [TestMethod]
-        public async void ValidateWithCode()
+        public async Task ValidateWithCode()
         {
             SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
             var input = ElementNode.Root("code", value: "CD123");
@@ -115,7 +115,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         }
 
         [TestMethod]
-        public async void ValidateWithUri()
+        public async Task ValidateWithUri()
         {
             SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
             var input = ElementNode.Root("uri", value: "http://some.uri");
@@ -139,7 +139,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         }
 
         [TestMethod]
-        public async void ValidateWithString()
+        public async Task ValidateWithString()
         {
             SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
             var input = ElementNode.Root("string", value: "Some string");
@@ -163,7 +163,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         }
 
         [TestMethod]
-        public async void ValidateWithCoding()
+        public async Task ValidateWithCoding()
         {
             SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
 
@@ -187,7 +187,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         }
 
         [TestMethod]
-        public async void ValidateWithCodeableConcept()
+        public async Task ValidateWithCodeableConcept()
         {
             SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
             var codings = new[] { createCoding("http://terminology.hl7.org/CodeSystem/data-absent-reason", "masked") ,
@@ -214,7 +214,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         }
 
         [TestMethod]
-        public async void ValidateWithQuantity()
+        public async Task ValidateWithQuantity()
         {
             SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
 
@@ -238,7 +238,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         }
 
         [TestMethod]
-        public async void ValidateEmptyString()
+        public async Task ValidateEmptyString()
         {
             var input = ElementNode.Root("string", value: "");
 
@@ -249,7 +249,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         }
 
         [TestMethod]
-        public async void ValidateCodingWithoutCode()
+        public async Task ValidateCodingWithoutCode()
         {
             var input = createCoding("system", null, null);
 
@@ -260,7 +260,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         }
 
         [TestMethod]
-        public async void ValidateInvalidCoding()
+        public async Task ValidateInvalidCoding()
         {
             SetupTerminologyServiceResult(new Assertions(ResultAssertion.Failure));
 

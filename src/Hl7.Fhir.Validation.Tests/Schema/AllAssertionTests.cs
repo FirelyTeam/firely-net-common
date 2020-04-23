@@ -38,7 +38,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
 
 
         [TestMethod]
-        public async void SingleOperand()
+        public async Task SingleOperand()
         {
             var allAssertion = new AllAssertion(new SuccessAssertion());
             var result = await allAssertion.Validate(null, null);
@@ -51,7 +51,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
         }
 
         [TestMethod]
-        public async void Combinations()
+        public async Task Combinations()
         {
             var allAssertion = new AllAssertion(new SuccessAssertion(), new FailureAssertion());
             var result = await allAssertion.Validate(null, null);

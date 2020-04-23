@@ -4,6 +4,7 @@ using Hl7.Fhir.Validation.Impl;
 using Hl7.Fhir.Validation.Schema;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Tests.Impl
 {
@@ -33,7 +34,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         }
 
         [TestMethod]
-        public async void PrimitivePatternTestcases()
+        public async Task PrimitivePatternTestcases()
         {
             foreach (var (patternValue, input, expectedResult, failureMessage) in TestData())
             {
@@ -46,7 +47,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         }
 
         [TestMethod]
-        public async void PatternHumanName()
+        public async Task PatternHumanName()
         {
             var patternValue = ElementNode.Root("HumanName");
             patternValue.Add("family", "Brown", "string");
@@ -61,7 +62,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         }
 
         [TestMethod]
-        public async void ComplexTypePattern()
+        public async Task ComplexTypePattern()
         {
             var patternValue = ElementNode.Root("HumanName");
             patternValue.Add("family", "Brown", "string");
@@ -80,7 +81,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         }
 
         [TestMethod]
-        public async void NotMatchingComplexTypePattern()
+        public async Task NotMatchingComplexTypePattern()
         {
             var patternValue = ElementNode.Root("HumanName");
             patternValue.Add("family", "Brown", "string");

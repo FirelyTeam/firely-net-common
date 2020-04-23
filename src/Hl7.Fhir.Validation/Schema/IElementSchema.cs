@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Hl7.Fhir.Validation.Schema
@@ -21,5 +22,12 @@ namespace Hl7.Fhir.Validation.Schema
 
         public static IElementSchema With(this IElementSchema elementSchema, IElementDefinitionAssertionFactory factory, params IAssertion[] additional)
             => elementSchema.With(factory, additional.AsEnumerable());
+
+        public static void LogSchema(this IElementSchema elementSchema)
+        {
+            var json = elementSchema.ToJson();
+
+            Debug.WriteLine($"Elementschema: {elementSchema.Id}\n{json}");
+        }
     }
 }

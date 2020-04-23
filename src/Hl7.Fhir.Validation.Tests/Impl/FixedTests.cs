@@ -4,6 +4,7 @@ using Hl7.Fhir.Validation.Impl;
 using Hl7.Fhir.Validation.Schema;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Tests.Impl
 {
@@ -33,7 +34,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         }
 
         [TestMethod]
-        public async void FixedTestcases()
+        public async Task FixedTestcases()
         {
             foreach (var (fixedValue, input, expectedResult, failureMessage) in TestData())
             {
@@ -46,7 +47,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         }
 
         [TestMethod]
-        public async void FixedHumanName()
+        public async Task FixedHumanName()
         {
             var fixedValue = ElementNode.Root("HumanName");
             fixedValue.Add("family", "Brown", "string");
@@ -61,7 +62,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         }
 
         [TestMethod]
-        public async void FixedHumanNameDifferentInstance()
+        public async Task FixedHumanNameDifferentInstance()
         {
             var fixedValue = ElementNode.Root("HumanName");
             fixedValue.Add("family", "Brown", "string");
