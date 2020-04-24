@@ -51,7 +51,7 @@ namespace Hl7.Fhir.Introspection
         /// <remarks>If the element is a collection or is nullable, this reflects the
         /// collection item or the type that is made nullable respectively.
         /// </remarks>
-        public Type ElementType { get; private set; }
+        public Type NativeType { get; private set; }
 
         public int Order { get; private set; }
 
@@ -128,16 +128,16 @@ namespace Hl7.Fhir.Introspection
                 prop.PropertyType != typeof(string);           // prevent silly string:char[] confusion
 
             // Get to the actual (native) type representing this element
-            result.ElementType = prop.PropertyType;
-            if (result.IsCollection) result.ElementType = ReflectionHelper.GetCollectionItemType(prop.PropertyType);
-            if (ReflectionHelper.IsNullableType(result.ElementType)) result.ElementType = ReflectionHelper.GetNullableArgument(result.ElementType);
-            result.IsPrimitive = isAllowedNativeTypeForDataTypeValue(result.ElementType);
+            result.NativeType = prop.PropertyType;
+            if (result.IsCollection) result.NativeType = ReflectionHelper.GetCollectionItemType(prop.PropertyType);
+            if (ReflectionHelper.IsNullableType(result.NativeType)) result.NativeType = ReflectionHelper.GetNullableArgument(result.NativeType);
+            result.IsPrimitive = isAllowedNativeTypeForDataTypeValue(result.NativeType);
 
             // Determine which FHIR type represents this ElementType
             // This is normally just the ElementType itself, but can be overridden
             // with the [DeclaredType] attribute.
             var declaredType = getAttribute<DeclaredTypeAttribute>(prop, version);
-            var fhirType = declaredType?.Type ?? result.ElementType;
+            var fhirType = declaredType?.Type ?? result.NativeType;
 
             result.IsResourceChoice = fhirType.GetTypeInfo().IsAbstract &&
                                         fhirType.CanBeTreatedAsType(typeof(Resource));
@@ -182,8 +182,9 @@ namespace Hl7.Fhir.Introspection
 
             return isValueElement;
 
-            string buildQualifiedPropName(PropertyInfo p) => p.DeclaringType.Name + "." + p.Name;
         }
+
+        private static string buildQualifiedPropName(PropertyInfo p) => p.DeclaringType.Name + "." + p.Name;
 
         private static bool isAllowedNativeTypeForDataTypeValue(Type type)
         {
@@ -237,7 +238,16 @@ namespace Hl7.Fhir.Introspection
 
         string IElementDefinitionSummary.DefaultTypeName => null;
             
-        ITypeSerializationInfo[] IElementDefinitionSummary.Type => throw new NotImplementedException();
+        ITypeSerializationInfo[] IElementDefinitionSummary.Type
+        {
+            get
+            {
+                LazyInitializer.EnsureInitialized(ref _types, buildTypes);
+                return _types;
+            }
+        }
+
+        private ITypeSerializationInfo[] _types;
 
         string IElementDefinitionSummary.NonDefaultNamespace => null;
 
@@ -271,11 +281,13 @@ namespace Hl7.Fhir.Introspection
 
             string getFhirTypeName(Type ft)
             {
+                // The special case where the mapping name is a backbone element name can safely
+                // be ignored here, since that is handled by the first case in the if statement above.
                 if (ClassMapping.TryCreate(ft, out var tm, _createdVersion))
-                    return tm.IsCodeOfT ? "code" : tm.Name;
+                    return ((IStructureDefinitionSummary)tm).TypeName;
                 else
-                    throw new NotSupportedException($"Type '{ft.Name}' is an allowed type for property " +
-                        $"'{_propInfo.Name}' in '{_propInfo.DeclaringType.Name}', but it does not seem to" +
+                    throw new NotSupportedException($"Type '{ft.Name}' is listed as an allowed type for property " +
+                        $"'{buildQualifiedPropName(_propInfo)}', but it does not seem to" +
                         $"be a valid FHIR type POCO.");
             }
         }

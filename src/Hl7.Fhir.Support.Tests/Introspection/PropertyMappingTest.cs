@@ -40,7 +40,7 @@ namespace Hl7.Fhir.Tests.Introspection
             Assert.IsNotNull(valueProp);
             Assert.IsFalse(valueProp.IsCollection);
             Assert.IsTrue(valueProp.RepresentsValueElement);
-            Assert.AreEqual(typeof(Resource.ResourceValidationMode),valueProp.ElementType);
+            Assert.AreEqual(typeof(Resource.ResourceValidationMode),valueProp.NativeType);
 
             Assert.IsTrue(ClassMapping.TryCreate(typeof(FhirUri), out mapping));
             Assert.AreEqual("uri", mapping.Name);
@@ -49,7 +49,7 @@ namespace Hl7.Fhir.Tests.Introspection
             Assert.IsNotNull(valueProp);
             Assert.IsFalse(valueProp.IsCollection);
             Assert.IsTrue(valueProp.RepresentsValueElement);
-            Assert.AreEqual(typeof(string), valueProp.ElementType);
+            Assert.AreEqual(typeof(string), valueProp.NativeType);
         }
         
         [TestMethod]

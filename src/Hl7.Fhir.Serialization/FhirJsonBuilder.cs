@@ -72,8 +72,11 @@ namespace Hl7.Fhir.Serialization
 
         // These are the "primitive" FHIR instance types that possibly need a separate element/_element
         // serialization in json.
-        private static readonly string[] primitiveTypes = { "boolean",
+        private static readonly string[] primitiveTypes =
+        {
+            "boolean",
              "integer",
+             "integer64",
              "unsignedInt",
              "positiveInt",
              "time",
@@ -91,7 +94,8 @@ namespace Hl7.Fhir.Serialization
              "url",
              "markdown",
              "base64Binary",
-             "xhtml" };
+             "xhtml" 
+        };
 
 
         private (JToken first, JObject second) buildNode(ITypedElement node)
@@ -206,13 +210,13 @@ namespace Hl7.Fhir.Serialization
                 case Int32 i32:
                 case Int16 i16:
                 case ulong ul:
+                case long l:
                 case double db:
                 case BigInteger bi:
                 case float f:
                     return new JValue(value);
                 case string s:
-                    return new JValue(s.Trim());
-                case long l:
+                    return new JValue(s.Trim());                
                 default:
                     return new JValue(PrimitiveTypeConverter.ConvertTo<string>(value));
             }

@@ -137,8 +137,14 @@ namespace Hl7.Fhir.ElementModel
 
             if (child.InstanceType == null && child.Definition != null)
             {
-                if (child.Definition.IsResource || child.Definition.Type.Length > 1)
+                if (child.Definition.IsResource || child.Definition.IsChoiceElement)
                 {
+                    // Note that we just demand InstanceType to be set on any kind of choice, even if
+                    // some profile has limited the choice to a single type. Too hard to figure out
+                    // whether it actually allows more than one choice, since the single type might
+                    // also be abstract, and still allow choices.
+                    throw Error.Argument("The ElementNode given should have its InstanceType property set, since the element is a choice or resource.");
+
                     // [EK20190822] This functionality has been removed since it heavily depends on knowledge about
                     // FHIR types, it would automatically try to derive a *FHIR* type from the given child.Value,
                     // however, this would not work correctly if the model used is something else than FHIR, 
@@ -148,8 +154,6 @@ namespace Hl7.Fhir.ElementModel
                     //// the instance type.  We can try to auto-set it by deriving it from the instance's type, if it is a primitive
                     //if (child.Value != null && IsSupportedValue(child.Value))
                     //    child.InstanceType = TypeSpecifier.ForNativeType(child.Value.GetType()).Name;
-                    //else
-                        throw Error.Argument("The ElementNode given should have its InstanceType property set, since the element is a choice or resource.");
                 }
                 else
                     child.InstanceType = child.Definition.Type.Single().GetTypeName();

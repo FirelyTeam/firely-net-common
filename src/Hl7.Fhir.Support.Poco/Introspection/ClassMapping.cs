@@ -21,12 +21,21 @@ namespace Hl7.Fhir.Introspection
     {
         private ClassMapping()
         {
-            // Force use of TryCreate for users
+            // No public constructor.
         }
 
         /// <summary>
-        /// Name of the FHIR datatype/resource this class represents
+        /// Name of the mapping.
         /// </summary>
+        /// <remarks>
+        /// This is often the FHIR name for the type, but not always:
+        /// <list type="bullet">
+        /// <item>FHIR <c>code</c> types with required bindings are modelled in the POCO as a <see cref="Code{T}"/>,
+        /// the mapping name for these will be <c>code&lt;name of enum&gt;</c></item>
+        /// <item>Nested (backbone)types have a mapping name that includes the full path to the element defining
+        /// the nested type, e.g. <c>Patient#Patient.contact</c></item>
+        /// </list>
+        /// </remarks>
         public string Name { get; private set; }
 
         /// <summary>
@@ -35,13 +44,25 @@ namespace Hl7.Fhir.Introspection
         public Type NativeType { get; private set; }
 
         /// <summary>
-        /// Is True when this class represents a Resource datatype and False if it 
-        /// represents a normal complex or primitive Fhir Datatype
+        /// 
+        /// </summary>
+        public Type DeclaredType { get; private set; }
+
+        /// <summary>
+        /// Is <c>true</c> when this class represents a Resource datatype.
         /// </summary>
         public bool IsResource { get; private set; }
 
+        /// <summary>
+        /// Is <c>true</c> when this class represents a code with a required binding.
+        /// </summary>
+        /// <remarks>See <see cref="Name"></see>.</remarks>
         public bool IsCodeOfT { get; private set; }
 
+        /// <summary>
+        /// Indicates whether this class represents the nested complex type for a (backbone) element.
+        /// </summary>
+        public bool IsNestedType { get; private set; }
 
         private class MappingCollection
         {
@@ -83,24 +104,29 @@ namespace Hl7.Fhir.Introspection
 
         public IList<PropertyMapping> PropertyMappings => Mappings.ByOrder;
 
-        /// <summary>
-        /// Indicates whether this class represents the nested complex type for a (backbone) element.
-        /// </summary>
-        public bool IsNestedType { get; private set; }
-
-        string IStructureDefinitionSummary.TypeName =>
-            !IsNestedType ? 
-                Name
-                : NativeType.CanBeTreatedAsType(typeof(BackboneElement)) ?
-                    "BackboneElement" 
-                    : "Element";
+        string IStructureDefinitionSummary.TypeName
+        {
+            get
+            {
+                if (IsCodeOfT) 
+                    return "code";
+                else if (IsNestedType)
+                {
+                    return NativeType.CanBeTreatedAsType(typeof(BackboneElement)) ?
+                        "BackboneElement"
+                        : "Element";
+                }
+                else
+                    return Name;
+            }
+        }
 
         bool IStructureDefinitionSummary.IsAbstract => NativeType.GetTypeInfo().IsAbstract;
 
         bool IStructureDefinitionSummary.IsResource => IsResource;
 
         IReadOnlyCollection<IElementDefinitionSummary> IStructureDefinitionSummary.GetElements() =>
-            PropertyMappings.ToReadOnlyCollection();
+            PropertyMappings.Where(pm => !pm.RepresentsValueElement).ToReadOnlyCollection();
 
         /// <summary>
         /// Returns the mapping for an element of this class.
