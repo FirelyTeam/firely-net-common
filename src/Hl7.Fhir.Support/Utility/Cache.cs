@@ -15,14 +15,18 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Utility
 {
-    public class Cache<K, V>
+    public class Cache<K, V> where V:class
     {
         private readonly ConcurrentDictionary<K, CacheItem<V>> _cached;
         private readonly int _minimumCacheSize;
         private readonly CacheSettings _settings;
         private readonly Func<K, CacheItem<V>> _retriever;
 
+        public Cache() : this(CacheSettings.CreateDefault()) { }
+
         public Cache(Func<K, V> retrieveFunction) : this(retrieveFunction, CacheSettings.CreateDefault())  { }
+
+        public Cache(CacheSettings settings) : this(null, CacheSettings.CreateDefault()) { }
 
         public Cache(Func<K, V> retrieveFunction, CacheSettings settings)
         {
@@ -38,12 +42,16 @@ namespace Hl7.Fhir.Utility
 
         public V GetValue(K key)
         {
-            var cachedItem = _retriever != null ?
-                _cached.GetOrAdd(key, _retriever)
-                : _cached.GetOrAdd(key, default(CacheItem<V>));
-            enforceMaxItems();
-
-            return cachedItem.Value;
+            if (_retriever == null)
+            {
+                return _cached.TryGetValue(key, out var foundItem) ? foundItem.Value : null;
+            }
+            else
+            {
+                var cachedItem = _cached.GetOrAdd(key, _retriever);
+                enforceMaxItems();
+                return cachedItem.Value;
+            }
         }
 
         public V GetValueOrAdd(K key, V value)

@@ -47,6 +47,19 @@ namespace Hl7.Fhir.Support.Tests
         }
 
         [TestMethod]
+        public void AddItemsWithoutRetriever()
+        {
+            var cache = new Cache<string, string>();
+
+            Assert.IsNull(cache.GetValue("item1"));
+            Assert.IsNull(cache.GetValue("item1"));  // and again, no change
+
+            var item = "contents";
+            Assert.IsTrue(object.ReferenceEquals(item, cache.GetValueOrAdd("item1", item)));
+            Assert.IsTrue(object.ReferenceEquals(item, cache.GetValue("item1")));
+        }
+
+        [TestMethod]
         public void AddingItems()
         {
             var called = 0;
@@ -90,13 +103,14 @@ namespace Hl7.Fhir.Support.Tests
         [TestCategory("LongRunner")]
         public void AddingItemsParallel()
         {
+            var cache = new Cache<string, string>(expr => expr.ToUpper(), new CacheSettings() { MaxCacheSize = 500 });
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
             var actionBlock = new ActionBlock<string>(
                  input =>
                  {
-                     _cache.GetValue(input);
+                     cache.GetValue(input);
                  }, 
                  new ExecutionDataflowBlockOptions()
                  {
