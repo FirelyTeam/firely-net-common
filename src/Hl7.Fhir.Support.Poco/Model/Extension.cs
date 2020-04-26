@@ -62,7 +62,7 @@ namespace Hl7.Fhir.Model
         /// identifies the meaning of the extension
         /// </summary>
         [FhirElement("url", XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 30)]
-        [DeclaredType(Type = typeof(FhirUri))]
+        [TypeRedirect(Type = typeof(FhirUri))]
         [Cardinality(Min = 1, Max = 1)]
         [UriPattern]
         [DataMember]
@@ -78,7 +78,6 @@ namespace Hl7.Fhir.Model
         /// Value of extension
         /// </summary>
         [FhirElement("value", InSummary = true, Order = 40)]
-        [AllowedTypes(IsOpen = true)]
         [DataMember]
         public Hl7.Fhir.Model.DataType Value
         {

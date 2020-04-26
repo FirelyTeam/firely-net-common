@@ -8,6 +8,7 @@
 
 using Hl7.Fhir.Utility;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 
@@ -21,15 +22,16 @@ namespace Hl7.Fhir.Introspection
 
         public ModelInspector(int fhirVersion)
         {
-            _fhirVersion = fhirVersion;
+            _classMappingsByType = new ConcurrentDictionary<Type, ClassMapping>()
         }
 
-        private readonly int _fhirVersion;
-        // Index for easy lookup of datatypes, key is upper typenanme
-        private readonly Dictionary<string, ClassMapping> _classMappingsByName = new Dictionary<string,ClassMapping>();
+        // Primary index of classmappings, key is Type
+        private readonly ConcurrentDictionary<Type, ClassMapping> _classMappingsByType =
+            
 
-        // Index for easy lookup of classmappings, key is Type
-        private readonly Dictionary<Type, ClassMapping> _classMappingsByType = new Dictionary<Type, ClassMapping>();
+        // Index for easy lookup of datatypes, key is upper typenanme
+        private readonly ConcurrentDictionary<string, ClassMapping> _classMappingsByName =
+            new ConcurrentDictionary<string, ClassMapping>();
 
         public void Import(Assembly assembly)
         {
@@ -45,28 +47,23 @@ namespace Hl7.Fhir.Introspection
                 ImportType(type);
         }
 
+        private ClassMapping createMapping(Type type, int version)
+        {
+            if (!ClassMapping.TryCreate(type, out var mapping, version))
+            {
+                Message.Info("Skipped type {0} while doing inspection: not recognized as representing a FHIR type", type.Name);
+                return null;
+            }
+            else
+            {
+                Message.Info("Created Class mapping for newly encountered type {0} (FHIR type {1})", type.Name, mapping.Name);
+                return mapping;
+            }
+        }
 
-        private readonly object importLockObject = new object();
 
         public ClassMapping ImportType(Type type)
         {
-            lock (importLockObject)
-            {
-                var mapping = FindClassMappingByType(type);
-                if (mapping != null) return mapping;
-
-                if (!ClassMapping.TryCreate(type, out mapping, _fhirVersion))
-                {
-                    Message.Info("Skipped type {0} while doing inspection: not recognized as representing a FHIR type", type.Name);
-                    return null;
-                }
-                else
-                {
-                    addClassMapping(mapping);
-                    Message.Info("Created Class mapping for newly encountered type {0} (FHIR type {1})", type.Name, mapping.Name);
-                    return mapping;
-                }
-            }
         }
 
         private void addClassMapping(ClassMapping mapping)

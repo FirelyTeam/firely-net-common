@@ -82,7 +82,7 @@ namespace Hl7.Fhir.Introspection
         /// <para>
         /// May be a non-FHIR .NET primitive type for value elements of
         /// primitive FHIR datatypes (e.g. FhirBoolean.Value) or other primitive
-        /// attributes (e.g. Extension.url)
+        /// attributes (e.g. Extension.url).
         /// </para>
         /// </remark>
         public Type[] FhirType { get; private set; }        // may be multiple if this is a choice
@@ -90,7 +90,7 @@ namespace Hl7.Fhir.Introspection
         /// <summary>
         /// True when the element is of type '*', e.g. Extension.value[x]. Any type is allowed.
         /// </summary>
-        public bool IsOpen { get; private set; }
+        //public bool IsOpen { get; private set; }
 
         private PropertyInfo _propInfo;
         private int _createdVersion;
@@ -106,12 +106,12 @@ namespace Hl7.Fhir.Introspection
             result = new PropertyMapping();
 
             // If there is no [FhirElement] on the property, skip it
-            var elementAttr = getAttribute<FhirElementAttribute>(prop, version);
+            var elementAttr = GetAttribute<FhirElementAttribute>(prop, version);
             if (elementAttr == null) return false;
 
             // If there is an explicit [NotMapped] on the property, skip it
             // (in combination with `Since` useful to remove a property from the serialization)
-            var notmappedAttr = getAttribute<NotMappedAttribute>(prop, version);
+            var notmappedAttr = GetAttribute<NotMappedAttribute>(prop, version);
             if (notmappedAttr != null) return false;
 
             result.Name = elementAttr.Name;
@@ -121,7 +121,7 @@ namespace Hl7.Fhir.Introspection
             result._propInfo = prop;
             result._createdVersion = version;
 
-            var cardinalityAttr = getAttribute<Validation.CardinalityAttribute>(prop, version);
+            var cardinalityAttr = GetAttribute<Validation.CardinalityAttribute>(prop, version);
             result.IsMandatoryElement = cardinalityAttr != null ? cardinalityAttr.Min > 0 : false;
 
             result.IsCollection = ReflectionHelper.IsTypedCollection(prop.PropertyType) &&
@@ -136,8 +136,8 @@ namespace Hl7.Fhir.Introspection
             // Determine which FHIR type represents this ElementType
             // This is normally just the ElementType itself, but can be overridden
             // with the [DeclaredType] attribute.
-            var declaredType = getAttribute<DeclaredTypeAttribute>(prop, version);
-            var fhirType = declaredType?.Type ?? result.NativeType;
+            var declaredType = GetAttribute<TypeRedirectAttribute>(prop, version);
+            var fhirType = declaredType?.Type ?? mayRedirect(result.NativeType);
 
             result.IsResourceChoice = fhirType.GetTypeInfo().IsAbstract &&
                                         fhirType.CanBeTreatedAsType(typeof(Resource));
@@ -147,9 +147,8 @@ namespace Hl7.Fhir.Introspection
             // The [AllowedElements] attribute can specify a set of allowed types
             // for this element. Take this list as the declared list of FHIR types.
             // If not present assume this is the declared FHIR type above
-            var allowedTypes = getAttribute<AllowedTypesAttribute>(prop, version);
+            var allowedTypes = GetAttribute<AllowedTypesAttribute>(prop, version);
 
-            result.IsOpen = allowedTypes?.IsOpen == true;
             result.FhirType = allowedTypes?.Types?.Any() == true ?
                 allowedTypes.Types : new[] { fhirType };
 
@@ -162,9 +161,15 @@ namespace Hl7.Fhir.Introspection
             if (result.IsPrimitive) result.RepresentsValueElement = isPrimitiveValueElement(elementAttr, prop);
 
             return true;
+
+            Type mayRedirect(Type t)
+            {
+                var redirect = ClassMapping.GetAttribute<TypeRedirectAttribute>(t, version);
+                return redirect?.Type != null ? redirect.Type : t;
+            }
         }
 
-        private static T getAttribute<T>(PropertyInfo p, int version) where T : Attribute
+        public static T GetAttribute<T>(PropertyInfo p, int version) where T : Attribute
         {
             return ReflectionHelper.GetAttributes<T>(p).LastOrDefault(isRelevant);
 
@@ -266,7 +271,7 @@ namespace Hl7.Fhir.Introspection
 
         private ITypeSerializationInfo[] buildTypes()
         {
-            var success = ClassMapping.TryCreate(FhirType[0], out var elementTypeMapping, _createdVersion);
+            _ = ClassMapping.TryCreate(FhirType[0], out var elementTypeMapping, _createdVersion);
 
             if (elementTypeMapping.IsNestedType)
             {

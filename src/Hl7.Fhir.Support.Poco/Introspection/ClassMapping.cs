@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * Copyright (c) 2014, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
@@ -64,9 +64,9 @@ namespace Hl7.Fhir.Introspection
         /// </summary>
         public bool IsNestedType { get; private set; }
 
-        private class MappingCollection
+        private class PropertyMappingCollection
         {
-            public MappingCollection(Dictionary<string, PropertyMapping> byName, List<PropertyMapping> byOrder)
+            public PropertyMappingCollection(Dictionary<string, PropertyMapping> byName, List<PropertyMapping> byOrder)
             {
                 ByOrder = byOrder;
                 ByName = byName;
@@ -85,7 +85,7 @@ namespace Hl7.Fhir.Introspection
 
         // This list is created lazily. This not only improves initial startup time of 
         // applications but also ensures circular references between types will not cause loops.
-        private MappingCollection Mappings
+        private PropertyMappingCollection Mappings
         {
             get
             {
@@ -94,8 +94,8 @@ namespace Hl7.Fhir.Introspection
             }
         }
 
-        private MappingCollection _mappings;
-        private Func<MappingCollection> _mappingInitializer;
+        private PropertyMappingCollection _mappings;
+        private Func<PropertyMappingCollection> _mappingInitializer;
 
         /// <summary>
         /// Secondary index of the PropertyMappings by uppercase name.
@@ -140,7 +140,7 @@ namespace Hl7.Fhir.Introspection
         }
 
 
-        private static T getAttribute<T>(Type t, int version) where T : Attribute
+        public static T GetAttribute<T>(Type t, int version) where T : Attribute
         {
             return ReflectionHelper.GetAttributes<T>(t.GetTypeInfo()).LastOrDefault(isRelevant);
 
@@ -151,7 +151,7 @@ namespace Hl7.Fhir.Introspection
         {
             result = null;
 
-            var typeAttribute = getAttribute<FhirTypeAttribute>(type, fhirVersion);
+            var typeAttribute = GetAttribute<FhirTypeAttribute>(type, fhirVersion);
             if (typeAttribute == null) return false;
 
             if (ReflectionHelper.IsOpenGenericTypeDefinition(type))
@@ -188,7 +188,7 @@ namespace Hl7.Fhir.Introspection
         /// Enumerate this class' properties using reflection, create PropertyMappings
         /// for them and add them to the PropertyMappings.
         /// </summary>
-        private static MappingCollection inspectProperties(Type nativeType, int fhirVersion)
+        private static PropertyMappingCollection inspectProperties(Type nativeType, int fhirVersion)
         {
             var byName = new Dictionary<string, PropertyMapping>();
 
@@ -205,7 +205,7 @@ namespace Hl7.Fhir.Introspection
             }
 
             var ordered = byName.Values.OrderBy(pm => pm.Order).ToList();
-            return new MappingCollection(byName, ordered);
+            return new PropertyMappingCollection(byName, ordered);
         }
 
         private static string collectTypeName(FhirTypeAttribute attr, Type type)

@@ -18,10 +18,10 @@ using System.Reflection;
 namespace Hl7.Fhir.Introspection
 {
     [CLSCompliant(false)]
-    [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
-    public class DeclaredTypeAttribute : VersionedAttribute
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+    public class TypeRedirectAttribute : VersionedAttribute
     {
-        public DeclaredTypeAttribute()
+        public TypeRedirectAttribute()
         {
         }
 
