@@ -25,7 +25,8 @@ namespace Hl7.Fhir.ElementModel
                 return TreeComparisonResult.Fail(actual.Location, $"name: was '{actual.Name}', expected '{expected.Name}'");
             if (!Object.Equals(expected.Value, actual.Value))
                 return TreeComparisonResult.Fail(actual.Location, $"value: was '{actual.Value}', expected '{expected.Value}'");
-            if (expected.InstanceType != actual.InstanceType && actual.InstanceType != null) return TreeComparisonResult.Fail(actual.Location, $"type: was '{actual.InstanceType}', expected '{expected.InstanceType}'");
+            if (expected.InstanceType != actual.InstanceType && actual.InstanceType != null) 
+                return TreeComparisonResult.Fail(actual.Location, $"type: was '{actual.InstanceType}', expected '{expected.InstanceType}'");
             if (expected.Location != actual.Location) TreeComparisonResult.Fail(actual.Location, $"Path: was '{actual.Location}', expected '{expected.Location}'");
 
             // Ignore ordering (only relevant to xml)

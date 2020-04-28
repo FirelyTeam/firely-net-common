@@ -124,8 +124,7 @@ namespace Hl7.Fhir.Introspection
             var cardinalityAttr = GetAttribute<Validation.CardinalityAttribute>(prop, version);
             result.IsMandatoryElement = cardinalityAttr != null ? cardinalityAttr.Min > 0 : false;
 
-            result.IsCollection = ReflectionHelper.IsTypedCollection(prop.PropertyType) &&
-                prop.PropertyType != typeof(string);           // prevent silly string:char[] confusion
+            result.IsCollection = ReflectionHelper.IsTypedCollection(prop.PropertyType) && !prop.PropertyType.IsArray;
 
             // Get to the actual (native) type representing this element
             result.NativeType = prop.PropertyType;
