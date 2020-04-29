@@ -29,58 +29,49 @@
 */
 
 using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Validation;
 using System.Runtime.Serialization;
 using Hl7.Fhir.Specification;
-using System.Text.RegularExpressions;
 using System;
+using System.Xml;
+using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model
 {
     /// <summary>
-    /// Primitive Type uuid
+    /// Primitive Type decimal
     /// </summary>
 #if !NETSTANDARD1_1
     [Serializable]
 #endif
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    [FhirType("uuid")]
+    [FhirType("decimal")]
     [DataContract]
-    public class Uuid : PrimitiveType<string>, IStringValue
+    public partial class FhirDecimal : Hl7.Fhir.Model.PrimitiveType<decimal?>, INullableValue<decimal>
     {
-        public override string TypeName { get { return "uuid"; } }
+        public override string TypeName { get { return "decimal"; } }
         
-        // Must conform to the pattern "urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-        public const string PATTERN = @"urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+        // Must conform to the pattern "-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?"
+        public const string PATTERN = @"-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?";
 
-		public Uuid(string value)
+		public FhirDecimal(decimal? value)
 		{
 			Value = value;
 		}
 
-		public Uuid(): this(null) {}
+		public FhirDecimal(): this((decimal?)null) {}
 
         /// <summary>
         /// Primitive value of the element
         /// </summary>
         [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
-        [UuidPattern]
         [DataMember]
-        public string Value
+        public decimal? Value
         {
-            get { return (string)ObjectValue; }
+            get { return (decimal?)ObjectValue; }
             set { ObjectValue = value; OnPropertyChanged("Value"); }
         }
 
-        public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
-
-        public static Uuid Generate()
-        {
-            var newUuid = "urn:uuid:" + System.Guid.NewGuid().ToString();
-            return new Uuid(newUuid);
-        }
-
-        public FhirUri AsUri() => new FhirUri(Value);
+        public static bool IsValidValue(string value) => 
+            Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
     }
-
 }

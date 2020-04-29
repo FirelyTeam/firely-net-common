@@ -28,59 +28,52 @@
 
 */
 
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Validation;
-using System.Runtime.Serialization;
-using Hl7.Fhir.Specification;
-using System.Text.RegularExpressions;
 using System;
+using Hl7.Fhir.Introspection;
+using System.Runtime.Serialization;
+using Hl7.Fhir.Serialization;
+using Hl7.Fhir.Specification;
+using System.Xml;
+using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model
 {
     /// <summary>
-    /// Primitive Type uuid
+    /// Primitive Type positiveInt
     /// </summary>
 #if !NETSTANDARD1_1
     [Serializable]
 #endif
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    [FhirType("uuid")]
+    [FhirType("positiveInt")]
     [DataContract]
-    public class Uuid : PrimitiveType<string>, IStringValue
+    public partial class PositiveInt : PrimitiveType<int?>, INullableIntegerValue
     {
-        public override string TypeName { get { return "uuid"; } }
+        public override string TypeName { get { return "positiveInt"; } }
         
-        // Must conform to the pattern "urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-        public const string PATTERN = @"urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+        // Must conform to the pattern "[1-9][0-9]*"
+        public const string PATTERN = @"[1-9][0-9]*";
 
-		public Uuid(string value)
+		public PositiveInt(int? value)
 		{
 			Value = value;
 		}
 
-		public Uuid(): this(null) {}
+		public PositiveInt(): this(null) {}
 
         /// <summary>
         /// Primitive value of the element
         /// </summary>
         [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
-        [UuidPattern]
         [DataMember]
-        public string Value
+        public int? Value
         {
-            get { return (string)ObjectValue; }
+            get { return (int?)ObjectValue; }
             set { ObjectValue = value; OnPropertyChanged("Value"); }
         }
 
-        public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
+        public static bool IsValidValue(string value) 
+            => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);        
 
-        public static Uuid Generate()
-        {
-            var newUuid = "urn:uuid:" + System.Guid.NewGuid().ToString();
-            return new Uuid(newUuid);
-        }
-
-        public FhirUri AsUri() => new FhirUri(Value);
     }
-
 }
