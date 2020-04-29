@@ -53,10 +53,7 @@ namespace Hl7.Fhir.Model
                 throw new ArgumentException("T must be an enumerated type");
         }
 
-        public override string TypeName
-        {
-            get { return "code"; }
-        }
+        public override string TypeName => "code";
 
         public Code() : this(null) { }
 
@@ -70,24 +67,10 @@ namespace Hl7.Fhir.Model
         [DataMember]
         public T? Value
         {
-            get
-            {
-                if (ObjectValue != null)
-                    return EnumUtility.ParseLiteral<T>((string)ObjectValue);
-                else
-                    return null;
-            }
+            get => ObjectValue != null ? EnumUtility.ParseLiteral<T>((string)ObjectValue) : null;
 
-            set
-            {
-                if (value != null)
-                    ObjectValue = ((Enum)(object)value).GetLiteral();
-                else
-                    ObjectValue = null;
-            }
+            set => ObjectValue = value != null ? ((Enum)(object)value).GetLiteral() : null;
         }
-
-
 
         string ISystemAndCode.System => ((Enum)(object)Value).GetSystem();
 

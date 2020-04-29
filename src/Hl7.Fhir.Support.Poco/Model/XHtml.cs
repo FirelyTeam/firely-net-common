@@ -73,7 +73,7 @@ namespace Hl7.Fhir.Model
         }
 
 #if NETSTANDARD1_1
-        public static bool IsValidValue(string value) => true;
+        public static bool IsValidValue(string _) => true;
 #else
         public static bool IsValidValue(string value) => !SerializationUtil.RunFhirXhtmlSchemaValidation(value).Any();
 #endif
