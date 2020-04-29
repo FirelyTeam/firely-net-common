@@ -7,17 +7,15 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Profile
 {
-    public interface ISliceCollectionFacade: ICollectionFacade<ProfileSliceFacade>
-    {
-    }
+    public interface ISliceCollectionFacade: ICollectionFacade<IProfileSliceFacade> { }
 
     public class SliceCollectionFacade<TProfileSliceFacade, TElementDefinition> : ISliceCollectionFacade
-        where TProfileSliceFacade: ProfileSliceFacade<TElementDefinition>, new()
+        where TProfileSliceFacade: ProfileSliceFacadeBase<TElementDefinition>, new()
         where TElementDefinition : new()
     {
         private readonly List<TProfileSliceFacade> _facades = new List<TProfileSliceFacade>(8);
 
-        public IEnumerator<ProfileSliceFacade> GetEnumerator() => _facades.GetEnumerator();
+        public IEnumerator<IProfileSliceFacade> GetEnumerator() => _facades.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -26,7 +24,7 @@ namespace Hl7.Fhir.Validation.Profile
             _facades.Add(facade);
         }
 
-        public ProfileSliceFacade Insert(int? index = null)
+        public IProfileSliceFacade Insert(int? index = null)
         {
             var item = new TElementDefinition();
             var facade = new TProfileSliceFacade();

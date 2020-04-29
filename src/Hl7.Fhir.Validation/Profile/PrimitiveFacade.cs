@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Profile
 {
-    public struct PrimitiveFacade<TPrimitive>
+    public class PrimitiveFacade<TPrimitive>
     {
         private readonly Func<TPrimitive> _getValue;
         private readonly Action<TPrimitive> _setValue;

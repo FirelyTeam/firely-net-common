@@ -10,9 +10,14 @@ namespace Hl7.Fhir.Validation.Profile
         void ProcessChange();
     }
 
-    public class ElementSchemaFacade<TProfileElementFacade, TProfileSliceFacade, TElementDefinition>: IChangeReceiver
-        where TProfileElementFacade: ProfileElementFacade<TElementDefinition>, new()
-        where TProfileSliceFacade : ProfileSliceFacade<TElementDefinition>, new()
+    public interface IElementSchemaFacade
+    {
+        IElementCollectionFacade Elements { get; }
+    }
+
+    public class ElementSchemaFacade<TProfileElementFacade, TProfileSliceFacade, TElementDefinition>: IElementSchemaFacade, IChangeReceiver
+        where TProfileElementFacade: ProfileElementFacadeBase<TElementDefinition>, new()
+        where TProfileSliceFacade : ProfileSliceFacadeBase<TElementDefinition>, new()
         where TElementDefinition : class, new()
     {
         private readonly List<TElementDefinition> _elements;
@@ -20,6 +25,8 @@ namespace Hl7.Fhir.Validation.Profile
             = new ElementCollectionFacade<TProfileElementFacade, TElementDefinition>();
         private readonly bool _isReadOnly;
         private readonly string _typeName;
+
+        public IElementCollectionFacade Elements => _elementsFacade;
 
         public ElementSchemaFacade(List<TElementDefinition> elements,
             Func<TElementDefinition, string> getPath,

@@ -5,17 +5,15 @@ using System.Linq;
 
 namespace Hl7.Fhir.Validation.Profile
 {
-    public interface IElementCollectionFacade: ICollectionFacade<ProfileElementFacade>
-    {
-    }
+    public interface IElementCollectionFacade: ICollectionFacade<IProfileElementFacade> { }
 
     public class ElementCollectionFacade<TProfileElementFacade, TElementDefinition> : IElementCollectionFacade
-        where TProfileElementFacade: ProfileElementFacade<TElementDefinition>, new()
+        where TProfileElementFacade: ProfileElementFacadeBase<TElementDefinition>, new()
         where TElementDefinition : new()
     {
         private readonly List<TProfileElementFacade> _facades = new List<TProfileElementFacade>(8);
 
-        public IEnumerator<ProfileElementFacade> GetEnumerator() => _facades.GetEnumerator();
+        public IEnumerator<IProfileElementFacade> GetEnumerator() => _facades.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -24,7 +22,7 @@ namespace Hl7.Fhir.Validation.Profile
             _facades.Add(facade);
         }
 
-        public ProfileElementFacade Insert(int? index = null)
+        public IProfileElementFacade Insert(int? index = null)
         { 
             var item = new TElementDefinition();
             var facade = new TProfileElementFacade();

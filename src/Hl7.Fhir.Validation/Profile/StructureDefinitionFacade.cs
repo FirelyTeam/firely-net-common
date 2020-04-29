@@ -6,20 +6,30 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Profile
 {
+    public interface IStructureDefinitionFacadeProvider
+    {
+        Func<PrimitiveFacade<string>> CreateUrlFacade { get; }
+        Func<ICollectionFacade<IdentifierFacade>> CreateIdentifiersFacade { get; }
+        Func<IElementSchemaFacade> CreateElementSchemaFacade { get; }
+    }
+
     public class StructureDefinitionFacade
     {
-        public StructureDefinitionFacade(
-            PrimitiveFacade<string> urlFacade,
-            ICollectionFacade<IdentifierFacade> identifiersFacade)
+        private readonly IStructureDefinitionFacadeProvider _provider;
+
+        public StructureDefinitionFacade(IStructureDefinitionFacadeProvider provider)
         {
-            _urlFacade = urlFacade;
-            Identifiers = identifiersFacade;
+            _provider = provider;
+            _urlFacade = new Lazy<PrimitiveFacade<string>>(provider.CreateUrlFacade);
+            _identifiersFacade = new Lazy<ICollectionFacade<IdentifierFacade>>(provider.CreateIdentifiersFacade);
+            _elementSchemaFacade = new Lazy<IElementSchemaFacade>(provider.CreateElementSchemaFacade);
         }
 
-        protected PrimitiveFacade<string> _urlFacade;
-        public string Url { get => _urlFacade.Value; set => _urlFacade.Value = value; }
+        private readonly Lazy<PrimitiveFacade<string>> _urlFacade;
+        public string Url { get => _urlFacade.Value.Value; set => _urlFacade.Value.Value = value; }
 
-        public ICollectionFacade<IdentifierFacade> Identifiers { get; }
+        private readonly Lazy<ICollectionFacade<IdentifierFacade>> _identifiersFacade;
+        public ICollectionFacade<IdentifierFacade> Identifiers => _identifiersFacade.Value;
 
         //string Version { get; set; }
         //string Name { get; set; }
@@ -44,6 +54,7 @@ namespace Hl7.Fhir.Validation.Profile
 
         //string FhirVersion { get; set; }
 
-        IElementCollectionFacade Elements { get; }
+        private readonly Lazy<IElementSchemaFacade> _elementSchemaFacade;
+        IElementCollectionFacade Elements => _elementSchemaFacade.Value.Elements;
     }
 }

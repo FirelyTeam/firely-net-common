@@ -11,6 +11,55 @@ namespace Hl7.Fhir.Validation.Profile
         void Remove(int index);
     }
 
+    public class CollectionFacade<TItem>: ICollectionFacade<TItem> where TItem: new()
+    {
+        private readonly IList<TItem> _items;
+        private readonly bool _isReadOnly;
+
+        public CollectionFacade(IList<TItem> items, bool isReadOnly = false)
+        {
+            _items = items;
+            _isReadOnly = isReadOnly;
+        }
+
+        public IEnumerator<TItem> GetEnumerator() => _items.GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        private void CheckWritable()
+        {
+            if (_isReadOnly)
+            {
+                throw new NotImplementedException("Editing is not implemented on this collection facade");
+            }
+        }
+
+        public TItem Insert(int? index = null)
+        {
+            CheckWritable();
+
+            var item = new TItem();
+
+            if (index is null || index >= _items.Count)
+            {
+                _items.Add(item);
+            }
+            else
+            {
+                _items.Insert(index.Value, item);
+            }
+
+            return item;
+        }
+
+        public void Remove(int index)
+        {
+            CheckWritable();
+
+            _items.RemoveAt(index);
+        }        
+    }
+
     public class CollectionFacade<TItemFacade, TItem>: ICollectionFacade<TItemFacade>
         where TItem: new()
     {

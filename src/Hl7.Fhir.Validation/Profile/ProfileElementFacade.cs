@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Profile
 {
-    public abstract class ProfileElementFacade
+    public interface IProfileElementFacade
     {
-        public ISliceCollectionFacade Slices { get; protected set; }
+        ISliceCollectionFacade Slices { get; }
     }
 
-    public abstract class ProfileElementFacade<TElementDefinition>: ProfileElementFacade
+    public abstract class ProfileElementFacadeBase<TElementDefinition>: IProfileElementFacade
     {
         private TElementDefinition _elementDefinition;
         public TElementDefinition ElementDefinition
@@ -23,6 +23,8 @@ namespace Hl7.Fhir.Validation.Profile
                 _elementDefinition = value;
             }
         }
+
+        public ISliceCollectionFacade Slices { get; protected set; }
 
         protected abstract void PlugIn(TElementDefinition elementDefinition);
     }
