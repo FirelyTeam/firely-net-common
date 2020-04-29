@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * Copyright (c) 2014, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
@@ -70,7 +70,7 @@ namespace Hl7.Fhir.Introspection
                 return null;
             }
 
-            return _classMappingsByName.TryGetValue(typeName.ToUpperInvariant(), out var entry) ? entry : null;
+            return _classMappingsByName.TryGetValue(typeName, out var entry) ? entry : null;
         }
 
 
@@ -114,18 +114,16 @@ namespace Hl7.Fhir.Introspection
             // with a mapping for this type, shared across all threads. Now we are going to add an entry by
             // name for this mapping.
 
-            var key = typeMapping.Name.ToUpperInvariant();
+            var key = typeMapping.Name;
             // Add this mapping by name of the mapping, overriding any entry already present
             if (overwrite)
             {
                 _ = _classMappingsByName
-                            .AddOrUpdate(typeMapping.Name.ToUpperInvariant(),
-                            typeMapping, (dumm1, dummy2) => typeMapping);
+                            .AddOrUpdate(key, typeMapping, (_, __) => typeMapping);
             }
             else
             {
-                var nameMapping = _classMappingsByName
-                        .GetOrAdd(typeMapping.Name.ToUpperInvariant(), typeMapping);
+                var nameMapping = _classMappingsByName.GetOrAdd(key, typeMapping);
 
                 if (!object.ReferenceEquals(typeMapping, nameMapping))
                 {

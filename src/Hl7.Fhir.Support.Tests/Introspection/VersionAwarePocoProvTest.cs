@@ -25,7 +25,7 @@ namespace Hl7.Fhir.Tests.Introspection
             inspector.ImportType(typeof(Way));
             inspector.ImportType(typeof(Way2));
 
-            var way = inspector.Provide("wAy") as ClassMapping;
+            var way = inspector.Provide("Way") as ClassMapping;
             Assert.IsNotNull(way);
             Assert.AreEqual(way.NativeType, typeof(Way));
 

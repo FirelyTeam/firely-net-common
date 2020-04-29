@@ -18,24 +18,33 @@ namespace Hl7.Fhir.Specification
         string ElementName { get; }
         bool IsCollection { get; }
         bool IsRequired { get; }
-
         bool InSummary { get; }
-
         bool IsChoiceElement { get; }
         bool IsResource { get; }
+
+        ITypeSerializationInfo[] Type { get; }
 
         /// <summary>
         /// Logical Models where a choice type is represented by ElementDefinition.representation = typeAttr might define a default type (elementdefinition-defaulttype extension). null in most cases.
         /// </summary>
         string DefaultTypeName { get; }
-        ITypeSerializationInfo[] Type { get; }
-
-        // Attributes for XML support
+    
+        /// <summary>
+        /// This is the namespace used for the xml node representing this element.
+        /// Only need to be set if different from "http://hl7.org/fhir".
+        /// </summary>
         string NonDefaultNamespace { get; }
+
+        /// <summary>
+        /// The kind of node used to represent this element in XML.
+        /// Default is <see cref="XmlRepresentation.XmlElement"/>.
+        /// </summary>
         XmlRepresentation Representation { get; }
 
         int Order { get; }
     }
+
+
 
     public interface ITypeSerializationInfo
     {
