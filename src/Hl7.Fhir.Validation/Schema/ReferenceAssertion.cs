@@ -8,6 +8,7 @@
 
 
 using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Support.Utility;
 using Hl7.Fhir.Utility;
 using Newtonsoft.Json.Linq;
 using System;
@@ -22,26 +23,31 @@ namespace Hl7.Fhir.Validation.Schema
 
         public ReferenceAssertion(IElementSchema schema, Uri reference = null)
         {
-            _reference = new Lazy<IElementSchema>(() => schema);
+            _reference = new AsyncLazy<IElementSchema>(() => schema);
             _referencedUri = reference;
         }
 
-        public ReferenceAssertion(Func<IElementSchema> dereference, Uri reference = null)
+        public ReferenceAssertion(Func<Task<IElementSchema>> dereference, Uri reference = null)
         {
-            _reference = new Lazy<IElementSchema>(dereference);
+            _reference = new AsyncLazy<IElementSchema>(dereference);
             _referencedUri = reference;
         }
 
-        private readonly Lazy<IElementSchema> _reference;
+        private readonly AsyncLazy<IElementSchema> _reference;
 
-        public IElementSchema ReferencedSchema => _reference.Value;
+        // TODO MV: this should be changed: antipattern to use GetResult()
+        public IElementSchema ReferencedSchema => _reference.GetAwaiter().GetResult();
+
         public Uri ReferencedUri => _referencedUri ?? ReferencedSchema.Id;
 
         // TODO: Risk of loop (if a referenced schema refers back to this schema - which is nonsense, but possible)
         //public IEnumerable<Assertions> Collect() => ReferencedSchema.Collect();
 
-        public Task<Assertions> Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
-            => ReferencedSchema.Validate(input, vc);
+        public async Task<Assertions> Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
+        {
+            var schema = await _reference;
+            return await schema.Validate(input, vc);
+        }
 
         public JToken ToJson() => new JProperty("$ref", ReferencedUri?.ToString() ??
             throw Error.InvalidOperation("Cannot convert to Json: reference refers to a schema without an identifier"));

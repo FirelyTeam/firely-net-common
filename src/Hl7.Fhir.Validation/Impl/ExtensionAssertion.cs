@@ -11,10 +11,10 @@ namespace Hl7.Fhir.Validation.Impl
 {
     public class ExtensionAssertion : IAssertion, IGroupValidatable
     {
-        private readonly Func<Uri, IElementSchema> _getSchema;
+        private readonly Func<Uri, Task<IElementSchema>> _getSchema;
         private readonly Uri _referencedUri;
 
-        public ExtensionAssertion(Func<Uri, IElementSchema> getSchema, Uri reference = null)
+        public ExtensionAssertion(Func<Uri, Task<IElementSchema>> getSchema, Uri reference = null)
         {
             _getSchema = getSchema;
             _referencedUri = reference;
@@ -30,7 +30,7 @@ namespace Hl7.Fhir.Validation.Impl
 
             foreach (var item in groups)
             {
-                var schema = _getSchema(new Uri(item.Key ?? "http://hl7.org/fhir/StructureDefinition/Extension"));
+                var schema = await _getSchema(new Uri(item.Key ?? "http://hl7.org/fhir/StructureDefinition/Extension"));
                 result += await schema.Validate(item, vc);
             }
 

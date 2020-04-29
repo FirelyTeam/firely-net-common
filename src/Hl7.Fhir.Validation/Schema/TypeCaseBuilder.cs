@@ -25,8 +25,8 @@ namespace Hl7.Fhir.Validation.Schema
         {
             var uri = new Uri(profile, UriKind.Absolute);
             return type == "Extension"
-                ? _assertionFactory.CreateExtensionAssertion((u) => Resolver.GetSchema(u), uri)
-                : _assertionFactory.CreateReferenceAssertion(() => Resolver.GetSchema(uri), uri);
+                ? _assertionFactory.CreateExtensionAssertion(async (u) => await Resolver.GetSchema(u), uri)
+                : _assertionFactory.CreateReferenceAssertion(async () => await Resolver.GetSchema(uri), uri);
         }
     }
 }

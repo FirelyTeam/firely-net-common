@@ -1,6 +1,7 @@
 ﻿using Hl7.Fhir.Validation.Impl;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Schema
 {
@@ -36,9 +37,9 @@ namespace Hl7.Fhir.Validation.Schema
 
         IAssertion CreatePatternAssertion(string location, Hl7.Fhir.ElementModel.ITypedElement patternValue);
 
-        IAssertion CreateReferenceAssertion(Func<IElementSchema> getSchema, Uri uri);
+        IAssertion CreateReferenceAssertion(Func<Task<IElementSchema>> getSchema, Uri uri);
 
-        IAssertion CreateExtensionAssertion(Func<Uri, IElementSchema> getSchema, Uri uri);
+        IAssertion CreateExtensionAssertion(Func<Uri, Task<IElementSchema>> getSchema, Uri uri);
 
         IAssertion CreateRegexAssertion(string location, string pattern);
 
