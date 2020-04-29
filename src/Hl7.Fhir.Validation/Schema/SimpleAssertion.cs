@@ -1,5 +1,6 @@
 ﻿using Hl7.Fhir.ElementModel;
 using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Schema
 {
@@ -14,7 +15,7 @@ namespace Hl7.Fhir.Validation.Schema
 
         public virtual JToken ToJson() => new JProperty(Key, Value);
 
-        public abstract Assertions Validate(ITypedElement input, ValidationContext vc);
+        public abstract Task<Assertions> Validate(ITypedElement input, ValidationContext vc);
 
         public string Location { get; }
         public abstract string Key { get; }

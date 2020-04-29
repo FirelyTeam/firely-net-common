@@ -11,6 +11,7 @@ using Hl7.Fhir.ElementModel.Functions;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Validation.Schema;
 using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl
 {
@@ -29,14 +30,14 @@ namespace Hl7.Fhir.Validation.Impl
 
         public override object Value => _fixed;
 
-        public override Assertions Validate(ITypedElement input, ValidationContext vc)
+        public override Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
         {
             if (!EqualityOperators.IsEqualTo(_fixed, input))
             {
-                return Assertions.Failure + new IssueAssertion(121, input.Location, $"Value is not exactly equal to fixed value '{_fixed.Value}'", IssueSeverity.Error);
+                return Task.FromResult(Assertions.Failure + new IssueAssertion(121, input.Location, $"Value is not exactly equal to fixed value '{_fixed.Value}'", IssueSeverity.Error));
             }
 
-            return Assertions.Success;
+            return Task.FromResult(Assertions.Success);
         }
 
         public override JToken ToJson()

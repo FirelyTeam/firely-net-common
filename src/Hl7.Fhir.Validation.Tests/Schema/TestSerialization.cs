@@ -3,6 +3,7 @@ using Hl7.Fhir.Validation.Impl;
 using Hl7.Fhir.Validation.Schema;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Tests.Schema
 {
@@ -36,7 +37,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
         }
 
         [TestMethod]
-        public void ValidateSchema()
+        public async Task ValidateSchema()
         {
             var stringSchema = new ElementSchema("#string",
                 new MaxLength("TestSerialization.ValidateSchema", 50)
@@ -77,7 +78,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
 
             var vc = new ValidationContext() { ValidateAssertions = new[] { typeof(CardinalityAssertion) } };
 
-            var validationResults = myHumanNameSchema.Validate(new[] { humanName }, vc);
+            var validationResults = await myHumanNameSchema.Validate(new[] { humanName }, vc);
 
             var issues = validationResults.OfType<IssueAssertion>();
 

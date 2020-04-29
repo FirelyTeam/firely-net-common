@@ -8,11 +8,12 @@
 
 using Hl7.Fhir.ElementModel;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Schema
 {
     public interface IGroupValidatable
     {
-        Assertions Validate(IEnumerable<ITypedElement> input, ValidationContext vc);
+        Task<Assertions> Validate(IEnumerable<ITypedElement> input, ValidationContext vc);
     }
 }

@@ -11,6 +11,7 @@ using Hl7.Fhir.Validation.Schema;
 using Hl7.FhirPath;
 using Hl7.FhirPath.Expressions;
 using System;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl
 {
@@ -35,7 +36,7 @@ namespace Hl7.Fhir.Validation.Impl
 
         public override object Value => _expression;
 
-        public override Assertions Validate(ITypedElement input, ValidationContext vc)
+        public override Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
         {
             var result = Assertions.Empty;
 
@@ -47,7 +48,7 @@ namespace Hl7.Fhir.Validation.Impl
                 switch (vc.ConstraintBestPractices)
                 {
                     case ValidateBestPractices.Ignore:
-                        return Assertions.Success;
+                        return Task.FromResult(Assertions.Success);
                     case ValidateBestPractices.Enabled:
                         _severity = IssueSeverity.Error;
                         break;
@@ -75,10 +76,10 @@ namespace Hl7.Fhir.Validation.Impl
             {
                 result += Assertions.Failure;
                 result += new IssueAssertion(_severity == IssueSeverity.Error ? 1012 : 1013, input.Location, $"Instance failed constraint {GetDescription()}", _severity);
-                return result;
+                return Task.FromResult(result);
             }
 
-            return Assertions.Success;
+            return Task.FromResult(Assertions.Success);
         }
 
         private string GetDescription()

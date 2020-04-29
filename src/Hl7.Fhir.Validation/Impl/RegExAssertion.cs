@@ -10,6 +10,7 @@ using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Validation.Schema;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl
 {
@@ -28,7 +29,7 @@ namespace Hl7.Fhir.Validation.Impl
 
         public override object Value => _pattern;
 
-        public override Assertions Validate(ITypedElement input, ValidationContext vc)
+        public override Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
         {
             if (_pattern != null)
             {
@@ -38,11 +39,11 @@ namespace Hl7.Fhir.Validation.Impl
 
                 if (!success)
                 {
-                    return Assertions.Failure + new IssueAssertion(1006, input.Location, $"Value '{value}' does not match regex '{regex}'", IssueSeverity.Error);
+                    return Task.FromResult(Assertions.Failure + new IssueAssertion(1006, input.Location, $"Value '{value}' does not match regex '{regex}'", IssueSeverity.Error));
                 }
             }
 
-            return Assertions.Success;
+            return Task.FromResult(Assertions.Success);
         }
 
         private string toStringRepresentation(ITypedElement vp)

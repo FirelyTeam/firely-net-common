@@ -5,6 +5,7 @@ using Hl7.Fhir.Validation.Schema;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using System;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl.Tests
 {
@@ -28,8 +29,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
 
         private void SetupTerminologyServiceResult(Assertions result)
         {
-            _terminologyService.Setup(ts => ts.ValidateCode(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ICoding>(), It.IsAny<IConcept>(), It.IsAny<PartialDateTime?>(), true, It.IsAny<string>())).Returns(result);
-
+            _terminologyService.Setup(ts => ts.ValidateCode(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ICoding>(), It.IsAny<IConcept>(), It.IsAny<PartialDateTime?>(), true, It.IsAny<string>())).Returns(Task.FromResult(result));
         }
 
         [TestMethod()]
@@ -91,12 +91,12 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         }
 
         [TestMethod]
-        public void ValidateWithCode()
+        public async Task ValidateWithCode()
         {
             SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
             var input = ElementNode.Root("code", value: "CD123");
 
-            var result = _bindingAssertion.Validate(input, _validationContext);
+            var result = await _bindingAssertion.Validate(input, _validationContext);
 
             Assert.IsTrue(result.Result.IsSuccessful);
             _terminologyService.Verify(ts => ts.ValidateCode(
@@ -115,12 +115,12 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         }
 
         [TestMethod]
-        public void ValidateWithUri()
+        public async Task ValidateWithUri()
         {
             SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
             var input = ElementNode.Root("uri", value: "http://some.uri");
 
-            var result = _bindingAssertion.Validate(input, _validationContext);
+            var result = await _bindingAssertion.Validate(input, _validationContext);
 
             Assert.IsTrue(result.Result.IsSuccessful);
             _terminologyService.Verify(ts => ts.ValidateCode(
@@ -139,12 +139,12 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         }
 
         [TestMethod]
-        public void ValidateWithString()
+        public async Task ValidateWithString()
         {
             SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
             var input = ElementNode.Root("string", value: "Some string");
 
-            var result = _bindingAssertion.Validate(input, _validationContext);
+            var result = await _bindingAssertion.Validate(input, _validationContext);
 
             Assert.IsTrue(result.Result.IsSuccessful);
             _terminologyService.Verify(ts => ts.ValidateCode(
@@ -163,12 +163,12 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         }
 
         [TestMethod]
-        public void ValidateWithCoding()
+        public async Task ValidateWithCoding()
         {
             SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
 
             var input = createCoding("http://terminology.hl7.org/CodeSystem/data-absent-reason", "masked");
-            var result = _bindingAssertion.Validate(input, _validationContext);
+            var result = await _bindingAssertion.Validate(input, _validationContext);
 
             Assert.IsTrue(result.Result.IsSuccessful);
             _terminologyService.Verify(ts => ts.ValidateCode(
@@ -187,7 +187,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         }
 
         [TestMethod]
-        public void ValidateWithCodeableConcept()
+        public async Task ValidateWithCodeableConcept()
         {
             SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
             var codings = new[] { createCoding("http://terminology.hl7.org/CodeSystem/data-absent-reason", "masked") ,
@@ -195,7 +195,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
 
             var input = createConcept(codings);
 
-            var result = _bindingAssertion.Validate(input, _validationContext);
+            var result = await _bindingAssertion.Validate(input, _validationContext);
 
             Assert.IsTrue(result.Result.IsSuccessful);
             _terminologyService.Verify(ts => ts.ValidateCode(
@@ -214,12 +214,12 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         }
 
         [TestMethod]
-        public void ValidateWithQuantity()
+        public async Task ValidateWithQuantity()
         {
             SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
 
             var input = createQuantity(25, "s");
-            var result = _bindingAssertion.Validate(input, _validationContext);
+            var result = await _bindingAssertion.Validate(input, _validationContext);
 
             Assert.IsTrue(result.Result.IsSuccessful);
             _terminologyService.Verify(ts => ts.ValidateCode(
@@ -238,34 +238,34 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         }
 
         [TestMethod]
-        public void ValidateEmptyString()
+        public async Task ValidateEmptyString()
         {
             var input = ElementNode.Root("string", value: "");
 
-            var result = _bindingAssertion.Validate(input, _validationContext);
+            var result = await _bindingAssertion.Validate(input, _validationContext);
 
             Assert.IsFalse(result.Result.IsSuccessful);
             _terminologyService.VerifyNoOtherCalls();
         }
 
         [TestMethod]
-        public void ValidateCodingWithoutCode()
+        public async Task ValidateCodingWithoutCode()
         {
             var input = createCoding("system", null, null);
 
-            var result = _bindingAssertion.Validate(input, _validationContext);
+            var result = await _bindingAssertion.Validate(input, _validationContext);
 
             Assert.IsFalse(result.Result.IsSuccessful);
             _terminologyService.VerifyNoOtherCalls();
         }
 
         [TestMethod]
-        public void ValidateInvalidCoding()
+        public async Task ValidateInvalidCoding()
         {
             SetupTerminologyServiceResult(new Assertions(ResultAssertion.Failure));
 
             var input = createCoding("http://terminology.hl7.org/CodeSystem/data-absent-reason", "UNKNOWN");
-            var result = _bindingAssertion.Validate(input, _validationContext);
+            var result = await _bindingAssertion.Validate(input, _validationContext);
 
             Assert.IsFalse(result.Result.IsSuccessful);
             _terminologyService.Verify(ts => ts.ValidateCode(

@@ -4,6 +4,7 @@ using Hl7.Fhir.Validation.Schema;
 using Hl7.Fhir.Validation.Tests.Impl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Tests.Schema
 {
@@ -13,11 +14,11 @@ namespace Hl7.Fhir.Validation.Tests.Schema
         public MaxLengthTests() : base(new MaxLength("MaxLengthTests", 10)) { }
 
         [TestMethod]
-        public void LengthTooLong()
+        public async Task LengthTooLong()
         {
             var node = ElementNode.ForPrimitive("12345678901");
 
-            var result = _validatable.Validate(node, null);
+            var result = await _validatable.Validate(node, null);
 
             Assert.IsNotNull(result);
             Assert.IsFalse(result.Result.IsSuccessful);
@@ -27,32 +28,32 @@ namespace Hl7.Fhir.Validation.Tests.Schema
         }
 
         [TestMethod]
-        public void LengthCorrect()
+        public async Task LengthCorrect()
         {
             var node = ElementNode.ForPrimitive("1234567890");
 
-            var result = _validatable.Validate(node, null);
+            var result = await _validatable.Validate(node, null);
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Result.IsSuccessful);
         }
 
         [TestMethod]
-        public void ValidateWithOtherThanString()
+        public async Task ValidateWithOtherThanString()
         {
             var node = ElementNode.ForPrimitive(90);
 
-            var result = _validatable.Validate(node, null);
+            var result = await _validatable.Validate(node, null);
 
             Assert.IsTrue(result.Result.IsSuccessful, "MaxLength constraint on a non-string primitive must be succesful");
         }
 
         [TestMethod]
-        public void ValidateWithEmptyString()
+        public async Task ValidateWithEmptyString()
         {
             var node = ElementNode.ForPrimitive("");
 
-            var result = _validatable.Validate(node, null);
+            var result = await _validatable.Validate(node, null);
 
             Assert.IsTrue(result.Result.IsSuccessful, "MaxLength constraint on an empty string must be succesful");
         }

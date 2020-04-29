@@ -11,6 +11,7 @@ using Hl7.Fhir.Validation.Schema;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl
 {
@@ -37,17 +38,17 @@ namespace Hl7.Fhir.Validation.Impl
             _maxInText = max;
         }
 
-        public Assertions Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
+        public Task<Assertions> Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
         {
             var assertions = Assertions.Empty + new Trace("[CardinalityAssertion] Validating");
 
             var count = input.Count();
             if (!InRange(count))
             {
-                assertions += Assertions.Failure + new IssueAssertion(1028, _location, $"Instance count for '{_location}' is { count }, which is not within the specified cardinality of { CardinalityDisplay}", IssueSeverity.Error);
+                assertions += new IssueAssertion(1028, _location, $"Instance count for '{_location}' is { count }, which is not within the specified cardinality of { CardinalityDisplay}", IssueSeverity.Error);
             }
 
-            return assertions;
+            return Task.FromResult(assertions.AddResultAssertion());
         }
 
         private bool InRange(int x)

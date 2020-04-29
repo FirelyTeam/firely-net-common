@@ -3,6 +3,7 @@ using Hl7.Fhir.Validation.Impl;
 using Hl7.Fhir.Validation.Schema;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Tests.Schema
 {
@@ -16,9 +17,9 @@ namespace Hl7.Fhir.Validation.Tests.Schema
                 throw new System.NotImplementedException();
             }
 
-            public Assertions Validate(ITypedElement input, ValidationContext vc)
+            public Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
             {
-                return Assertions.Success + new TraceText("Success Assertion");
+                return Task.FromResult(Assertions.Success + new TraceText("Success Assertion"));
             }
         }
 
@@ -29,31 +30,31 @@ namespace Hl7.Fhir.Validation.Tests.Schema
                 throw new System.NotImplementedException();
             }
 
-            public Assertions Validate(ITypedElement input, ValidationContext vc)
+            public Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
             {
-                return Assertions.Failure + new TraceText("Failure Assertion");
+                return Task.FromResult(Assertions.Failure + new TraceText("Failure Assertion"));
             }
         }
 
 
         [TestMethod]
-        public void SingleOperand()
+        public async Task SingleOperand()
         {
             var allAssertion = new AllAssertion(new SuccessAssertion());
-            var result = allAssertion.Validate(null, null);
+            var result = await allAssertion.Validate(null, null);
             Assert.IsTrue(result.Result.IsSuccessful);
 
             allAssertion = new AllAssertion(new FailureAssertion());
-            result = allAssertion.Validate(null, null);
+            result = await allAssertion.Validate(null, null);
             Assert.IsFalse(result.Result.IsSuccessful);
 
         }
 
         [TestMethod]
-        public void Combinations()
+        public async Task Combinations()
         {
             var allAssertion = new AllAssertion(new SuccessAssertion(), new FailureAssertion());
-            var result = allAssertion.Validate(null, null);
+            var result = await allAssertion.Validate(null, null);
             Assert.IsFalse(result.Result.IsSuccessful);
 
         }

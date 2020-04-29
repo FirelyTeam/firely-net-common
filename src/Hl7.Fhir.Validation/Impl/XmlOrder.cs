@@ -8,6 +8,7 @@
 
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Validation.Schema;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl
 {
@@ -24,6 +25,6 @@ namespace Hl7.Fhir.Validation.Impl
 
         public override object Value => Order;
 
-        public override Assertions Validate(ITypedElement input, ValidationContext vc) => Assertions.Empty;
+        public override Task<Assertions> Validate(ITypedElement input, ValidationContext vc) => Task.FromResult(Assertions.Success);
     }
 }

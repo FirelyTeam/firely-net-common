@@ -12,6 +12,7 @@ using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation.Schema;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl
 {
@@ -49,24 +50,25 @@ namespace Hl7.Fhir.Validation.Impl
 
         public override object Value => _minMaxValue;
 
-        public override Assertions Validate(ITypedElement input, ValidationContext vc)
+        public override Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
         {
             var comparisonOutcome = _minMaxType == MinMax.MinValue ? -1 : 1;
 
             // TODO : what to do if Value is not IComparable?
             if (input.Value is IComparable instanceValue)
             {
+                if (input.InstanceType != _minMaxValue.InstanceType) return Task.FromResult(Assertions.Failure);
                 if (instanceValue.CompareTo(_minMaxValue.Value) == comparisonOutcome)
                 {
                     var label = comparisonOutcome == -1 ? "smaller than" :
                                     comparisonOutcome == 0 ? "equal to" :
                                         "larger than";
 
-                    return Assertions.Failure + new Trace($"Value '{instanceValue}' is {label} {_minMaxValue.Value})");
+                    return Task.FromResult(Assertions.Failure + new Trace($"Value '{instanceValue}' is {label} {_minMaxValue.Value})"));
                 }
             }
 
-            return Assertions.Success;
+            return Task.FromResult(Assertions.Success);
         }
 
         public override JToken ToJson()

@@ -12,17 +12,21 @@ namespace Hl7.Fhir.Validation.Schema
 {
     public class TypeCaseBuilder
     {
+        private readonly IElementDefinitionAssertionFactory _assertionFactory;
         public readonly ISchemaResolver Resolver;
 
-        public TypeCaseBuilder(ISchemaResolver resolver)
+        public TypeCaseBuilder(ISchemaResolver resolver, IElementDefinitionAssertionFactory assertionFactory)
         {
             Resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
+            _assertionFactory = assertionFactory;
         }
 
-        public ReferenceAssertion BuildProfileRef(string profile)
+        public IAssertion BuildProfileRef(string type, string profile)
         {
             var uri = new Uri(profile, UriKind.Absolute);
-            return new ReferenceAssertion(() => Resolver.GetSchema(uri), uri);
+            return type == "Extension"
+                ? _assertionFactory.CreateExtensionAssertion((u) => Resolver.GetSchema(u), uri)
+                : _assertionFactory.CreateReferenceAssertion(() => Resolver.GetSchema(uri), uri);
         }
     }
 }

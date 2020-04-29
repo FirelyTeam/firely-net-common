@@ -12,14 +12,15 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Schema
 {
-    public class ElementSchema : IAssertion, IMergeable, IGroupValidatable
+    public class ElementSchema : IElementSchema, IMergeable
     {
         public Uri Id { get; private set; }
 
-        public readonly Assertions Members;
+        public Assertions Members { get; private set; }
 
 
         public ElementSchema(Assertions assertions)
@@ -56,25 +57,17 @@ namespace Hl7.Fhir.Validation.Schema
 
         public bool IsEmpty => !Members.Any();
 
-        public Assertions Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
+        public async Task<Assertions> Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
         {
             var members = Members.Where(vc?.IncludeFilter ?? (assertion => true));
             var multiAssertions = members.OfType<IGroupValidatable>();
             var singleAssertions = members.OfType<IValidatable>();
 
-            var multiResults = multiAssertions
-                                .Select(ma => ma.Validate(input, vc));
+            var multiResults = await multiAssertions
+                                        .Select(ma => ma.Validate(input, vc)).AggregateAsync();
 
-            var singleResults = input
-                            .Select(elt => collectPerInstance(elt));
-
-            return collect(multiResults.Union(singleResults));
-
-            Assertions collectPerInstance(ITypedElement elt) =>
-                collect(from assert in singleAssertions
-                        select assert.Validate(elt, vc));
-
-            Assertions collect(IEnumerable<Assertions> bunch) => bunch.Aggregate(Assertions.Empty, (sum, other) => sum += other);
+            var singleResult = await input.Select(elt => singleAssertions.ValidateAsync(elt, vc)).AggregateAsync();
+            return multiResults + singleResult;
         }
 
         public JToken ToJson()
@@ -87,11 +80,6 @@ namespace Hl7.Fhir.Validation.Schema
             JToken nest(JToken mem) =>
                 mem is JObject ? new JProperty("nested", mem) : mem;
         }
-
-        public ElementSchema With(params IAssertion[] additional) => With(additional.AsEnumerable());
-
-        public ElementSchema With(IEnumerable<IAssertion> additional) =>
-            new ElementSchema(this.Id, this.Members.Union(additional));
 
         public IMergeable Merge(IMergeable other) =>
             other is ElementSchema schema ? new ElementSchema(this.Members + schema.Members)
