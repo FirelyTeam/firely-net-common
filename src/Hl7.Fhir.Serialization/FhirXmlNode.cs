@@ -73,7 +73,7 @@ namespace Hl7.Fhir.Serialization
             {
                 if (_containedResource == null)
                 {
-                    if (Current is XElement xe && xe.TryGetContainedResource(out XElement contained))
+                    if (Current is XElement xe && xe.TryGetContainedResource(out XElement contained, ignoreNameSpace: PermissiveParsing))
                     {
                         bool errorEncountered = verifyContained(contained, this, PermissiveParsing);
 
