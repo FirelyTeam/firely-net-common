@@ -45,7 +45,14 @@ namespace Hl7.Fhir.Utility
             return (T?)ParseLiteral(rawValue, typeof(T), ignoreCase);
         }
 
-		public static string GetName( Type enumType )
+        public static bool TryParseLiteral<T>(string rawValue, out T? value, bool ignoreCase = false) where T : struct
+        {
+            var result = GetEnumMapping(typeof(T)).TryParseLiteral(rawValue, ignoreCase, out var parsed);
+            value = (T?)(object)parsed;
+            return result;
+        }
+
+        public static string GetName( Type enumType )
 		{
 			return GetEnumMapping(enumType).Name;
 		}
@@ -101,6 +108,18 @@ namespace Hl7.Fhir.Utility
                     _literalToEnum.TryGetValue(literal, out result);
                 }
                 return result;
+            }
+
+            public bool TryParseLiteral(string literal, bool ignoreCase, out Enum result)
+            {
+                if (ignoreCase)
+                {
+                    return _lowercaseLiteralToEnum.TryGetValue(literal.ToLowerInvariant(), out result);
+                }
+                else
+                {
+                    return _literalToEnum.TryGetValue(literal, out result);
+                }
             }
 
             public bool ContainsLiteral(string literal) => _literalToEnum.ContainsKey(literal);
