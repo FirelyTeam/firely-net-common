@@ -50,33 +50,29 @@ namespace Hl7.Fhir.Model
 
         public override IDeepCopyable CopyTo(IDeepCopyable other)
         {
-            var dest = other as DataType;
-            
-            if (dest != null)
+            if (other is DataType dest)
             {
                 base.CopyTo(dest);
                 return dest;
             }
             else
-            	throw new ArgumentException("Can only copy to an object of the same type", "other");
+                throw new ArgumentException("Can only copy to an object of the same type", "other");
         }
         
         public override bool Matches(IDeepComparable other)
         {
-            var otherT = other as DataType;
-            if(otherT == null) return false;
-            
-            if(!base.Matches(otherT)) return false;
+            if (!(other is DataType otherT)) return false;
+
+            if (!base.Matches(otherT)) return false;
             
             return true;
         }
         
         public override bool IsExactly(IDeepComparable other)
         {
-            var otherT = other as DataType;
-            if(otherT == null) return false;
-            
-            if(!base.IsExactly(otherT)) return false;
+            if (!(other is DataType otherT)) return false;
+
+            if (!base.IsExactly(otherT)) return false;
             
             return true;
         }
