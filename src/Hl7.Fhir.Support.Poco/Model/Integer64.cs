@@ -45,7 +45,7 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("integer64")]
     [DataContract]
-    public partial class Integer64 : Hl7.Fhir.Model.PrimitiveType<long?>, INullableValue<long>
+    public partial class Integer64 : PrimitiveType, INullableValue<long>
     {
         [NotMapped]
         public override string TypeName { get { return "integer64"; } }

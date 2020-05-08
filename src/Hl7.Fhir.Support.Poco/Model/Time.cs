@@ -45,7 +45,7 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("time")]
     [DataContract]
-    public partial class Time : PrimitiveType<string>, IStringValue
+    public partial class Time : PrimitiveType, IStringValue
     {
         public override string TypeName { get { return "time"; } }
 
