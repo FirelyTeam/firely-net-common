@@ -46,7 +46,7 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("decimal")]
     [DataContract]
-    public partial class FhirDecimal : Hl7.Fhir.Model.PrimitiveType<decimal?>, INullableValue<decimal>
+    public partial class FhirDecimal : PrimitiveType, INullableValue<decimal>
     {
         public override string TypeName { get { return "decimal"; } }
         

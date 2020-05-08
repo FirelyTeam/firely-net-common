@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
 
     [FhirType("unsignedInt")]
     [DataContract]
-    public partial class UnsignedInt : PrimitiveType<int?>, INullableIntegerValue
+    public partial class UnsignedInt : PrimitiveType, INullableIntegerValue
     {
         public override string TypeName { get { return "unsignedInt"; } }
 

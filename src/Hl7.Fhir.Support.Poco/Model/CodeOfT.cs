@@ -44,7 +44,7 @@ namespace Hl7.Fhir.Model
     [FhirType("codeOfT")]
     [DataContract]
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    public class Code<T> : PrimitiveType<T>, INullableValue<T>, ISystemAndCode where T : struct
+    public class Code<T> : PrimitiveType, INullableValue<T>, ISystemAndCode where T : struct
     {
         static Code()
         {
