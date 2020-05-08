@@ -23,12 +23,13 @@ namespace Hl7.Fhir.Rest
                 ResponseUri = response.ResponseUri,
                 Status = response.Status
             };
-            
-            if (response.Body != null)
+
+            var body = response.GetBodyAsText();
+            if (!string.IsNullOrEmpty(body))
             {
                 try
                 {
-                    result.TypedElement = parseResource(response.GetBodyAsText(), response.ContentType, parserSettings, provider, response.IsSuccessful());
+                    result.TypedElement = parseResource(body, response.ContentType, parserSettings, provider, response.IsSuccessful());
                 }
                 catch (UnsupportedBodyTypeException bte)
                 {
@@ -46,8 +47,8 @@ namespace Hl7.Fhir.Rest
         
         private static ITypedElement parseResource(string bodyText, string contentType, ParserSettings settings, IStructureDefinitionSummaryProvider provider, bool throwOnFormatException)
         {
-            ITypedElement result = null;
-
+            
+            ITypedElement result = null;            
             var fhirType = ContentType.GetResourceFormatFromContentType(contentType);
 
             if (fhirType == ResourceFormat.Unknown)
@@ -79,6 +80,8 @@ namespace Hl7.Fhir.Rest
 
                 return null;
             }
+            
+               
             return result;
         }
     }

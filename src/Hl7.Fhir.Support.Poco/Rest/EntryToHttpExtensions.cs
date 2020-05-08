@@ -19,7 +19,7 @@ namespace Hl7.Fhir.Rest
 {
     internal static class EntryToHttpExtensions
     {
-        public static HttpRequestMessage ToHttpRequest(this EntryRequest entry, FhirClientSettings settings)
+        public static HttpRequestMessage ToHttpRequestMessage(this EntryRequest entry, Uri baseUrl, FhirClientSettings settings)
         {
 
             System.Diagnostics.Debug.WriteLine("{0}: {1}", entry.Method, entry.Url);           
@@ -27,7 +27,14 @@ namespace Hl7.Fhir.Rest
             if (entry.RequestBodyContent != null && !(entry.Method == HTTPVerb.POST || entry.Method == HTTPVerb.PUT))
                 throw Error.InvalidOperation("Cannot have a body on an Http " + entry.Method.ToString());
 
-            var location = new RestUrl(entry.Url);
+            // Create an absolute uri when the interaction.Url is relative.
+            var uri = new Uri(entry.Url, UriKind.RelativeOrAbsolute);
+            if (!uri.IsAbsoluteUri)
+            {
+                uri = HttpUtil.MakeAbsoluteToBase(uri, baseUrl);
+            }
+
+            var location = new RestUrl(uri);
 
             if (settings.UseFormatParameter)
                 location.AddParam(HttpUtil.RESTPARAM_FORMAT, ContentType.BuildFormatParam(settings.PreferredFormat));
@@ -50,7 +57,7 @@ namespace Hl7.Fhir.Rest
                 request.Headers.Add("Prefer", "handling=" + PrimitiveTypeConverter.ConvertTo<string>(settings.PreferredParameterHandling));
 
             if (entry.RequestBodyContent != null)
-                setBodyAndContentType(request, entry.RequestBodyContent, settings.PreferredFormat, settings.CompressRequestBody);
+                setContentAndContentType(request, entry.RequestBodyContent, entry.ContentType, settings.PreferredFormat);
 
             return request;
         }
@@ -76,31 +83,30 @@ namespace Hl7.Fhir.Rest
             throw new HttpRequestException($"Valid HttpVerb could not be found for verb type: [{verb}]");
         }
 
-        private static void setBodyAndContentType(HttpRequestMessage request, byte[] data, ResourceFormat format, bool CompressRequestBody)
+        private static void setContentAndContentType(HttpRequestMessage request, byte[] data, string contentType, ResourceFormat format)
         {
-            if (data == null) throw Error.ArgumentNull(nameof(data));
-
-            // This is done by the caller after the OnBeforeRequest is called so that other properties
-            // can be set before the content is committed
-            // request.WriteBody(CompressRequestBody, data);
-
-            var contentType = ContentType.BuildContentType(format, forBundle: false);
+            if (data == null) throw Error.ArgumentNull(nameof(data));         
+            
             request.Content = new ByteArrayContent(data);
+
+            if(contentType == null)
+            {
+                contentType = ContentType.BuildContentType(format, forBundle: false);
+            }
+               
             request.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
         }
 
 
-        public static HttpWebRequest ToHttpRequest(this EntryRequest entry, Uri baseUrl, FhirClientSettings settings)
+        public static HttpWebRequest ToHttpWebRequest(this EntryRequest entry, Uri baseUrl, FhirClientSettings settings)
         {
-            System.Diagnostics.Debug.WriteLine("{0}: {1}", entry.Method, entry.Url);
+            System.Diagnostics.Debug.WriteLine("{0}: {1}", (object)entry.Method, (object)entry.Url);
 
-            var interaction = entry;
-
-            if (entry.RequestBodyContent != null && !(interaction.Method == HTTPVerb.POST || interaction.Method == HTTPVerb.PUT))
-                throw Error.InvalidOperation("Cannot have a body on an Http " + interaction.Method.ToString());
+            if (entry.RequestBodyContent != null && !(entry.Method == HTTPVerb.POST || entry.Method == HTTPVerb.PUT))
+                throw Error.InvalidOperation((string)("Cannot have a body on an Http " + entry.Method.ToString()));
 
             // Create an absolute uri when the interaction.Url is relative.
-            var uri = new Uri(interaction.Url, UriKind.RelativeOrAbsolute);
+            var uri = new Uri(entry.Url, UriKind.RelativeOrAbsolute);
             if (!uri.IsAbsoluteUri)
             {
                 uri = HttpUtil.MakeAbsoluteToBase(uri, baseUrl);
@@ -108,25 +114,29 @@ namespace Hl7.Fhir.Rest
 
             var location = new RestUrl(uri);
 
+
+
             if (settings.UseFormatParameter)
                 location.AddParam(HttpUtil.RESTPARAM_FORMAT, Hl7.Fhir.Rest.ContentType.BuildFormatParam(settings.PreferredFormat));
 
             var request = (HttpWebRequest)HttpWebRequest.Create(location.Uri);
-            request.Method = interaction.Method.ToString();
-            setAgent(request, ".NET FhirClient for FHIR " + entry.Agent);
+            request.Method = entry.Method.ToString();
+            setAgent(request, (string)(".NET FhirClient for FHIR " + entry.Agent));
 
             if (!settings.UseFormatParameter)
-                request.Accept = Hl7.Fhir.Rest.ContentType.BuildContentType(settings.PreferredFormat, forBundle: false);
+                request.Accept = ContentType.BuildContentType(settings.PreferredFormat, forBundle: false);
 
-            if (interaction.Headers.IfMatch != null) request.Headers["If-Match"] = interaction.Headers.IfMatch;
-            if (interaction.Headers.IfNoneMatch != null) request.Headers["If-None-Match"] = interaction.Headers.IfNoneMatch;
+            request.ContentType = entry.ContentType ?? ContentType.BuildContentType(settings.PreferredFormat, forBundle: false);
+
+            if (entry.Headers.IfMatch != null) request.Headers["If-Match"] = entry.Headers.IfMatch;
+            if (entry.Headers.IfNoneMatch != null) request.Headers["If-None-Match"] = entry.Headers.IfNoneMatch;
 #if NETSTANDARD1_1
-            if (interaction.Headers.IfModifiedSince != null) request.Headers["If-Modified-Since"] = interaction.Headers.IfModifiedSince.Value.UtcDateTime.ToString();
+            if (entry.Headers.IfModifiedSince != null) request.Headers["If-Modified-Since"] = entry.Headers.IfModifiedSince.Value.UtcDateTime.ToString();
 #else
-            if (interaction.Headers.IfModifiedSince != null) request.IfModifiedSince = interaction.Headers.IfModifiedSince.Value.UtcDateTime;
+            if (entry.Headers.IfModifiedSince != null) request.IfModifiedSince = entry.Headers.IfModifiedSince.Value.UtcDateTime;
 
 #endif
-            if (interaction.Headers.IfNoneExist != null) request.Headers["If-None-Exist"] = interaction.Headers.IfNoneExist;
+            if (entry.Headers.IfNoneExist != null) request.Headers["If-None-Exist"] = entry.Headers.IfNoneExist;
 
             if (canHaveReturnPreference() && settings.PreferredReturn.HasValue)
             {
@@ -143,7 +153,7 @@ namespace Hl7.Fhir.Rest
                 if (settings.PreferredReturn.HasValue && settings.PreferredReturn == Prefer.RespondAsync)
                     preferHeader.Add(settings.PreferredReturn.GetLiteral());
                 if (preferHeader.Count > 0)
-                    request.Headers["Prefer"] = String.Join(", ", preferHeader);
+                    request.Headers["Prefer"] = string.Join(", ", preferHeader);
             }
 
             bool canHaveReturnPreference() => entry.Type == InteractionType.Create ||

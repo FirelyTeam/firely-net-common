@@ -29,6 +29,7 @@ namespace Hl7.Fhir.Rest
 
             Client = new HttpClient(messageHandler);
             Client.DefaultRequestHeaders.Add("User-Agent", $".NET FhirClient for FHIR");
+            Client.Timeout = new TimeSpan(0, 0, 0, Settings.Timeout);
         }
 
 
@@ -49,9 +50,8 @@ namespace Hl7.Fhir.Rest
 
             compressRequestBody = Settings.CompressRequestBody; // PCL doesn't support compression at the moment
 
-            using (var requestMessage = interaction.ToHttpRequest(Settings))
-            {
-                Client.Timeout = new TimeSpan(0, 0, 0, Settings.Timeout);
+            using (var requestMessage = interaction.ToHttpRequestMessage(BaseUrl,Settings))
+            {            
 
                 if (Settings.PreferCompressedResponses)
                 {

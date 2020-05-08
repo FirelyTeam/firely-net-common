@@ -25,19 +25,17 @@ namespace Hl7.Fhir.Rest
 
         internal static EntryResponse ToEntryResponse(this HttpResponseMessage response, byte[] body)
         {
-            var result = new EntryResponse();
-
-            
-            result.Status = ((int)response.StatusCode).ToString();
-            result.SetHeaders(response.Headers);      
-
-            
-            result.Body = body;
-            result.Location = response.Headers.Location?.AbsoluteUri ?? response.Content.Headers.ContentLocation?.AbsoluteUri;
-
-            result.LastModified = response.Content.Headers.LastModified;
-            result.Etag = response.Headers.ETag?.Tag.Trim('\"');
-            result.ContentType = response.Content.Headers.ContentType.MediaType;           
+            var result = new EntryResponse
+            {
+                Status = ((int)response.StatusCode).ToString(),
+                ResponseUri = response.RequestMessage.RequestUri,//this is actually the requestUri, can't find the responseUri
+                Body = body,
+                Location = response.Headers.Location?.AbsoluteUri ?? response.Content.Headers.ContentLocation?.AbsoluteUri,
+                LastModified = response.Content.Headers.LastModified,
+                Etag = response.Headers.ETag?.Tag.Trim('\"'),
+                ContentType = response.Content.Headers.ContentType?.MediaType
+            };
+            result.SetHeaders(response.Headers);     
 
 
             return result;

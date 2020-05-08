@@ -39,10 +39,7 @@ namespace Hl7.Fhir.Rest
 
             bool compressRequestBody = false;
 
-            var request = interaction.ToHttpRequest(BaseUrl, Settings);
-
-            //Handled in ToHttpRequest
-            //request.ContentType = interaction.ContentType;
+            var request = interaction.ToHttpWebRequest(BaseUrl, Settings);
 
 #if !NETSTANDARD1_1
             request.Timeout = Settings.Timeout;
@@ -53,8 +50,10 @@ namespace Hl7.Fhir.Rest
                 request.Headers["Accept-Encoding"] = "gzip, deflate";
             }
 
-            var result = new EntryResponse();
-            result.LastRequest = request;
+            var result = new EntryResponse
+            {
+                LastRequest = request
+            };
 
             BeforeRequest?.Invoke(request, interaction.RequestBodyContent);
 
