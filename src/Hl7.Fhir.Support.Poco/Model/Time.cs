@@ -29,42 +29,40 @@
 */
 
 using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Validation;
 using System.Runtime.Serialization;
 using Hl7.Fhir.Specification;
-using System.Text.RegularExpressions;
 using System;
+using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model
 {
     /// <summary>
-    /// Primitive Type uuid
+    /// Primitive Type time
     /// </summary>
 #if !NETSTANDARD1_1
     [Serializable]
 #endif
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    [FhirType("uuid")]
+    [FhirType("time")]
     [DataContract]
-    public class Uuid : PrimitiveType<string>, IStringValue
+    public partial class Time : PrimitiveType<string>, IStringValue
     {
-        public override string TypeName { get { return "uuid"; } }
-        
-        // Must conform to the pattern "urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-        public const string PATTERN = @"urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+        public override string TypeName { get { return "time"; } }
 
-		public Uuid(string value)
+        // Must conform to the pattern "([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?"
+        public const string PATTERN = @"([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?";
+
+        public Time(string value)
 		{
 			Value = value;
 		}
 
-		public Uuid(): this(null) {}
+        public Time(): this(null) {}
 
         /// <summary>
         /// Primitive value of the element
         /// </summary>
         [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
-        [UuidPattern]
         [DataMember]
         public string Value
         {
@@ -72,15 +70,10 @@ namespace Hl7.Fhir.Model
             set { ObjectValue = value; OnPropertyChanged("Value"); }
         }
 
-        public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
+        public static bool IsValidValue(string value) 
+            => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
 
-        public static Uuid Generate()
-        {
-            var newUuid = "urn:uuid:" + System.Guid.NewGuid().ToString();
-            return new Uuid(newUuid);
-        }
-
-        public FhirUri AsUri() => new FhirUri(Value);
+        public Primitives.PartialTime? ToTime() 
+            => Value != null ? (Primitives.PartialTime?)Primitives.PartialTime.Parse(Value) : null;
     }
-
 }
