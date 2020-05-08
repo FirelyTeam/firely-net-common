@@ -38,16 +38,16 @@ using System.Runtime.Serialization;
 namespace Hl7.Fhir.Model
 {
     /// <summary>
-    /// Base for elements defined inside a resource
+    /// Base for datatypes that can carry modifier extensions
     /// </summary>
 #if !NETSTANDARD1_1
     [Serializable]
 #endif
-    [FhirType("BackboneElement")]
+    [FhirType("BackboneType")]
     [DataContract]
-    public abstract partial class BackboneElement : Element, IModifierExtendable
+    public abstract class BackboneType : DataType, IModifierExtendable
     {
-        public override string TypeName { get { return "BackboneElement"; } }
+        public override string TypeName { get { return "BackboneType"; } }
         
         /// <summary>
         /// Extensions that cannot be ignored even if unrecognized
@@ -66,7 +66,7 @@ namespace Hl7.Fhir.Model
 
         public override IDeepCopyable CopyTo(IDeepCopyable other)
         {
-            var dest = other as BackboneElement;
+            var dest = other as BackboneType;
             
             if (dest != null)
             {
@@ -80,7 +80,7 @@ namespace Hl7.Fhir.Model
         
         public override bool Matches(IDeepComparable other)
         {
-            var otherT = other as BackboneElement;
+            var otherT = other as BackboneType;
             if(otherT == null) return false;
             
             if(!base.Matches(otherT)) return false;
@@ -91,7 +91,7 @@ namespace Hl7.Fhir.Model
         
         public override bool IsExactly(IDeepComparable other)
         {
-            var otherT = other as BackboneElement;
+            var otherT = other as BackboneType;
             if(otherT == null) return false;
             
             if(!base.IsExactly(otherT)) return false;

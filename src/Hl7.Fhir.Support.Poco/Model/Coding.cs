@@ -45,7 +45,7 @@ namespace Hl7.Fhir.Model
     [FhirType("Coding")]
     [DataContract]
     [DebuggerDisplay(@"\{{DebuggerDisplay,nq}}")]
-    public class Coding : Element
+    public class Coding : DataType
     {
         public override string TypeName { get { return "Coding"; } }
 

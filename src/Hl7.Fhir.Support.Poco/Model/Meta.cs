@@ -41,7 +41,7 @@ namespace Hl7.Fhir.Model
     /// </summary>
     [FhirType("Meta")]
     [DataContract]
-    public class Meta : Element
+    public class Meta : DataType
     {
         public override string TypeName { get { return "Meta"; } }
         

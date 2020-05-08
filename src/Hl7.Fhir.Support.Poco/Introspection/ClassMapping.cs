@@ -35,10 +35,6 @@ namespace Hl7.Fhir.Introspection
 
         public bool IsCodeOfT { get; private set; }
 
-        public bool IsBackbone { get; private set; }
-
-        public bool IsNamedBackboneElement { get; private set; }
-
         /// <summary>
         /// PropertyMappings indexed by uppercase name for access speed
         /// </summary>
@@ -58,6 +54,11 @@ namespace Hl7.Fhir.Introspection
         public PropertyMapping PrimitiveValueProperty { get; private set; }
 
         public bool HasPrimitiveValueMember => PrimitiveValueProperty != null;
+
+        /// <summary>
+        /// Indicates whether this class represents the nested complex type for a (backbone) element.
+        /// </summary>
+        public bool IsNestedType { get; private set; }
 
         /// <summary>
         /// Returns the mapping for an element of this class.
@@ -100,11 +101,10 @@ namespace Hl7.Fhir.Introspection
             {
                 Name = collectTypeName(typeAttribute, type),
                 IsResource = type.CanBeTreatedAsType(typeof(Resource)),
-                IsNamedBackboneElement = typeAttribute.NamedBackboneElement,
                 IsCodeOfT = ReflectionHelper.IsClosedGenericType(type) &&
                                 ReflectionHelper.IsConstructedFromGenericTypeDefinition(type, typeof(Code<>)),
-                IsBackbone = type.CanBeTreatedAsType(typeof(IBackboneElement)),
                 NativeType = type,
+                IsNestedType = typeAttribute.IsNestedType
             };
 
             result.inspectProperties(fhirVersion);

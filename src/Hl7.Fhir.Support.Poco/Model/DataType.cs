@@ -28,59 +28,74 @@
 
 */
 
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Validation;
-using System.Runtime.Serialization;
-using Hl7.Fhir.Specification;
-using System.Text.RegularExpressions;
 using System;
+using System.Collections.Generic;
+using Hl7.Fhir.Introspection;
+using System.Runtime.Serialization;
 
 namespace Hl7.Fhir.Model
 {
     /// <summary>
-    /// Primitive Type uuid
+    /// Reuseable Types
     /// </summary>
 #if !NETSTANDARD1_1
     [Serializable]
 #endif
-    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    [FhirType("uuid")]
+    [FhirType("DataType")]
     [DataContract]
-    public class Uuid : PrimitiveType<string>, IStringValue
+    public abstract class DataType : Element
     {
-        public override string TypeName { get { return "uuid"; } }
+        public override string TypeName { get { return "DataType"; } }
         
-        // Must conform to the pattern "urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-        public const string PATTERN = @"urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 
-		public Uuid(string value)
-		{
-			Value = value;
-		}
-
-		public Uuid(): this((string)null) {}
-
-        /// <summary>
-        /// Primitive value of the element
-        /// </summary>
-        [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
-        [UuidPattern]
-        [DataMember]
-        public string Value
+        public override IDeepCopyable CopyTo(IDeepCopyable other)
         {
-            get { return (string)ObjectValue; }
-            set { ObjectValue = value; OnPropertyChanged("Value"); }
+            var dest = other as DataType;
+            
+            if (dest != null)
+            {
+                base.CopyTo(dest);
+                return dest;
+            }
+            else
+            	throw new ArgumentException("Can only copy to an object of the same type", "other");
+        }
+        
+        public override bool Matches(IDeepComparable other)
+        {
+            var otherT = other as DataType;
+            if(otherT == null) return false;
+            
+            if(!base.Matches(otherT)) return false;
+            
+            return true;
+        }
+        
+        public override bool IsExactly(IDeepComparable other)
+        {
+            var otherT = other as DataType;
+            if(otherT == null) return false;
+            
+            if(!base.IsExactly(otherT)) return false;
+            
+            return true;
         }
 
-        public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
-
-        public static Uuid Generate()
+        public override IEnumerable<Base> Children
         {
-            var newUuid = "urn:uuid:" + System.Guid.NewGuid().ToString();
-            return new Uuid(newUuid);
+            get
+            {
+                foreach (var item in base.Children) yield return item;
+            }
         }
 
-        public FhirUri AsUri() => new FhirUri(Value);
+        public override IEnumerable<ElementValue> NamedChildren 
+        { 
+            get 
+            { 
+                foreach (var item in base.NamedChildren) yield return item; 
+ 
+            } 
+        } 
     }
-
 }
