@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * Copyright (c) 2014, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
@@ -51,10 +51,29 @@ namespace Hl7.Fhir.Rest
 
             var interactionType = entry.Type;
 
-            if (interactionType == InteractionType.Create && settings.PreferredReturn != null)
-                request.Headers.Add("Prefer", "return=" + PrimitiveTypeConverter.ConvertTo<string>(settings.PreferredReturn));
+            bool canHaveReturnPreference() => entry.Type == InteractionType.Create ||
+              entry.Type == InteractionType.Update ||
+              entry.Type == InteractionType.Patch;
+
+            if (canHaveReturnPreference() && settings.PreferredReturn != null)
+            {
+                if (settings.PreferredReturn == Prefer.RespondAsync)
+                    request.Headers.Add("Prefer", PrimitiveTypeConverter.ConvertTo<string>(settings.PreferredReturn));
+                else
+                    request.Headers.Add("Prefer", "return=" + PrimitiveTypeConverter.ConvertTo<string>(settings.PreferredReturn));
+            }
+              
             else if (interactionType == InteractionType.Search && settings.PreferredParameterHandling != null)
-                request.Headers.Add("Prefer", "handling=" + PrimitiveTypeConverter.ConvertTo<string>(settings.PreferredParameterHandling));
+            {
+                List<string> preferHeader = new List<string>();
+                if (settings.PreferredParameterHandling.HasValue)
+                    preferHeader.Add("handling=" + settings.PreferredParameterHandling.GetLiteral());
+                if (settings.PreferredReturn.HasValue && settings.PreferredReturn == Prefer.RespondAsync)
+                    preferHeader.Add(settings.PreferredReturn.GetLiteral());
+                if (preferHeader.Count > 0)
+                    request.Headers.Add("Prefer", string.Join(", ", preferHeader));
+            }        
+
 
             if (entry.RequestBodyContent != null)
                 setContentAndContentType(request, entry.RequestBodyContent, entry.ContentType, settings.PreferredFormat);
@@ -155,6 +174,7 @@ namespace Hl7.Fhir.Rest
                 if (preferHeader.Count > 0)
                     request.Headers["Prefer"] = string.Join(", ", preferHeader);
             }
+
 
             bool canHaveReturnPreference() => entry.Type == InteractionType.Create ||
                  entry.Type == InteractionType.Update ||
