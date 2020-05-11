@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("dateTime")]
     [DataContract]
-    public partial class FhirDateTime : Primitive<string>, IStringValue
+    public partial class FhirDateTime : PrimitiveType, IStringValue
     {
         public const string FMT_FULL = "yyyy-MM-dd'T'HH:mm:ssK";
         public const string FMT_YEAR = "{0:D4}";
@@ -115,12 +115,8 @@ namespace Hl7.Fhir.Model
             set { ObjectValue = value; OnPropertyChanged("Value"); }
         }
 
-        public static bool IsValidValue(string value)
-        {
-            return Regex.IsMatch(value as string, "^" + PATTERN + "$", RegexOptions.Singleline);
-
-            //TODO: Additional checks not implementable by the regex
-        }
+        public static bool IsValidValue(string value) 
+            => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
 
 
         public static FhirDateTime Now()
@@ -155,20 +151,11 @@ namespace Hl7.Fhir.Model
 
 
         [Obsolete("Use ToDateTimeOffset(TimeSpan zone) instead")]
-        public DateTime? ToDateTime()
-        {
-            if (this.Value == null) return null;
+        public DateTime? ToDateTime() 
+            => Value == null ? null : (DateTime?)PrimitiveTypeConverter.ConvertTo<DateTime>(Value);
 
-            return PrimitiveTypeConverter.ConvertTo<DateTime>(this.Value);
-        }
-
-        public Primitives.PartialDateTime? ToPartialDateTime()
-        {
-            if (Value != null)
-                return Primitives.PartialDateTime.Parse(Value);
-            else
-                return null;
-        }
+        public Primitives.PartialDateTime? ToPartialDateTime() 
+            => Value != null ? (Primitives.PartialDateTime?)Primitives.PartialDateTime.Parse(Value) : null;
     }
 
 }

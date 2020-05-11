@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("date")]
     [DataContract]
-    public partial class Date : Primitive<string>, IStringValue
+    public partial class Date : PrimitiveType, IStringValue
     {
         public override string TypeName { get { return "date"; } }
         

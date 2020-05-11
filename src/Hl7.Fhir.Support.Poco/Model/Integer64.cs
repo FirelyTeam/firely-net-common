@@ -25,54 +25,54 @@
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
   POSSIBILITY OF SUCH DAMAGE.
   
+
 */
 
-using System;
 using Hl7.Fhir.Introspection;
 using System.Runtime.Serialization;
 using Hl7.Fhir.Specification;
-
+using System.Text.RegularExpressions;
+using System;
 
 namespace Hl7.Fhir.Model
 {
     /// <summary>
-    /// Primitive Type url
+    /// Primitive Type integer64
     /// </summary>
 #if !NETSTANDARD1_1
     [Serializable]
 #endif
-    [System.Diagnostics.DebuggerDisplay(@"\{{Value,nq}}")] // http://blogs.msdn.com/b/jaredpar/archive/2011/03/18/debuggerdisplay-attribute-best-practices.aspx
-    [FhirType("url")]
+    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
+    [FhirType("integer64")]
     [DataContract]
-    public partial class FhirUrl : PrimitiveType, IStringValue
+    public partial class Integer64 : PrimitiveType, INullableValue<long>
     {
-        public override string TypeName { get { return "url"; } }
+        [NotMapped]
+        public override string TypeName { get { return "integer64"; } }
         
-        // Must conform to the pattern "\S*"
-        public const string PATTERN = @"\S*";
+        // Must conform to the pattern "-?([0]|([1-9][0-9]*))"
+        public const string PATTERN = @"-?([0]|([1-9][0-9]*))";
 
-		public FhirUrl(string value)
+		public Integer64(long? value)
 		{
 			Value = value;
 		}
 
-		public FhirUrl(): this((string)null) {}
-
-        public FhirUrl(Uri uri)
-        {
-            Value = uri.OriginalString;
-        }
+		public Integer64(): this(null) {}
 
         /// <summary>
         /// Primitive value of the element
         /// </summary>
         [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
         [DataMember]
-        public string Value
+        public long? Value
         {
-            get { return (string)ObjectValue; }
+            get { return (long?)ObjectValue; }
             set { ObjectValue = value; OnPropertyChanged("Value"); }
-        }           
+        }
+
+        public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
+
     }
     
 }
