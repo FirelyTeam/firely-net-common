@@ -90,20 +90,34 @@ namespace Hl7.FhirPath.Expressions
         {
             if (instance == null) return null;
 
-            if (to.CanBeTreatedAsType(typeof(IEnumerable<ITypedElement>))) return instance;
-
             if (instance is IEnumerable<ITypedElement> list)
             {
+                if (to.CanBeTreatedAsType(typeof(IEnumerable<ITypedElement>))) return instance;
+
                 if (!list.Any()) return null;
                 if (list.Count() == 1)
                     instance = list.Single();
             }
 
-            if (to.CanBeTreatedAsType(typeof(ITypedElement))) return instance;
+            if (instance is ITypedElement element)
+            {
+                if (to.CanBeTreatedAsType(typeof(ITypedElement))) return instance;
+                if (to == typeof(object)) return instance;
 
-            if (instance is ITypedElement element && to != typeof(object))
-                return element.Value;
-            
+                if (element.Value != null)
+                    instance = element.Value; // this is primitive
+                else
+                {
+                    // HACK - there may also be primitives with .Value == null, we need
+                    // to make sure we return null in that case. We assume the primitives
+                    // start with a lower-case letter, which is true in FHIR but not
+                    // in general.
+                    var isFhirPrimitive = Char.IsLower(element.InstanceType[0]);
+                    if (isFhirPrimitive)
+                        instance = element.Value;
+                }
+
+            }
             return instance;
         }
 
