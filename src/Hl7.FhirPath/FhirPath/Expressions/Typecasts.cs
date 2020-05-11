@@ -90,9 +90,7 @@ namespace Hl7.FhirPath.Expressions
         {
             if (instance == null) return null;
 
-            if (instance is IEnumerable<ITypedElement> list)
-            {
-                if (to.CanBeTreatedAsType(typeof(IEnumerable<ITypedElement>))) return instance;
+            if (to.CanBeTreatedAsType(typeof(IEnumerable<ITypedElement>))) return instance;
 
             if (instance is IEnumerable<ITypedElement> list)
             {
