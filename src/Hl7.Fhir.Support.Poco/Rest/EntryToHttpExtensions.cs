@@ -1,4 +1,4 @@
-/* 
+﻿/* 
  * Copyright (c) 2014, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
@@ -40,6 +40,8 @@ namespace Hl7.Fhir.Rest
                 location.AddParam(HttpUtil.RESTPARAM_FORMAT, ContentType.BuildFormatParam(settings.PreferredFormat));
 
             var request = new HttpRequestMessage(getMethod(entry.Method), location.Uri);
+
+            request.Headers.Add("User-Agent", ".NET FhirClient for FHIR " + entry.Agent);
 
             if (!settings.UseFormatParameter)
                 request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse(ContentType.BuildContentType(settings.PreferredFormat, forBundle: false)));
