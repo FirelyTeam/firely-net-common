@@ -22,10 +22,9 @@ namespace Hl7.Fhir.Serialization
         internal FhirJsonNode(JObject root, string nodeName, FhirJsonParsingSettings settings = null)
         {
             JsonObject = root ?? throw Error.ArgumentNull(nameof(root));
-
-            var rootName = nodeName ?? ResourceType;
-            Name = rootName ?? throw Error.InvalidOperation("Root object has no type indication (resourceType) and therefore cannot be used to construct an FhirJsonNode. " +
-                    $"Alternatively, specify a {nameof(nodeName)} using the parameter.");
+            Name = (nodeName ?? (string.IsNullOrEmpty(ResourceType) ? null : ResourceType))
+                      ?? throw Error.InvalidOperation("Root object has no type indication (resourceType) and therefore cannot be used to construct an FhirJsonNode. " +
+                        $"Alternatively, specify a {nameof(nodeName)} using the parameter.");
             Location = Name;
 
             JsonValue = null;

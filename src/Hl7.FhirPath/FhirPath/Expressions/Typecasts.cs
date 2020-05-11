@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * Copyright (c) 2015, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
@@ -94,19 +94,18 @@ namespace Hl7.FhirPath.Expressions
             {
                 if (to.CanBeTreatedAsType(typeof(IEnumerable<ITypedElement>))) return instance;
 
+            if (instance is IEnumerable<ITypedElement> list)
+            {
                 if (!list.Any()) return null;
                 if (list.Count() == 1)
                     instance = list.Single();
             }
 
-            if (instance is ITypedElement element)
-            {
-                if (to.CanBeTreatedAsType(typeof(ITypedElement))) return instance;
+            if (to.CanBeTreatedAsType(typeof(ITypedElement))) return instance;
 
-                if (element.Value != null)
-                    instance = element.Value;
-            }
-
+            if (instance is ITypedElement element && to != typeof(object))
+                return element.Value;
+            
             return instance;
         }
 
