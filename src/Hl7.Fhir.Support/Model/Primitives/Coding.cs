@@ -17,7 +17,7 @@ namespace Hl7.Fhir.Model.Primitives
         public Coding(string system, string code, string display = null)
         {
             System = system;
-            Code = code ?? throw new ArgumentNullException(nameof(code)); // TODO MV Valdation: remove this Exception
+            Code = code; // MV 20200512:  code can be null as well. In old version that was not allowed.
             Display = display;
         }
 

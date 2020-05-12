@@ -33,28 +33,28 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         }
 
         [TestMethod()]
-        [ExpectedException(typeof(InvalidValidationContextException), "Expected InvalidValidationContextException was expected because the terminology service is absent")]
-        public void NoTerminolyServicePresent()
+        [ExpectedException(typeof(InvalidValidationContextException), "InvalidValidationContextException was expected because the terminology service is absent")]
+        public async Task NoTerminolyServicePresent()
         {
             var input = ElementNode.ForPrimitive(true);
             var vc = new ValidationContext();
 
-            var result = _bindingAssertion.Validate(input, vc);
+            _ = await _bindingAssertion.Validate(input, vc);
         }
 
         [TestMethod()]
         [ExpectedException(typeof(ArgumentNullException), "No input is present")]
-        public void NoInputPresent()
+        public async Task NoInputPresent()
         {
-            _ = _bindingAssertion.Validate(null, _validationContext);
+            _ = await _bindingAssertion.Validate(null, _validationContext);
         }
 
         [TestMethod()]
-        public void ValidateTest()
+        public async Task ValidateTest()
         {
             var input = ElementNode.ForPrimitive(true);
 
-            var result = _bindingAssertion.Validate(input, _validationContext);
+            var result = await _bindingAssertion.Validate(input, _validationContext);
         }
 
         private ElementNode createCoding(string system, string code, string display = null)

@@ -41,11 +41,12 @@ namespace Hl7.Fhir.Validation.Tests.Schema
         [TestMethod]
         public async Task ValidateWithOtherThanString()
         {
+            // TODO debatable: is MaxLength for an integer valid? It is now Undecided.
             var node = ElementNode.ForPrimitive(90);
 
             var result = await _validatable.Validate(node, null);
 
-            Assert.IsTrue(result.Result.IsSuccessful, "MaxLength constraint on a non-string primitive must be succesful");
+            Assert.IsFalse(result.Result.IsSuccessful, "MaxLength constraint on a non-string primitive is undecided == not succesful");
         }
 
         [TestMethod]

@@ -39,9 +39,9 @@ namespace Hl7.Fhir.Validation.Impl
             foreach (var member in _members.OfType<IValidatable>())
             {
                 var memberResult = await member.Validate(input, vc);
-                if (memberResult.Result.IsSuccessful)
+                if (!memberResult.Result.IsSuccessful)
                 {
-                    // we have found a result, so we do not continue with the rest anymore
+                    // we have found a failure result, so we do not continue with the rest anymore
                     return memberResult;
                 }
                 result += memberResult;
