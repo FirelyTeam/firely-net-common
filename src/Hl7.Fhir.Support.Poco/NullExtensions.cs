@@ -32,9 +32,9 @@ namespace Hl7.Fhir.Support
             if (element == null) { return true; }
 
             IStringValue ss;
-            Primitive pp;
+            PrimitiveType pp;
             var isEmpty = (ss = element as IStringValue) != null ? string.IsNullOrEmpty(ss.Value)
-                : (pp = element as Primitive) != null ? pp.ObjectValue == null
+                : (pp = element as PrimitiveType) != null ? pp.ObjectValue == null
                 : true;
 
             // Note: Children collection includes extensions

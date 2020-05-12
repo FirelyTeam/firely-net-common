@@ -152,7 +152,7 @@ namespace Hl7.Fhir.Model
         }
 
       
-        public static T GetExtensionValue<T>(this IExtendable extendable, string uri) where T : Element
+        public static T GetExtensionValue<T>(this IExtendable extendable, string uri) where T : DataType
         {
             var ext = extendable.GetExtension(uri);
 
@@ -182,7 +182,7 @@ namespace Hl7.Fhir.Model
         /// <param name="value"></param>
         /// <param name="isModifier"></param>
         /// <returns>The newly added Extension</returns>
-        public static Extension AddExtension(this IExtendable extendable, string uri, Element value, bool isModifier=false)
+        public static Extension AddExtension(this IExtendable extendable, string uri, DataType value, bool isModifier=false)
         {
             var newExtension = new Extension() { Url = uri, Value = value };
 
@@ -227,7 +227,7 @@ namespace Hl7.Fhir.Model
         /// <param name="value"></param>
         /// <param name="isModifier"></param>
         /// <returns>The newly added extension</returns>
-        public static Extension SetExtension(this IExtendable extendable, string uri, Element value, bool isModifier=false)
+        public static Extension SetExtension(this IExtendable extendable, string uri, DataType value, bool isModifier=false)
         {
             if (extendable.Extension == null)
                 extendable.Extension = new List<Extension>();

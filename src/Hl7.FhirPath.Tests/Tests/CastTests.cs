@@ -159,7 +159,7 @@ namespace Hl7.FhirPath.Tests
         {
             get
             {
-                return null;
+                return "NotAPrimitiveType";
             }
         }
 

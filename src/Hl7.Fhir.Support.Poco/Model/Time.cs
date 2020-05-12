@@ -25,43 +25,39 @@
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
   POSSIBILITY OF SUCH DAMAGE.
   
+
 */
 
-using System;
 using Hl7.Fhir.Introspection;
 using System.Runtime.Serialization;
 using Hl7.Fhir.Specification;
-
+using System;
+using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model
 {
     /// <summary>
-    /// Primitive Type url
+    /// Primitive Type time
     /// </summary>
 #if !NETSTANDARD1_1
     [Serializable]
 #endif
-    [System.Diagnostics.DebuggerDisplay(@"\{{Value,nq}}")] // http://blogs.msdn.com/b/jaredpar/archive/2011/03/18/debuggerdisplay-attribute-best-practices.aspx
-    [FhirType("url")]
+    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
+    [FhirType("time")]
     [DataContract]
-    public partial class FhirUrl : PrimitiveType, IStringValue
+    public partial class Time : PrimitiveType, IStringValue
     {
-        public override string TypeName { get { return "url"; } }
-        
-        // Must conform to the pattern "\S*"
-        public const string PATTERN = @"\S*";
+        public override string TypeName { get { return "time"; } }
 
-		public FhirUrl(string value)
+        // Must conform to the pattern "([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?"
+        public const string PATTERN = @"([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?";
+
+        public Time(string value)
 		{
 			Value = value;
 		}
 
-		public FhirUrl(): this((string)null) {}
-
-        public FhirUrl(Uri uri)
-        {
-            Value = uri.OriginalString;
-        }
+        public Time(): this(null) {}
 
         /// <summary>
         /// Primitive value of the element
@@ -72,7 +68,12 @@ namespace Hl7.Fhir.Model
         {
             get { return (string)ObjectValue; }
             set { ObjectValue = value; OnPropertyChanged("Value"); }
-        }           
+        }
+
+        public static bool IsValidValue(string value) 
+            => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
+
+        public Primitives.PartialTime? ToTime() 
+            => Value != null ? (Primitives.PartialTime?)Primitives.PartialTime.Parse(Value) : null;
     }
-    
 }

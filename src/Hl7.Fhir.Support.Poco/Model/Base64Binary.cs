@@ -45,7 +45,7 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("base64Binary")]
     [DataContract]
-    public class Base64Binary : Primitive<byte[]>, IValue<byte[]>
+    public class Base64Binary : PrimitiveType, IValue<byte[]>
     {
         public override string TypeName { get { return "base64Binary"; } }
 

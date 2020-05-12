@@ -25,6 +25,7 @@
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
   POSSIBILITY OF SUCH DAMAGE.
   
+
 */
 
 using System;
@@ -36,32 +37,28 @@ using Hl7.Fhir.Specification;
 namespace Hl7.Fhir.Model
 {
     /// <summary>
-    /// Primitive Type url
+    /// Primitive Type markdown
     /// </summary>
 #if !NETSTANDARD1_1
     [Serializable]
 #endif
-    [System.Diagnostics.DebuggerDisplay(@"\{{Value,nq}}")] // http://blogs.msdn.com/b/jaredpar/archive/2011/03/18/debuggerdisplay-attribute-best-practices.aspx
-    [FhirType("url")]
-    [DataContract]
-    public partial class FhirUrl : PrimitiveType, IStringValue
-    {
-        public override string TypeName { get { return "url"; } }
-        
-        // Must conform to the pattern "\S*"
-        public const string PATTERN = @"\S*";
+    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
 
-		public FhirUrl(string value)
+    [FhirType("markdown")]
+    [DataContract]
+    public partial class Markdown : PrimitiveType, IStringValue
+    {
+        public override string TypeName { get { return "markdown"; } }
+
+        // Must conform to the pattern "[ \r\n\t\S]+"
+        public const string PATTERN = @"[ \r\n\t\S]+";
+
+        public Markdown(string value)
 		{
 			Value = value;
 		}
 
-		public FhirUrl(): this((string)null) {}
-
-        public FhirUrl(Uri uri)
-        {
-            Value = uri.OriginalString;
-        }
+		public Markdown(): this((string)null) {}
 
         /// <summary>
         /// Primitive value of the element
@@ -72,7 +69,9 @@ namespace Hl7.Fhir.Model
         {
             get { return (string)ObjectValue; }
             set { ObjectValue = value; OnPropertyChanged("Value"); }
-        }           
+        }
+
+        public static bool IsValidValue(string value) => FhirString.IsValidValue(value);
     }
     
 }

@@ -1,4 +1,4 @@
-﻿/*
+/*
   Copyright (c) 2011-2012, HL7, Inc
   All rights reserved.
   
@@ -28,14 +28,17 @@
 
 */
 
+
+
 using System;
 
 namespace Hl7.Fhir.Model
 {
-
-    public partial class FhirDateTime
+    [System.Diagnostics.DebuggerDisplay(@"\{{Value}}")]
+    public partial class Time
     {
-        public static bool operator >(FhirDateTime a, FhirDateTime b)
+
+        public static bool operator >(Time a, Time b)
         {
             var aValue = a?.Value;
             var bValue = b?.Value;
@@ -43,10 +46,10 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return Primitives.PartialDateTime.Parse(a.Value) > Primitives.PartialDateTime.Parse(b.Value);
+            return Primitives.PartialTime.Parse(a.Value) > Primitives.PartialTime.Parse(b.Value);
         }
 
-        public static bool operator >=(FhirDateTime a, FhirDateTime b)
+        public static bool operator >=(Time a, Time b)
         {
             var aValue = a?.Value;
             var bValue = b?.Value;
@@ -54,10 +57,10 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return Primitives.PartialDateTime.Parse(a.Value) >= Primitives.PartialDateTime.Parse(b.Value);
+            return Primitives.PartialTime.Parse(a.Value) >= Primitives.PartialTime.Parse(b.Value);
         }
 
-        public static bool operator <(FhirDateTime a, FhirDateTime b)
+        public static bool operator <(Time a, Time b)
         {
             var aValue = a?.Value;
             var bValue = b?.Value;
@@ -65,10 +68,10 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return Primitives.PartialDateTime.Parse(a.Value) < Primitives.PartialDateTime.Parse(b.Value);
+            return Primitives.PartialTime.Parse(a.Value) < Primitives.PartialTime.Parse(b.Value);
         }
 
-        public static bool operator <=(FhirDateTime a, FhirDateTime b)
+        public static bool operator <=(Time a, Time b)
         {
             var aValue = a?.Value;
             var bValue = b?.Value;
@@ -76,7 +79,7 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return Primitives.PartialDateTime.Parse(a.Value) <= Primitives.PartialDateTime.Parse(b.Value);
+            return Primitives.PartialTime.Parse(a.Value) <= Primitives.PartialTime.Parse(b.Value);
         }
 
         /// <summary>
@@ -85,7 +88,7 @@ namespace Hl7.Fhir.Model
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
-        public static bool operator ==(FhirDateTime a, FhirDateTime b) => Equals(a, b);
+        public static bool operator ==(Time a, Time b) => Equals(a, b);
 
         /// <summary>
         /// If you use this operator, you should check that a modifierExtension isn't changing the meaning
@@ -93,11 +96,11 @@ namespace Hl7.Fhir.Model
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
-        public static bool operator !=(FhirDateTime a, FhirDateTime b) => !Equals(a, b);
+        public static bool operator !=(Time a, Time b) => !Equals(a, b);
 
         public override bool Equals(object obj)
         {
-            if (obj is FhirDateTime other)
+            if (obj is Time other)
             {
                 var otherValue = other?.Value;
 
@@ -106,8 +109,8 @@ namespace Hl7.Fhir.Model
 
                 if (this.Value == otherValue) return true; // Default reference/string comparison works in most cases
 
-                var left = Primitives.PartialDateTime.Parse(Value);
-                var right = Primitives.PartialDateTime.Parse(otherValue);
+                var left = Primitives.PartialTime.Parse(Value);
+                var right = Primitives.PartialTime.Parse(otherValue);
 
                 return left == right;
             }

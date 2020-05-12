@@ -44,7 +44,7 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("string")]
     [DataContract]    
-    public class FhirString : Primitive<string>, IStringValue
+    public class FhirString : PrimitiveType, IStringValue
     {
         public override string TypeName { get { return "string"; } }
         
