@@ -2,7 +2,7 @@
 
 namespace Hl7.Fhir.Validation.Model
 {
-    public class UniStructureDefElementSchema
+    public class UniStructureDefElementSchema: IUniElementsOwner
     {
         public List<UniStructureDefElement> Elements { get; set; }
     }

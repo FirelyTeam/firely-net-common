@@ -12,7 +12,7 @@ namespace Hl7.Fhir.Validation.Model
 
     }
 
-    public class UniStructureDefElementBucket
+    public class UniStructureDefElementBucket: IUniElementsOwner
     {
         public string Name { get; set; }
         public string Label { get; set; }
