@@ -46,7 +46,7 @@ namespace Hl7.Fhir.Model
 
     [FhirType("oid")]
     [DataContract]
-    public class Oid : Primitive<string>, IStringValue
+    public class Oid : PrimitiveType, IStringValue
     {
         public override string TypeName { get { return "oid"; } }
 

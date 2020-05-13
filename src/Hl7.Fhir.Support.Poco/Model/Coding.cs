@@ -44,7 +44,7 @@ namespace Hl7.Fhir.Model
     [FhirType("Coding")]
     [DataContract]
     [DebuggerDisplay(@"\{{DebuggerDisplay,nq}}")]
-    public class Coding : Element, ICoding
+    public class Coding : DataType, ICoding
     {
         public override string TypeName { get { return "Coding"; } }
 
@@ -85,13 +85,10 @@ namespace Hl7.Fhir.Model
         [IgnoreDataMemberAttribute]
         public string System
         {
-            get { return SystemElement != null ? SystemElement.Value : null; }
+            get => SystemElement?.Value;
             set
             {
-                if (value == null)
-                    SystemElement = null;
-                else
-                    SystemElement = new Hl7.Fhir.Model.FhirUri(value);
+                SystemElement = value == null ? null : new Hl7.Fhir.Model.FhirUri(value);
                 OnPropertyChanged("System");
             }
         }
@@ -116,13 +113,10 @@ namespace Hl7.Fhir.Model
         [IgnoreDataMemberAttribute]
         public string Version
         {
-            get { return VersionElement != null ? VersionElement.Value : null; }
+            get { return VersionElement?.Value; }
             set
             {
-                if (value == null)
-                    VersionElement = null;
-                else
-                    VersionElement = new Hl7.Fhir.Model.FhirString(value);
+                VersionElement = value == null ? null : new FhirString(value);
                 OnPropertyChanged("Version");
             }
         }
@@ -147,13 +141,10 @@ namespace Hl7.Fhir.Model
         [IgnoreDataMemberAttribute]
         public string Code
         {
-            get { return CodeElement != null ? CodeElement.Value : null; }
+            get { return CodeElement?.Value; }
             set
             {
-                if (value == null)
-                    CodeElement = null;
-                else
-                    CodeElement = new Hl7.Fhir.Model.Code(value);
+                CodeElement = value == null ? null : new Hl7.Fhir.Model.Code(value);
                 OnPropertyChanged("Code");
             }
         }
@@ -178,13 +169,10 @@ namespace Hl7.Fhir.Model
         [IgnoreDataMember]
         public string Display
         {
-            get { return DisplayElement != null ? DisplayElement.Value : null; }
+            get { return DisplayElement?.Value; }
             set
             {
-                if (value == null)
-                    DisplayElement = null;
-                else
-                    DisplayElement = new Hl7.Fhir.Model.FhirString(value);
+                DisplayElement = value == null ? null : new Hl7.Fhir.Model.FhirString(value);
                 OnPropertyChanged("Display");
             }
         }
@@ -209,13 +197,10 @@ namespace Hl7.Fhir.Model
         [IgnoreDataMember]
         public bool? UserSelected
         {
-            get { return UserSelectedElement != null ? UserSelectedElement.Value : null; }
+            get { return UserSelectedElement?.Value; }
             set
             {
-                if (!value.HasValue)
-                    UserSelectedElement = null;
-                else
-                    UserSelectedElement = new Hl7.Fhir.Model.FhirBoolean(value);
+                UserSelectedElement = !value.HasValue ? null : new Hl7.Fhir.Model.FhirBoolean(value);
                 OnPropertyChanged("UserSelected");
             }
         }

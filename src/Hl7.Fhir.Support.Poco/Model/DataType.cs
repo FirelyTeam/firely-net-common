@@ -25,54 +25,73 @@
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
   POSSIBILITY OF SUCH DAMAGE.
   
+
 */
 
 using System;
+using System.Collections.Generic;
 using Hl7.Fhir.Introspection;
 using System.Runtime.Serialization;
-using Hl7.Fhir.Specification;
-
 
 namespace Hl7.Fhir.Model
 {
     /// <summary>
-    /// Primitive Type url
+    /// Reuseable Types
     /// </summary>
 #if !NETSTANDARD1_1
     [Serializable]
 #endif
-    [System.Diagnostics.DebuggerDisplay(@"\{{Value,nq}}")] // http://blogs.msdn.com/b/jaredpar/archive/2011/03/18/debuggerdisplay-attribute-best-practices.aspx
-    [FhirType("url")]
+    [FhirType("DataType")]
     [DataContract]
-    public partial class FhirUrl : PrimitiveType, IStringValue
+    public abstract class DataType : Element
     {
-        public override string TypeName { get { return "url"; } }
+        public override string TypeName { get { return "DataType"; } }
         
-        // Must conform to the pattern "\S*"
-        public const string PATTERN = @"\S*";
 
-		public FhirUrl(string value)
-		{
-			Value = value;
-		}
-
-		public FhirUrl(): this((string)null) {}
-
-        public FhirUrl(Uri uri)
+        public override IDeepCopyable CopyTo(IDeepCopyable other)
         {
-            Value = uri.OriginalString;
+            if (other is DataType dest)
+            {
+                base.CopyTo(dest);
+                return dest;
+            }
+            else
+                throw new ArgumentException("Can only copy to an object of the same type", "other");
+        }
+        
+        public override bool Matches(IDeepComparable other)
+        {
+            if (!(other is DataType otherT)) return false;
+
+            if (!base.Matches(otherT)) return false;
+            
+            return true;
+        }
+        
+        public override bool IsExactly(IDeepComparable other)
+        {
+            if (!(other is DataType otherT)) return false;
+
+            if (!base.IsExactly(otherT)) return false;
+            
+            return true;
         }
 
-        /// <summary>
-        /// Primitive value of the element
-        /// </summary>
-        [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
-        [DataMember]
-        public string Value
+        public override IEnumerable<Base> Children
         {
-            get { return (string)ObjectValue; }
-            set { ObjectValue = value; OnPropertyChanged("Value"); }
-        }           
+            get
+            {
+                foreach (var item in base.Children) yield return item;
+            }
+        }
+
+        public override IEnumerable<ElementValue> NamedChildren 
+        { 
+            get 
+            { 
+                foreach (var item in base.NamedChildren) yield return item; 
+ 
+            } 
+        } 
     }
-    
 }

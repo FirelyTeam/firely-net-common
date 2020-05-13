@@ -25,54 +25,54 @@
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
   POSSIBILITY OF SUCH DAMAGE.
   
+
 */
 
 using System;
 using Hl7.Fhir.Introspection;
 using System.Runtime.Serialization;
 using Hl7.Fhir.Specification;
-
+using System.Xml;
+using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model
 {
     /// <summary>
-    /// Primitive Type url
+    /// Primitive Type unsignedInt
     /// </summary>
 #if !NETSTANDARD1_1
     [Serializable]
 #endif
-    [System.Diagnostics.DebuggerDisplay(@"\{{Value,nq}}")] // http://blogs.msdn.com/b/jaredpar/archive/2011/03/18/debuggerdisplay-attribute-best-practices.aspx
-    [FhirType("url")]
-    [DataContract]
-    public partial class FhirUrl : PrimitiveType, IStringValue
-    {
-        public override string TypeName { get { return "url"; } }
-        
-        // Must conform to the pattern "\S*"
-        public const string PATTERN = @"\S*";
+    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
 
-		public FhirUrl(string value)
+    [FhirType("unsignedInt")]
+    [DataContract]
+    public partial class UnsignedInt : PrimitiveType, INullableIntegerValue
+    {
+        public override string TypeName { get { return "unsignedInt"; } }
+
+        // Must conform to the pattern "[0]|([1-9][0-9]*)"
+        public const string PATTERN = @"[0]|([1-9][0-9]*)";
+
+        public UnsignedInt(int? value)
 		{
 			Value = value;
 		}
 
-		public FhirUrl(): this((string)null) {}
-
-        public FhirUrl(Uri uri)
-        {
-            Value = uri.OriginalString;
-        }
+		public UnsignedInt(): this(null) {}
 
         /// <summary>
         /// Primitive value of the element
         /// </summary>
         [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
         [DataMember]
-        public string Value
+        public int? Value
         {
-            get { return (string)ObjectValue; }
+            get { return (int?)ObjectValue; }
             set { ObjectValue = value; OnPropertyChanged("Value"); }
-        }           
+        }
+
+        public static bool IsValidValue(string value) 
+            => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
     }
-    
 }

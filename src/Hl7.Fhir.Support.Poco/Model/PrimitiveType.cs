@@ -8,7 +8,9 @@
 
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Utility;
@@ -18,14 +20,13 @@ namespace Hl7.Fhir.Model
 #if !NETSTANDARD1_1
     [Serializable]
 #endif
-    public abstract class Primitive : Element
+    [FhirType("PrimitiveType")]
+    [DataContract]
+    public abstract class PrimitiveType : DataType
     {
-        public object ObjectValue { get; set; }
+        public override string TypeName { get { return "PrimitiveType"; } }
 
-        public override string TypeName
-        {
-            get { return "Primitive"; }
-        }
+        public object ObjectValue { get; set; }
 
         public override string ToString()
         {
@@ -38,14 +39,16 @@ namespace Hl7.Fhir.Model
 
         public override IDeepCopyable CopyTo(IDeepCopyable other)
         {
-            if (other == null) throw Error.ArgumentNull(nameof(other));
-            if(this.GetType() != other.GetType())
-                throw Error.Argument(nameof(other), "Can only copy to an object of the same type");
+            var dest = other as PrimitiveType;
 
-            base.CopyTo(other);
-            if (ObjectValue != null) ((Primitive)other).ObjectValue = ObjectValue;
-
-            return other;
+            if (dest != null)
+            {
+                base.CopyTo(dest);
+                if (ObjectValue != null) ((PrimitiveType)other).ObjectValue = ObjectValue;
+                return dest;
+            }
+            else
+                throw new ArgumentException("Can only copy to an object of the same type", "other");
         }
 
         public override IDeepCopyable DeepCopy()
@@ -53,25 +56,39 @@ namespace Hl7.Fhir.Model
             return CopyTo((IDeepCopyable)Activator.CreateInstance(this.GetType()));
         }
 
-        public override bool Matches(IDeepComparable other)
-        {
-            return IsExactly(other);
-        }
+        public override bool Matches(IDeepComparable other) => IsExactly(other);
 
         public override bool IsExactly(IDeepComparable other)
         {
-            if (other == null) throw Error.ArgumentNull(nameof(other));
-
-            if (this.GetType() != other.GetType()) return false;
+            var otherT = other as PrimitiveType;
+            if (otherT == null) return false;
 
             if (!base.IsExactly(other)) return false;
 
-            var otherValue = ((Primitive)other).ObjectValue;
+            var otherValue = ((PrimitiveType)other).ObjectValue;
 
             if (ObjectValue is byte[] bytes && otherValue is byte[] bytesOther)
                 return Enumerable.SequenceEqual(bytes, bytesOther);
             else
-                return Object.Equals(ObjectValue, ((Primitive)other).ObjectValue);
+                return Object.Equals(ObjectValue, ((PrimitiveType)other).ObjectValue);
         }
+
+        public override IEnumerable<Base> Children
+        {
+            get
+            {
+                foreach (var item in base.Children) yield return item;
+            }
+        }
+
+        public override IEnumerable<ElementValue> NamedChildren
+        {
+            get
+            {
+                foreach (var item in base.NamedChildren) yield return item;
+
+            }
+        }
+
     }
 }

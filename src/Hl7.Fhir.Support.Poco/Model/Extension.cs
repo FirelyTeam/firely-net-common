@@ -44,13 +44,13 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value} Url={_Url}}")]
     [FhirType("Extension")]
     [DataContract]
-    public class Extension : Element
+    public class Extension : DataType
     {
         public Extension()
         {
         }
 
-        public Extension(string url, Element value)
+        public Extension(string url, DataType value)
         {
             this.Url = url;
             this.Value = value;
@@ -80,13 +80,13 @@ namespace Hl7.Fhir.Model
         [CLSCompliant(false)]
         [AllowedTypes(IsOpen = true)]
         [DataMember]
-        public Hl7.Fhir.Model.Element Value
+        public Hl7.Fhir.Model.DataType Value
         {
             get { return _Value; }
             set { _Value = value; OnPropertyChanged("Value"); }
         }
 
-        private Hl7.Fhir.Model.Element _Value;
+        private Hl7.Fhir.Model.DataType _Value;
 
         public override IDeepCopyable CopyTo(IDeepCopyable other)
         {
@@ -96,7 +96,7 @@ namespace Hl7.Fhir.Model
             {
                 base.CopyTo(dest);
                 if (Url != null) dest.Url = Url;
-                if (Value != null) dest.Value = (Hl7.Fhir.Model.Element)Value.DeepCopy();
+                if (Value != null) dest.Value = (Hl7.Fhir.Model.DataType)Value.DeepCopy();
                 return dest;
             }
             else

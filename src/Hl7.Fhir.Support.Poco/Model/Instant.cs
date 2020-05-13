@@ -45,7 +45,7 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("instant")]
     [DataContract]
-    public partial class Instant : Primitive<DateTimeOffset?>, INullableValue<DateTimeOffset>
+    public partial class Instant : PrimitiveType, INullableValue<DateTimeOffset>
     {
         public override string TypeName { get { return "instant"; } }
         
@@ -70,12 +70,8 @@ namespace Hl7.Fhir.Model
             set { ObjectValue = value; OnPropertyChanged("Value"); }
         }
 
-        public static bool IsValidValue(string value)
-        {
-            return Regex.IsMatch(value as string, "^" + PATTERN + "$", RegexOptions.Singleline);
-
-            //TODO: Additional checks not implementable by the regex
-        }
+        public static bool IsValidValue(string value) 
+            => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
 
         public static Instant FromLocalDateTime(int year, int month, int day,
                     int hour, int min, int sec, int millis = 0)
