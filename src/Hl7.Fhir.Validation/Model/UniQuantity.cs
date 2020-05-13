@@ -8,7 +8,7 @@
         GreaterThen
     }
 
-    public class UniQuantity : IUniElement
+    public class UniQuantity : IUniDataType
     {
         public decimal? Value { get; set; }
         public UniQuantityComparator? Comparator { get; set; }

@@ -1,6 +1,6 @@
 ﻿namespace Hl7.Fhir.Validation.Model
 {
-    public class UniCoding : IUniElement
+    public class UniCoding : IUniDataType
     {
         public string System { get; set; }
         public string Version { get; set; }

@@ -45,58 +45,58 @@ namespace Hl7.Fhir.Model
 #endif
     [FhirType("BackboneElement")]
     [DataContract]
-    public abstract partial class BackboneElement : Element, IModifierExtendable
+    public abstract class BackboneElement : Element, IModifierExtendable, IBackboneElement2
     {
         public override string TypeName { get { return "BackboneElement"; } }
-        
+
         /// <summary>
         /// Extensions that cannot be ignored even if unrecognized
         /// </summary>
-        [FhirElement("modifierExtension", InSummary=true, Order=30)]
-        [Cardinality(Min=0,Max=-1)]
+        [FhirElement("modifierExtension", InSummary = true, Order = 30)]
+        [Cardinality(Min = 0, Max = -1)]
         [DataMember]
         public List<Extension> ModifierExtension
         {
-            get { if(_ModifierExtension==null) _ModifierExtension = new List<Extension>(); return _ModifierExtension; }
+            get { if (_ModifierExtension == null) _ModifierExtension = new List<Extension>(); return _ModifierExtension; }
             set { _ModifierExtension = value; OnPropertyChanged("ModifierExtension"); }
         }
-        
+
         private List<Extension> _ModifierExtension;
-        
+
 
         public override IDeepCopyable CopyTo(IDeepCopyable other)
         {
             var dest = other as BackboneElement;
-            
+
             if (dest != null)
             {
                 base.CopyTo(dest);
-                if(ModifierExtension != null) dest.ModifierExtension = new List<Extension>(ModifierExtension.DeepCopy());
+                if (ModifierExtension != null) dest.ModifierExtension = new List<Extension>(ModifierExtension.DeepCopy());
                 return dest;
             }
             else
-            	throw new ArgumentException("Can only copy to an object of the same type", "other");
+                throw new ArgumentException("Can only copy to an object of the same type", "other");
         }
-        
+
         public override bool Matches(IDeepComparable other)
         {
             var otherT = other as BackboneElement;
-            if(otherT == null) return false;
-            
-            if(!base.Matches(otherT)) return false;
-            if( !DeepComparable.Matches(ModifierExtension, otherT.ModifierExtension)) return false;
-            
+            if (otherT == null) return false;
+
+            if (!base.Matches(otherT)) return false;
+            if (!DeepComparable.Matches(ModifierExtension, otherT.ModifierExtension)) return false;
+
             return true;
         }
-        
+
         public override bool IsExactly(IDeepComparable other)
         {
             var otherT = other as BackboneElement;
-            if(otherT == null) return false;
-            
-            if(!base.IsExactly(otherT)) return false;
-            if( !DeepComparable.IsExactly(ModifierExtension, otherT.ModifierExtension)) return false;
-            
+            if (otherT == null) return false;
+
+            if (!base.IsExactly(otherT)) return false;
+            if (!DeepComparable.IsExactly(ModifierExtension, otherT.ModifierExtension)) return false;
+
             return true;
         }
 
@@ -109,14 +109,14 @@ namespace Hl7.Fhir.Model
             }
         }
 
-        public override IEnumerable<ElementValue> NamedChildren 
-        { 
-            get 
-            { 
-                foreach (var item in base.NamedChildren) yield return item; 
+        public override IEnumerable<ElementValue> NamedChildren
+        {
+            get
+            {
+                foreach (var item in base.NamedChildren) yield return item;
                 foreach (var elem in ModifierExtension) { if (elem != null) yield return new ElementValue("modifierExtension", elem); }
- 
-            } 
-        } 
+
+            }
+        }
     }
 }
