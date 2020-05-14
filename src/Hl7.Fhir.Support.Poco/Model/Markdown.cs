@@ -46,7 +46,7 @@ namespace Hl7.Fhir.Model
 
     [FhirType("markdown")]
     [DataContract]
-    public partial class Markdown : Hl7.Fhir.Model.PrimitiveType<string>, IStringValue
+    public partial class Markdown : PrimitiveType, IStringValue
     {
         public override string TypeName { get { return "markdown"; } }
 

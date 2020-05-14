@@ -46,7 +46,7 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("uuid")]
     [DataContract]
-    public class Uuid : PrimitiveType<string>, IStringValue
+    public class Uuid : PrimitiveType, IStringValue
     {
         public override string TypeName { get { return "uuid"; } }
         

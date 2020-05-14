@@ -20,19 +20,6 @@ namespace Hl7.Fhir.Model
 #if !NETSTANDARD1_1
     [Serializable]
 #endif
-    public abstract class PrimitiveType<T> : PrimitiveType
-    {
-        // [WMR 20160615] Cannot provide common generic Value property, as subclasses differ in their implementation
-        // e.g. Code<T> exposes T? Value where T : struct
-        // T Value { get; set; }
-        // => Instead, define and implement a generic interface IValue<T>
-    }
-
-
-
-#if !NETSTANDARD1_1
-    [Serializable]
-#endif
     [FhirType("PrimitiveType")]
     [DataContract]
     public abstract class PrimitiveType : DataType

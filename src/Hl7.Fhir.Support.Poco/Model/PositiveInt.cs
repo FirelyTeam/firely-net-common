@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("positiveInt")]
     [DataContract]
-    public partial class PositiveInt : PrimitiveType<int?>, INullableIntegerValue
+    public partial class PositiveInt : PrimitiveType, INullableIntegerValue
     {
         public override string TypeName { get { return "positiveInt"; } }
         

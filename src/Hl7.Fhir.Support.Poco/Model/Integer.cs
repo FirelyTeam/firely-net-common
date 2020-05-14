@@ -45,7 +45,7 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("integer")]
     [DataContract]
-    public class Integer : PrimitiveType<int?>, INullableIntegerValue
+    public class Integer : PrimitiveType, INullableIntegerValue
     {
         public override string TypeName { get { return "integer"; } }
         

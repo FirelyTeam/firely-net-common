@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * Copyright (c) 2015, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
@@ -102,11 +102,22 @@ namespace Hl7.FhirPath.Expressions
             if (instance is ITypedElement element)
             {
                 if (to.CanBeTreatedAsType(typeof(ITypedElement))) return instance;
+                if (to == typeof(object)) return instance;
 
                 if (element.Value != null)
-                    instance = element.Value;
-            }
+                    instance = element.Value; // this is primitive
+                else
+                {
+                    // HACK - there may also be primitives with .Value == null, we need
+                    // to make sure we return null in that case. We assume the primitives
+                    // start with a lower-case letter, which is true in FHIR but not
+                    // in general.
+                    var isFhirPrimitive = Char.IsLower(element.InstanceType[0]);
+                    if (isFhirPrimitive)
+                        instance = element.Value;
+                }
 
+            }
             return instance;
         }
 

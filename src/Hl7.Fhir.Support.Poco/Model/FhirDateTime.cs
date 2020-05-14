@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("dateTime")]
     [DataContract]
-    public partial class FhirDateTime : PrimitiveType<string>, IStringValue
+    public partial class FhirDateTime : PrimitiveType, IStringValue
     {
         public const string FMT_FULL = "yyyy-MM-dd'T'HH:mm:ssK";
         public const string FMT_YEAR = "{0:D4}";

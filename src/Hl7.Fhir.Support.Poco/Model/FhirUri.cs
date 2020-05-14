@@ -45,7 +45,7 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [FhirType("uri")]
     [DataContract]
-    public class FhirUri : PrimitiveType<string>, IStringValue
+    public class FhirUri : PrimitiveType, IStringValue
     {
         public override string TypeName { get { return "uri"; } }
         

@@ -16,10 +16,10 @@ namespace Hl7.Fhir.Serialization
 {
     internal static class XObjectFhirXmlExtensions
     {
-        public static bool IsResourceName(this XName elementName) =>
-            Char.IsUpper(elementName.LocalName, 0) && elementName.Namespace == XmlNs.XFHIR;
+        public static bool IsResourceName(this XName elementName, bool ignoreNameSpace = false) =>
+            Char.IsUpper(elementName.LocalName, 0) && (ignoreNameSpace || elementName.Namespace == XmlNs.XFHIR);
 
-        public static bool TryGetContainedResource(this XElement xe, out XElement contained)
+        public static bool TryGetContainedResource(this XElement xe, out XElement contained, bool ignoreNameSpace = false)
         {
             contained = null;
 
@@ -27,7 +27,7 @@ namespace Hl7.Fhir.Serialization
             {
                 var candidate = xe.Elements().First();
 
-                if (candidate.Name.IsResourceName())
+                if (candidate.Name.IsResourceName(ignoreNameSpace))
                 {
                     contained = candidate;
                     return true;

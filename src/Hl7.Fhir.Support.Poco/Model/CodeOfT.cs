@@ -45,7 +45,7 @@ namespace Hl7.Fhir.Model
     [DataContract]
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
     [TypeRedirect(Type=typeof(Code))]
-    public class Code<T> : PrimitiveType<T>, INullableValue<T>, ISystemAndCode where T : struct
+    public class Code<T> : PrimitiveType, INullableValue<T>, ISystemAndCode where T : struct
     {
         static Code()
         {
