@@ -35,12 +35,16 @@ namespace Hl7.Fhir.Rest
     {
         [EnumLiteral("GET", "http://hl7.org/fhir/http-verb"), Description("GET")]
         GET,
+        [EnumLiteral("HEAD", "http://hl7.org/fhir/http-verb"), Description("HEAD")]
+        HEAD,
         [EnumLiteral("POST", "http://hl7.org/fhir/http-verb"), Description("POST")]
         POST,
         [EnumLiteral("PUT", "http://hl7.org/fhir/http-verb"), Description("PUT")]
         PUT,
         [EnumLiteral("DELETE", "http://hl7.org/fhir/http-verb"), Description("DELETE")]
         DELETE,
+        [EnumLiteral("PATH", "http://hl7.org/fhir/http-verb"), Description("PATH")]
+        PATCH,
     }
     
     public enum InteractionType
