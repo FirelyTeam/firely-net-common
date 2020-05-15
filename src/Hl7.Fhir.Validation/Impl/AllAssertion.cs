@@ -22,14 +22,11 @@ namespace Hl7.Fhir.Validation.Impl
 
         public JToken ToJson()
         {
-            var result = new JObject
-            {
-                _members.Select(mem => nest(mem.ToJson()))
-            };
-            return result;
+            if (_members.Count() == 0) return null; // this should not happen
 
-            JToken nest(JToken mem) =>
-                mem is JObject ? new JProperty("nested", mem) : mem;
+            if (_members.Count() == 1) return _members.First().ToJson();
+
+            return new JProperty("all", new JArray(_members.Select(m => new JObject(m.ToJson()))));
         }
 
         public async Task<Assertions> Validate(ITypedElement input, ValidationContext vc)

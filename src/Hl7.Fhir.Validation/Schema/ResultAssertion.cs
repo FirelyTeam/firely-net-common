@@ -6,11 +6,13 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Utility;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Schema
 {
@@ -21,7 +23,7 @@ namespace Hl7.Fhir.Validation.Schema
         Undecided
     }
 
-    public class ResultAssertion : IAssertion, IMergeable
+    public class ResultAssertion : IAssertion, IMergeable, IValidatable
     {
         public static readonly ResultAssertion Success = new ResultAssertion(ValidationResult.Success);
         public static readonly ResultAssertion Failure = new ResultAssertion(ValidationResult.Failure);
@@ -50,11 +52,10 @@ namespace Hl7.Fhir.Validation.Schema
             if (other is ResultAssertion ra)
             {
                 // If we currently are succesful, the new result fully depends on the other
-                if (IsSuccessful) return other;
-
                 // Otherwise, we are failing or undecided, which we need to
                 // propagate
-                return this;
+                // if other is not succesful as well, then combine the evidence as a result
+                return new ResultAssertion((IsSuccessful) ? ra.Result : Result, Evidence.Concat(ra.Evidence));
             }
             else
                 throw Error.InvalidOperation($"Internal logic failed: tried to merge a ResultAssertion with an {other.GetType().Name}");
@@ -67,5 +68,17 @@ namespace Hl7.Fhir.Validation.Schema
                 new JProperty("result", Result.ToString()),
                 new JProperty("evidence", evidence)));
         }
+
+        public async Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
+        {
+            var result = new Assertions(this);
+            foreach (var item in Evidence)
+            {
+                result += await item.Validate(input, vc);
+            }
+            return result;
+        }
+
+
     }
 }

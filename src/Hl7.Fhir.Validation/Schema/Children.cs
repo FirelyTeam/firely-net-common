@@ -92,19 +92,15 @@ namespace Hl7.Fhir.Validation.Schema
                 result += new IssueAssertion(1000, input.Location, "Element must not be empty", IssueSeverity.Error);
             }
 
+            // new style:
+            //var filteredChildern = input.ChildrenIncValue().Where(child => NameMatches(assertion.Key, child));
+            //result = await ChildList.Values.Select(assertion => assertion.Validate(input, vc)).AggregateAsync();
+
             foreach (var assertion in ChildList)
             {
                 var childElements = input.ChildrenIncValue().Where(child => NameMatches(assertion.Key, child)).ToList();
 
-                switch (assertion.Value)
-                {
-                    case IValidatable validatable:
-                        result += await validatable.Validate(childElements.SingleOrDefault(), vc);
-                        break;
-                    case IGroupValidatable groupvalidatable:
-                        result += await groupvalidatable.Validate(childElements, vc);
-                        break;
-                }
+                result += await assertion.Value.Validate(childElements, vc);
             }
 
             // todo restanten, which are not part of the definition?

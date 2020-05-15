@@ -11,39 +11,37 @@ namespace Hl7.Fhir.Validation.Tests.Impl
     [TestClass]
     public class FixedTests
     {
-        private IEnumerable<(object fixedValue, object input, bool expectedResult, string failureMessage)> TestData()
+        private static IEnumerable<object[]> TestData()
         {
             // integer
-            yield return (fixedValue: 90, input: 91, expectedResult: false, failureMessage: "result must be false [int]");
-            yield return (fixedValue: 90, input: 90, expectedResult: true, failureMessage: "result must be true [int]");
+            yield return new object[] { 90, 91, false, "result must be false [int]" };
+            yield return new object[] { 90, 90, true, "result must be true [int]" };
 
             // string
-            yield return (fixedValue: "test", input: "testfailure", expectedResult: false, failureMessage: "result must be false [string]");
-            yield return (fixedValue: "test", input: "test", expectedResult: true, failureMessage: "result must be true [string]");
+            yield return new object[] { "test", "testfailure", false, "result must be false [string]" };
+            yield return new object[] { "test", "test", true, "result must be true [string]" };
 
             // date
-            yield return (fixedValue: PartialDate.Parse("2019-09-05"), input: PartialDate.Parse("2019-09-04"), expectedResult: false, failureMessage: "result must be false [date]");
-            yield return (fixedValue: PartialDate.Parse("2019-09-05"), input: PartialDate.Parse("2019-09-05"), expectedResult: true, failureMessage: "result must be true [date]");
+            yield return new object[] { PartialDate.Parse("2019-09-05"), PartialDate.Parse("2019-09-04"), false, "result must be false [date]" };
+            yield return new object[] { PartialDate.Parse("2019-09-05"), PartialDate.Parse("2019-09-05"), true, "result must be true [date]" };
 
             // boolean
-            yield return (fixedValue: true, input: false, expectedResult: false, failureMessage: "result must be false [boolean]");
-            yield return (fixedValue: true, input: true, expectedResult: true, failureMessage: "result must be true [boolean]");
+            yield return new object[] { true, false, false, "result must be false [boolean]" };
+            yield return new object[] { true, true, true, "result must be true [boolean]" };
 
             // mixed primitive types
-            yield return (fixedValue: PartialDate.Parse("2019-09-05"), input: 20190905, expectedResult: false, failureMessage: "result must be false [mixed]");
+            yield return new object[] { PartialDate.Parse("2019-09-05"), 20190905, false, "result must be false [mixed]" };
         }
 
-        [TestMethod]
-        public async Task FixedTestcases()
+        [DataTestMethod]
+        [DynamicData(nameof(TestData), DynamicDataSourceType.Method)]
+        public async Task FixedTestcases(object fixedValue, object input, bool expectedResult, string failureMessage)
         {
-            foreach (var (fixedValue, input, expectedResult, failureMessage) in TestData())
-            {
-                var validatable = new Fixed("FixedTests.FixedTestcases", fixedValue);
-                var result = await validatable.Validate(ElementNode.ForPrimitive(input), new ValidationContext());
+            var validatable = new Fixed("FixedTests.FixedTestcases", fixedValue);
+            var result = await validatable.Validate(ElementNode.ForPrimitive(input), new ValidationContext());
 
-                Assert.IsNotNull(result);
-                Assert.IsTrue(result.Result.IsSuccessful == expectedResult, failureMessage);
-            }
+            Assert.IsNotNull(result);
+            Assert.IsTrue(result.Result.IsSuccessful == expectedResult, failureMessage);
         }
 
         [TestMethod]
