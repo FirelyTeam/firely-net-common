@@ -18,7 +18,7 @@ namespace Hl7.Fhir.Serialization
 {
     public static class PrimitiveTypeConverter
     {
-        private static readonly string[] FORBIDDEN_DECIMAL_PREFIXES = new[] { "+", ".", "00" };
+        private static readonly string[] _forbiddenDecimalPrefixes = new[] { "+", ".", "00" };
 
         public static T ConvertTo<T>(object value) => (T)ConvertTo(value, typeof(T));
 
@@ -35,9 +35,9 @@ namespace Hl7.Fhir.Serialization
                 return convertToXmlString(value);
 
             // Convert FROM string
-            else if (value is string)
+            else if (value is string @string)
             {
-                return convertXmlStringToPrimitive(to, (string)value);
+                return convertXmlStringToPrimitive(to, @string);
                 // Include enum parsing here
             }
             else
@@ -95,7 +95,7 @@ namespace Hl7.Fhir.Serialization
                 return convertToDatetimeOffset(value).UtcDateTime;  // Obsolete: use DateTimeOffset instead!!
             if (typeof(decimal) == to)
             {
-                if (FORBIDDEN_DECIMAL_PREFIXES.Any(prefix => value.StartsWith(prefix)) || value.EndsWith("."))
+                if (_forbiddenDecimalPrefixes.Any(prefix => value.StartsWith(prefix)) || value.EndsWith("."))
                 {
                     // decimal cannot start with '+', '-' or '00' and cannot end with '.'
                     throw new FormatException("Input string was not in a correct format.");

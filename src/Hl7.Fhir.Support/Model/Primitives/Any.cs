@@ -212,8 +212,8 @@ namespace Hl7.Fhir.Model.Primitives
                 primitiveValue = PartialDateTime.FromDateTimeOffset(dto);
             else if (value is float || value is double || value is decimal)
                 primitiveValue = Convert.ToDecimal(value);
-            else if (value is char)
-                primitiveValue = new string((char)value, 1);
+            else if (value is char @char)
+                primitiveValue = new string(@char, 1);
 #pragma warning disable IDE0045 // Convert to conditional expression
             else if (value is Uri u)
 #pragma warning restore IDE0045 // Convert to conditional expression

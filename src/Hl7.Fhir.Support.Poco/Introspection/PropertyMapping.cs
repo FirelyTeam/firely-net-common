@@ -122,7 +122,7 @@ namespace Hl7.Fhir.Introspection
             result._createdVersion = version;
 
             var cardinalityAttr = GetAttribute<Validation.CardinalityAttribute>(prop, version);
-            result.IsMandatoryElement = cardinalityAttr != null ? cardinalityAttr.Min > 0 : false;
+            result.IsMandatoryElement = cardinalityAttr != null && cardinalityAttr.Min > 0;
 
             result.IsCollection = ReflectionHelper.IsTypedCollection(prop.PropertyType) && !prop.PropertyType.IsArray;
 
@@ -172,7 +172,7 @@ namespace Hl7.Fhir.Introspection
         {
             return ReflectionHelper.GetAttributes<T>(p).LastOrDefault(isRelevant);
 
-            bool isRelevant(Attribute a) => a is IFhirVersionDependent vd ? vd.AppliesToVersion(version) : true;
+            bool isRelevant(Attribute a) => !(a is IFhirVersionDependent vd) || vd.AppliesToVersion(version);
         }
 
 

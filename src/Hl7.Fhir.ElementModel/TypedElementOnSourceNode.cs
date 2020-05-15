@@ -32,17 +32,17 @@ namespace Hl7.Fhir.ElementModel
                 ies.ExceptionHandler = (o, a) => ExceptionHandler.NotifyOrThrow(o, a);
 
             ShortPath = source.Name;
-            Source = source;
+            _source = source;
             (InstanceType, Definition) = buildRootPosition(type);
         }
 
         private (string instanceType, IElementDefinitionSummary definition) buildRootPosition(string type)
         {
-            var rootType = type ?? Source.GetResourceTypeIndicator();
+            var rootType = type ?? _source.GetResourceTypeIndicator();
             if (rootType == null)
             {
                 if (_settings.ErrorMode == TypedElementSettings.TypeErrorMode.Report)
-                    throw Error.Format(nameof(type), $"Cannot determine the type of the root element at '{Source.Location}', " +
+                    throw Error.Format(nameof(type), $"Cannot determine the type of the root element at '{_source.Location}', " +
                         $"please supply a type argument.");
                 else
                     return (rootType, null);
@@ -61,14 +61,14 @@ namespace Hl7.Fhir.ElementModel
             if (elementType.IsAbstract)
                 throw Error.Argument(nameof(elementType), $"The type of a node must be a concrete type, '{elementType.TypeName}' is abstract.");
 
-            var rootTypeDefinition = ElementDefinitionSummary.ForRoot(elementType, Source.Name);
+            var rootTypeDefinition = ElementDefinitionSummary.ForRoot(elementType, _source.Name);
             return (rootType, rootTypeDefinition);
         }
 
 
         private TypedElementOnSourceNode(TypedElementOnSourceNode parent, ISourceNode source, IElementDefinitionSummary definition, string instanceType, string prettyPath)
         {
-            Source = source;
+            _source = source;
             ShortPath = prettyPath;
             Provider = parent.Provider;
             ExceptionHandler = parent.ExceptionHandler;
@@ -95,7 +95,7 @@ namespace Hl7.Fhir.ElementModel
 
         public string InstanceType { get; private set; }
 
-        private readonly ISourceNode Source;
+        private readonly ISourceNode _source;
 
         public readonly IStructureDefinitionSummaryProvider Provider;
 
@@ -103,7 +103,7 @@ namespace Hl7.Fhir.ElementModel
 
         public IElementDefinitionSummary Definition { get; private set; }
 
-        public string Name => Definition?.ElementName ?? Source.Name;
+        public string Name => Definition?.ElementName ?? _source.Name;
 
         // [EK, 20190822] This is a temporary fix - it brings information in the ElementModel about which
         // FHIR type uses which "universal" primitive type, so a mapping from FHIR.* -> System.*
@@ -162,7 +162,7 @@ namespace Hl7.Fhir.ElementModel
         {
             get
             {
-                string sourceText = Source.Text;
+                string sourceText = _source.Text;
 
                 if (sourceText == null) return null;
 
@@ -173,7 +173,7 @@ namespace Hl7.Fhir.ElementModel
                 var ts = tryMapFhirPrimitiveTypeToSystemType(InstanceType);
                 if (ts == null)
                 {
-                    raiseTypeError($"Since type {InstanceType} is not a primitive, it cannot have a value", Source, location: Source.Location);
+                    raiseTypeError($"Since type {InstanceType} is not a primitive, it cannot have a value", _source, location: _source.Location);
                     return null;
                 }
 
@@ -192,7 +192,7 @@ namespace Hl7.Fhir.ElementModel
                     return val;
                 else
                 {
-                    raiseTypeError($"Literal '{sourceText}' cannot be parsed as a {InstanceType}.", Source, location: Source.Location);
+                    raiseTypeError($"Literal '{sourceText}' cannot be parsed as a {InstanceType}.", _source, location: _source.Location);
                     return sourceText;
                 }
             }
@@ -255,7 +255,7 @@ namespace Hl7.Fhir.ElementModel
                     // Unfortunately, we decided to nicely capitalize the suffix, even for
                     // primitives - luckily then, there's just a single list of primitives,
                     // so we can "correct" them
-                    return suffixMap.TryGetValue(s, out var corrected) ? corrected : s;
+                    return _suffixMap.TryGetValue(s, out var corrected) ? corrected : s;
                 };
             }
             else if (info.Representation == XmlRepresentation.TypeAttr) // May be used by models other then FHIR, e.g. CCDA represented by a StructureDefinition
@@ -277,7 +277,7 @@ namespace Hl7.Fhir.ElementModel
             return tp.GetTypeName();
         }
 
-        private static readonly Dictionary<string, string> suffixMap = new Dictionary<string, string>()
+        private static readonly Dictionary<string, string> _suffixMap = new Dictionary<string, string>()
         {
             { "Boolean", "boolean" },
             { "Integer", "integer" },
@@ -408,7 +408,7 @@ namespace Hl7.Fhir.ElementModel
                 // No type information available for the type representing the children....
 
                 if (InstanceType != null && _settings.ErrorMode == TypedElementSettings.TypeErrorMode.Report)
-                    raiseTypeError($"Encountered unknown type '{InstanceType}'", Source, location: Source.Location);
+                    raiseTypeError($"Encountered unknown type '{InstanceType}'", _source, location: _source.Location);
 
                 // Don't go on with the (untyped) children, unless explicitly told to do so
                 if (_settings.ErrorMode != TypedElementSettings.TypeErrorMode.Passthrough)
@@ -416,16 +416,16 @@ namespace Hl7.Fhir.ElementModel
                 else
                     // Ok, pass through the untyped members, but since there is no type information, 
                     // don't bother to run the additional rules
-                    return enumerateElements(childElementDefs, Source, name);
+                    return enumerateElements(childElementDefs, _source, name);
             }
             else
-                return runAdditionalRules(enumerateElements(childElementDefs, Source, name));
+                return runAdditionalRules(enumerateElements(childElementDefs, _source, name));
         }
 
         private IEnumerable<ITypedElement> runAdditionalRules(IEnumerable<ITypedElement> children)
         {
 #pragma warning disable 612, 618
-            var additionalRules = Source.Annotations(typeof(AdditionalStructuralRule));
+            var additionalRules = _source.Annotations(typeof(AdditionalStructuralRule));
             var stateBag = new Dictionary<AdditionalStructuralRule, object>();
             foreach (var child in children)
             {
@@ -441,12 +441,12 @@ namespace Hl7.Fhir.ElementModel
 #pragma warning restore 612, 618
         }
 
-        public string Location => Source.Location;
+        public string Location => _source.Location;
 
         public string ShortPath { get; private set; }
 
         public override string ToString() =>
-            $"{(InstanceType != null ? ($"[{InstanceType}] ") : "")}{Source.ToString()}";
+            $"{(InstanceType != null ? ($"[{InstanceType}] ") : "")}{_source}";
 
         public IEnumerable<object> Annotations(Type type)
         {
@@ -455,7 +455,7 @@ namespace Hl7.Fhir.ElementModel
 #pragma warning restore IDE0046 // Convert to conditional expression
                 return new[] { this };
             else
-                return Source.Annotations(type);
+                return _source.Annotations(type);
         }
     }
 
