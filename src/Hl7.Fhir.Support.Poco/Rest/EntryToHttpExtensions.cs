@@ -100,6 +100,10 @@ namespace Hl7.Fhir.Rest
                     return HttpMethod.Put;
                 case HTTPVerb.DELETE:
                     return HttpMethod.Delete;
+                case HTTPVerb.HEAD:
+                    return HttpMethod.Head;
+                case HTTPVerb.PATCH:
+                    return new HttpMethod("PATCH");
             }
             throw new HttpRequestException($"Valid HttpVerb could not be found for verb type: [{verb}]");
         }
