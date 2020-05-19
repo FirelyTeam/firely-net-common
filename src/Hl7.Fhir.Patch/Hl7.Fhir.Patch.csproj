@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net45;netstandard1.1;netstandard2.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <Import Project="..\fhir-net-common.props" />
+  <Import Project="..\fhir-net-common.targets" />
+
+  <PropertyGroup>
+    <PackageId>Hl7.Fhir.Patch</PackageId>
+    <Title>HL7 FHIR patch functionality</Title>
+    <Summary>Version-independent patch functionality</Summary>
+    <Description>Contains general interfaces and classes for patching FHIR data, regardless of FHIR version or POCO's</Description>
+    <PackageTags>HL7;FHIR;xml;json;patch</PackageTags>
+    <AssemblyName>Hl7.Fhir.Patch</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Hl7.Fhir.ElementModel\Hl7.Fhir.ElementModel.csproj" />
+    <ProjectReference Include="..\Hl7.Fhir.Support\Hl7.Fhir.Support.csproj" />
+    <ProjectReference Include="..\Hl7.FhirPath\Hl7.FhirPath.csproj" />
+  </ItemGroup>
+</Project>

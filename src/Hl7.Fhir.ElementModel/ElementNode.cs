@@ -94,6 +94,37 @@ namespace Hl7.Fhir.ElementModel
             return Add(provider, child);
         }
 
+        public ElementNode Insert (IStructureDefinitionSummaryProvider provider, ElementNode child, int index, string name = null)
+        {
+            if ( provider == null )
+                throw new ArgumentNullException(nameof(provider));
+            if ( child == null )
+                throw new ArgumentNullException(nameof(child));
+
+            var childName = name ?? child.Name;
+            if ( child.Name == null ) throw Error.Argument($"The ElementNode given should have its Name property set or the '{nameof(name)}' parameter should be given.");
+
+            var childIndices = ChildList.Select((x, i) => (child: x, index: (int?)i)).Where(kvp => kvp.child.Name == childName).Select(kvp => kvp.index).ToArray();
+            if(index < 0 || index > childIndices.Length) throw Error.Argument($"The index given is out of bounds of the array size.");
+
+            var insertAtIndex = childIndices.ElementAtOrDefault(index);
+            importChild(provider, child, name, insertAtIndex ?? childIndices.Length);
+            return child;
+        }
+
+        public ElementNode Insert (IStructureDefinitionSummaryProvider provider, string name, int index, object value = null, string instanceType = null)
+        {
+            if ( provider == null )
+                throw new ArgumentNullException(nameof(provider));
+            if ( name == null )
+                throw new ArgumentNullException(nameof(name));
+
+            var child = new ElementNode(name, value, instanceType, null);
+
+            // Insert() will supply the definition and the instanceType (if necessary)
+            return Insert(provider, child, index);
+        }
+
         public void ReplaceWith(IStructureDefinitionSummaryProvider provider, ElementNode node)
         {
             if (provider == null) throw new ArgumentNullException(nameof(provider));
