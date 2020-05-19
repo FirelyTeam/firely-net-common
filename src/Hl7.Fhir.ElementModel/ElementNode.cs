@@ -6,14 +6,12 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using Hl7.Fhir.Language;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using TS = Hl7.Fhir.Language.TypeSpecifier;
 
 namespace Hl7.Fhir.ElementModel
 {
