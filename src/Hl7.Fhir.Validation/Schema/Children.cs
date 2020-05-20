@@ -98,7 +98,7 @@ namespace Hl7.Fhir.Validation.Schema
 
             foreach (var assertion in ChildList)
             {
-                var childElements = input.ChildrenIncValue().Where(child => NameMatches(assertion.Key, child)).ToList();
+                var childElements = input.Children().Where(child => NameMatches(assertion.Key, child)).ToList();
 
                 result += await assertion.Value.Validate(childElements, vc);
             }
@@ -127,22 +127,6 @@ namespace Hl7.Fhir.Validation.Schema
             }
 
             return false;
-        }
-    }
-
-    public static class TypeElementExtensions
-    {
-        public static IEnumerable<ITypedElement> ChildrenIncValue(this ITypedElement instance)
-        {
-            foreach (var child in instance.Children())
-            {
-                yield return child;
-
-            }
-            if ((instance.Value is object) && Char.IsLower(instance.InstanceType[0]))
-            {
-                yield return new ValueElementNode(instance.Value, instance.Location);
-            }
         }
     }
 }
