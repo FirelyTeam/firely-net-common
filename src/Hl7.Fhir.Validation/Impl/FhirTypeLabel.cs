@@ -18,7 +18,16 @@ namespace Hl7.Fhir.Validation.Impl
         public override object Value => Label;
 
         public override Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
-            => Task.FromResult(input.InstanceType == Label ? Assertions.Success : Assertions.Failure); // TODO use ModelInfo
+        {
+            // TODO use ModelInfo
 
+            var result = Assertions.Empty;
+
+            result += input?.InstanceType == Label ?
+                new ResultAssertion(ValidationResult.Success) :
+                new ResultAssertion(ValidationResult.Failure, new IssueAssertion(-1, $"Type of instance ({input?.InstanceType}) is not valid at location {input?.Location}.", IssueSeverity.Error));
+
+            return Task.FromResult(result);
+        }
     }
 }

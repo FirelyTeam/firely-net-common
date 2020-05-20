@@ -1,5 +1,5 @@
 ﻿/* 
- * Copyright (c) 2019, Firely (info@fire.ly) and contributors
+ * Copyright (c) 2020, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
@@ -7,9 +7,11 @@
  */
 
 using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation.Schema;
 using Hl7.FhirPath;
 using Hl7.FhirPath.Expressions;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Threading.Tasks;
 
@@ -22,19 +24,37 @@ namespace Hl7.Fhir.Validation.Impl
         private readonly string _expression;
         private IssueSeverity? _severity;
         private readonly bool _bestPractice;
+        private readonly CompiledExpression _defaultCompiledExpression;
 
-        public FhirPathAssertion(string location, string key, string expression, string humanDescription, IssueSeverity? severity, bool bestPractice) : base(location)
+        public FhirPathAssertion(string key, string expression) : this(null, key, expression, null) { }
+
+
+        public FhirPathAssertion(string location, string key, string expression, string humanDescription, IssueSeverity? severity = IssueSeverity.Error, bool bestPractice = false) : base(location)
         {
-            _key = key;
+            _key = key ?? throw new ArgumentNullException(nameof(key));
+            _expression = expression ?? throw new ArgumentNullException(nameof(expression));
+            _severity = severity ?? throw new ArgumentNullException(nameof(severity));
             _humanDescription = humanDescription;
-            _expression = expression;
-            _severity = severity;
             _bestPractice = bestPractice;
+            _defaultCompiledExpression = GetDefaultCompiledExpression(expression);
         }
 
         public override string Key => _key;
 
         public override object Value => _expression;
+
+        public override JToken ToJson()
+        {
+            var props = new JObject(
+                     new JProperty("key", _key),
+                     new JProperty("expression", _expression),
+                     new JProperty("severity", _severity?.GetLiteral()),
+                     new JProperty("bestPractice", _bestPractice)
+                    );
+            if (_humanDescription != null)
+                props.Add(new JProperty("humanDescription", _humanDescription));
+            return new JProperty($"fhirPath-{_key}", props);
+        }
 
         public override Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
         {
@@ -61,11 +81,9 @@ namespace Hl7.Fhir.Validation.Impl
             }
 
             bool success = false;
-            var compiler = GetFhirPathCompiler(vc);
             try
             {
-                var compiledExpression = compiler.Compile(_expression);
-                success = compiledExpression.Predicate(input, new EvaluationContext(context));
+                success = Predicate(input, new EvaluationContext(context), vc);
             }
             catch (Exception e)
             {
@@ -74,8 +92,7 @@ namespace Hl7.Fhir.Validation.Impl
 
             if (!success)
             {
-                result += Assertions.Failure;
-                result += new IssueAssertion(_severity == IssueSeverity.Error ? 1012 : 1013, input.Location, $"Instance failed constraint {GetDescription()}", _severity);
+                result += new ResultAssertion(ValidationResult.Failure, new IssueAssertion(_severity == IssueSeverity.Error ? 1012 : 1013, input.Location, $"Instance failed constraint {GetDescription()}", _severity));
                 return Task.FromResult(result);
             }
 
@@ -92,19 +109,42 @@ namespace Hl7.Fhir.Validation.Impl
             return desc;
         }
 
-
-        private FhirPathCompiler GetFhirPathCompiler(ValidationContext context)
+        private CompiledExpression GetDefaultCompiledExpression(string expression)
         {
-
-            // Use a provided compiler
-            if (context?.FhirPathCompiler != null)
-                return context.FhirPathCompiler;
-
             var symbolTable = new SymbolTable();
             symbolTable.AddStandardFP();
-            //symbolTable.AddFhirExtensions();
+            symbolTable.AddFhirExtensions();
 
-            return new FhirPathCompiler(symbolTable);
+            var compiler = new FhirPathCompiler(symbolTable);
+            return compiler.Compile(expression);
+        }
+
+        private bool Predicate(ITypedElement input, EvaluationContext context, ValidationContext vc)
+        {
+            var compiledExpression = (vc?.FhirPathCompiler == null)
+                ? _defaultCompiledExpression : vc?.FhirPathCompiler.Compile(_expression);
+
+            return compiledExpression.Predicate(input, context);
+        }
+
+    }
+
+    internal static class FPExtensions
+    {
+        public static SymbolTable AddFhirExtensions(this SymbolTable t)
+        {
+            t.Add("hasValue", (ITypedElement f) => HasValue(f), doNullProp: false);
+
+            return t;
+        }
+
+        public static bool HasValue(ITypedElement focus)
+        {
+            if (focus == null)
+                return false;
+            if (focus.Value == null)
+                return false;
+            return true;
         }
     }
 }

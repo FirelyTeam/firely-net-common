@@ -32,9 +32,13 @@ namespace Hl7.Fhir.Validation.Impl
 
         public override Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
         {
+            var result = Assertions.Empty;
+
             if (!EqualityOperators.IsEqualTo(_fixed, input))
             {
-                return Task.FromResult(Assertions.Failure + new IssueAssertion(121, input.Location, $"Value is not exactly equal to fixed value '{_fixed.Value}'", IssueSeverity.Error));
+                result += ResultAssertion.CreateFailure(new IssueAssertion(121, input.Location, $"Value is not exactly equal to fixed value '{_fixed.Value}'", IssueSeverity.Error));
+
+                return Task.FromResult(result);
             }
 
             return Task.FromResult(Assertions.Success);

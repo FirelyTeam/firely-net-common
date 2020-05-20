@@ -32,6 +32,8 @@ namespace Hl7.Fhir.Validation.Schema
         public readonly ValidationResult Result;
         public readonly IAssertion[] Evidence;
 
+        public static ResultAssertion CreateFailure(params IAssertion[] evidence) => new ResultAssertion(ValidationResult.Failure, evidence);
+
         public ResultAssertion(ValidationResult result, params IAssertion[] evidence) : this(result, evidence.AsEnumerable())
         {
         }

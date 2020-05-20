@@ -83,5 +83,91 @@ namespace Hl7.Fhir.Validation.Tests.Schema
             var issues = validationResults.OfType<IssueAssertion>();
 
         }
+
+        [TestMethod]
+        public async Task ValidateBloodPressureSchema()
+        {
+            var bpComponentSchema = new ElementSchema("#bpComponentSchema",
+                new Assertions(
+                    new CardinalityAssertion(1, "1"),
+                    new Children(
+                        ("code", new CardinalityAssertion(1, "*")),
+                        ("value[x]", new AllAssertion(new CardinalityAssertion(1, "*"), new FhirTypeLabel("Quantity", "TODO")))
+                    )
+                )
+            ); ;
+
+            ElementNode BuildCodeableConcept(string system, string code)
+            {
+                var coding = ElementNode.Root("Coding");
+                coding.Add("system", system, "string");
+                coding.Add("code", code, "string");
+
+                var result = ElementNode.Root("CodeableConcept");
+                result.Add(coding, "coding");
+                return result;
+            }
+
+            var systolicSlice = new SliceAssertion.Slice("systolic",
+                new AllAssertion(
+                    new FhirPathAssertion("path", "code"),
+                    new PathSelectorAssertion("code", new Fixed("TODO", BuildCodeableConcept("http://loinc.org", "8480-6")))
+                ),
+                bpComponentSchema
+            );
+
+            var dystolicSlice = new SliceAssertion.Slice("dystolic",
+                new AllAssertion(
+                    new FhirPathAssertion("path", "code"),
+                    new PathSelectorAssertion("code", new Fixed("TODO", BuildCodeableConcept("http://loinc.org", "8462-4")))
+                ),
+                bpComponentSchema
+            );
+
+
+            var componentSchema = new ElementSchema("#ComponentSlicing",
+                new Assertions(
+                    new CardinalityAssertion(2, "*"),
+                    new SliceAssertion(false, new[] { systolicSlice, dystolicSlice })
+                    )
+            );
+
+            var bloodPressureSchema = new ElementSchema("http://example.com/bloodPressureSchema",
+                new Children(
+                    ("status", new CardinalityAssertion(1, "*")),
+                    ("component", componentSchema)
+                )
+            );
+
+            ElementNode buildBpComponent(string system, string code, string value)
+            {
+                var result = ElementNode.Root("Component");
+                result.Add(BuildCodeableConcept(system, code), "code");
+                result.Add("value", value, "Quantity");
+                return result;
+            }
+
+
+
+            var bloodPressure = ElementNode.Root("Observation");
+            bloodPressure.Add("status", "final", "string");
+            bloodPressure.Add(buildBpComponent("http://loinc.org", "8480-6", "120"), "component");
+            bloodPressure.Add(buildBpComponent("http://loinc.org", "8462-4", "80"), "component");
+
+
+            var json = bloodPressureSchema.ToJson().ToString();
+
+            var vc = new ValidationContext();
+
+            var validationResults = await bloodPressureSchema.Validate(new[] { bloodPressure }, vc);
+
+
+            var issues = validationResults.OfType<IssueAssertion>().Concat(validationResults.Result.Evidence.OfType<IssueAssertion>());
+
+            Assert.IsTrue(validationResults.Result.IsSuccessful);
+
+
+
+        }
     }
 }
