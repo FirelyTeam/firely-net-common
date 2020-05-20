@@ -88,7 +88,7 @@ namespace Hl7.Fhir.Serialization
             // If dataType is an abstract resource superclass -> ToTypedElement(with type=null) will figure it out;
             if (mapping == null)
                 dataType = null;
-            else if (mapping.NativeType == typeof(Resource))
+            else if (mapping.NativeType.IsAbstract)
                 dataType = null;
             else
                 dataType = mapping.Name;
