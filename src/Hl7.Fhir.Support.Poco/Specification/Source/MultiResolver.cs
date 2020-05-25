@@ -83,7 +83,7 @@ namespace Hl7.Fhir.Specification.Source
             {
                 try
                 {
-                    var result = await source.ResolveByUriAsync(uri);
+                    var result = await source.ResolveByUriAsync(uri).ConfigureAwait(false);
 
                     if (result != null) return result;
                 }
@@ -108,7 +108,7 @@ namespace Hl7.Fhir.Specification.Source
             {
                 try
                 {
-                    var result = await source.ResolveByCanonicalUriAsync(uri);
+                    var result = await source.ResolveByCanonicalUriAsync(uri).ConfigureAwait(false);
 
                     if (result != null) return result;
                 }

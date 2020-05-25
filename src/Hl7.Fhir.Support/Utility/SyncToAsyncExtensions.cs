@@ -37,7 +37,7 @@ namespace Hl7.Fhir.Utility
         public static async Task<bool> AnyAsync<TSource>(this IEnumerable<TSource> source, Func<TSource, Task<bool>> predicate)
         {
             foreach (var elem in source)
-                if (await predicate(elem)) return true;
+                if (await predicate(elem).ConfigureAwait(false)) return true;
 
             return false;
         }
