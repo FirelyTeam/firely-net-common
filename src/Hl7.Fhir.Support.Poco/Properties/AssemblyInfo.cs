@@ -7,4 +7,6 @@ using System.Runtime.InteropServices;
 
 [assembly: CLSCompliant(true)]
 [assembly: InternalsVisibleTo("Hl7.Fhir.R4.Core")]
+[assembly: InternalsVisibleTo("Hl7.Fhir.STU3.Core")]
+
 
