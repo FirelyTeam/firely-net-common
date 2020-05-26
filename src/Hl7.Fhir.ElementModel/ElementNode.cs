@@ -92,6 +92,11 @@ namespace Hl7.Fhir.ElementModel
             return Add(provider, child);
         }
 
+        public void Remove(string name)
+        {
+            ChildList.RemoveAll(en => en.Name == name);
+        }
+
         public void ReplaceWith(IStructureDefinitionSummaryProvider provider, ElementNode node)
         {
             if (provider == null) throw new ArgumentNullException(nameof(provider));
