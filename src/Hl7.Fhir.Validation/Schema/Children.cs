@@ -85,11 +85,13 @@ namespace Hl7.Fhir.Validation.Schema
 
         public async Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
         {
+            var element = input.AddValueNode();
+
             var result = Assertions.Empty;
 
-            if (input.Value is null && !input.Children().Any())
+            if (element.Value is null && !element.Children().Any())
             {
-                result += new IssueAssertion(1000, input.Location, "Element must not be empty", IssueSeverity.Error);
+                result += new IssueAssertion(1000, element.Location, "Element must not be empty", IssueSeverity.Error);
             }
 
             // new style:
@@ -98,7 +100,7 @@ namespace Hl7.Fhir.Validation.Schema
 
             foreach (var assertion in ChildList)
             {
-                var childElements = input.Children().Where(child => NameMatches(assertion.Key, child)).ToList();
+                var childElements = element.Children().Where(child => NameMatches(assertion.Key, child)).ToList();
 
                 result += await assertion.Value.Validate(childElements, vc);
             }
