@@ -256,7 +256,7 @@ namespace Hl7.Fhir.Utility
             //return t.GetRuntimeProperties(); //(BindingFlags.Instance | BindingFlags.Public);
             // return t.GetTypeInfo().DeclaredProperties.Union(t.GetTypeInfo().BaseType.GetTypeInfo().DeclaredProperties); //(BindingFlags.Instance | BindingFlags.Public);
 
-            bool hasPublicInstanceReadAccessor(PropertyInfo p)
+            static bool hasPublicInstanceReadAccessor(PropertyInfo p)
             {
                 if (!p.CanRead) return false;
                 var getMethod = p.GetMethod;

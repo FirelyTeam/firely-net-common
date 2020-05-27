@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Hl7.Fhir.Model.Primitives;
+using Hl7.Fhir.Utility;
 
 namespace Hl7.Fhir.Language
 {
@@ -26,26 +27,25 @@ namespace Hl7.Fhir.Language
 
             return result ?? new NamedTypeSpecifier(@namespace, typeName);
 
-            NamedTypeSpecifier resolveSystemType(string name)
+            static NamedTypeSpecifier resolveSystemType(string name)
             {
-                switch (name)
+                return name switch
                 {
-                    case "Any": return Any;
-                    case "Boolean": return Boolean;
-                    case "Code": return Code;
-                    case "Concept": return Concept;
-                    case "Date": return Date;
-                    case "DateTime": return DateTime;
-                    case "Decimal": return Decimal;
-                    case "Integer": return Integer;
-                    case "Integer64": return Integer64;
-                    case "Quantity": return Quantity;
-                    case "String": return String;
-                    case "Time": return Time;
-                    case "Void": return Void;
-                    default:
-                        return null;
-                }
+                    "Any" => Any,
+                    "Boolean" => Boolean,
+                    "Code" => Code,
+                    "Concept" => Concept,
+                    "Date" => Date,
+                    "DateTime" => DateTime,
+                    "Decimal" => Decimal,
+                    "Integer" => Integer,
+                    "Integer64" => Integer64,
+                    "Quantity" => Quantity,
+                    "String" => String,
+                    "Time" => Time,
+                    "Void" => Void,
+                    _ => null,
+                };
             }
         }
 
@@ -59,7 +59,7 @@ namespace Hl7.Fhir.Language
             get
             {
                 return $"{esc(Namespace)}.{esc(Name)}";
-                string esc(string spec)
+                static string esc(string spec)
                 {
                     if (!spec.Contains(".") && !spec.Contains("`")) return spec;
 
@@ -97,7 +97,7 @@ namespace Hl7.Fhir.Language
                 return String;
             else if (t<Quantity>())
                 return Quantity;
-            else if (t<Coding>())
+            else if (t<Coding>() || dotNetType.CanBeTreatedAsType(typeof(Enum)))
                 return Code;
             else if (t<Concept>())
                 return Concept;
