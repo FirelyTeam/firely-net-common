@@ -35,10 +35,9 @@ namespace Hl7.Fhir.Serialization
                 return convertToXmlString(value);
 
             // Convert FROM string
-            else if (value is string)
+            else if (value is string str)
             {
-                return convertXmlStringToPrimitive(to, (string)value);
-                // Include enum parsing here
+                return convertXmlStringToPrimitive(to, str);
             }
             else
                 // For non-string primitives use the .NET conversions to convert
@@ -53,34 +52,33 @@ namespace Hl7.Fhir.Serialization
 
         private static string convertToXmlString(object value)
         {
-            switch (value)
+            return value switch
             {
-                case bool bl: return XmlConvert.ToString(bl);
-                case Byte by: return XmlConvert.ToString(by);        // Not used in FHIR serialization
-                case Char cr: return XmlConvert.ToString(cr);        // Not used in FHIR serialization
-                case DateTime dt: return XmlConvert.ToString(dt, FMT_FULL);  // Obsolete: use DateTimeOffset instead!!
-                case decimal dec: return XmlConvert.ToString(dec);
-                case Double dbl: return XmlConvert.ToString(dbl);
-                case Int16 i16: return XmlConvert.ToString(i16);
-                case Int32 i32: return XmlConvert.ToString(i32);
-                case Int64 i64: return XmlConvert.ToString(i64);       // Not used in FHIR serialization
-                case SByte sb: return XmlConvert.ToString(sb);         // Not used in FHIR serialization
-                case Single sing: return XmlConvert.ToString(sing);    // Not used in FHIR serialization
-                case UInt16 uint16: return XmlConvert.ToString(uint16);      // Not used in FHIR serialization
-                case UInt32 uint32: return XmlConvert.ToString(uint32);      // Not used in FHIR serialization
-                case UInt64 uint64: return XmlConvert.ToString(uint64);      // Not used in FHIR serialization
-                case byte[] barr: return System.Convert.ToBase64String(barr);
-                case DateTimeOffset dto: return XmlConvert.ToString(dto, FMT_FULL);
-                case Uri uri: return uri.ToString();
-                case PartialDateTime pdt: return pdt.ToString();
-                case PartialTime pt: return pt.ToString();
-                case PartialDate pd: return pd.ToString();
-                case Enum en: return en.GetLiteral();
-                case BigInteger bi: return bi.ToString();
-                case Quantity q: return q.ToString();
-                default:
-                    throw Error.NotSupported($"Cannot convert '{value.GetType().Name}' value '{value}' to string");
-            }
+                bool bl => XmlConvert.ToString(bl),
+                Byte by => XmlConvert.ToString(by),// Not used in FHIR serialization
+                Char cr => XmlConvert.ToString(cr),// Not used in FHIR serialization
+                DateTime dt => XmlConvert.ToString(dt, FMT_FULL),// Obsolete: use DateTimeOffset instead!!
+                decimal dec => XmlConvert.ToString(dec),
+                Double dbl => XmlConvert.ToString(dbl),
+                Int16 i16 => XmlConvert.ToString(i16),
+                Int32 i32 => XmlConvert.ToString(i32),
+                Int64 i64 => XmlConvert.ToString(i64),// Not used in FHIR serialization
+                SByte sb => XmlConvert.ToString(sb),// Not used in FHIR serialization
+                Single sing => XmlConvert.ToString(sing),// Not used in FHIR serialization
+                UInt16 uint16 => XmlConvert.ToString(uint16),// Not used in FHIR serialization
+                UInt32 uint32 => XmlConvert.ToString(uint32),// Not used in FHIR serialization
+                UInt64 uint64 => XmlConvert.ToString(uint64),// Not used in FHIR serialization
+                byte[] barr => System.Convert.ToBase64String(barr),
+                DateTimeOffset dto => XmlConvert.ToString(dto, FMT_FULL),
+                Uri uri => uri.ToString(),
+                PartialDateTime pdt => pdt.ToString(),
+                PartialTime pt => pt.ToString(),
+                PartialDate pd => pd.ToString(),
+                Enum en => en.GetLiteral(),
+                BigInteger bi => bi.ToString(),
+                Quantity q => q.ToString(),
+                _ => throw Error.NotSupported($"Cannot convert '{value.GetType().Name}' value '{value}' to string"),
+            };
         }
 
         private static object convertXmlStringToPrimitive(Type to, string value)
