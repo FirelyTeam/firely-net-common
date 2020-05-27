@@ -1,4 +1,5 @@
 using Hl7.Fhir.Model.Primitives;
+using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,6 +35,6 @@ namespace Hl7.Fhir.Language
         /// This is the list of supported types for the primitive values in ITypedElement.Value
         /// </summary>
         public static readonly TypeSpecifier[] PrimitiveTypes =
-            new[] { Boolean, Date, DateTime, Decimal, Integer, Integer64, String, Time };
+            new[] { Boolean, Code, Date, DateTime, Decimal, Integer, Integer64, String, Time };
     }
 }

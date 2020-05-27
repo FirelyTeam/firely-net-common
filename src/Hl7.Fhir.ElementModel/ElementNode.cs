@@ -25,8 +25,14 @@ namespace Hl7.Fhir.ElementModel
         // HACK: For now, allow a Quantity (which is NOT a primitive) in the .Value property
         // of ITypedElement. This is a temporary situation to make a quick & dirty upgrade of
         // FP to Normative (with Quantity support) possible.
-        public static ITypedElement ForPrimitive(object value) =>
-            value is Model.Primitives.Quantity q ? PrimitiveElement.ForQuantity(q) : new PrimitiveElement(value);
+        public static ITypedElement ForPrimitive(object value)
+        {
+            return value switch
+            {
+                Model.Primitives.Quantity q => PrimitiveElement.ForQuantity(q),
+                _ => new PrimitiveElement(value, useFullTypeName:true)
+            };
+        }
 
         /// <summary>
         /// Create a fixed length set of values (but also support variable number of parameter values)
@@ -37,8 +43,8 @@ namespace Hl7.Fhir.ElementModel
             values != null
                 ? values.Select(value => value == null 
                     ? null 
-                    : value is ITypedElement 
-                        ? (ITypedElement)value 
+                    : value is ITypedElement element
+                        ? element 
                         : ForPrimitive(value))
                 : EmptyList;
 
@@ -49,7 +55,7 @@ namespace Hl7.Fhir.ElementModel
         /// <param name="values"></param>
         /// <returns></returns>
         public static IEnumerable<ITypedElement> CreateList(IEnumerable<object> values) => values != null
-                ? values.Select(value => value == null ? null : value is ITypedElement ? (ITypedElement)value : ForPrimitive(value))
+                ? values.Select(value => value == null ? null : value is ITypedElement element ? element : ForPrimitive(value))
                 : EmptyList;
 
         public static readonly IEnumerable<ITypedElement> EmptyList = Enumerable.Empty<ITypedElement>();
