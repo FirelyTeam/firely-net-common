@@ -40,17 +40,6 @@ namespace Hl7.Fhir.ElementModel
         public override IEnumerable<string> GetDynamicMemberNames()
            => base.GetDynamicMemberNames().Union(_wrapped.Children().Select(c => c.Name));
 
-        //public override bool TryUnaryOperation(UnaryOperationBinder binder, out object result)
-        //{
-        //    if(binder.Operation == System.Linq.Expressions.ExpressionType.OnesComplement)  // ~ unary
-        //    { 
-        //        result = _wrapped;
-        //        return true;
-        //    }
-
-        //    return base.TryUnaryOperation(binder, out result);
-        //}
-
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
             _wrapped.Remove(binder.Name);
@@ -112,7 +101,7 @@ namespace Hl7.Fhir.ElementModel
             if (indexes.Length == 1 && indexes[0] is string key)
             {
                 result = getMemberByName(key);
-                return result != null;
+                return true; // if not found, just return null
             }
 
             //else if (indexes.Length == 1 && IsCollection(   indexes[0]) is int ix))

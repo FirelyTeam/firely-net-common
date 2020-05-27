@@ -37,7 +37,7 @@ namespace Hl7.Fhir.ElementModel
         {            
         }
 
-        public PrimitiveElement(object value, string name = null, bool useFullTypeName = false)
+        public PrimitiveElement(object value, string name = null)
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
 
@@ -46,7 +46,7 @@ namespace Hl7.Fhir.ElementModel
                 throw new ArgumentException("The supplied value cannot be represented with a System primitive.", nameof(value));
            
             Value = Any.ConvertToSystemValue(value);
-            InstanceType = useFullTypeName ? systemType.FullName : systemType.Name;
+            InstanceType =  systemType.FullName;
             Name = name ?? "@primitivevalue@";
         }
 
