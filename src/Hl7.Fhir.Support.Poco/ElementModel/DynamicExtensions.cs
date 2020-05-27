@@ -4,6 +4,7 @@ using Hl7.Fhir.Specification;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Dynamic;
 using System.Linq;
 using System.Text;
@@ -21,20 +22,17 @@ namespace Hl7.Fhir.ElementModel
         private readonly ElementNode _wrapped;
         private readonly IStructureDefinitionSummaryProvider _prov;
 
-        public string Name => ((ITypedElement)_wrapped).Name;
-
-        public string InstanceType => ((ITypedElement)_wrapped).InstanceType;
-
-        public object Value => ((ITypedElement)_wrapped).Value;
-
-        public string Location => ((ITypedElement)_wrapped).Location;
-
-        public IElementDefinitionSummary Definition => ((ITypedElement)_wrapped).Definition;
+        public string Name => _wrapped.Name;
+        public string InstanceType => _wrapped.InstanceType;
+        public object Value => _wrapped.Value;
+        public string Location => _wrapped.Location;
+        public IEnumerable<ITypedElement> Children(string name = null) => _wrapped.Children(name);
+        public IElementDefinitionSummary Definition => _wrapped.Definition;
 
         public DynamicElementNode(ElementNode wrapped, IStructureDefinitionSummaryProvider prov)
         {
             _wrapped = wrapped ?? throw new ArgumentNullException(nameof(wrapped));
-            _prov = prov;
+            _prov = prov ?? throw new ArgumentNullException(nameof(prov));
         }
 
         public override IEnumerable<string> GetDynamicMemberNames()
@@ -51,12 +49,12 @@ namespace Hl7.Fhir.ElementModel
             if (!IsCollection(valueType))
                 values = new object[] { value };
             else
-                values = ((IEnumerable)value).OfType<object>();            
+                values = ((IEnumerable)value).OfType<object>();
 
             foreach (var newChild in values.Select(v => ToElementNode(v, binder.Name)))
                 _wrapped.Add(_prov, newChild);
 
-            return true;            
+            return true;
         }
 
         internal static bool IsCollection(Type t) => typeof(ICollection).IsAssignableFrom(t) &&
@@ -83,6 +81,9 @@ namespace Hl7.Fhir.ElementModel
             return result != null;
         }
 
+        public override bool TryBinaryOperation(BinaryOperationBinder binder, object arg, out object result)
+            => base.TryBinaryOperation(binder, arg, out result);
+
 
         internal object getMemberByName(string name)
         {
@@ -90,12 +91,11 @@ namespace Hl7.Fhir.ElementModel
             if (!children.Any()) return null;
 
             if (children[0].Definition?.IsCollection == true || children.Count > 1)
-                return children.Select(c => (object)c.Dynamic(_prov)).ToList();
+                return children.Select(c => (ITypedElement)c.Dynamic(_prov)).ToReadOnlyCollection();
             else
                 return children.Single().Dynamic(_prov);
         }
 
-        // ook setindex overriden
         public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object result)
         {
             if (indexes.Length == 1 && indexes[0] is string key)
@@ -118,23 +118,18 @@ namespace Hl7.Fhir.ElementModel
                 result = _wrapped;
                 return true;
             }
-            else if(_wrapped.Value != null && binder.Type.IsAssignableFrom(_wrapped.Value.GetType()))
+            else if (_wrapped.Value != null && binder.Type.IsAssignableFrom(_wrapped.Value.GetType()))
             {
                 result = _wrapped.Value;
                 return true;
             }
-            else if(typeof(Base).IsAssignableFrom(binder.Type))
+            else if (typeof(Base).IsAssignableFrom(binder.Type))
             {
                 result = _wrapped.ToPoco(_prov);
                 return true;
             }
 
             return base.TryConvert(binder, out result);
-        }
-
-
-
-        public IEnumerable<ITypedElement> Children(string name = null) => ((ITypedElement)_wrapped).Children(name);
+        }        
     }
-
 }

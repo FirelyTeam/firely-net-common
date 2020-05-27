@@ -30,7 +30,7 @@ namespace Hl7.Fhir.ElementModel
             return value switch
             {
                 Model.Primitives.Quantity q => PrimitiveElement.ForQuantity(q),
-                _ => new PrimitiveElement(value, useFullTypeName:true)
+                _ => new PrimitiveElement(value)
             };
         }
 
