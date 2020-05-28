@@ -19,7 +19,7 @@ namespace Hl7.Fhir.Validation.Impl
 
         public async Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
         {
-            return await _other.Validate(input.Select(_path), vc);
+            return await _other.Validate(input.Select(_path), vc).ConfigureAwait(false);
         }
 
         public JToken ToJson()

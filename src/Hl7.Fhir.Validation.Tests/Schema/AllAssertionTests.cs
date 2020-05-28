@@ -41,11 +41,11 @@ namespace Hl7.Fhir.Validation.Tests.Schema
         public async Task SingleOperand()
         {
             var allAssertion = new AllAssertion(new SuccessAssertion());
-            var result = await allAssertion.Validate(null, null);
+            var result = await allAssertion.Validate(null, null).ConfigureAwait(false);
             Assert.IsTrue(result.Result.IsSuccessful);
 
             allAssertion = new AllAssertion(new FailureAssertion());
-            result = await allAssertion.Validate(null, null);
+            result = await allAssertion.Validate(null, null).ConfigureAwait(false);
             Assert.IsFalse(result.Result.IsSuccessful);
 
         }
@@ -54,7 +54,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
         public async Task Combinations()
         {
             var allAssertion = new AllAssertion(new SuccessAssertion(), new FailureAssertion());
-            var result = await allAssertion.Validate(null, null);
+            var result = await allAssertion.Validate(null, null).ConfigureAwait(false);
             Assert.IsFalse(result.Result.IsSuccessful);
 
         }

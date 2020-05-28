@@ -37,7 +37,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
 
             var input = ElementNode.ForPrimitive("test");
 
-            var result = await validatable.Validate(input, new ValidationContext() { FhirPathCompiler = fpCompiler });
+            var result = await validatable.Validate(input, new ValidationContext() { FhirPathCompiler = fpCompiler }).ConfigureAwait(false);
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Result.IsSuccessful, "the FhirPath Expression must be valid for this input");
@@ -50,7 +50,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
 
             var input = ElementNode.ForPrimitive("test");
 
-            var result = await validatable.Validate(input, new ValidationContext() { FhirPathCompiler = fpCompiler });
+            var result = await validatable.Validate(input, new ValidationContext() { FhirPathCompiler = fpCompiler }).ConfigureAwait(false);
 
             Assert.IsNotNull(result);
             Assert.IsFalse(result.Result.IsSuccessful, "the FhirPath Expression must not be valid for this input");
@@ -66,7 +66,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
 
             var validatable = new FhirPathAssertion("FhirPathAssertionTests.ValidateChildrenExists", "test-1", "children().count() = 3", "human description", IssueSeverity.Error, false);
 
-            var result = await validatable.Validate(humanName, new ValidationContext() { FhirPathCompiler = fpCompiler });
+            var result = await validatable.Validate(humanName, new ValidationContext() { FhirPathCompiler = fpCompiler }).ConfigureAwait(false);
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Result.IsSuccessful, "the FhirPath Expression must not be valid for this input");

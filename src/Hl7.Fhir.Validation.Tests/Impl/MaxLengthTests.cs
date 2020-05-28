@@ -18,7 +18,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
         {
             var node = ElementNode.ForPrimitive("12345678901");
 
-            var result = await _validatable.Validate(node, null);
+            var result = await _validatable.Validate(node, null).ConfigureAwait(false);
 
             Assert.IsNotNull(result);
             Assert.IsFalse(result.Result.IsSuccessful);
@@ -32,7 +32,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
         {
             var node = ElementNode.ForPrimitive("1234567890");
 
-            var result = await _validatable.Validate(node, null);
+            var result = await _validatable.Validate(node, null).ConfigureAwait(false);
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Result.IsSuccessful);
@@ -44,7 +44,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
             // TODO debatable: is MaxLength for an integer valid? It is now Undecided.
             var node = ElementNode.ForPrimitive(90);
 
-            var result = await _validatable.Validate(node, null);
+            var result = await _validatable.Validate(node, null).ConfigureAwait(false);
 
             Assert.IsFalse(result.Result.IsSuccessful, "MaxLength constraint on a non-string primitive is undecided == not succesful");
         }
@@ -54,7 +54,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
         {
             var node = ElementNode.ForPrimitive("");
 
-            var result = await _validatable.Validate(node, null);
+            var result = await _validatable.Validate(node, null).ConfigureAwait(false);
 
             Assert.IsTrue(result.Result.IsSuccessful, "MaxLength constraint on an empty string must be succesful");
         }

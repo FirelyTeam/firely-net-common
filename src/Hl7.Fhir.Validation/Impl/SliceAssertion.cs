@@ -74,7 +74,7 @@ namespace Hl7.Fhir.Validation.Impl
                 for (var sliceNumber = 0; sliceNumber < Slices.Length; sliceNumber++)
                 {
                     var sliceName = Slices[sliceNumber].Name;
-                    var sliceResult = await Slices[sliceNumber].Condition.Validate(candidate, vc);
+                    var sliceResult = await Slices[sliceNumber].Condition.Validate(candidate, vc).ConfigureAwait(false);
 
                     if (sliceResult.Result.IsSuccessful)
                     {
@@ -105,7 +105,8 @@ namespace Hl7.Fhir.Validation.Impl
                 {
                     defaultInUse = true;
 
-                    var defaultResult = (await Default.Validate(candidate, vc)).Result;
+                    var assertions = await Default.Validate(candidate, vc).ConfigureAwait(false);
+                    var defaultResult = assertions.Result;
 
                     if (defaultResult.IsSuccessful)
                         result += new Trace("Element was determined to be in the open slice for group");
@@ -117,7 +118,7 @@ namespace Hl7.Fhir.Validation.Impl
                 }
             }
 
-            result += await buckets.Validate(null, vc);
+            result += await buckets.Validate(null, vc).ConfigureAwait(false);
 
             return result;
         }
@@ -149,7 +150,7 @@ namespace Hl7.Fhir.Validation.Impl
 
                 foreach (var bucket in this)
                 {
-                    result += await bucket.Key.Assertion.Validate(bucket.Value, vc);
+                    result += await bucket.Key.Assertion.Validate(bucket.Value, vc).ConfigureAwait(false);
                 }
 
                 return result;

@@ -78,7 +78,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
 
             var vc = new ValidationContext() { ValidateAssertions = new[] { typeof(CardinalityAssertion) } };
 
-            var validationResults = await myHumanNameSchema.Validate(new[] { humanName }, vc);
+            var validationResults = await myHumanNameSchema.Validate(new[] { humanName }, vc).ConfigureAwait(false);
 
             var issues = validationResults.OfType<IssueAssertion>();
 
@@ -159,7 +159,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
 
             var vc = new ValidationContext();
 
-            var validationResults = await bloodPressureSchema.Validate(new[] { bloodPressure }, vc);
+            var validationResults = await bloodPressureSchema.Validate(new[] { bloodPressure }, vc).ConfigureAwait(false);
 
 
             var issues = validationResults.OfType<IssueAssertion>().Concat(validationResults.Result.Evidence.OfType<IssueAssertion>());

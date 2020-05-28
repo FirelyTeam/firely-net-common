@@ -46,7 +46,7 @@ namespace Hl7.Fhir.Validation.Schema
         public async Task<Assertions> Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
         {
             var schema = await _reference;
-            return await schema.Validate(input, vc);
+            return await schema.Validate(input, vc).ConfigureAwait(false);
         }
 
         public JToken ToJson() => new JProperty("$ref", ReferencedUri?.ToString() ??

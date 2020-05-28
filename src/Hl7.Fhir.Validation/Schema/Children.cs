@@ -102,7 +102,7 @@ namespace Hl7.Fhir.Validation.Schema
             {
                 var childElements = element.Children().Where(child => NameMatches(assertion.Key, child)).ToList();
 
-                result += await assertion.Value.Validate(childElements, vc);
+                result += await assertion.Value.Validate(childElements, vc).ConfigureAwait(false);
             }
 
             // todo restanten, which are not part of the definition?

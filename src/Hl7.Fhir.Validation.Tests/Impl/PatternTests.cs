@@ -39,7 +39,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             foreach (var (patternValue, input, expectedResult, failureMessage) in TestData())
             {
                 var validatable = new Fixed("PatternTests.PatternTestcases", patternValue);
-                var result = await validatable.Validate(ElementNode.ForPrimitive(input), new ValidationContext());
+                var result = await validatable.Validate(ElementNode.ForPrimitive(input), new ValidationContext()).ConfigureAwait(false);
 
                 Assert.IsNotNull(result);
                 Assert.IsTrue(result.Result.IsSuccessful == expectedResult, failureMessage);
@@ -55,7 +55,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             patternValue.Add("given", "Patrick", "string");
 
             var validatable = new Fixed("PatternTests.PatternHumanName", patternValue);
-            var result = await validatable.Validate(ElementNode.ForPrimitive("Brown, Joe Patrick"), new ValidationContext());
+            var result = await validatable.Validate(ElementNode.ForPrimitive("Brown, Joe Patrick"), new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsNotNull(result);
             Assert.IsFalse(result.Result.IsSuccessful, "String and HumanName are different");
@@ -74,7 +74,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             input.Add("given", "Patrick", "string");
 
             var validatable = new Pattern("PatternTests.ComplexTypePattern", patternValue);
-            var result = await validatable.Validate(input, new ValidationContext());
+            var result = await validatable.Validate(input, new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Result.IsSuccessful, "The input should match the pattern: family name should be Brown, and given name is Joe");
@@ -93,7 +93,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             input.Add("given", "Joe", "string");
 
             var validatable = new Pattern("PatternTests.NotMatchingComplexTypePattern", patternValue);
-            var result = await validatable.Validate(input, new ValidationContext());
+            var result = await validatable.Validate(input, new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsNotNull(result);
             Assert.IsFalse(result.Result.IsSuccessful, "The input should not match the pattern");

@@ -30,8 +30,8 @@ namespace Hl7.Fhir.Validation.Impl
 
             foreach (var item in groups)
             {
-                var schema = await _getSchema(new Uri(item.Key ?? "http://hl7.org/fhir/StructureDefinition/Extension"));
-                result += await schema.Validate(item, vc);
+                var schema = await _getSchema(new Uri(item.Key ?? "http://hl7.org/fhir/StructureDefinition/Extension")).ConfigureAwait(false);
+                result += await schema.Validate(item, vc).ConfigureAwait(false);
             }
 
             return result.AddResultAssertion();

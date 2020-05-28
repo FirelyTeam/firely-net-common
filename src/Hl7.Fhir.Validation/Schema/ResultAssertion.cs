@@ -76,7 +76,7 @@ namespace Hl7.Fhir.Validation.Schema
             var result = new Assertions(this);
             foreach (var item in Evidence)
             {
-                result += await item.Validate(input, vc);
+                result += await item.Validate(input, vc).ConfigureAwait(false);
             }
             return result;
         }

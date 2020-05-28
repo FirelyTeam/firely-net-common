@@ -38,7 +38,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         public async Task FixedTestcases(object fixedValue, object input, bool expectedResult, string failureMessage)
         {
             var validatable = new Fixed("FixedTests.FixedTestcases", fixedValue);
-            var result = await validatable.Validate(ElementNode.ForPrimitive(input), new ValidationContext());
+            var result = await validatable.Validate(ElementNode.ForPrimitive(input), new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Result.IsSuccessful == expectedResult, failureMessage);
@@ -53,7 +53,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             fixedValue.Add("given", "Patrick", "string");
 
             var validatable = new Fixed("FixedTests.FixedHumanName", fixedValue);
-            var result = await validatable.Validate(ElementNode.ForPrimitive("Brown, Joe Patrick"), new ValidationContext());
+            var result = await validatable.Validate(ElementNode.ForPrimitive("Brown, Joe Patrick"), new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsNotNull(result);
             Assert.IsFalse(result.Result.IsSuccessful, "String and HumanName are different");
@@ -73,7 +73,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             input.Add("given", "Joe", "string");
 
             var validatable = new Fixed("FixedTests.FixedHumanNameDifferentInstance", fixedValue);
-            var result = await validatable.Validate(input, new ValidationContext());
+            var result = await validatable.Validate(input, new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsNotNull(result);
             Assert.IsFalse(result.Result.IsSuccessful, "The input (HumanName) is slightly different than the fixed value");

@@ -18,7 +18,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         [TestMethod]
         public async Task CompareWithOtherPrimitive()
         {
-            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<FhirString, string>("a string"), new ValidationContext());
+            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<FhirString, string>("a string"), new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsFalse(result.Result.IsSuccessful);
 
@@ -27,7 +27,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         [TestMethod]
         public async Task LessThen()
         {
-            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(3), new ValidationContext());
+            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(3), new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsFalse(result.Result.IsSuccessful);
         }
@@ -35,7 +35,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         [TestMethod]
         public async Task Equals()
         {
-            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(4), new ValidationContext());
+            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(4), new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsTrue(result.Result.IsSuccessful);
         }
@@ -43,7 +43,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         [TestMethod]
         public async Task GreaterThen()
         {
-            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(5), new ValidationContext());
+            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(5), new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsTrue(result.Result.IsSuccessful);
         }
@@ -61,7 +61,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         [TestMethod]
         public async Task CompareWithOtherPrimitive()
         {
-            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(2), new ValidationContext());
+            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(2), new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsFalse(result.Result.IsSuccessful);
 
@@ -70,7 +70,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         [TestMethod]
         public async Task LessThen()
         {
-            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Date, string>("1905-01-01"), new ValidationContext());
+            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Date, string>("1905-01-01"), new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsTrue(result.Result.IsSuccessful);
         }
@@ -78,7 +78,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         [TestMethod]
         public async Task PartialEquals()
         {
-            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Date, string>("1905"), new ValidationContext());
+            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Date, string>("1905"), new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsTrue(result.Result.IsSuccessful);
         }
@@ -86,7 +86,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         [TestMethod]
         public async Task Equals()
         {
-            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Date, string>("1905-08-23"), new ValidationContext());
+            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Date, string>("1905-08-23"), new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsTrue(result.Result.IsSuccessful);
         }
@@ -94,7 +94,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         [TestMethod]
         public async Task GreaterThen()
         {
-            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Date, string>("1905-12-31"), new ValidationContext());
+            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Date, string>("1905-12-31"), new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsFalse(result.Result.IsSuccessful);
         }
@@ -102,7 +102,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         [TestMethod]
         public async Task PartialGreaterThen()
         {
-            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Date, string>("1906"), new ValidationContext());
+            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Date, string>("1906"), new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsFalse(result.Result.IsSuccessful);
         }

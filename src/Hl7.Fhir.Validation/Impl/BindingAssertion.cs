@@ -78,7 +78,7 @@ namespace Hl7.Fhir.Validation.Impl
 
             if (!result.Result.IsSuccessful) return result;
 
-            result += await ValidateCode(input, bindable, vc);
+            result += await ValidateCode(input, bindable, vc).ConfigureAwait(false);
 
             return result.AddResultAssertion();
         }
@@ -148,13 +148,13 @@ namespace Hl7.Fhir.Validation.Impl
             switch (bindable)
             {
                 case string code:
-                    result += await callService(vc.TerminologyService, source.Location, ValueSetUri, code: code, system: null, display: null, abstractAllowed: AbstractAllowed); ;
+                    result += await callService(vc.TerminologyService, source.Location, ValueSetUri, code: code, system: null, display: null, abstractAllowed: AbstractAllowed).ConfigureAwait(false);
                     break;
                 case ICoding cd:
-                    result += await callService(vc.TerminologyService, source.Location, ValueSetUri, coding: cd, abstractAllowed: AbstractAllowed);
+                    result += await callService(vc.TerminologyService, source.Location, ValueSetUri, coding: cd, abstractAllowed: AbstractAllowed).ConfigureAwait(false);
                     break;
                 case IConcept cc:
-                    result += await callService(vc.TerminologyService, source.Location, ValueSetUri, cc: cc, abstractAllowed: AbstractAllowed);
+                    result += await callService(vc.TerminologyService, source.Location, ValueSetUri, cc: cc, abstractAllowed: AbstractAllowed).ConfigureAwait(false);
                     break;
                 default:
                     throw Error.InvalidOperation($"Parsed bindable was of unexpected instance type '{bindable.GetType().Name}'.");
@@ -176,7 +176,7 @@ namespace Hl7.Fhir.Validation.Impl
             {
 
                 result = await svc.ValidateCode(canonical: canonical, code: code, system: system, display: display,
-                                               coding: coding, codeableConcept: cc, @abstract: abstractAllowed);
+                                               coding: coding, codeableConcept: cc, @abstract: abstractAllowed).ConfigureAwait(false);
 
                 // add location to IssueAssertions, if there are any.
                 return new Assertions(result.Select(r => r is IssueAssertion ia ? new IssueAssertion(ia.IssueNumber, location, ia.Message, ia.Severity) : r).ToList());

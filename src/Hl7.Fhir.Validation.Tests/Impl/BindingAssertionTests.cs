@@ -39,14 +39,14 @@ namespace Hl7.Fhir.Validation.Impl.Tests
             var input = ElementNode.ForPrimitive(true);
             var vc = new ValidationContext();
 
-            _ = await _bindingAssertion.Validate(input, vc);
+            _ = await _bindingAssertion.Validate(input, vc).ConfigureAwait(false);
         }
 
         [TestMethod()]
         [ExpectedException(typeof(ArgumentNullException), "No input is present")]
         public async Task NoInputPresent()
         {
-            _ = await _bindingAssertion.Validate(null, _validationContext);
+            _ = await _bindingAssertion.Validate(null, _validationContext).ConfigureAwait(false);
         }
 
         [TestMethod()]
@@ -54,7 +54,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         {
             var input = ElementNode.ForPrimitive(true);
 
-            var result = await _bindingAssertion.Validate(input, _validationContext);
+            var result = await _bindingAssertion.Validate(input, _validationContext).ConfigureAwait(false);
         }
 
         private ElementNode createCoding(string system, string code, string display = null)
@@ -96,7 +96,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
             SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
             var input = ElementNode.Root("code", value: "CD123");
 
-            var result = await _bindingAssertion.Validate(input, _validationContext);
+            var result = await _bindingAssertion.Validate(input, _validationContext).ConfigureAwait(false);
 
             Assert.IsTrue(result.Result.IsSuccessful);
             _terminologyService.Verify(ts => ts.ValidateCode(
@@ -120,7 +120,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
             SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
             var input = ElementNode.Root("uri", value: "http://some.uri");
 
-            var result = await _bindingAssertion.Validate(input, _validationContext);
+            var result = await _bindingAssertion.Validate(input, _validationContext).ConfigureAwait(false);
 
             Assert.IsTrue(result.Result.IsSuccessful);
             _terminologyService.Verify(ts => ts.ValidateCode(
@@ -144,7 +144,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
             SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
             var input = ElementNode.Root("string", value: "Some string");
 
-            var result = await _bindingAssertion.Validate(input, _validationContext);
+            var result = await _bindingAssertion.Validate(input, _validationContext).ConfigureAwait(false);
 
             Assert.IsTrue(result.Result.IsSuccessful);
             _terminologyService.Verify(ts => ts.ValidateCode(
@@ -168,7 +168,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
             SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
 
             var input = createCoding("http://terminology.hl7.org/CodeSystem/data-absent-reason", "masked");
-            var result = await _bindingAssertion.Validate(input, _validationContext);
+            var result = await _bindingAssertion.Validate(input, _validationContext).ConfigureAwait(false);
 
             Assert.IsTrue(result.Result.IsSuccessful);
             _terminologyService.Verify(ts => ts.ValidateCode(
@@ -195,7 +195,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
 
             var input = createConcept(codings);
 
-            var result = await _bindingAssertion.Validate(input, _validationContext);
+            var result = await _bindingAssertion.Validate(input, _validationContext).ConfigureAwait(false);
 
             Assert.IsTrue(result.Result.IsSuccessful);
             _terminologyService.Verify(ts => ts.ValidateCode(
@@ -219,7 +219,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
             SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
 
             var input = createQuantity(25, "s");
-            var result = await _bindingAssertion.Validate(input, _validationContext);
+            var result = await _bindingAssertion.Validate(input, _validationContext).ConfigureAwait(false);
 
             Assert.IsTrue(result.Result.IsSuccessful);
             _terminologyService.Verify(ts => ts.ValidateCode(
@@ -242,7 +242,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         {
             var input = ElementNode.Root("string", value: "");
 
-            var result = await _bindingAssertion.Validate(input, _validationContext);
+            var result = await _bindingAssertion.Validate(input, _validationContext).ConfigureAwait(false);
 
             Assert.IsFalse(result.Result.IsSuccessful);
             _terminologyService.VerifyNoOtherCalls();
@@ -253,7 +253,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         {
             var input = createCoding("system", null, null);
 
-            var result = await _bindingAssertion.Validate(input, _validationContext);
+            var result = await _bindingAssertion.Validate(input, _validationContext).ConfigureAwait(false);
 
             Assert.IsFalse(result.Result.IsSuccessful);
             _terminologyService.VerifyNoOtherCalls();
@@ -265,7 +265,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
             SetupTerminologyServiceResult(new Assertions(ResultAssertion.Failure));
 
             var input = createCoding("http://terminology.hl7.org/CodeSystem/data-absent-reason", "UNKNOWN");
-            var result = await _bindingAssertion.Validate(input, _validationContext);
+            var result = await _bindingAssertion.Validate(input, _validationContext).ConfigureAwait(false);
 
             Assert.IsFalse(result.Result.IsSuccessful);
             _terminologyService.Verify(ts => ts.ValidateCode(
