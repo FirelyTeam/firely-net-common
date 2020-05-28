@@ -221,9 +221,9 @@ namespace Hl7.FhirPath.Functions
             {
                 // Inconsistenty, the format for a time requires the 'T' prefix, while
                 // convertsToDateTime() does not expect a '@'.
-                if (!si.StartsWith("T")) return null;
+                //if (!si.StartsWith("T")) return null;
 
-                return PartialTime.TryParse(si.Substring(1), out var result) ?
+                return PartialTime.TryParse(si, out var result) ?
                      result : (PartialTime?)null;
             }
         }

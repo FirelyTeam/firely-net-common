@@ -59,29 +59,12 @@ namespace Hl7.FhirPath.Expressions
             if (value == null) Error.ArgumentNull("value");
 
             if (Any.TryConvertToSystemValue(value, out var systemValue))
+            {
                 Value = systemValue;
+                ExpressionType = TypeSpecifier.ForNativeType(value.GetType());
+            }
             else
                 throw Error.InvalidOperation("Internal logic error: encountered unmappable Value of type " + Value.GetType().Name);
-
-            if (Value is bool)
-                ExpressionType = TypeSpecifier.Boolean;
-            else if (Value is string)
-                ExpressionType = TypeSpecifier.String;
-            else if (Value is Int32)
-                ExpressionType = TypeSpecifier.Integer;
-            else if (Value is decimal)
-                ExpressionType = TypeSpecifier.Decimal;
-            else if (Value is PartialDateTime)
-                ExpressionType = TypeSpecifier.DateTime;
-            else if (Value is PartialTime)
-                ExpressionType = TypeSpecifier.Time;
-            else if (Value is PartialDate)
-                ExpressionType = TypeSpecifier.Date;
-            else if (Value is Quantity)
-                ExpressionType = TypeSpecifier.Quantity;
-            else
-                throw Error.InvalidOperation($"Internal logic error: encountered unmappable Value of type " + Value.GetType().Name);
-
         }
 
         public object Value { get; private set; }
