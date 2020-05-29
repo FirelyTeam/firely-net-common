@@ -1,4 +1,4 @@
-using Hl7.Fhir.ElementModel;
+﻿using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
@@ -26,20 +26,8 @@ namespace Hl7.Fhir.Rest
 
             var body = response.GetBodyAsText();
             if (!string.IsNullOrEmpty(body))
-            {
-                try
-                {
-                    result.TypedElement = parseResource(body, response.ContentType, parserSettings, provider, response.IsSuccessful());
-                }
-                catch (UnsupportedBodyTypeException bte)
-                {
-                    var errorResult = new TypedEntryResponse
-                    {
-                        Status = response.Status,
-                        BodyException = bte
-                    };
-                    return errorResult;
-                }
+            {               
+                result.TypedElement = parseResource(body, response.ContentType, provider, response.IsSuccessful());               
             }
 
             return result;

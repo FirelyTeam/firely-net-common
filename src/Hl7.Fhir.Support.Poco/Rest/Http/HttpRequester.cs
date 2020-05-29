@@ -46,9 +46,7 @@ namespace Hl7.Fhir.Rest
         public async Task<EntryResponse> ExecuteAsync(EntryRequest interaction)
         {
             if (interaction == null) throw Error.ArgumentNull(nameof(interaction));
-            bool compressRequestBody = false;
-
-            compressRequestBody = Settings.CompressRequestBody; // PCL doesn't support compression at the moment
+            bool compressRequestBody = Settings.CompressRequestBody;
 
             using (var requestMessage = interaction.ToHttpRequestMessage(BaseUrl,Settings))
             {            
