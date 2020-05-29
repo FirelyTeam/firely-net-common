@@ -10,68 +10,35 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.ComponentModel;
+using System.Collections.Concurrent;
 
 namespace Hl7.Fhir.Utility
 {
     public static class EnumUtility
     {
-        public static string GetLiteral(this Enum e)
-        {
-            return GetEnumMapping(e.GetType()).GetLiteral(e);
-        }
+        public static string GetLiteral(this Enum e) => getEnumMapping(e.GetType()).GetLiteral(e);
 
-        public static string GetSystem(this Enum e)
-        {
-            var attr = e.GetAttributeOnEnum<EnumLiteralAttribute>();
-            return attr?.System;
-        }
+        public static string GetSystem(this Enum e) => e.GetAttributeOnEnum<EnumLiteralAttribute>()?.System;
 
-        public static string GetDocumentation(this Enum e)
-        {
-            var attr = e.GetAttributeOnEnum<DescriptionAttribute>();
-            return attr?.Description ?? e.ToString();
-        }
+        public static string GetDocumentation(this Enum e) 
+            => e.GetAttributeOnEnum<DescriptionAttribute>()?.Description ?? e.ToString();
 
-        private static Dictionary<Type, EnumMapping> _cache = new Dictionary<Type, EnumMapping>();
-        private static Object _cacheLock = new Object();
+        private static readonly ConcurrentDictionary<Type, EnumMapping> _cache = new ConcurrentDictionary<Type, EnumMapping>();
 
-        public static object ParseLiteral(string rawValue, Type enumType, bool ignoreCase = false)
-        {
-            return GetEnumMapping(enumType).ParseLiteral(rawValue, ignoreCase);
-        }
+        public static object ParseLiteral(string rawValue, Type enumType, bool ignoreCase = false) 
+            => getEnumMapping(enumType).ParseLiteral(rawValue, ignoreCase);
 
-        public static T? ParseLiteral<T>(string rawValue, bool ignoreCase = false) where T : struct
-        {
-            return (T?)ParseLiteral(rawValue, typeof(T), ignoreCase);
-        }
+        public static T? ParseLiteral<T>(string rawValue, bool ignoreCase = false) where T : struct 
+            => (T?)ParseLiteral(rawValue, typeof(T), ignoreCase);
 
-		public static string GetName( Type enumType )
-		{
-			return GetEnumMapping(enumType).Name;
-		}
+        public static string GetName(Type enumType) => getEnumMapping(enumType).Name;
 
-		public static string GetName<T>() where T : struct
-		{
-			return GetName(typeof(T));
-		}
+        public static string GetName<T>() where T : struct => GetName(typeof(T));
 
-		private static EnumMapping GetEnumMapping( Type enumType )
-		{
-			EnumMapping fieldInfo = null;
+        private static EnumMapping getEnumMapping(Type enumType)
+            => _cache.GetOrAdd(enumType, t => EnumMapping.Create(t));     
 
-			lock ( _cacheLock )
-			{
-				if ( !_cache.TryGetValue( enumType, out fieldInfo ) )
-				{
-					fieldInfo = EnumMapping.Create( enumType );
-					_cache.Add( enumType, fieldInfo );
-				}
-			}
-
-			return fieldInfo;
-		}
-
-		internal class EnumMapping
+        internal class EnumMapping
         {
             // Symbolic name of the enumeration
             public string Name { get; private set; }
@@ -136,20 +103,14 @@ namespace Hl7.Fhir.Utility
                 return result;
             }
 
-            public static bool IsMappableEnum(Type t)
-            {
-                return t.IsEnum() &&  t.GetTypeInfo().GetCustomAttribute<FhirEnumerationAttribute>() != null;
-            }
+            public static bool IsMappableEnum(Type t) =>
+                t.IsEnum() && t.GetTypeInfo().GetCustomAttribute<FhirEnumerationAttribute>() != null;
 
 
             private static string getEnumName(Type t)
             {
                 var attr = t.GetTypeInfo().GetCustomAttribute<FhirEnumerationAttribute>();
-
-                if (attr != null)
-                    return attr.BindingName;
-                else
-                    return t.Name;
+                return attr != null ? attr.BindingName : t.Name;
             }
         }
     }
