@@ -1,4 +1,6 @@
 ﻿using Hl7.Fhir.Serialization;
+using Hl7.Fhir.Utility;
+using System;
 
 namespace Hl7.Fhir.Rest
 {
@@ -53,6 +55,41 @@ namespace Hl7.Fhir.Rest
         /// </summary>
         public bool CompressRequestBody;
 
-        public ParserSettings ParserSettings = ParserSettings.Default;
+        public ParserSettings ParserSettings = ParserSettings.CreateDefault();
+
+        public FhirClientSettings() { }
+
+        /// <summary>Clone constructor. Generates a new <see cref="FhirClientSettings"/> instance initialized from the state of the specified instance.</summary>
+        /// <exception cref="ArgumentNullException">The specified argument is <c>null</c>.</exception>
+        public FhirClientSettings(FhirClientSettings other)
+        {
+            if (other == null) throw Error.ArgumentNull(nameof(other));
+            other.CopyTo(this);
+        }
+
+        /// <summary>Copy all configuration settings to another instance.</summary>
+        /// <param name="other">Another <see cref="FhirClientSettings"/> instance.</param>
+        /// <exception cref="ArgumentNullException">The specified argument is <c>null</c>.</exception>
+        public void CopyTo(FhirClientSettings other)
+        {
+            if (other == null) throw Error.ArgumentNull(nameof(other));
+
+            other.CompressRequestBody = CompressRequestBody;
+            other.ParserSettings = ParserSettings;
+            other.PreferCompressedResponses = PreferCompressedResponses;
+            other.PreferredFormat = PreferredFormat;
+            other.PreferredReturn = PreferredReturn;
+            other.Timeout = Timeout;
+            other.UseFormatParameter = UseFormatParameter;
+            other.VerifyFhirVersion = VerifyFhirVersion;
+            other.PreferredParameterHandling = PreferredParameterHandling;
+        }
+
+        /// <summary>Creates a new <see cref="FhirClientSettings"/> object that is a copy of the current instance.</summary>
+        public FhirClientSettings Clone() => new FhirClientSettings(this);
+
+        /// <summary>Creates a new <see cref="FhirClientSettings"/> instance with default property values.</summary>
+        public static FhirClientSettings CreateDefault() => new FhirClientSettings();
     }
 }
+
