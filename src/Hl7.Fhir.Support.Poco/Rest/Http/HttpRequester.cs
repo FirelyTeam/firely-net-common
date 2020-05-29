@@ -62,14 +62,14 @@ namespace Hl7.Fhir.Rest
                 byte[] outgoingBody = null;
                 if (requestMessage.Method == HttpMethod.Post || requestMessage.Method == HttpMethod.Put)
                 {
-                    outgoingBody = await requestMessage.Content.ReadAsByteArrayAsync();
+                    outgoingBody = await requestMessage.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
                 }
 
                 using (var response = await Client.SendAsync(requestMessage).ConfigureAwait(false))
                 {
                     try
                     {
-                        var body = await response.Content.ReadAsByteArrayAsync();
+                        var body = await response.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
 
                         LastResponse = response;
 
