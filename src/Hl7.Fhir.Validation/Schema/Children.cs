@@ -19,13 +19,23 @@ namespace Hl7.Fhir.Validation.Schema
     public class Children : IAssertion, IMergeable, IValidatable//, ICollectable
     {
         private readonly Lazy<IReadOnlyDictionary<string, IAssertion>> _childList;
+        private readonly bool _allowAdditionalChildren;
 
-        public Children(params (string name, IAssertion assertion)[] children)
+        public Children(bool allowAdditionalChildren = false, params (string name, IAssertion assertion)[] children) : this(() => toROD(children), allowAdditionalChildren)
         {
-            _childList = new Lazy<IReadOnlyDictionary<string, IAssertion>>(() => toROD(children));
         }
 
-        private IReadOnlyDictionary<string, IAssertion> toROD(IEnumerable<(string, IAssertion)> children)
+        public Children(IReadOnlyDictionary<string, IAssertion> children, bool allowAdditionalChildren = false) : this(() => children, allowAdditionalChildren)
+        {
+        }
+
+        public Children(Func<IReadOnlyDictionary<string, IAssertion>> childGenerator, bool allowAdditionalChildren = false)
+        {
+            _childList = new Lazy<IReadOnlyDictionary<string, IAssertion>>(childGenerator);
+            _allowAdditionalChildren = allowAdditionalChildren;
+        }
+
+        private static IReadOnlyDictionary<string, IAssertion> toROD(IEnumerable<(string, IAssertion)> children)
         {
             var lookup = new Dictionary<string, IAssertion>();
             foreach (var (name, assertion) in children)
@@ -35,17 +45,6 @@ namespace Hl7.Fhir.Validation.Schema
 #else
             return lookup;
 #endif
-        }
-
-
-        public Children(IReadOnlyDictionary<string, IAssertion> children)
-        {
-            _childList = new Lazy<IReadOnlyDictionary<string, IAssertion>>(() => children);
-        }
-
-        public Children(Func<IReadOnlyDictionary<string, IAssertion>> childGenerator)
-        {
-            _childList = new Lazy<IReadOnlyDictionary<string, IAssertion>>(childGenerator);
         }
 
         public IReadOnlyDictionary<string, IAssertion> ChildList => _childList.Value;
@@ -91,26 +90,61 @@ namespace Hl7.Fhir.Validation.Schema
 
             if (element.Value is null && !element.Children().Any())
             {
-                result += new IssueAssertion(1000, element.Location, "Element must not be empty", IssueSeverity.Error);
+                result += ResultAssertion.CreateFailure(new IssueAssertion(1000, element.Location, "Element must not be empty", IssueSeverity.Error));
             }
 
-            // new style:
-            //var filteredChildern = input.ChildrenIncValue().Where(child => NameMatches(assertion.Key, child));
-            //result = await ChildList.Values.Select(assertion => assertion.Validate(input, vc)).AggregateAsync();
-
-            foreach (var assertion in ChildList)
+            var matchResult = ChildNameMatcher.Match(ChildList, element);
+            if (matchResult.UnmatchedInstanceElements.Any() && !_allowAdditionalChildren)
             {
-                var childElements = element.Children().Where(child => NameMatches(assertion.Key, child)).ToList();
-
-                result += await assertion.Value.Validate(childElements, vc).ConfigureAwait(false);
+                var elementList = String.Join(",", matchResult.UnmatchedInstanceElements.Select(e => "'" + e.Name + "'"));
+                result += ResultAssertion.CreateFailure(new IssueAssertion(1001, $"Encountered unknown child elements {elementList} for definition '{"TODO: definition.Path"}'", IssueSeverity.Error));
             }
 
-            // todo restanten, which are not part of the definition?
+            result += await matchResult.Matches.Select(m => m.Assertion.Validate(m.InstanceElements, vc)).AggregateAsync();
+            return result;
+        }
+    }
+
+    internal class ChildNameMatcher
+    {
+        public static MatchResult Match(IReadOnlyDictionary<string, IAssertion> assertions, ITypedElement instanceParent)
+        {
+            var elementsToMatch = instanceParent.Children().ToList();
+
+            List<Match> matches = new List<Match>();
+
+            foreach (var assertion in assertions)
+            {
+                var match = new Match() { Assertion = assertion.Value, InstanceElements = new List<ITypedElement>() };
+
+                // Special case is the .value of a primitive fhir type, this is represented
+                // as the "Value" of the IValueProvider interface, not as a real child
+                //if (definitionElement.Current.IsPrimitiveValueConstraint())
+                //{
+                //    if (instanceParent.Value != null)
+                //        match.InstanceElements.Add(instanceParent);
+                //}
+                //else
+                //{
+                var found = elementsToMatch.Where(ie => NameMatches(assertion.Key, ie)).ToList();
+
+                match.InstanceElements.AddRange(found);
+                elementsToMatch.RemoveAll(e => found.Contains(e));
+                //}
+
+                matches.Add(match);
+            }
+
+            MatchResult result = new MatchResult
+            {
+                Matches = matches,
+                UnmatchedInstanceElements = elementsToMatch
+            };
 
             return result;
         }
 
-        private bool NameMatches(string name, ITypedElement instanceElement)
+        private static bool NameMatches(string name, ITypedElement instanceElement)
         {
             var definedName = name;
 
@@ -130,5 +164,17 @@ namespace Hl7.Fhir.Validation.Schema
 
             return false;
         }
+    }
+
+    internal class MatchResult
+    {
+        public List<Match> Matches;
+        public List<ITypedElement> UnmatchedInstanceElements;
+    }
+
+    internal class Match
+    {
+        public IAssertion Assertion;
+        public List<ITypedElement> InstanceElements;
     }
 }

@@ -14,8 +14,8 @@ namespace Hl7.Fhir.Validation.Impl
         public IAssertion CreateCardinalityAssertion(int? min, string max, string location = null)
             => new CardinalityAssertion(min, max, location);
 
-        public IAssertion CreateChildren(Func<IReadOnlyDictionary<string, IAssertion>> childGenerator)
-            => new Children(childGenerator);
+        public IAssertion CreateChildren(Func<IReadOnlyDictionary<string, IAssertion>> childGenerator, bool allowAdditionalChildren = true)
+            => new Children(childGenerator, allowAdditionalChildren);
 
         public IAssertion CreateConditionsAssertion()
             => null; // todo

@@ -3,6 +3,7 @@ using Hl7.Fhir.Language;
 using Hl7.Fhir.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Hl7.Fhir.Validation.Schema
 {
@@ -23,7 +24,7 @@ namespace Hl7.Fhir.Validation.Schema
 
         public override IEnumerable<ITypedElement> Children(string name = null)
         {
-            if ((Value is object) && Char.IsLower(InstanceType[0]))
+            if ((Value is object) && Char.IsLower(InstanceType[0]) && !base.Children(name).Any())
             {
                 yield return new ValueElementNode(this, true);
             }

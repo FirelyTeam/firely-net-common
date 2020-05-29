@@ -13,7 +13,8 @@ namespace Hl7.Fhir.Validation.Schema
 
         IAssertion CreateCardinalityAssertion(int? min, string max, string location = null);
 
-        IAssertion CreateChildren(Func<IReadOnlyDictionary<string, IAssertion>> childGenerator);
+        //TODO remove the default true of allowAdditionalChildren
+        IAssertion CreateChildren(Func<IReadOnlyDictionary<string, IAssertion>> childGenerator, bool allowAdditionalChildren = true);
 
         IAssertion CreateConditionsAssertion();
 
