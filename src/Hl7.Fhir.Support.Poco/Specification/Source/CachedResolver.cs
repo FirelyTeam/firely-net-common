@@ -76,7 +76,7 @@ namespace Hl7.Fhir.Specification.Source
         public async Task<Resource> ResolveByUriAsync(string url)
         {
             if (url == null) throw Error.ArgumentNull(nameof(url));
-            return await _resourcesByUri.Get(url, CachedResolverLoadingStrategy.LoadOnDemand);
+            return await _resourcesByUri.Get(url, CachedResolverLoadingStrategy.LoadOnDemand).ConfigureAwait(false);
         }
 
         /// <inheritdoc cref="ResolveByUriAsync(string, CachedResolverLoadingStrategy)"/>
@@ -92,7 +92,7 @@ namespace Hl7.Fhir.Specification.Source
         public async Task<Resource> ResolveByUriAsync(string url, CachedResolverLoadingStrategy strategy)
         {
             if (url == null) throw Error.ArgumentNull(nameof(url));
-            return await _resourcesByUri.Get(url, strategy);
+            return await _resourcesByUri.Get(url, strategy).ConfigureAwait(false);
         }
 
         /// <inheritdoc cref="ResolveByCanonicalUriAsync(string)" />
@@ -106,7 +106,7 @@ namespace Hl7.Fhir.Specification.Source
         public async Task<Resource> ResolveByCanonicalUriAsync(string url)
         {
             if (url == null) throw Error.ArgumentNull(nameof(url));
-            return await _resourcesByCanonical.Get(url, CachedResolverLoadingStrategy.LoadOnDemand);
+            return await _resourcesByCanonical.Get(url, CachedResolverLoadingStrategy.LoadOnDemand).ConfigureAwait(false);
         }
 
         /// <inheritdoc cref="ResolveByCanonicalUriAsync(string, CachedResolverLoadingStrategy)" />
@@ -122,7 +122,7 @@ namespace Hl7.Fhir.Specification.Source
         public async Task<Resource> ResolveByCanonicalUriAsync(string url, CachedResolverLoadingStrategy strategy)
         {
             if (url == null) throw Error.ArgumentNull(nameof(url));
-            return await _resourcesByCanonical.Get(url, strategy);
+            return await _resourcesByCanonical.Get(url, strategy).ConfigureAwait(false);
         }
 
         /// <summary>Clear the cache entry for the artifact with the specified url, if it exists.</summary>
@@ -185,14 +185,14 @@ namespace Hl7.Fhir.Specification.Source
 
         internal async Task<Resource> InternalResolveByUri(string url)
         {
-            var resource = await AsyncResolver.ResolveByUriAsync(url);
+            var resource = await AsyncResolver.ResolveByUriAsync(url).ConfigureAwait(false);
             OnLoad(url, resource);
             return resource;
         }
 
         internal async Task<Resource> InternalResolveByCanonicalUri(string url)
         {
-            var resource = await AsyncResolver.ResolveByCanonicalUriAsync(url);
+            var resource = await AsyncResolver.ResolveByCanonicalUriAsync(url).ConfigureAwait(false);
             OnLoad(url, resource);
             return resource;
         }
@@ -246,7 +246,7 @@ namespace Hl7.Fhir.Specification.Source
                 if (strategy != CachedResolverLoadingStrategy.LoadFromCache)
                 {
                     // Otherwise, fetch it and cache it.
-                    T newData = await _onCacheMiss(identifier);
+                    T newData = await _onCacheMiss(identifier).ConfigureAwait(false);
 
                     lock (_getLock)
                     {
