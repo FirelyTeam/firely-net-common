@@ -94,7 +94,7 @@ namespace Hl7.Fhir.Rest
         /// only the key was specified as a query parameter.</returns>
         internal static Tuple<string, string> SplitParam(string param)
         {
-            if (param == null) throw new ArgumentNullException("param");
+            if (param == null) throw new ArgumentNullException(nameof(param));
 
             string[] pair = param.Split('=');
 
@@ -107,7 +107,7 @@ namespace Hl7.Fhir.Rest
 
         public static UriParamList FromQueryString(string query)
         {
-            if (query == null) throw new ArgumentNullException("query");
+            if (query == null) throw new ArgumentNullException(nameof(query));
 
             var result = new UriParamList();
 
@@ -136,7 +136,7 @@ namespace Hl7.Fhir.Rest
         /// <returns></returns>
         internal static string MakeParam(string key, string value = null)
         {
-            if (key == null) throw new ArgumentNullException("key");
+            if (key == null) throw new ArgumentNullException(nameof(key));
 
             var result = Uri.EscapeDataString(key);
 
@@ -149,8 +149,8 @@ namespace Hl7.Fhir.Rest
 
         internal static string JoinParam(Tuple<string, string> kv)
         {
-            if (kv == null) throw new ArgumentNullException("kv");
-            if (kv.Item1 == null) throw new ArgumentException("Key in tuple may not be null", "kv");
+            if (kv == null) throw new ArgumentNullException(nameof(kv));
+            if (kv.Item1 == null) throw new ArgumentException("Key in tuple may not be null", nameof(kv));
 
             return MakeParam(kv.Item1, kv.Item2);
         }

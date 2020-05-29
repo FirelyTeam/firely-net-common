@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * Copyright (c) 2014, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
@@ -142,11 +142,11 @@ namespace Hl7.Fhir.Rest
 
 
             if (settings.UseFormatParameter)
-                location.AddParam(HttpUtil.RESTPARAM_FORMAT, Hl7.Fhir.Rest.ContentType.BuildFormatParam(settings.PreferredFormat));
+                location.AddParam(HttpUtil.RESTPARAM_FORMAT, ContentType.BuildFormatParam(settings.PreferredFormat));
 
             var request = (HttpWebRequest)HttpWebRequest.Create(location.Uri);
             request.Method = entry.Method.ToString();
-            setAgent(request, (string)(".NET FhirClient for FHIR " + entry.Agent));
+            setAgent(request, ".NET FhirClient for FHIR " + entry.Agent);
 
             if (!settings.UseFormatParameter)
                 request.Accept = ContentType.BuildContentType(settings.PreferredFormat, forBundle: false);
@@ -207,7 +207,7 @@ namespace Hl7.Fhir.Rest
             {
                 try
                 {
-                    System.Reflection.PropertyInfo prop = request.GetType().GetRuntimeProperty("UserAgent");
+                    PropertyInfo prop = request.GetType().GetRuntimeProperty("UserAgent");
 
                     if (prop != null)
                         prop.SetValue(request, agent, null);

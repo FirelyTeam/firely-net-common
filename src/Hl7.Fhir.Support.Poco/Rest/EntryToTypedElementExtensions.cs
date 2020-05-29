@@ -1,4 +1,4 @@
-﻿using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
@@ -8,7 +8,7 @@ namespace Hl7.Fhir.Rest
 {
     public static class EntryToTypedEntryExtensions
     {
-        public static TypedEntryResponse ToTypedEntryResponse(this EntryResponse response, ParserSettings parserSettings, IStructureDefinitionSummaryProvider provider)
+        public static TypedEntryResponse ToTypedEntryResponse(this EntryResponse response, IStructureDefinitionSummaryProvider provider)
         {
             var result = new TypedEntryResponse
             {
@@ -45,10 +45,8 @@ namespace Hl7.Fhir.Rest
             return result;
         }
         
-        private static ITypedElement parseResource(string bodyText, string contentType, ParserSettings settings, IStructureDefinitionSummaryProvider provider, bool throwOnFormatException)
+        private static ITypedElement parseResource(string bodyText, string contentType, IStructureDefinitionSummaryProvider provider, bool throwOnFormatException)
         {
-            
-            ITypedElement result = null;            
             var fhirType = ContentType.GetResourceFormatFromContentType(contentType);
 
             if (fhirType == ResourceFormat.Unknown)
@@ -60,6 +58,8 @@ namespace Hl7.Fhir.Rest
                 throw new UnsupportedBodyTypeException(
                         "Endpoint said it returned '{0}', but the body is not recognized as either xml or json.".FormatWith(contentType), contentType, bodyText);
 
+
+            ITypedElement result;
             try
             {
                 if (bodyText == null) throw Error.ArgumentNull(nameof(bodyText));
@@ -71,17 +71,11 @@ namespace Hl7.Fhir.Rest
                     result = FhirXmlNode.Parse(bodyText).ToTypedElement(provider);
             }
             catch (FormatException) when (!throwOnFormatException)
-            {
-                //if (throwOnFormatException) throw fe;
-
-                //         [WMR 20181029]
-                //TODO...
-                //         ExceptionHandler.NotifyOrThrow(...)_
-
+            {           
                 return null;
             }
-            
-               
+
+
             return result;
         }
     }

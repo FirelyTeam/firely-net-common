@@ -62,7 +62,7 @@ namespace Hl7.Fhir.Rest
                 request.WriteBody(compressRequestBody, interaction.RequestBodyContent);
 
             // Make sure the HttpResponse gets disposed!
-            using (HttpWebResponse webResponse = (HttpWebResponse)await request.GetResponseAsync(new TimeSpan(0, 0, 0, 0, Settings.Timeout)).ConfigureAwait(false))
+            using (HttpWebResponse webResponse = (HttpWebResponse)await request.GetResponseAsync(TimeSpan.FromMilliseconds(Settings.Timeout)).ConfigureAwait(false))
             {
                 try
                 {
