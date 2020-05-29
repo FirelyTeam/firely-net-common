@@ -25,7 +25,8 @@ namespace Hl7.FhirPath.Tests
             var parser = Grammar.Literal.End();
 
             AssertParser.SucceedsMatch(parser, "'hi there'", new ConstantExpression("hi there"));
-            AssertParser.SucceedsMatch(parser, "3", new ConstantExpression(3));
+            var m = new ConstantExpression(3L);
+            AssertParser.SucceedsMatch(parser, "3", m);
             AssertParser.SucceedsMatch(parser, "3.14", new ConstantExpression(3.14m));
             AssertParser.SucceedsMatch(parser, "@2013-12", new ConstantExpression(PartialDate.Parse("2013-12")));
             AssertParser.SucceedsMatch(parser, "@2013-12T", new ConstantExpression(PartialDateTime.Parse("2013-12")));
@@ -52,7 +53,7 @@ namespace Hl7.FhirPath.Tests
                                 new ConstantExpression(3.14m)));
 
             AssertParser.SucceedsMatch(parser, "doSomething('hi', 3.14, 3, $this, somethingElse(true))", new FunctionCallExpression(AxisExpression.That, "doSomething", TypeSpecifier.Any,
-                        new ConstantExpression("hi"), new ConstantExpression(3.14m), new ConstantExpression(3),
+                        new ConstantExpression("hi"), new ConstantExpression(3.14m), new ConstantExpression(3L),
                         AxisExpression.This,
                         new FunctionCallExpression(AxisExpression.That, "somethingElse", TypeSpecifier.Any, new ConstantExpression(true))));
 
@@ -77,9 +78,9 @@ namespace Hl7.FhirPath.Tests
             AssertParser.SucceedsMatch(parser, "%external", new VariableRefExpression("external"));
             AssertParser.SucceedsMatch(parser, "@2013-12", new ConstantExpression(PartialDate.Parse("2013-12")));
             AssertParser.SucceedsMatch(parser, "@2013-12T", new ConstantExpression(PartialDateTime.Parse("2013-12")));
-            AssertParser.SucceedsMatch(parser, "3", new ConstantExpression(3));
+            AssertParser.SucceedsMatch(parser, "3", new ConstantExpression(3L));
             AssertParser.SucceedsMatch(parser, "true", new ConstantExpression(true));
-            AssertParser.SucceedsMatch(parser, "(3)", new ConstantExpression(3));
+            AssertParser.SucceedsMatch(parser, "(3)", new ConstantExpression(3L));
             AssertParser.SucceedsMatch(parser, "{}", NewNodeListInitExpression.Empty);
             AssertParser.SucceedsMatch(parser, "@2014-12-13T12:00:00+02:00", new ConstantExpression(PartialDateTime.Parse("2014-12-13T12:00:00+02:00")));
             AssertParser.SucceedsMatch(parser, "78 'kg'", new ConstantExpression(new Quantity(78m, "kg")));
@@ -142,10 +143,10 @@ namespace Hl7.FhirPath.Tests
 
             AssertParser.SucceedsMatch(parser, "Patient.name", patientName);
             AssertParser.SucceedsMatch(parser, "Patient.name [4 ]",
-                    new IndexerExpression(patientName, new ConstantExpression(4)));
+                    new IndexerExpression(patientName, new ConstantExpression(4L)));
             AssertParser.SucceedsMatch(parser, "$this[4].name",
                 new ChildExpression(
-                    new IndexerExpression(AxisExpression.This, new ConstantExpression(4)),
+                    new IndexerExpression(AxisExpression.This, new ConstantExpression(4L)),
                     "name"));
 
             AssertParser.FailsMatch(parser, "Patient.name[");
@@ -161,8 +162,8 @@ namespace Hl7.FhirPath.Tests
         {
             var parser = Grammar.PolarityExpression.End();
 
-            AssertParser.SucceedsMatch(parser, "4", new ConstantExpression(4));
-            AssertParser.SucceedsMatch(parser, "-4", new UnaryExpression('-', new ConstantExpression(4)));
+            AssertParser.SucceedsMatch(parser, "4", new ConstantExpression(4L));
+            AssertParser.SucceedsMatch(parser, "-4", new UnaryExpression('-', new ConstantExpression(4L)));
 
             AssertParser.SucceedsMatch(parser, "-Patient.name", new UnaryExpression('-', patientName));
             AssertParser.SucceedsMatch(parser, "+Patient.name", new UnaryExpression('+', patientName));
@@ -175,8 +176,8 @@ namespace Hl7.FhirPath.Tests
             var parser = Grammar.MulExpression.End();
 
             AssertParser.SucceedsMatch(parser, "Patient.name", patientName);
-            AssertParser.SucceedsMatch(parser, "4* Patient.name", new BinaryExpression('*', new ConstantExpression(4), patientName));
-            AssertParser.SucceedsMatch(parser, "5 div 6", constOp("div", 5, 6));
+            AssertParser.SucceedsMatch(parser, "4* Patient.name", new BinaryExpression('*', new ConstantExpression(4L), patientName));
+            AssertParser.SucceedsMatch(parser, "5 div 6", constOp("div", 5L, 6L));
 
             AssertParser.FailsMatch(parser, "4*");
             // AssertParser.FailsMatch(parser, "5div6");    oops
@@ -187,8 +188,8 @@ namespace Hl7.FhirPath.Tests
         {
             var parser = Grammar.AddExpression.End();
 
-            AssertParser.SucceedsMatch(parser, "-4", new UnaryExpression('-', new ConstantExpression(4)));
-            AssertParser.SucceedsMatch(parser, "4 + 6", constOp("+", 4, 6));
+            AssertParser.SucceedsMatch(parser, "-4", new UnaryExpression('-', new ConstantExpression(4L)));
+            AssertParser.SucceedsMatch(parser, "4 + 6", constOp("+", 4L, 6L));
 
             AssertParser.FailsMatch(parser, "4+");
             // AssertParser.FailsMatch(parser, "5div6");    oops
@@ -200,8 +201,8 @@ namespace Hl7.FhirPath.Tests
         {
             var parser = Grammar.TypeExpression.End();
 
-            AssertParser.SucceedsMatch(parser, "4 is integer", new BinaryExpression("is", new ConstantExpression(4), new ConstantExpression("integer")));
-            AssertParser.SucceedsMatch(parser, "8 as notoddbuteven", new BinaryExpression("as", new ConstantExpression(8), new ConstantExpression("notoddbuteven")));
+            AssertParser.SucceedsMatch(parser, "4 is integer", new BinaryExpression("is", new ConstantExpression(4L), new ConstantExpression("integer")));
+            AssertParser.SucceedsMatch(parser, "8 as notoddbuteven", new BinaryExpression("as", new ConstantExpression(8L), new ConstantExpression("notoddbuteven")));
 
             AssertParser.FailsMatch(parser, "4 is 5");
             // AssertParser.FailsMatch(parser, "5div6");    oops

@@ -88,7 +88,7 @@ namespace Hl7.Fhir.ElementModel
 
         bool IStructureDefinitionSummary.IsResource => false;
 
-        public override bool Equals(object obj) => obj is ITypedElement ite ? Equals(ite.Value, Value) : false;
+        public override bool Equals(object obj) => obj is ITypedElement ite && Equals(ite.Value, Value);
 
         public override int GetHashCode() => Value?.GetHashCode() ?? 0;
 
