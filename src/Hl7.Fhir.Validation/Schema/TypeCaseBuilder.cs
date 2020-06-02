@@ -59,8 +59,8 @@ namespace Hl7.Fhir.Validation.Schema
             {
                 var allowedCodes = String.Join(",", typeCases.Select(t => $"'{t.code ?? "(any)"}'"));
                 return
-                    new ResultAssertion(ValidationResult.Failure,
-                    new IssueAssertion(1026, $"Element is a choice, but the instance does not use of the allowed choice types ({allowedCodes})", IssueSeverity.Error));
+                    ResultAssertion.CreateFailure(
+                        new IssueAssertion(1026, $"Element is a choice, but the instance does not use of the allowed choice types ({allowedCodes})", IssueSeverity.Error));
             }
 
             SliceAssertion.Slice buildSliceForTypeCase(string code, IEnumerable<string> profiles)
@@ -82,8 +82,8 @@ namespace Hl7.Fhir.Validation.Schema
             {
                 var allowedProfiles = String.Join(",", profiles.Select(p => $"'{p}'"));
                 return
-                    new ResultAssertion(ValidationResult.Failure,
-                    new Trace($"Element does not validate against any of the expected profiles ({allowedProfiles})"));
+                    ResultAssertion.CreateFailure(
+                        new IssueAssertion(-1, $"Element does not validate against any of the expected profiles ({allowedProfiles})", IssueSeverity.Error));
             }
 
             SliceAssertion.Slice buildSliceForProfile(string profile)

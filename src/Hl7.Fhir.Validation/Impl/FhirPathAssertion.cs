@@ -92,7 +92,7 @@ namespace Hl7.Fhir.Validation.Impl
 
             if (!success)
             {
-                result += new ResultAssertion(ValidationResult.Failure, new IssueAssertion(_severity == IssueSeverity.Error ? 1012 : 1013, input.Location, $"Instance failed constraint {GetDescription()}", _severity));
+                result += ResultAssertion.CreateFailure(new IssueAssertion(_severity == IssueSeverity.Error ? 1012 : 1013, input.Location, $"Instance failed constraint {GetDescription()}", _severity));
                 return Task.FromResult(result);
             }
 

@@ -23,7 +23,7 @@ namespace Hl7.Fhir.Validation.Schema
         {
         }
 
-        public Assertions(IEnumerable<IAssertion> assertions) : base(merge(assertions).ToList())
+        public Assertions(IEnumerable<IAssertion> assertions) : base(merge(assertions ?? Assertions.Empty).ToList())
         {
         }
 
@@ -50,5 +50,6 @@ namespace Hl7.Fhir.Validation.Schema
 
         public ResultAssertion Result => this.OfType<ResultAssertion>().Single();
     }
+
 
 }

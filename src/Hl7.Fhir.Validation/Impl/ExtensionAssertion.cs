@@ -30,11 +30,18 @@ namespace Hl7.Fhir.Validation.Impl
 
             foreach (var item in groups)
             {
-                var schema = await _getSchema(new Uri(item.Key ?? "http://hl7.org/fhir/StructureDefinition/Extension")).ConfigureAwait(false);
+                Uri uri = createUri(item.Key);
+
+                var schema = await _getSchema(uri).ConfigureAwait(false);
                 result += await schema.Validate(item, vc).ConfigureAwait(false);
             }
 
             return result.AddResultAssertion();
+        }
+
+        private Uri createUri(string item)
+        {
+            return Uri.TryCreate(item, UriKind.RelativeOrAbsolute, out var uri) ? (uri.IsAbsoluteUri ? uri : _referencedUri) : _referencedUri;
         }
 
         public JToken ToJson() => new JProperty("$extension", ReferencedUri?.ToString() ??

@@ -25,7 +25,7 @@ namespace Hl7.Fhir.Validation.Impl
 
             result += input?.InstanceType == Label ?
                 new ResultAssertion(ValidationResult.Success) :
-                new ResultAssertion(ValidationResult.Failure, new IssueAssertion(-1, $"Type of instance ({input?.InstanceType}) is not valid at location {input?.Location}.", IssueSeverity.Error));
+                ResultAssertion.CreateFailure(new IssueAssertion(-1, $"Type of instance ({input?.InstanceType}) is not valid at location {input?.Location}.", IssueSeverity.Error));
 
             return Task.FromResult(result);
         }

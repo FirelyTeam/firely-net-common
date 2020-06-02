@@ -2,6 +2,7 @@
 using Hl7.Fhir.Validation.Schema;
 using Hl7.FhirPath;
 using Newtonsoft.Json.Linq;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl
@@ -19,7 +20,10 @@ namespace Hl7.Fhir.Validation.Impl
 
         public async Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
         {
-            return await _other.Validate(input.Select(_path), vc).ConfigureAwait(false);
+            var selected = input.Select(_path);
+            return selected.Any()
+                ? await _other.Validate(selected, vc).ConfigureAwait(false)
+                : Assertions.Empty + ResultAssertion.CreateFailure(new Trace("No Selection"));
         }
 
         public JToken ToJson()

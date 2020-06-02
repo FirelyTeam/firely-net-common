@@ -57,7 +57,7 @@ namespace Hl7.Fhir.Validation.Schema
                 // Otherwise, we are failing or undecided, which we need to
                 // propagate
                 // if other is not succesful as well, then combine the evidence as a result
-                return new ResultAssertion((IsSuccessful) ? ra.Result : Result, Evidence.Concat(ra.Evidence));
+                return new ResultAssertion(IsSuccessful ? ra.Result : Result, Evidence.Concat(ra.Evidence));
             }
             else
                 throw Error.InvalidOperation($"Internal logic failed: tried to merge a ResultAssertion with an {other.GetType().Name}");
