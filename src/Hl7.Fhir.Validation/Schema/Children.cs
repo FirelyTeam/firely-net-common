@@ -21,7 +21,7 @@ namespace Hl7.Fhir.Validation.Schema
         private readonly Lazy<IReadOnlyDictionary<string, IAssertion>> _childList;
         private readonly bool _allowAdditionalChildren;
 
-        public Children(bool allowAdditionalChildren = false, params (string name, IAssertion assertion)[] children) : this(() => toROD(children), allowAdditionalChildren)
+        public Children(bool allowAdditionalChildren, params (string name, IAssertion assertion)[] children) : this(() => toROD(children), allowAdditionalChildren)
         {
         }
 

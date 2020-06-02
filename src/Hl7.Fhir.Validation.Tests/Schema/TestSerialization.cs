@@ -28,7 +28,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
                     new SliceAssertion.Slice("fail", new Fail(), new Trace("This always fails"))
                     ),
                 */
-                new Children(
+                new Children(false,
                     ("child1", new ElementSchema(new Trace("in child 1"))),
                     ("child2", new Trace("in child 2")))
                 );
@@ -62,7 +62,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
 
             var myHumanNameSchema = new ElementSchema("http://example.com/myHumanNameSchema",
                 new Definitions(stringSchema),
-                new Children(
+                new Children(false,
                     ("family", familySchema),
                     ("given", givenSchema)
                 )
@@ -90,7 +90,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
             var bpComponentSchema = new ElementSchema("#bpComponentSchema",
                 new Assertions(
                     new CardinalityAssertion(1, "1"),
-                    new Children(
+                    new Children(false,
                         ("code", new CardinalityAssertion(1, "*")),
                         ("value[x]", new AllAssertion(new CardinalityAssertion(1, "*"), new FhirTypeLabel("Quantity", "TODO")))
                     )
@@ -133,7 +133,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
             );
 
             var bloodPressureSchema = new ElementSchema("http://example.com/bloodPressureSchema",
-                new Children(
+                new Children(false,
                     ("status", new CardinalityAssertion(1, "*")),
                     ("component", componentSchema)
                 )
