@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using static Hl7.Fhir.Validation.Impl.SliceAssertion;
 
 namespace Hl7.Fhir.Validation.Schema
 {
@@ -44,5 +45,9 @@ namespace Hl7.Fhir.Validation.Schema
         IAssertion CreateRegexAssertion(string location, string pattern);
 
         IAssertion CreateTypesAssertion(IEnumerable<(string code, IEnumerable<string> profileCanonicals)> types);
+
+        IAssertion CreateSliceAssertion(bool ordered, IAssertion @default, IEnumerable<Slice> slices);
+
+        SliceAssertion.Slice CreateSlice(string name, IAssertion condition, IAssertion assertion);
     }
 }

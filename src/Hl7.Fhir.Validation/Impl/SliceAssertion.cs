@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl
 {
-
     public class SliceAssertion : IAssertion, IGroupValidatable
     {
         public class Slice : IAssertion
@@ -53,8 +52,8 @@ namespace Hl7.Fhir.Validation.Impl
         public SliceAssertion(bool ordered, IAssertion @default, IEnumerable<Slice> slices)
         {
             Ordered = ordered;
-            Default = @default ?? new ElementSchema(ResultAssertion.Failure,
-                            new Trace("Element does not match any slice and the group is closed."));
+            Default = @default ?? ResultAssertion.CreateFailure(
+                            new IssueAssertion(1026, "Element does not match any slice and the group is closed.", IssueSeverity.Error));
             Slices = slices.ToArray() ?? throw new ArgumentNullException(nameof(slices));
         }
 
@@ -63,7 +62,7 @@ namespace Hl7.Fhir.Validation.Impl
             var lastMatchingSlice = -1;
             var defaultInUse = false;
             Assertions result = Assertions.Empty;
-            var buckets = new Buckets();
+            var buckets = new Buckets(Slices);
 
             // Go over the elements in the instance, in order
             foreach (var candidate in input)
@@ -96,7 +95,7 @@ namespace Hl7.Fhir.Validation.Impl
 
                         // to add to slice
                         buckets.Add(Slices[sliceNumber], candidate);
-                        break;      // TODO: should add this break to original code too (in SliceGroupBucket.cs)
+                        break;
                     }
                 }
 
@@ -118,9 +117,7 @@ namespace Hl7.Fhir.Validation.Impl
                 }
             }
 
-            result += await buckets.Validate(null, vc).ConfigureAwait(false);
-
-            return result;
+            return result += await buckets.Validate(vc).ConfigureAwait(false);
         }
 
         public JToken ToJson()
@@ -134,27 +131,24 @@ namespace Hl7.Fhir.Validation.Impl
                 new JProperty("default", def)));
         }
 
-        private class Buckets : Dictionary<Slice, IList<ITypedElement>>, IValidatable
+        private class Buckets : Dictionary<Slice, IList<ITypedElement>>
         {
+            public Buckets(IEnumerable<Slice> slices)
+            {
+                // initialize the buckets according to the slice definitions
+                foreach (var item in slices)
+                {
+                    this.Add(item, new List<ITypedElement>());
+                }
+            }
+
             public void Add(Slice slice, ITypedElement item)
             {
-                if (TryGetValue(slice, out var list))
-                    list.Add(item);
-                else
-                    Add(slice, new List<ITypedElement>() { item });
+                if (TryGetValue(slice, out var list)) list.Add(item);
             }
 
-            public async Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
-            {
-                var result = Assertions.Empty;
-
-                foreach (var bucket in this)
-                {
-                    result += await bucket.Key.Assertion.Validate(bucket.Value, vc).ConfigureAwait(false);
-                }
-
-                return result;
-            }
+            public async Task<Assertions> Validate(ValidationContext vc)
+                => await this.Select(slice => slice.Key.Assertion.Validate(slice.Value, vc)).AggregateAsync();
         }
     }
 

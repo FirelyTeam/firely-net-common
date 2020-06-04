@@ -3,6 +3,7 @@ using Hl7.Fhir.Validation.Schema;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using static Hl7.Fhir.Validation.Impl.SliceAssertion;
 
 namespace Hl7.Fhir.Validation.Impl
 {
@@ -64,5 +65,11 @@ namespace Hl7.Fhir.Validation.Impl
 
         public IAssertion CreateTypesAssertion(IEnumerable<(string code, IEnumerable<string> profileCanonicals)> types)
             => null; // todo
+
+        public IAssertion CreateSliceAssertion(bool ordered, IAssertion @default, IEnumerable<Slice> slices)
+            => new SliceAssertion(ordered, @default, slices);
+
+        public Slice CreateSlice(string name, IAssertion condition, IAssertion assertion)
+            => new Slice(name, condition, assertion);
     }
 }

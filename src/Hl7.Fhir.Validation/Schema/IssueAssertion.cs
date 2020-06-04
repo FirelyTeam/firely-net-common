@@ -15,7 +15,7 @@ namespace Hl7.Fhir.Validation.Schema
     public class IssueAssertion : IAssertion, IValidatable
     {
         public int IssueNumber { get; }
-        public string Location { get; }
+        public string Location { get; private set; }
         public IssueSeverity? Severity { get; }
         public string Message { get; }
 
@@ -44,6 +44,10 @@ namespace Hl7.Fhir.Validation.Schema
         }
 
         public Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
-            => Task.FromResult(new Assertions(new IssueAssertion(IssueNumber, input.Location, Message, Severity)));
+        {
+            // update location
+            Location = input.Location;
+            return Task.FromResult(new Assertions(this));
+        }
     }
 }

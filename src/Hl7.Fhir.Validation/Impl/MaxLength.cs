@@ -42,7 +42,7 @@ namespace Hl7.Fhir.Validation.Impl
 
                 if (serializedValue.Length > _maxLength)
                 {
-                    return Task.FromResult(result + Assertions.Failure + new IssueAssertion(1005, input.Location, "message") + new Trace($"Value '{serializedValue}' is too long (maximum length is {_maxLength})"));
+                    return Task.FromResult(result + ResultAssertion.CreateFailure(new IssueAssertion(1005, input.Location, $"Value '{serializedValue}' is too long (maximum length is {_maxLength}")));
                 }
             }
             else return Task.FromResult(Assertions.Undecided);

@@ -53,7 +53,7 @@ namespace Hl7.Fhir.Validation.Schema
                 defaultCases.Any() ?
                     BuildSliceForProfiles(defaultCases) as IAssertion : buildSliceFailure();
 
-            return new SliceAssertion(ordered: false, @default: defaultSlice, sliceCases);
+            return _assertionFactory.CreateSliceAssertion(ordered: false, @default: defaultSlice, sliceCases);
 
             IAssertion buildSliceFailure()
             {
@@ -64,8 +64,7 @@ namespace Hl7.Fhir.Validation.Schema
             }
 
             SliceAssertion.Slice buildSliceForTypeCase(string code, IEnumerable<string> profiles)
-                => new SliceAssertion.Slice(code,
-                    new FhirTypeLabel(code, "TODO"), BuildSliceForProfiles(profiles));
+                => _assertionFactory.CreateSlice(code, new FhirTypeLabel(code, "TODO"), BuildSliceForProfiles(profiles));
         }
 
         public IAssertion BuildSliceForProfiles(IEnumerable<string> profiles)
@@ -76,7 +75,7 @@ namespace Hl7.Fhir.Validation.Schema
 
             var sliceCases = profiles.Select(p => buildSliceForProfile(p));
 
-            return new SliceAssertion(ordered: false, @default: buildSliceFailure(), sliceCases);
+            return _assertionFactory.CreateSliceAssertion(ordered: false, @default: buildSliceFailure(), sliceCases);
 
             IAssertion buildSliceFailure()
             {
@@ -87,8 +86,7 @@ namespace Hl7.Fhir.Validation.Schema
             }
 
             SliceAssertion.Slice buildSliceForProfile(string profile)
-                => new SliceAssertion.Slice(makeSliceName(profile),
-                    BuildProfileRef(profile), ResultAssertion.Success);
+                => _assertionFactory.CreateSlice(makeSliceName(profile), BuildProfileRef(profile), ResultAssertion.Success);
 
             string makeSliceName(string profile)
             {

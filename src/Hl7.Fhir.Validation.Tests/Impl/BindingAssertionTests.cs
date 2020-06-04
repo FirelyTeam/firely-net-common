@@ -93,7 +93,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         [TestMethod]
         public async Task ValidateWithCode()
         {
-            SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
+            SetupTerminologyServiceResult(Assertions.Success);
             var input = ElementNode.Root("code", value: "CD123");
 
             var result = await _bindingAssertion.Validate(input, _validationContext).ConfigureAwait(false);
@@ -117,7 +117,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         [TestMethod]
         public async Task ValidateWithUri()
         {
-            SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
+            SetupTerminologyServiceResult(Assertions.Success);
             var input = ElementNode.Root("uri", value: "http://some.uri");
 
             var result = await _bindingAssertion.Validate(input, _validationContext).ConfigureAwait(false);
@@ -141,7 +141,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         [TestMethod]
         public async Task ValidateWithString()
         {
-            SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
+            SetupTerminologyServiceResult(Assertions.Success);
             var input = ElementNode.Root("string", value: "Some string");
 
             var result = await _bindingAssertion.Validate(input, _validationContext).ConfigureAwait(false);
@@ -165,7 +165,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         [TestMethod]
         public async Task ValidateWithCoding()
         {
-            SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
+            SetupTerminologyServiceResult(Assertions.Success);
 
             var input = createCoding("http://terminology.hl7.org/CodeSystem/data-absent-reason", "masked");
             var result = await _bindingAssertion.Validate(input, _validationContext).ConfigureAwait(false);
@@ -189,7 +189,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         [TestMethod]
         public async Task ValidateWithCodeableConcept()
         {
-            SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
+            SetupTerminologyServiceResult(Assertions.Success);
             var codings = new[] { createCoding("http://terminology.hl7.org/CodeSystem/data-absent-reason", "masked") ,
             createCoding("http://terminology.hl7.org/CodeSystem/data-absent-reason", "masked")};
 
@@ -216,7 +216,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         [TestMethod]
         public async Task ValidateWithQuantity()
         {
-            SetupTerminologyServiceResult(new Assertions(ResultAssertion.Success));
+            SetupTerminologyServiceResult(Assertions.Success);
 
             var input = createQuantity(25, "s");
             var result = await _bindingAssertion.Validate(input, _validationContext).ConfigureAwait(false);
@@ -262,7 +262,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         [TestMethod]
         public async Task ValidateInvalidCoding()
         {
-            SetupTerminologyServiceResult(new Assertions(ResultAssertion.Failure));
+            SetupTerminologyServiceResult(Assertions.Failure);
 
             var input = createCoding("http://terminology.hl7.org/CodeSystem/data-absent-reason", "UNKNOWN");
             var result = await _bindingAssertion.Validate(input, _validationContext).ConfigureAwait(false);
