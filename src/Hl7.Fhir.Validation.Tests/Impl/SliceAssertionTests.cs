@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Hl7.Fhir.Validation.Schema;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Hl7.Fhir.Validation.Impl.Tests
 {
@@ -6,9 +7,14 @@ namespace Hl7.Fhir.Validation.Impl.Tests
     public class SliceAssertionTests
     {
         [TestMethod()]
-        public void ValidateTest()
+        public void ConstructorTest()
         {
-            Assert.Fail();
+            var slice = new SliceAssertion.Slice("slice", ResultAssertion.Success, ResultAssertion.Success);
+            var assertion = new SliceAssertion(false, slice);
+
+            Assert.AreEqual(1, assertion.Slices.Length);
+            Assert.AreEqual(false, assertion.Ordered);
+            Assert.IsNotNull(assertion.Default);
         }
     }
 }

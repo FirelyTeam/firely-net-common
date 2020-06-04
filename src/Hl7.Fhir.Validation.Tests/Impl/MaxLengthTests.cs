@@ -22,9 +22,9 @@ namespace Hl7.Fhir.Validation.Tests.Schema
 
             Assert.IsNotNull(result);
             Assert.IsFalse(result.Result.IsSuccessful);
-            var issues = result.OfType<IssueAssertion>();
-            Assert.AreEqual(1, issues.Count());
-            Assert.AreEqual(1005, issues.Single().IssueNumber);
+            var evidence = result.Result.Evidence.OfType<IssueAssertion>();
+            Assert.AreEqual(1, evidence.Count());
+            Assert.AreEqual(1005, evidence.Single().IssueNumber);
         }
 
         [TestMethod]

@@ -115,8 +115,15 @@ namespace Hl7.Fhir.Validation.Impl
             symbolTable.AddStandardFP();
             symbolTable.AddFhirExtensions();
 
-            var compiler = new FhirPathCompiler(symbolTable);
-            return compiler.Compile(expression);
+            try
+            {
+                var compiler = new FhirPathCompiler(symbolTable);
+                return compiler.Compile(expression);
+            }
+            catch (Exception ex)
+            {
+                throw new IncorrectElementDefinitionException($"Error during compilation expression ({expression})", ex);
+            }
         }
 
         private bool Predicate(ITypedElement input, EvaluationContext context, ValidationContext vc)

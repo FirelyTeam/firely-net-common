@@ -44,16 +44,10 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         }
 
         [TestMethod]
-        public async Task ValidateIncorrectFhirPath()
+        [ExpectedException(typeof(IncorrectElementDefinitionException), "A negative number was allowed.")]
+        public void ValidateIncorrectFhirPath()
         {
-            var validatable = new FhirPathAssertion("FhirPathAssertionTests.ValidateIncorrectFhirPath", "test -1", "this is not a fhirpath expression", "human description", IssueSeverity.Error, false);
-
-            var input = ElementNode.ForPrimitive("test");
-
-            var result = await validatable.Validate(input, new ValidationContext() { FhirPathCompiler = fpCompiler }).ConfigureAwait(false);
-
-            Assert.IsNotNull(result);
-            Assert.IsFalse(result.Result.IsSuccessful, "the FhirPath Expression must not be valid for this input");
+            _ = new FhirPathAssertion("FhirPathAssertionTests.ValidateIncorrectFhirPath", "test -1", "this is not a fhirpath expression", "human description", IssueSeverity.Error, false);
         }
 
         [TestMethod]
