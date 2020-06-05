@@ -4,13 +4,7 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Schema
 {
-    public enum IssueSeverity
-    {
-        Fatal,
-        Error,
-        Warning,
-        Information
-    }
+
 
     public class IssueAssertion : IAssertion, IValidatable
     {
@@ -19,6 +13,11 @@ namespace Hl7.Fhir.Validation.Schema
         public IssueSeverity? Severity { get; }
         public string Message { get; }
 
+
+        public IssueAssertion(Issue issue, string location, string message) :
+            this(issue.IssueNumber, location, message, issue.Severity)
+        {
+        }
         public IssueAssertion(int issueNumber, string message, IssueSeverity? severity = null) :
             this(issueNumber, null, message, severity)
         {
@@ -49,5 +48,7 @@ namespace Hl7.Fhir.Validation.Schema
             Location = input.Location;
             return Task.FromResult(new Assertions(this));
         }
+
+
     }
 }

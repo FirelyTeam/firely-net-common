@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Schema
 {
-    public class Children : IAssertion, IMergeable, IValidatable//, ICollectable
+    public class Children : IAssertion, IMergeable, IValidatable
     {
         private readonly Lazy<IReadOnlyDictionary<string, IAssertion>> _childList;
         private readonly bool _allowAdditionalChildren;
@@ -51,8 +51,6 @@ namespace Hl7.Fhir.Validation.Schema
 
         public IAssertion Lookup(string name) =>
             ChildList.TryGetValue(name, out var child) ? child : null;
-
-        public IEnumerable<Assertions> Collect() => new Assertions(this).Collection;
 
         public IMergeable Merge(IMergeable other)
         {
@@ -90,14 +88,14 @@ namespace Hl7.Fhir.Validation.Schema
 
             if (element.Value is null && !element.Children().Any())
             {
-                result += ResultAssertion.CreateFailure(new IssueAssertion(1000, element.Location, "Element must not be empty", IssueSeverity.Error));
+                result += ResultAssertion.CreateFailure(new IssueAssertion(Issue.CONTENT_ELEMENT_MUST_HAVE_VALUE_OR_CHILDREN, element.Location, "Element must not be empty"));
             }
 
             var matchResult = ChildNameMatcher.Match(ChildList, element);
             if (matchResult.UnmatchedInstanceElements.Any() && !_allowAdditionalChildren)
             {
                 var elementList = String.Join(",", matchResult.UnmatchedInstanceElements.Select(e => "'" + e.Name + "'"));
-                result += ResultAssertion.CreateFailure(new IssueAssertion(1001, $"Encountered unknown child elements {elementList} for definition '{"TODO: definition.Path"}'", IssueSeverity.Error));
+                result += ResultAssertion.CreateFailure(new IssueAssertion(Issue.CONTENT_ELEMENT_HAS_UNKNOWN_CHILDREN, null, $"Encountered unknown child elements {elementList} for definition '{"TODO: definition.Path"}'"));
             }
 
             result += await matchResult.Matches.Select(m => m.Assertion.Validate(m.InstanceElements, vc)).AggregateAsync();
@@ -128,11 +126,13 @@ namespace Hl7.Fhir.Validation.Schema
                 //{
                 var found = elementsToMatch.Where(ie => NameMatches(assertion.Key, ie)).ToList();
 
-                match.InstanceElements.AddRange(found);
-                elementsToMatch.RemoveAll(e => found.Contains(e));
-                //}
+                if (found.Any())
+                {
+                    match.InstanceElements.AddRange(found);
+                    elementsToMatch.RemoveAll(e => found.Contains(e));
 
-                matches.Add(match);
+                    matches.Add(match);
+                }
             }
 
             MatchResult result = new MatchResult
