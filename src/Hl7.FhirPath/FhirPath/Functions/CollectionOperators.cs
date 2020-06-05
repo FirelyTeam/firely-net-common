@@ -90,11 +90,6 @@ namespace Hl7.FhirPath.Functions
             return elements.SelectMany(e => e.Navigate(name));
         }
 
-        //(Patient, "Resource.meta.lastUpdate") => List<Patient>
-        //(Patient, "Patient.name.family") => List<Patient> == (Patient, "name.family)
-        //(Patient, "Patient.Name.family") => List<Patient> == (Patient, "name.family)
-        //(Patient, "NAME.family") => Children("NAME") => List.Empty
-        //(Root, "MSH.test") => List<MSH>
         public static IEnumerable<ITypedElement> Navigate(this ITypedElement element, string name)
         {
             if (char.IsUpper(name[0]))
