@@ -68,6 +68,9 @@ namespace Hl7.Fhir.Validation.Schema
 
             var singleResult = await input.Select(elt => singleAssertions.ValidateAsync(elt, vc)).AggregateAsync();
             return multiResults + singleResult;
+
+            // TODO: can we do this as well? Makes a bit shorter..
+            //return await members.Select(m => m.Validate(input, vc)).AggregateAsync();
         }
 
         public JToken ToJson()
