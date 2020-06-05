@@ -12,7 +12,9 @@
 using Hl7.Fhir.ElementModel;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
+using Hl7.FhirPath.Functions;
 using System.Linq;
+using System;
 
 namespace Hl7.FhirPath.Tests
 {
@@ -73,6 +75,32 @@ namespace Hl7.FhirPath.Tests
             result = dummy.Select("split('[stop]')");
             Assert.IsNotNull(result);
             CollectionAssert.AreEqual(new[] { "ONE", "TWO", "THREE" }, result.Select(r => r.Value.ToString()).ToArray());
+        }
+
+        [TestMethod]
+        public void TestStringJoin()
+        {
+            var dummy = ElementNode.CreateList("This ", "is ", "one ", "sentence", ".");
+            var result = dummy.FpJoin(string.Empty);
+            Assert.IsNotNull(result);
+            Assert.AreEqual("This is one sentence.", result);
+
+            dummy = ElementNode.CreateList();
+            result = dummy.FpJoin("");
+            Assert.AreEqual(string.Empty, result);
+
+            dummy = ElementNode.CreateList("This", "is", "a", "separated", "sentence.");
+            result = dummy.FpJoin(";");
+            Assert.IsNotNull(result);
+            Assert.AreEqual("This;is;a;separated;sentence.", result);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void TestStringJoinError()
+        {
+            var dummy = ElementNode.CreateList("This", "is", "sentence", "with", 1, "number.");
+            dummy.FpJoin(string.Empty);
         }
     }
         

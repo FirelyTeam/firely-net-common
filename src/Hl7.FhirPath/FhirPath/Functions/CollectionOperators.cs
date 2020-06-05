@@ -112,5 +112,22 @@ namespace Hl7.FhirPath.Functions
                 return element.Children(name);
             }
         }
+
+        public static string FpJoin(this IEnumerable<ITypedElement> collection, string separator)
+        {
+            //if the collection is empty return the empty result
+            if (!collection.Any())
+                return string.Empty;
+
+            //only join collections with string values inside
+            foreach (var typedElement in collection)
+            {
+                if (typedElement.InstanceType != "string")
+                    throw Error.InvalidOperation("Join function can only be performed on string collections.");
+            }
+
+            var values = collection.Select(n => n.Value);
+            return string.Join(separator, values);
+        }
     }
 }
