@@ -53,7 +53,7 @@ namespace Hl7.Fhir.Validation.Impl
         {
             Ordered = ordered;
             Default = @default ?? ResultAssertion.CreateFailure(
-                            new IssueAssertion(1026, "Element does not match any slice and the group is closed.", IssueSeverity.Error));
+                            new IssueAssertion(Issue.CONTENT_ELEMENT_FAILS_SLICING_RULE, "TODO: location?", "Element does not match any slice and the group is closed."));
             Slices = slices.ToArray() ?? throw new ArgumentNullException(nameof(slices));
         }
 
@@ -80,14 +80,14 @@ namespace Hl7.Fhir.Validation.Impl
                         // The instance matched a slice that we have already passed, if order matters, 
                         // this is not allowed
                         if (sliceNumber < lastMatchingSlice && Ordered)
-                            result += new IssueAssertion(1027, "TODO", $"Element matches slice '{sliceName}', but this is out of order for this group, since a previous element already matched slice '{Slices[lastMatchingSlice].Name}'", IssueSeverity.Error);
+                            result += new IssueAssertion(Issue.CONTENT_ELEMENT_SLICING_OUT_OF_ORDER, "TODO", $"Element matches slice '{sliceName}', but this is out of order for this group, since a previous element already matched slice '{Slices[lastMatchingSlice].Name}'");
                         else
                             lastMatchingSlice = sliceNumber;
 
                         if (defaultInUse && Ordered)
                         {
                             // We found a match while we already added a non-match to a "open at end" slicegroup, that's not allowed
-                            result += new IssueAssertion(1026, "TODO", $"Element matched slice '{sliceName}', but it appears after a non-match, which is not allowed for an open-at-end group", IssueSeverity.Error);
+                            result += new IssueAssertion(Issue.CONTENT_ELEMENT_FAILS_SLICING_RULE, "TODO", $"Element matched slice '{sliceName}', but it appears after a non-match, which is not allowed for an open-at-end group");
                         }
 
                         hasSucceeded = true;

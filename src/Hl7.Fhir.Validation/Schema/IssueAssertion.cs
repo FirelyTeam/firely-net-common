@@ -4,31 +4,32 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Schema
 {
-
-
     public class IssueAssertion : IAssertion, IValidatable
     {
         public int IssueNumber { get; }
         public string Location { get; private set; }
         public IssueSeverity? Severity { get; }
         public string Message { get; }
+        public IssueType Type { get; }
 
 
         public IssueAssertion(Issue issue, string location, string message) :
-            this(issue.IssueNumber, location, message, issue.Severity)
+            this(issue.IssueNumber, location, message, issue.Severity, issue.Type)
         {
         }
+
         public IssueAssertion(int issueNumber, string message, IssueSeverity? severity = null) :
             this(issueNumber, null, message, severity)
         {
         }
 
-        public IssueAssertion(int issueNumber, string location, string message, IssueSeverity? severity = null)
+        public IssueAssertion(int issueNumber, string location, string message, IssueSeverity? severity = null, IssueType? type = null)
         {
             IssueNumber = issueNumber;
             Location = location;
             Severity = severity;
             Message = message;
+            Type = Type;
         }
 
         public JToken ToJson()
@@ -48,7 +49,5 @@ namespace Hl7.Fhir.Validation.Schema
             Location = input.Location;
             return Task.FromResult(new Assertions(this));
         }
-
-
     }
 }

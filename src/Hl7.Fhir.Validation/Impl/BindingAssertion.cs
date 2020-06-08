@@ -125,11 +125,11 @@ namespace Hl7.Fhir.Validation.Impl
                 case string co when string.IsNullOrEmpty(co) && Strength == BindingStrength.Required:
                 case ICoding cd when string.IsNullOrEmpty(cd.Code) && Strength == BindingStrength.Required:
                 case IConcept cc when !codeableConceptHasCode(cc) && Strength == BindingStrength.Required:
-                    result += new IssueAssertion(6005, Location, $"No code found in {source.InstanceType} with a required binding.", IssueSeverity.Error);
+                    result += new IssueAssertion(Issue.TERMINOLOGY_NO_CODE_IN_INSTANCE, Location, $"No code found in {source.InstanceType} with a required binding.");
                     break;
                 case IConcept cc when !codeableConceptHasCode(cc) && string.IsNullOrEmpty(cc.Display) &&
                                 Strength == BindingStrength.Extensible:
-                    result += new IssueAssertion(6005, Location, $"Extensible binding requires code or text.", IssueSeverity.Error);
+                    result += new IssueAssertion(Issue.TERMINOLOGY_NO_CODE_IN_INSTANCE, Location, $"Extensible binding requires code or text.");
                     break;
                 default:
                     return new Assertions(ResultAssertion.Success);      // nothing wrong then
@@ -183,7 +183,7 @@ namespace Hl7.Fhir.Validation.Impl
             }
             catch (Exception tse)
             {
-                result += new Assertions(new IssueAssertion(1, location, $"Terminology service failed while validating code '{code}' (system '{system}'): {tse.Message}", IssueSeverity.Fatal));
+                result += ResultAssertion.CreateFailure(new IssueAssertion(Issue.TERMINOLOGY_SERVICE_FAILED, location, $"Terminology service failed while validating code '{code}' (system '{system}'): {tse.Message}"));
             }
             return result;
         }

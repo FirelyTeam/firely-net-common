@@ -59,7 +59,9 @@ namespace Hl7.Fhir.Validation.Schema
 
         public async Task<Assertions> Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
         {
+
             var members = Members.Where(vc?.IncludeFilter ?? (assertion => true));
+
             var multiAssertions = members.OfType<IGroupValidatable>();
             var singleAssertions = members.OfType<IValidatable>();
 
@@ -69,7 +71,8 @@ namespace Hl7.Fhir.Validation.Schema
             var singleResult = await input.Select(elt => singleAssertions.ValidateAsync(elt, vc)).AggregateAsync();
             return multiResults + singleResult;
 
-            // TODO: can we do this as well? Makes a bit shorter..
+
+            //TODO: can we do this as well? Makes a bit shorter..
             //return await members.Select(m => m.Validate(input, vc)).AggregateAsync();
         }
 

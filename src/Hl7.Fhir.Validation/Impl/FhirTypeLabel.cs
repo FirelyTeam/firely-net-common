@@ -8,7 +8,7 @@ namespace Hl7.Fhir.Validation.Impl
     {
         public readonly string Label;
 
-        public FhirTypeLabel(string label, string location) : base(location)
+        public FhirTypeLabel(string label) : base(string.Empty)
         {
             Label = label;
         }
@@ -19,7 +19,8 @@ namespace Hl7.Fhir.Validation.Impl
 
         public override Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
         {
-            // TODO use ModelInfo
+            // TODO use ModelInfo 
+            // ModelInfo.IsInstanceTypeFor(input?.InstanceType);
 
             var result = Assertions.Empty;
 

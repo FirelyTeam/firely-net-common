@@ -60,11 +60,11 @@ namespace Hl7.Fhir.Validation.Schema
                 var allowedCodes = String.Join(",", typeCases.Select(t => $"'{t.code ?? "(any)"}'"));
                 return
                     ResultAssertion.CreateFailure(
-                        new IssueAssertion(1026, $"Element is a choice, but the instance does not use of the allowed choice types ({allowedCodes})", IssueSeverity.Error));
+                        new IssueAssertion(Issue.CONTENT_ELEMENT_FAILS_SLICING_RULE, "TODO: location?", $"Element is a choice, but the instance does not use one of the allowed choice types ({allowedCodes})"));
             }
 
             SliceAssertion.Slice buildSliceForTypeCase(string code, IEnumerable<string> profiles)
-                => _assertionFactory.CreateSlice(code, new FhirTypeLabel(code, "TODO"), BuildSliceForProfiles(profiles));
+                => _assertionFactory.CreateSlice(code, new FhirTypeLabel(code), BuildSliceForProfiles(profiles));
         }
 
         public IAssertion BuildSliceForProfiles(IEnumerable<string> profiles)

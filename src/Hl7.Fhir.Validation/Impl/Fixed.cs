@@ -36,7 +36,7 @@ namespace Hl7.Fhir.Validation.Impl
 
             if (!EqualityOperators.IsEqualTo(_fixed, input))
             {
-                result += ResultAssertion.CreateFailure(new IssueAssertion(121, input.Location, $"Value is not exactly equal to fixed value '{_fixed.Value}'", IssueSeverity.Error));
+                result += ResultAssertion.CreateFailure(new IssueAssertion(Issue.CONTENT_DOES_NOT_MATCH_FIXED_VALUE, input.Location, $"Value is not exactly equal to fixed value '{_fixed.Value}'"));
 
                 return Task.FromResult(result);
             }

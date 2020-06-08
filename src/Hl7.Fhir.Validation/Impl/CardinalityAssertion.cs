@@ -45,7 +45,8 @@ namespace Hl7.Fhir.Validation.Impl
             var count = input.Count();
             if (!InRange(count))
             {
-                assertions += new IssueAssertion(1028, _location, $"Instance count for '{_location}' is { count }, which is not within the specified cardinality of { CardinalityDisplay}", IssueSeverity.Error);
+
+                assertions += new IssueAssertion(Issue.CONTENT_INCORRECT_OCCURRENCE, _location, $"Instance count for '{_location}' is { count }, which is not within the specified cardinality of {CardinalityDisplay}");
             }
 
             return Task.FromResult(assertions.AddResultAssertion());

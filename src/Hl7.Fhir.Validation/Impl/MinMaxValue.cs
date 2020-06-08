@@ -64,7 +64,10 @@ namespace Hl7.Fhir.Validation.Impl
                                     comparisonOutcome == 0 ? "equal to" :
                                         "larger than";
 
-                    return Task.FromResult(Assertions.Failure + new Trace($"Value '{instanceValue}' is {label} {_minMaxValue.Value})"));
+                    var issue = comparisonOutcome == -1 ? Issue.CONTENT_ELEMENT_PRIMITIVE_VALUE_TOO_SMALL :
+                                           Issue.CONTENT_ELEMENT_PRIMITIVE_VALUE_TOO_LARGE;
+
+                    return Task.FromResult(Assertions.Empty + ResultAssertion.CreateFailure(new IssueAssertion(issue, input.Location, $"Value '{instanceValue}' is {label} {_minMaxValue.Value})")));
                 }
             }
 

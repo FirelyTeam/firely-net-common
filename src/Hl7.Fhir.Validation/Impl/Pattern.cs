@@ -27,8 +27,7 @@ namespace Hl7.Fhir.Validation.Impl
             var result = Assertions.Empty + new Trace($"Validate with pattern {_pattern.ToJson()}");
             if (!input.Matches(_pattern))
             {
-                return Task.FromResult(result + Assertions.Failure + new IssueAssertion(1009, Location, $"Value does not match pattern '{_pattern.ToJson()}", IssueSeverity.Error));
-
+                return Task.FromResult(result + ResultAssertion.CreateFailure(new IssueAssertion(Issue.CONTENT_DOES_NOT_MATCH_PATTERN_VALUE, Location, $"Value does not match pattern '{_pattern.ToJson()}")));
             }
 
             return Task.FromResult(result + Assertions.Success);

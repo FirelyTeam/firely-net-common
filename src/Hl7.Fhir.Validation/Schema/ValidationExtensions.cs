@@ -19,6 +19,7 @@ namespace Hl7.Fhir.Validation.Schema
            => await assertion.Validate(new[] { input }, vc).ConfigureAwait(false);
 
         public static async Task<Assertions> Validate(this IValidatable assertion, IEnumerable<ITypedElement> input, ValidationContext vc)
-            => await assertion.Validate(input.SingleOrDefault(), vc).ConfigureAwait(false);
+            => input.Any() ? await assertion.Validate(input.Single(), vc).ConfigureAwait(false) : Assertions.Empty;
+        // to protect that IValidatables are executed with null
     }
 }

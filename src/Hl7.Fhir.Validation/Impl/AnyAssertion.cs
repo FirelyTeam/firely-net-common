@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Validation.Impl
                     return singleResult;
                 }
             }
-            return Assertions.Failure + new IssueAssertion(1, "TODO", "any did not succeed", IssueSeverity.Error) + result;
+            return result += ResultAssertion.CreateFailure(new IssueAssertion(Issue.TODO, "TODO", "Any did not succeed"));
         }
 
         public async Task<Assertions> Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
@@ -71,7 +71,7 @@ namespace Hl7.Fhir.Validation.Impl
                     return singleResult;
                 }
             }
-            return Assertions.Failure + new IssueAssertion(1, "TODO", "any did not succeed", IssueSeverity.Error) + result;
+            return result += ResultAssertion.CreateFailure(new IssueAssertion(Issue.TODO, "TODO", "Any did not succeed"));
         }
 
         private async Task<Assertions> Foo<T>(IEnumerable<ITypedElement> input, ValidationContext vc) where T : IValidatable, IGroupValidatable
@@ -88,7 +88,7 @@ namespace Hl7.Fhir.Validation.Impl
                     return singleResult;
                 }
             }
-            return Assertions.Failure + new IssueAssertion(1, "TODO", "any did not succeed", IssueSeverity.Error) + result;
+            return result += ResultAssertion.CreateFailure(new IssueAssertion(Issue.TODO, "TODO", "Any did not succeed"));
         }
     }
 }

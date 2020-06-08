@@ -126,13 +126,10 @@ namespace Hl7.Fhir.Validation.Schema
                 //{
                 var found = elementsToMatch.Where(ie => NameMatches(assertion.Key, ie)).ToList();
 
-                if (found.Any())
-                {
-                    match.InstanceElements.AddRange(found);
-                    elementsToMatch.RemoveAll(e => found.Contains(e));
+                match.InstanceElements.AddRange(found);
+                elementsToMatch.RemoveAll(e => found.Contains(e));
 
-                    matches.Add(match);
-                }
+                matches.Add(match);
             }
 
             MatchResult result = new MatchResult

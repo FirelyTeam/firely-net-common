@@ -6,8 +6,6 @@ namespace Hl7.Fhir.Validation.Schema
 {
     public abstract class SimpleAssertion : IAssertion, IValidatable
     {
-        //public IEnumerable<Assertions> Collect() => new Assertions(this).Collection;
-
         public SimpleAssertion(string location)
         {
             Location = location;

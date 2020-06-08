@@ -113,5 +113,7 @@
         public static readonly Issue TERMINOLOGY_SERVICE_FAILED = Create(6004, IssueSeverity.Warning, IssueType.NotSupported);
         public static readonly Issue TERMINOLOGY_NO_CODE_IN_INSTANCE = Create(6005, IssueSeverity.Error, IssueType.CodeInvalid);
 
+        public static readonly Issue TODO = Create(-1, IssueSeverity.Error, IssueType.Invalid);
+
     }
 }

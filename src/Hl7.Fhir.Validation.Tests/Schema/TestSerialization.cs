@@ -92,7 +92,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
                     new CardinalityAssertion(1, "1"),
                     new Children(false,
                         ("code", new CardinalityAssertion(1, "*")),
-                        ("value[x]", new AllAssertion(new CardinalityAssertion(1, "*"), new FhirTypeLabel("Quantity", "TODO")))
+                        ("value[x]", new AllAssertion(new CardinalityAssertion(1, "*"), new FhirTypeLabel("Quantity")))
                     )
                 )
             ); ;
