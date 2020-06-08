@@ -86,7 +86,7 @@ namespace Hl7.FhirPath.Tests
             Assert.AreEqual("This is one sentence.", result);
 
             dummy = ElementNode.CreateList();
-            result = dummy.FpJoin("");
+            result = dummy.FpJoin(string.Empty);
             Assert.AreEqual(string.Empty, result);
 
             dummy = ElementNode.CreateList("This", "is", "a", "separated", "sentence.");
