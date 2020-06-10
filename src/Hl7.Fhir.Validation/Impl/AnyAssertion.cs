@@ -41,13 +41,13 @@ namespace Hl7.Fhir.Validation.Impl
             {
                 var singleResult = await member.Validate(input, vc).ConfigureAwait(false);
                 result += singleResult;
-                if (singleResult.Result.IsSuccessful)
+                if (singleResult.Any() && singleResult.Result.IsSuccessful)
                 {
                     // we have found a result, so we do not continue with the rest anymore
                     return singleResult;
                 }
             }
-            return result += ResultAssertion.CreateFailure(new IssueAssertion(Issue.TODO, "TODO", "Any did not succeed"));
+            return result;// += ResultAssertion.CreateFailure(new IssueAssertion(Issue.TODO, "TODO", "Any did not succeed"));
         }
 
         public async Task<Assertions> Validate(IEnumerable<ITypedElement> input, ValidationContext vc)
@@ -65,13 +65,13 @@ namespace Hl7.Fhir.Validation.Impl
             {
                 var singleResult = await member.Validate(input, vc).ConfigureAwait(false);
                 result += singleResult;
-                if (singleResult.Result.IsSuccessful)
+                if (singleResult.Any() && singleResult.Result.IsSuccessful)
                 {
                     // we have found a result, so we do not continue with the rest anymore
                     return singleResult;
                 }
             }
-            return result += ResultAssertion.CreateFailure(new IssueAssertion(Issue.TODO, "TODO", "Any did not succeed"));
+            return result;// += ResultAssertion.CreateFailure(new IssueAssertion(Issue.TODO, "TODO", "Any did not succeed"));
         }
 
         private async Task<Assertions> Foo<T>(IEnumerable<ITypedElement> input, ValidationContext vc) where T : IValidatable, IGroupValidatable
