@@ -1,5 +1,6 @@
 ﻿using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Validation.Schema;
+using Hl7.Fhir.Validation.Support;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -9,8 +10,8 @@ namespace Hl7.Fhir.Validation.Impl
 {
     public class ValidationElementDefinitionAssertionFactory : IElementDefinitionAssertionFactory
     {
-        public IAssertion CreateBindingAssertion(string location, string valueSetUri, BindingAssertion.BindingStrength strength, bool abstractAllowed = true, string description = null)
-            => new BindingAssertion(location, valueSetUri, strength, abstractAllowed, description);
+        public IAssertion CreateBindingAssertion(string valueSetUri, BindingAssertion.BindingStrength strength, bool abstractAllowed = true, string description = null)
+            => new BindingAssertion(valueSetUri, strength, abstractAllowed, description);
 
         public IAssertion CreateCardinalityAssertion(int? min, string max, string location = null)
             => new CardinalityAssertion(min, max, location);
@@ -33,35 +34,35 @@ namespace Hl7.Fhir.Validation.Impl
         public void CreateExampleValues(IEnumerable<(string label, ITypedElement value)> exampleValues)
         { }
 
-        public IAssertion CreateFhirPathAssertion(string location, string key, string expression, string humanDescription, IssueSeverity? severity, bool bestPractice)
-            => new FhirPathAssertion(location, key, expression, humanDescription, severity, bestPractice);
+        public IAssertion CreateFhirPathAssertion(string key, string expression, string humanDescription, IssueSeverity? severity, bool bestPractice)
+            => new FhirPathAssertion(key, expression, humanDescription, severity, bestPractice);
 
-        public IAssertion CreateFixedValueAssertion(string location, ITypedElement fixedValue)
-            => new Fixed(location, fixedValue);
+        public IAssertion CreateFixedValueAssertion(ITypedElement fixedValue)
+            => new Fixed(fixedValue);
 
         public IAssertion CreateIsModifierAssertion(bool isModifier, string reason = null)
             => null; // todo
 
-        public IAssertion CreateMaxLengthAssertion(string location, int maxLength)
-            => new MaxLength(location, maxLength);
+        public IAssertion CreateMaxLengthAssertion(int maxLength)
+            => new MaxLength(maxLength);
 
-        public IAssertion CreateMinMaxValueAssertion(string location, ITypedElement minMaxValue, MinMax minMaxType)
-            => new MinMaxValue(location, minMaxValue, minMaxType);
+        public IAssertion CreateMinMaxValueAssertion(ITypedElement minMaxValue, MinMax minMaxType)
+            => new MinMaxValue(minMaxValue, minMaxType);
 
         public IAssertion CreateMustSupportAssertion(bool mustSupport)
             => null;
 
-        public IAssertion CreatePatternAssertion(string location, ITypedElement patternValue)
-            => new Pattern(location, patternValue);
+        public IAssertion CreatePatternAssertion(ITypedElement patternValue)
+            => new Pattern(patternValue);
 
-        public IAssertion CreateReferenceAssertion(Func<Task<IElementSchema>> getSchema, Uri uri)
-            => new ReferenceAssertion(getSchema, uri);
+        public IAssertion CreateReferenceAssertion(Func<Uri, Task<IElementSchema>> getSchema, Uri uri, IEnumerable<AggregationMode?> aggregations = null)
+            => new ReferenceAssertion(getSchema, uri, aggregations);
 
         public IAssertion CreateExtensionAssertion(Func<Uri, Task<IElementSchema>> getSchema, Uri uri)
             => new ExtensionAssertion(getSchema, uri);
 
-        public IAssertion CreateRegexAssertion(string location, string pattern)
-            => new RegExAssertion(location, pattern);
+        public IAssertion CreateRegexAssertion(string pattern)
+            => new RegExAssertion(pattern);
 
         public IAssertion CreateTypesAssertion(IEnumerable<(string code, IEnumerable<string> profileCanonicals)> types)
             => null; // todo

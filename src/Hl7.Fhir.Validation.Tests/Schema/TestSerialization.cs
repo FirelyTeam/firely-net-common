@@ -1,8 +1,8 @@
-﻿using Hl7.Fhir.ElementModel;
+﻿using FluentAssertions;
+using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Validation.Impl;
 using Hl7.Fhir.Validation.Schema;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Tests.Schema
@@ -17,17 +17,15 @@ namespace Hl7.Fhir.Validation.Tests.Schema
             var sub = new ElementSchema("#sub", new Trace("In a subschema"));
 
             var main = new ElementSchema("http://root.nl/schema1",
-                 new Definitions(sub),
-                // new Fail(),
+                new Definitions(sub),
                 new ElementSchema("#nested", new Trace("nested")),
                 new ReferenceAssertion(sub),
-                /*
-                 * new SliceAssertion(false,
+                new SliceAssertion(false,
                     @default: new Trace("this is the default"),
-                    new SliceAssertion.Slice("und", new Undecided(), new Trace("I really don't know")),
-                    new SliceAssertion.Slice("fail", new Fail(), new Trace("This always fails"))
+                    new SliceAssertion.Slice("und", ResultAssertion.Undecided, new Trace("I really don't know")),
+                    new SliceAssertion.Slice("fail", ResultAssertion.Failure, new Trace("This always fails"))
                     ),
-                */
+
                 new Children(false,
                     ("child1", new ElementSchema(new Trace("in child 1"))),
                     ("child2", new Trace("in child 2")))
@@ -40,15 +38,18 @@ namespace Hl7.Fhir.Validation.Tests.Schema
         public async Task ValidateSchema()
         {
             var stringSchema = new ElementSchema("#string",
-                new MaxLength("TestSerialization.ValidateSchema", 50)
-                );
+                new Assertions(
+                    new MaxLength(50),
+                    new FhirTypeLabel("string")
+                )
+            );
 
             var familySchema = new ElementSchema("#myHumanName.family",
                 new Assertions(
                     new ReferenceAssertion(stringSchema),
                     new CardinalityAssertion(0, "1", "myHumanName.family"),
-                    new MaxLength("TestSerialization.ValidateSchema", 40),
-                    new Fixed("TestSerialization.ValidateSchema", "Brown")
+                    new MaxLength(40),
+                    new Fixed("Brown")
                 )
             );
 
@@ -56,7 +57,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
                 new Assertions(
                     new ReferenceAssertion(stringSchema),
                     new CardinalityAssertion(0, "*", "myHumanName.given"),
-                    new MaxLength("TestSerialization.ValidateSchema", 40)
+                    new MaxLength(40)
                 )
             );
 
@@ -73,15 +74,29 @@ namespace Hl7.Fhir.Validation.Tests.Schema
             humanName.Add("family", "Brown2", "string");
             humanName.Add("given", "Joe", "string");
             humanName.Add("given", "Patrick", "string");
+            humanName.Add("given", new string('x', 41), "string");
+            humanName.Add("given", "1", "integer");
+
 
             var result = myHumanNameSchema.ToJson().ToString();
 
-            var vc = new ValidationContext() { ValidateAssertions = new[] { typeof(CardinalityAssertion) } };
+            var vc = new ValidationContext();
 
-            var validationResults = await myHumanNameSchema.Validate(new[] { humanName }, vc).ConfigureAwait(false);
+            var validationResults = await myHumanNameSchema.Validate(humanName, vc).ConfigureAwait(false);
 
-            var issues = validationResults.OfType<IssueAssertion>();
+            Assert.IsNotNull(validationResults);
+            Assert.IsFalse(validationResults.Result.IsSuccessful);
 
+            var issues = validationResults.GetIssueAssertions();
+            issues.Should()
+                .Contain(i => i.IssueNumber == Issue.CONTENT_INCORRECT_OCCURRENCE.IssueNumber && i.Location == "myHumanName.family", "maximum is 1")
+                .And
+                .Contain(i => i.IssueNumber == Issue.CONTENT_DOES_NOT_MATCH_FIXED_VALUE.IssueNumber && i.Location == "HumanName.family[1]", "fixed to Brown")
+                .And
+                .Contain(i => i.IssueNumber == Issue.CONTENT_ELEMENT_VALUE_TOO_LONG.IssueNumber && i.Location == "HumanName.given[2]", "HumanName.given[2] is too long")
+                .And
+                .Contain(i => i.IssueNumber == Issue.CONTENT_ELEMENT_HAS_INCORRECT_TYPE.IssueNumber && i.Location == "HumanName.given[3]", "HumanName.given must be of type string")
+                .And.HaveCount(4);
         }
 
         [TestMethod]
@@ -97,7 +112,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
                 )
             ); ;
 
-            ElementNode BuildCodeableConcept(string system, string code)
+            static ElementNode buildCodeableConcept(string system, string code)
             {
                 var coding = ElementNode.Root("Coding");
                 coding.Add("system", system, "string");
@@ -109,18 +124,12 @@ namespace Hl7.Fhir.Validation.Tests.Schema
             }
 
             var systolicSlice = new SliceAssertion.Slice("systolic",
-                new AllAssertion(
-                    new FhirPathAssertion("path", "code"),
-                    new PathSelectorAssertion("code", new Fixed("TODO", BuildCodeableConcept("http://loinc.org", "8480-6")))
-                ),
+                    new PathSelectorAssertion("code", new Fixed(buildCodeableConcept("http://loinc.org", "8480-6"))),
                 bpComponentSchema
             );
 
             var dystolicSlice = new SliceAssertion.Slice("dystolic",
-                new AllAssertion(
-                    new FhirPathAssertion("path", "code"),
-                    new PathSelectorAssertion("code", new Fixed("TODO", BuildCodeableConcept("http://loinc.org", "8462-4")))
-                ),
+                    new PathSelectorAssertion("code", new Fixed(buildCodeableConcept("http://loinc.org", "8462-4"))),
                 bpComponentSchema
             );
 
@@ -139,10 +148,10 @@ namespace Hl7.Fhir.Validation.Tests.Schema
                 )
             );
 
-            ElementNode buildBpComponent(string system, string code, string value)
+            static ElementNode buildBpComponent(string system, string code, string value)
             {
                 var result = ElementNode.Root("Component");
-                result.Add(BuildCodeableConcept(system, code), "code");
+                result.Add(buildCodeableConcept(system, code), "code");
                 result.Add("value", value, "Quantity");
                 return result;
             }
@@ -159,15 +168,10 @@ namespace Hl7.Fhir.Validation.Tests.Schema
 
             var vc = new ValidationContext();
 
-            var validationResults = await bloodPressureSchema.Validate(new[] { bloodPressure }, vc).ConfigureAwait(false);
-
-
-            var issues = validationResults.OfType<IssueAssertion>().Concat(validationResults.Result.Evidence.OfType<IssueAssertion>());
+            var validationResults = await bloodPressureSchema.Validate(bloodPressure, vc).ConfigureAwait(false);
 
             Assert.IsTrue(validationResults.Result.IsSuccessful);
-
-
-
+            validationResults.GetIssueAssertions().Should().BeEmpty();
         }
     }
 }

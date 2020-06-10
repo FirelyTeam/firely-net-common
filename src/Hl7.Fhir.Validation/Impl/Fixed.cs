@@ -19,12 +19,12 @@ namespace Hl7.Fhir.Validation.Impl
     {
         private readonly ITypedElement _fixed;
 
-        public Fixed(string location, ITypedElement fixedValue) : base(location)
+        public Fixed(ITypedElement fixedValue)
         {
             this._fixed = fixedValue;
         }
 
-        public Fixed(string location, object fixedValue) : this(location, ElementNode.ForPrimitive(fixedValue)) { }
+        public Fixed(object fixedValue) : this(ElementNode.ForPrimitive(fixedValue)) { }
 
         public override string Key => "fixed[x]";
 

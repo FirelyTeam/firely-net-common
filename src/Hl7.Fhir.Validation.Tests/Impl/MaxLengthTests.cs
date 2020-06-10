@@ -11,7 +11,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
     [TestClass]
     public class MaxLengthTests : SimpleAssertionTests
     {
-        public MaxLengthTests() : base(new MaxLength("MaxLengthTests", 10)) { }
+        public MaxLengthTests() : base(new MaxLength(10)) { }
 
         [TestMethod]
         public async Task LengthTooLong()
@@ -63,7 +63,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
         [ExpectedException(typeof(IncorrectElementDefinitionException), "A negative number was allowed.")]
         public void InitializeWithNegativeMaxLength()
         {
-            new MaxLength("MaxLengthTests.InitializeWithNegativeMaxLength", -1);
+            new MaxLength(-1);
         }
     }
 }

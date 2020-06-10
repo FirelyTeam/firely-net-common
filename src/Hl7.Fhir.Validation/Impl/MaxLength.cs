@@ -18,7 +18,7 @@ namespace Hl7.Fhir.Validation.Impl
     {
         private readonly int _maxLength;
 
-        public MaxLength(string location, int maxLength) : base(location)
+        public MaxLength(int maxLength)
         {
             if (maxLength <= 0)
                 throw new IncorrectElementDefinitionException($"{nameof(maxLength)}: Must be a positive number");

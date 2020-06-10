@@ -16,7 +16,7 @@ namespace Hl7.Fhir.Validation.Impl
     {
         public readonly int Order;
 
-        public XmlOrder(int order, string location) : base(location)
+        public XmlOrder(int order)
         {
             Order = order;
         }
@@ -25,6 +25,7 @@ namespace Hl7.Fhir.Validation.Impl
 
         public override object Value => Order;
 
-        public override Task<Assertions> Validate(ITypedElement input, ValidationContext vc) => Task.FromResult(Assertions.Success);
+        public override Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
+            => Task.FromResult(Assertions.Success);
     }
 }

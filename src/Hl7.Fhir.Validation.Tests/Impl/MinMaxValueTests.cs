@@ -10,7 +10,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
     [TestClass]
     public class MinValueTests : SimpleAssertionTests
     {
-        public MinValueTests() : base(new MinMaxValue("MinValueTests", PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(4), MinMax.MinValue))
+        public MinValueTests() : base(new MinMaxValue(PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(4), MinMax.MinValue))
         {
 
         }
@@ -53,7 +53,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
     [TestClass]
     public class MaxValueTests : SimpleAssertionTests
     {
-        public MaxValueTests() : base(new MinMaxValue("MaxValueTests", PrimitiveTypeExtensions.ToTypedElement<Date, string>("1905-08-23"), MinMax.MaxValue))
+        public MaxValueTests() : base(new MinMaxValue(PrimitiveTypeExtensions.ToTypedElement<Date, string>("1905-08-23"), MinMax.MaxValue))
         {
 
         }

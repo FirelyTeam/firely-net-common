@@ -26,10 +26,10 @@ namespace Hl7.Fhir.Validation.Impl
         private readonly bool _bestPractice;
         private readonly CompiledExpression _defaultCompiledExpression;
 
-        public FhirPathAssertion(string key, string expression) : this(null, key, expression, null) { }
+        public FhirPathAssertion(string key, string expression) : this(key, expression, null) { }
 
 
-        public FhirPathAssertion(string location, string key, string expression, string humanDescription, IssueSeverity? severity = IssueSeverity.Error, bool bestPractice = false) : base(location)
+        public FhirPathAssertion(string key, string expression, string humanDescription, IssueSeverity? severity = IssueSeverity.Error, bool bestPractice = false)
         {
             _key = key ?? throw new ArgumentNullException(nameof(key));
             _expression = expression ?? throw new ArgumentNullException(nameof(expression));

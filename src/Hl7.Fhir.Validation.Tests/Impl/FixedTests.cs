@@ -37,7 +37,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
         [DynamicData(nameof(TestData), DynamicDataSourceType.Method)]
         public async Task FixedTestcases(object fixedValue, object input, bool expectedResult, string failureMessage)
         {
-            var validatable = new Fixed("FixedTests.FixedTestcases", fixedValue);
+            var validatable = new Fixed(fixedValue);
             var result = await validatable.Validate(ElementNode.ForPrimitive(input), new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsNotNull(result);
@@ -52,7 +52,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             fixedValue.Add("given", "Joe", "string");
             fixedValue.Add("given", "Patrick", "string");
 
-            var validatable = new Fixed("FixedTests.FixedHumanName", fixedValue);
+            var validatable = new Fixed(fixedValue);
             var result = await validatable.Validate(ElementNode.ForPrimitive("Brown, Joe Patrick"), new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsNotNull(result);
@@ -72,7 +72,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             input.Add("given", "Patrick", "string");
             input.Add("given", "Joe", "string");
 
-            var validatable = new Fixed("FixedTests.FixedHumanNameDifferentInstance", fixedValue);
+            var validatable = new Fixed(fixedValue);
             var result = await validatable.Validate(input, new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsNotNull(result);

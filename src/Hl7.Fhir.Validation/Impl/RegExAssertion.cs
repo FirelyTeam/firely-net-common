@@ -19,7 +19,7 @@ namespace Hl7.Fhir.Validation.Impl
         private readonly string _pattern;
         private readonly Regex _regex;
 
-        public RegExAssertion(string location, string pattern) : base(location)
+        public RegExAssertion(string pattern)
         {
             _pattern = pattern;
             _regex = new Regex(pattern);

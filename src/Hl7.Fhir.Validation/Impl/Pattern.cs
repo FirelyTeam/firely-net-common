@@ -11,12 +11,12 @@ namespace Hl7.Fhir.Validation.Impl
     {
         private readonly ITypedElement _pattern;
 
-        public Pattern(string location, ITypedElement patternValue) : base(location)
+        public Pattern(ITypedElement patternValue)
         {
             this._pattern = patternValue;
         }
 
-        public Pattern(string location, object fixedValue) : this(location, ElementNode.ForPrimitive(fixedValue)) { }
+        public Pattern(object fixedValue) : this(ElementNode.ForPrimitive(fixedValue)) { }
 
         public override string Key => "pattern[x]";
 
@@ -27,7 +27,7 @@ namespace Hl7.Fhir.Validation.Impl
             var result = Assertions.Empty + new Trace($"Validate with pattern {_pattern.ToJson()}");
             if (!input.Matches(_pattern))
             {
-                return Task.FromResult(result + ResultAssertion.CreateFailure(new IssueAssertion(Issue.CONTENT_DOES_NOT_MATCH_PATTERN_VALUE, Location, $"Value does not match pattern '{_pattern.ToJson()}")));
+                return Task.FromResult(result + ResultAssertion.CreateFailure(new IssueAssertion(Issue.CONTENT_DOES_NOT_MATCH_PATTERN_VALUE, input.Location, $"Value does not match pattern '{_pattern.ToJson()}")));
             }
 
             return Task.FromResult(result + Assertions.Success);

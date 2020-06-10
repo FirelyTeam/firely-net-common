@@ -20,7 +20,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
         public BindingAssertionTests()
         {
             var valueSetUri = "http://hl7.org/fhir/ValueSet/data-absent-reason";
-            _bindingAssertion = new BindingAssertion("BindingAssertionTests", valueSetUri, BindingAssertion.BindingStrength.Required);
+            _bindingAssertion = new BindingAssertion(valueSetUri, BindingAssertion.BindingStrength.Required);
 
             _terminologyService = new Mock<ITerminologyServiceNEW>();
 

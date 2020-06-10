@@ -11,39 +11,37 @@ namespace Hl7.Fhir.Validation.Tests.Impl
     [TestClass]
     public class PatternTests
     {
-        private IEnumerable<(object patternValue, object input, bool expectedResult, string failureMessage)> TestData()
+        public static IEnumerable<object[]> TestData()
         {
             // integer
-            yield return (patternValue: 90, input: 91, expectedResult: false, failureMessage: "result must be false [int]");
-            yield return (patternValue: 90, input: 90, expectedResult: true, failureMessage: "result must be true [int]");
+            yield return new object[] { 90, 91, false, "result must be false [int]" };
+            yield return new object[] { 90, 90, true, "result must be true [int]" };
 
             // string
-            yield return (patternValue: "test", input: "testfailure", expectedResult: false, failureMessage: "result must be false [string]");
-            yield return (patternValue: "test", input: "test", expectedResult: true, failureMessage: "result must be true [string]");
+            yield return new object[] { "test", "testfailure", false, "result must be false [string]" };
+            yield return new object[] { "test", "test", true, "result must be true [string]" };
 
             // date
-            yield return (patternValue: PartialDate.Parse("2019-09-05"), input: PartialDate.Parse("2019-09-04"), expectedResult: false, failureMessage: "result must be false [date]");
-            yield return (patternValue: PartialDate.Parse("2019-09-05"), input: PartialDate.Parse("2019-09-05"), expectedResult: true, failureMessage: "result must be true [date]");
+            yield return new object[] { PartialDate.Parse("2019-09-05"), PartialDate.Parse("2019-09-04"), false, "result must be false [date]" };
+            yield return new object[] { PartialDate.Parse("2019-09-05"), PartialDate.Parse("2019-09-05"), true, "result must be true [date]" };
 
             // boolean
-            yield return (patternValue: true, input: false, expectedResult: false, failureMessage: "result must be false [boolean]");
-            yield return (patternValue: true, input: true, expectedResult: true, failureMessage: "result must be true [boolean]");
+            yield return new object[] { true, false, false, "result must be false [boolean]" };
+            yield return new object[] { true, true, true, "result must be true [boolean]" };
 
             // mixed primitive types
-            yield return (patternValue: PartialDate.Parse("2019-09-05"), input: 20190905, expectedResult: false, failureMessage: "result must be false [mixed]");
+            yield return new object[] { PartialDate.Parse("2019-09-05"), 20190905, false, "result must be false [mixed]" };
         }
 
-        [TestMethod]
-        public async Task PrimitivePatternTestcases()
+        [DataTestMethod]
+        [DynamicData(nameof(TestData), DynamicDataSourceType.Method)]
+        public async Task PrimitivePatternTestcases(object patternValue, object input, bool expectedResult, string failureMessage)
         {
-            foreach (var (patternValue, input, expectedResult, failureMessage) in TestData())
-            {
-                var validatable = new Fixed("PatternTests.PatternTestcases", patternValue);
-                var result = await validatable.Validate(ElementNode.ForPrimitive(input), new ValidationContext()).ConfigureAwait(false);
+            var validatable = new Pattern(patternValue);
+            var result = await validatable.Validate(ElementNode.ForPrimitive(input), ValidationContext.CreateDefault()).ConfigureAwait(false);
 
-                Assert.IsNotNull(result);
-                Assert.IsTrue(result.Result.IsSuccessful == expectedResult, failureMessage);
-            }
+            Assert.IsNotNull(result);
+            Assert.IsTrue(result.Result.IsSuccessful == expectedResult, failureMessage);
         }
 
         [TestMethod]
@@ -54,7 +52,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             patternValue.Add("given", "Joe", "string");
             patternValue.Add("given", "Patrick", "string");
 
-            var validatable = new Fixed("PatternTests.PatternHumanName", patternValue);
+            var validatable = new Pattern(patternValue);
             var result = await validatable.Validate(ElementNode.ForPrimitive("Brown, Joe Patrick"), new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsNotNull(result);
@@ -73,7 +71,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             input.Add("given", "Joe", "string");
             input.Add("given", "Patrick", "string");
 
-            var validatable = new Pattern("PatternTests.ComplexTypePattern", patternValue);
+            var validatable = new Pattern(patternValue);
             var result = await validatable.Validate(input, new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsNotNull(result);
@@ -92,7 +90,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             input.Add("family", "Brown", "string");
             input.Add("given", "Joe", "string");
 
-            var validatable = new Pattern("PatternTests.NotMatchingComplexTypePattern", patternValue);
+            var validatable = new Pattern(patternValue);
             var result = await validatable.Validate(input, new ValidationContext()).ConfigureAwait(false);
 
             Assert.IsNotNull(result);

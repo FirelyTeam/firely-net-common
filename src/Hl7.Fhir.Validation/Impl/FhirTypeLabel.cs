@@ -8,7 +8,7 @@ namespace Hl7.Fhir.Validation.Impl
     {
         public readonly string Label;
 
-        public FhirTypeLabel(string label) : base(string.Empty)
+        public FhirTypeLabel(string label)
         {
             Label = label;
         }
@@ -26,7 +26,7 @@ namespace Hl7.Fhir.Validation.Impl
 
             result += input?.InstanceType == Label ?
                 new ResultAssertion(ValidationResult.Success) :
-                ResultAssertion.CreateFailure(new IssueAssertion(-1, $"Type of instance ({input?.InstanceType}) is not valid at location {input?.Location}.", IssueSeverity.Error));
+                ResultAssertion.CreateFailure(new IssueAssertion(Issue.CONTENT_ELEMENT_HAS_INCORRECT_TYPE, input?.Location, $"Type of instance ({input?.InstanceType}) is not valid at location {input?.Location}."));
 
             return Task.FromResult(result);
         }

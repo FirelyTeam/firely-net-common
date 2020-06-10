@@ -46,15 +46,13 @@ namespace Hl7.Fhir.Validation.Impl
         public readonly BindingStrength Strength;
         public readonly string Description;
         public readonly bool AbstractAllowed;
-        public readonly string Location;
 
-        public BindingAssertion(string location, string valueSetUri, BindingStrength strength, bool abstractAllowed = true, string description = null)
+        public BindingAssertion(string valueSetUri, BindingStrength strength, bool abstractAllowed = true, string description = null)
         {
-            ValueSetUri = valueSetUri ?? throw Error.ArgumentNull(nameof(valueSetUri));
+            ValueSetUri = valueSetUri;
             Strength = strength;
             Description = description;
             AbstractAllowed = abstractAllowed;
-            Location = location;
         }
 
         public async Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
@@ -105,7 +103,7 @@ namespace Hl7.Fhir.Validation.Impl
         {
             var bindable = input.ParseBindable();
             if (bindable == null)    // should never happen, since we already checked IsBindable
-                throw Error.NotSupported($"Type '{input.InstanceType}' is bindable, but could not be parsed by ParseBindable().");
+                throw Error.NotSupported($"Type '{input.InstanceType}' is bindable, but could not be parsed by ParseBindable() at {input.Location}.");
 
             return bindable;
         }
@@ -125,11 +123,11 @@ namespace Hl7.Fhir.Validation.Impl
                 case string co when string.IsNullOrEmpty(co) && Strength == BindingStrength.Required:
                 case ICoding cd when string.IsNullOrEmpty(cd.Code) && Strength == BindingStrength.Required:
                 case IConcept cc when !codeableConceptHasCode(cc) && Strength == BindingStrength.Required:
-                    result += new IssueAssertion(Issue.TERMINOLOGY_NO_CODE_IN_INSTANCE, Location, $"No code found in {source.InstanceType} with a required binding.");
+                    result += new IssueAssertion(Issue.TERMINOLOGY_NO_CODE_IN_INSTANCE, source.Location, $"No code found in {source.InstanceType} with a required binding.");
                     break;
                 case IConcept cc when !codeableConceptHasCode(cc) && string.IsNullOrEmpty(cc.Display) &&
                                 Strength == BindingStrength.Extensible:
-                    result += new IssueAssertion(Issue.TERMINOLOGY_NO_CODE_IN_INSTANCE, Location, $"Extensible binding requires code or text.");
+                    result += new IssueAssertion(Issue.TERMINOLOGY_NO_CODE_IN_INSTANCE, source.Location, $"Extensible binding requires code or text.");
                     break;
                 default:
                     return new Assertions(ResultAssertion.Success);      // nothing wrong then
@@ -191,9 +189,10 @@ namespace Hl7.Fhir.Validation.Impl
         public JToken ToJson()
         {
             var props = new JObject(
-                     new JProperty("valueSet", ValueSetUri),
                      new JProperty("strength", Strength.GetLiteral()),
                      new JProperty("abstractAllowed", AbstractAllowed));
+            if (ValueSetUri != null)
+                props.Add(new JProperty("valueSet", ValueSetUri));
             if (Description != null)
                 props.Add(new JProperty("description", Description));
 
