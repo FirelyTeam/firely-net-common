@@ -25,12 +25,12 @@ namespace Hl7.Fhir.Validation.Schema
             _assertionFactory = assertionFactory;
         }
 
-        public IAssertion BuildProfileRef(string type, string profile)
+        public IAssertion BuildProfileRef(string type, string profile, IEnumerable<Support.AggregationMode?> aggregations)
         {
             var uri = new Uri(profile, UriKind.Absolute);
             return type == "Extension" // TODO: some constant.
                 ? _assertionFactory.CreateExtensionAssertion(async (u) => await Resolver.GetSchema(u).ConfigureAwait(false), uri)
-                : _assertionFactory.CreateReferenceAssertion(async (u) => await Resolver.GetSchema(u).ConfigureAwait(false), uri);
+                : _assertionFactory.CreateReferenceAssertion(async (u) => await Resolver.GetSchema(u).ConfigureAwait(false), uri, aggregations);
         }
 
         public IAssertion BuildProfileRef(string profile)

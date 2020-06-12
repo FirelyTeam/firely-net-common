@@ -61,7 +61,7 @@ namespace Hl7.Fhir.Validation.Schema
             result += resolveReference(instance, reference, out (ITypedElement referencedResource, AggregationMode? encounteredKind) referenceInstance);
             var referencedResource = referenceInstance.referencedResource;
 
-            result += ValidateAggregation(referenceInstance);
+            result += ValidateAggregation(referenceInstance.encounteredKind, input.Location, reference);
 
 
             // Bail out if we are asked to follow an *external reference* when this is disabled in the settings
@@ -85,7 +85,7 @@ namespace Hl7.Fhir.Validation.Schema
             }
 
             // If the reference was resolved (either internally or externally), validate it
-            result = await ValidateReferencedResource(vc, instance, reference, referenceInstance, referencedResource);
+            result += await ValidateReferencedResource(vc, instance, reference, referenceInstance, referencedResource);
 
             return result;
         }
@@ -127,16 +127,16 @@ namespace Hl7.Fhir.Validation.Schema
             return result;
         }
 
-        private Assertions ValidateAggregation((ITypedElement referencedResource, AggregationMode? encounteredKind) referenceInstance)
+        private Assertions ValidateAggregation(AggregationMode? encounteredKind, string location, string reference)
         {
             var result = Assertions.Empty;
 
             // Validate the kind of aggregation.
             // If no aggregation is given, all kinds of aggregation are allowed, otherwise only allow
             // those aggregation types that are given in the Aggregation element
-            if (HasAggregation && !_aggregations.Any(a => a == referenceInstance.encounteredKind))
+            if (HasAggregation && !_aggregations.Any(a => a == encounteredKind))
             {
-                result += ResultAssertion.CreateFailure(new IssueAssertion(Issue.CONTENT_REFERENCE_OF_INVALID_KIND, "TODO", $"Encountered a reference ({referenceInstance.referencedResource}) of kind '{referenceInstance.encounteredKind}' which is not allowed"));
+                result += ResultAssertion.CreateFailure(new IssueAssertion(Issue.CONTENT_REFERENCE_OF_INVALID_KIND, location, $"Encountered a reference ({reference}) of kind '{encounteredKind}' which is not allowed"));
             }
 
             return result;

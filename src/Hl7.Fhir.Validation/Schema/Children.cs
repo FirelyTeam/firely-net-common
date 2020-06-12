@@ -95,7 +95,7 @@ namespace Hl7.Fhir.Validation.Schema
             if (matchResult.UnmatchedInstanceElements.Any() && !_allowAdditionalChildren)
             {
                 var elementList = String.Join(",", matchResult.UnmatchedInstanceElements.Select(e => "'" + e.Name + "'"));
-                result += ResultAssertion.CreateFailure(new IssueAssertion(Issue.CONTENT_ELEMENT_HAS_UNKNOWN_CHILDREN, null, $"Encountered unknown child elements {elementList} for definition '{"TODO: definition.Path"}'"));
+                result += ResultAssertion.CreateFailure(new IssueAssertion(Issue.CONTENT_ELEMENT_HAS_UNKNOWN_CHILDREN, input.Location, $"Encountered unknown child elements {elementList} for definition '{"TODO: definition.Path"}'"));
             }
 
             result += await matchResult.Matches.Select(m => m.Assertion.Validate(m.InstanceElements, vc)).AggregateAsync();
