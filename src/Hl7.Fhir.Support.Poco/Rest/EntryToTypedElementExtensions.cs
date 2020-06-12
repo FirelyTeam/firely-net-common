@@ -35,6 +35,9 @@ namespace Hl7.Fhir.Rest
         
         private static ITypedElement parseResource(string bodyText, string contentType, IStructureDefinitionSummaryProvider provider, bool throwOnFormatException)
         {
+            if (bodyText == null) throw Error.ArgumentNull(nameof(bodyText));
+            if (provider == null) throw Error.ArgumentNull(nameof(provider));
+           
             var fhirType = ContentType.GetResourceFormatFromContentType(contentType);
 
             if (fhirType == ResourceFormat.Unknown)
@@ -45,26 +48,17 @@ namespace Hl7.Fhir.Rest
             if (!SerializationUtil.ProbeIsJson(bodyText) && !SerializationUtil.ProbeIsXml(bodyText))
                 throw new UnsupportedBodyTypeException(
                         "Endpoint said it returned '{0}', but the body is not recognized as either xml or json.".FormatWith(contentType), contentType, bodyText);
-
-
-            ITypedElement result;
+            
             try
             {
-                if (bodyText == null) throw Error.ArgumentNull(nameof(bodyText));
-                if (provider == null) throw Error.ArgumentNull(nameof(provider));
-
-                if (fhirType == ResourceFormat.Json)
-                    result = FhirJsonNode.Parse(bodyText).ToTypedElement(provider);
-                else
-                    result = FhirXmlNode.Parse(bodyText).ToTypedElement(provider);
+               return (fhirType == ResourceFormat.Json)
+                    ? FhirJsonNode.Parse(bodyText).ToTypedElement(provider)
+                    : FhirXmlNode.Parse(bodyText).ToTypedElement(provider);
             }
             catch (FormatException) when (!throwOnFormatException)
             {           
                 return null;
             }
-
-
-            return result;
         }
     }
 
