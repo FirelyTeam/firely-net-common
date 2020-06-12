@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Rest
 {    
-    public class Requester : IRequester
+    public class WebClientRequester : IClientRequester
     {
         public Uri BaseUrl { get; private set; }
 
@@ -23,7 +23,7 @@ namespace Hl7.Fhir.Rest
         public Action<HttpWebRequest, byte[]> BeforeRequest { get; set; }
         public Action<HttpWebResponse, byte[]> AfterResponse { get; set; }
 
-        public Requester(Uri baseUrl, FhirClientSettings settings)
+        public WebClientRequester(Uri baseUrl, FhirClientSettings settings)
         {
             BaseUrl = baseUrl;
             Settings = settings;

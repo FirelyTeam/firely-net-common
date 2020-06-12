@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Rest
 {
-    public interface IRequester
+    public interface IClientRequester
     {
         Task<EntryResponse> ExecuteAsync(EntryRequest interaction);
     }

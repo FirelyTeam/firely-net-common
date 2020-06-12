@@ -16,13 +16,13 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Rest
 {
-    public class HttpRequester : IRequester, IDisposable
+    public class HttpClientRequester : IClientRequester, IDisposable
     {
         public FhirClientSettings Settings { get; set; }
         public Uri BaseUrl { get; private set; }
         public HttpClient Client { get; private set; }
 
-        public HttpRequester(Uri baseUrl, FhirClientSettings settings, HttpMessageHandler messageHandler)
+        public HttpClientRequester(Uri baseUrl, FhirClientSettings settings, HttpMessageHandler messageHandler)
         {
             Settings = settings;
             BaseUrl = baseUrl;
