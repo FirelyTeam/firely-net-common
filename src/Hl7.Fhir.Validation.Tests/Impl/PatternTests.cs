@@ -21,10 +21,6 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             yield return new object[] { "test", "testfailure", false, "result must be false [string]" };
             yield return new object[] { "test", "test", true, "result must be true [string]" };
 
-            // date
-            yield return new object[] { PartialDate.Parse("2019-09-05"), PartialDate.Parse("2019-09-04"), false, "result must be false [date]" };
-            yield return new object[] { PartialDate.Parse("2019-09-05"), PartialDate.Parse("2019-09-05"), true, "result must be true [date]" };
-
             // boolean
             yield return new object[] { true, false, false, "result must be false [boolean]" };
             yield return new object[] { true, true, true, "result must be true [boolean]" };

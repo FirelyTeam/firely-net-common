@@ -32,7 +32,6 @@ namespace Hl7.Fhir.Validation.Schema
         public static async Task<Assertions> Validate(Func<Uri, Task<IElementSchema>> getSchema, Uri uri, ITypedElement input, ValidationContext vc)
         {
             var schema = await getSchema(uri);
-            schema.LogSchema();
             return await schema.Validate(input, vc).ConfigureAwait(false);
         }
     }
