@@ -13,7 +13,7 @@ using System;
 
 namespace Hl7.Fhir.Serialization
 {
-    /// <summary>Configuration settings for the <see cref="PocoBuilder"/> class.</summary>
+    /// <summary>Configuration settings for the PocoBuilder class.</summary>
     public class PocoBuilderSettings
     {
         /// <summary>

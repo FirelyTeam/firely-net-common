@@ -12,7 +12,7 @@
     <Title>HL7 FHIR library containing support classes for POCO support in the .NET API</Title>
     <Summary>Base classes and supporting infrastructure to work with FHIR data using POCOs.</Summary>
     <Description>This is the support library for working with the POCO representation of HL7's FHIR model data</Description>
-    <PackageTags>HL7;FHIR;POCO</PackageTags>
+    <PackageTags>HL7;FHIR;POCO;REST;PARSE;SERIALIZE</PackageTags>
     <AssemblyName>Hl7.Fhir.Support.Poco</AssemblyName>
   </PropertyGroup>
 
@@ -44,8 +44,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Hl7.Fhir.ElementModel\Hl7.Fhir.ElementModel.csproj" />
     <ProjectReference Include="..\Hl7.Fhir.Serialization\Hl7.Fhir.Serialization.csproj" />
     <ProjectReference Include="..\Hl7.Fhir.Support\Hl7.Fhir.Support.csproj" />
+    <ProjectReference Include="..\Hl7.Fhir.Serialization\Hl7.Fhir.Serialization.csproj" />
   </ItemGroup>
 
 </Project>

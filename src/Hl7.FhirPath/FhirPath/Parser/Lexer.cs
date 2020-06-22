@@ -155,8 +155,8 @@ namespace Hl7.FhirPath.Parser
         // NUMBER
         //   : [0-9]+('.' [0-9]+)?
         //   ;
-        public static readonly Parser<Int32> IntegerNumber =
-            Parse.Number.Select(s => Integer.Parse(s));
+        public static readonly Parser<Int64> IntegerNumber =
+            Parse.Number.Select(s => Int64.Parse(s));
 
         public static readonly Parser<decimal> DecimalNumber =
                    from num in Parse.Number

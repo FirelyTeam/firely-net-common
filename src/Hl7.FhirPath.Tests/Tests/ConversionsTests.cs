@@ -115,7 +115,7 @@ namespace Hl7.FhirPath.Tests
         public void ConvertToTime()
         {
             var now = PartialTime.Parse("15:47:00+01:00");
-            var inputs = ElementNode.CreateList(now, "T12:05:45");
+            var inputs = ElementNode.CreateList(now, "12:05:45");
             var vals = new[] { now, PartialTime.Parse("12:05:45") };
 
             inputs.Zip(vals, (i, v) => (i, v))

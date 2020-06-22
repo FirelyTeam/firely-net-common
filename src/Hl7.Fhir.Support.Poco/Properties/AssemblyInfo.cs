@@ -10,3 +10,6 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("Hl7.Fhir.STU3.Core")]
 
 
+#if DEBUG
+[assembly: InternalsVisibleTo("Hl7.Fhir.Core.Tests")]
+#endif

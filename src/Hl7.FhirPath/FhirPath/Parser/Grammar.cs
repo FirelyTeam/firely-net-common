@@ -53,7 +53,7 @@ namespace Hl7.FhirPath.Parser
                 .XOr(Lexer.Bool.Select(v => new ConstantExpression(v, TypeSpecifier.Boolean)))
                 .Or(Quantity.Select(v => new ConstantExpression(v, TypeSpecifier.Quantity)))
                 .Or(Lexer.DecimalNumber.Select(v => new ConstantExpression(v, TypeSpecifier.Decimal)))
-                .Or(Lexer.IntegerNumber.Select(v => new ConstantExpression(v, TypeSpecifier.Integer)));
+                .Or(Lexer.IntegerNumber.Select(v => new ConstantExpression(v, TypeSpecifier.Integer64)));
 
 
         //term
