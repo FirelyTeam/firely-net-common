@@ -201,6 +201,8 @@ namespace Hl7.Fhir.ElementModel
 
         public string ResourceType => Current is Resource ? InstanceType : null;
 
+        public TypeDefinition InstanceTypeD => throw new NotImplementedException();
+
         public IEnumerable<object> Annotations(Type type)
         {
             if (type == typeof(PocoElementNode) || type == typeof(ITypedElement) || type == typeof(IShortPathGenerator))

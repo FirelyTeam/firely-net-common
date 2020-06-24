@@ -193,19 +193,21 @@ namespace Hl7.Fhir.ElementModel
 
         private static ElementNode buildNode(ITypedElement node, bool recursive, IEnumerable<Type> annotationsToCopy, ElementNode parent)
         {
-            var me = new ElementNode(node.Name, node.Value, node.InstanceType, node.Definition)
-            {
-                Parent = parent
-            };
+            throw new NotImplementedException();
 
-            foreach (var t in annotationsToCopy ?? Enumerable.Empty<Type>())
-                foreach (var ann in node.Annotations(t))
-                    me.AddAnnotation(ann);
+            //var me = new ElementNode(node.Name, node.Value, node.InstanceType, node.Definition)
+            //{
+            //    Parent = parent
+            //};
 
-            if (recursive)
-                me.ChildList.AddRange(node.Children().Select(c => buildNode(c, recursive: true, annotationsToCopy: annotationsToCopy, me)));
+            //foreach (var t in annotationsToCopy ?? Enumerable.Empty<Type>())
+            //    foreach (var ann in node.Annotations(t))
+            //        me.AddAnnotation(ann);
 
-            return me;
+            //if (recursive)
+            //    me.ChildList.AddRange(node.Children().Select(c => buildNode(c, recursive: true, annotationsToCopy: annotationsToCopy, me)));
+
+            //return me;
         }
 
         public bool Remove(ElementNode child)
@@ -289,5 +291,7 @@ namespace Hl7.Fhir.ElementModel
                     return Name;
             }
         }
+
+        public TypeDefinition InstanceTypeD => throw new NotImplementedException();
     }
 }

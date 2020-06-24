@@ -102,7 +102,7 @@ namespace Hl7.Fhir.Serialization
         {
             var details = node.GetJsonSerializationDetails();
             object value = node.Definition != null ? node.Value : details?.OriginalValue ?? node.Value;
-            var objectInShadow = node.InstanceType != null ? primitiveTypes.Contains(node.InstanceType) : details?.UsesShadow ?? false;
+            var objectInShadow = node.InstanceTypeD != null ? node.InstanceTypeD is PrimitiveTypeDefinition : details?.UsesShadow ?? false;
 
             JToken first = value != null ? buildValue(value) : null;
             JObject second = buildChildren(node);
@@ -159,7 +159,7 @@ namespace Hl7.Fhir.Serialization
         {
             var resourceTypeIndicator = node.Annotation<IResourceTypeSupplier>()?.ResourceType;
             var isResource = node.Definition?.IsResource ?? resourceTypeIndicator != null;
-            var containedResourceType = isResource ? (node.InstanceType ?? resourceTypeIndicator) : null;
+            var containedResourceType = isResource ? (node.InstanceTypeD?.Name ?? resourceTypeIndicator) : null;
             if (containedResourceType != null)
                 parent.AddFirst(new JProperty(JsonSerializationDetails.RESOURCETYPE_MEMBER_NAME, containedResourceType));
 
@@ -189,7 +189,7 @@ namespace Hl7.Fhir.Serialization
                 var needsMainProperty = children.Any(c => c.first != null);
                 var needsShadowProperty = children.Any(c => c.second != null);
                 var propertyName = generalInfo?.IsChoiceElement == true ?
-                        members[0].Name + members[0].InstanceType.Capitalize() : members[0].Name;
+                        members[0].Name + members[0].InstanceTypeD.Name.Capitalize() : members[0].Name;
 
                 if (needsMainProperty)
                     parent.Add(new JProperty(propertyName,

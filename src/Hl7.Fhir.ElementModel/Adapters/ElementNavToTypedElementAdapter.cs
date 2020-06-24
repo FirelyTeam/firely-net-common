@@ -43,13 +43,13 @@ namespace Hl7.Fhir.ElementModel.Adapters
 
         public string Name => Current.Name;
 
-        public string InstanceType => Current.Type;
-
         public string Location => Current.Location;
 
         public object Value => Current.Value;
 
-        public IElementDefinitionSummary Definition => Current.Annotation<ITypedElement>()?.Definition;
+        public TypeDefinition InstanceTypeD => throw new NotImplementedException("Will never be implemented, since this class has to be removed before shipping 2.0");
+
+        public IElementDefinitionSummary Definition => throw new NotImplementedException();
 
         public IEnumerable<ITypedElement> Children(string name=null) =>
             Current.Children(name).Select(c => new ElementNavToTypedElementAdapter(this, c));

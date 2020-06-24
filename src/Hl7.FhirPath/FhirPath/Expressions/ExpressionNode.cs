@@ -61,7 +61,7 @@ namespace Hl7.FhirPath.Expressions
             if (Any.TryConvertToSystemValue(value, out var systemValue))
             {
                 Value = systemValue;
-                ExpressionType = TypeSpecifier.ForNativeType(value.GetType());
+                ExpressionType = NamedTypeSpecifier.ForNativeType(value.GetType());
             }
             else
                 throw Error.InvalidOperation("Internal logic error: encountered unmappable Value of type " + Value.GetType().Name);

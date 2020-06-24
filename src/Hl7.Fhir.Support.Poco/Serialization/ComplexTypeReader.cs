@@ -28,13 +28,13 @@ namespace Hl7.Fhir.Serialization
 
         public string Name => "value";
 
-        public string InstanceType => _wrapped.InstanceType;
-
         public object Value => _wrapped.Value;
 
         public string Location => _wrapped.Location;
 
         public IElementDefinitionSummary Definition => _wrapped.Definition;
+
+        public TypeDefinition InstanceTypeD => _wrapped.InstanceTypeD;
 
         public IEnumerable<ITypedElement> Children(string name = null) => _wrapped.Children(name);
     }
@@ -64,13 +64,13 @@ namespace Hl7.Fhir.Serialization
 
             if (mappingToUse == null)
             {
-                if (_current.InstanceType is null)
+                if (_current.InstanceTypeD is null)
                     throw Error.Format("Underlying data source was not able to provide the actual instance type of the resource.");
 
-                mappingToUse = (ClassMapping)_inspector.Provide(_current.InstanceType);
+                mappingToUse = (ClassMapping)_inspector.Provide(_current.InstanceTypeD.Name);
 
                 if (mappingToUse == null)
-                    RaiseFormatError($"Asked to deserialize unknown type '{_current.InstanceType}'", _current.Location);
+                    RaiseFormatError($"Asked to deserialize unknown type '{_current.InstanceTypeD.Name}'", _current.Location);
             }
           
             if (existing == null)

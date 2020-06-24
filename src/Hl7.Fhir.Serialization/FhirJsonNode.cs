@@ -374,7 +374,7 @@ namespace Hl7.Fhir.Serialization
                 {
                     XDocument doc = null;
 
-                    if (nav.InstanceType == "xhtml")
+                    if (nav.InstanceTypeD?.Name == "xhtml")
                     {
                         try
                         {

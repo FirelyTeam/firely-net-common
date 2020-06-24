@@ -72,8 +72,10 @@ namespace Hl7.FhirPath.Functions
                 // If we are at a resource, we should match a path that is possibly not rooted in the resource
                 // (e.g. doing "name.family" on a Patient is equivalent to "Patient.name.family")   
                 // Also we do some poor polymorphism here: Resource.meta.lastUpdated is also allowed.
+                // Now we have real type information through element.InstanceTypeD, we could improve the
+                // inheritance checking for Resource and DomainResource
                 var baseClasses = new[] { "Resource", "DomainResource" };
-                if (element.InstanceType == name || baseClasses.Contains(name))
+                if (element.InstanceTypeD.Name == name || baseClasses.Contains(name))
                 {
                     return new List<ITypedElement>() { element };
                 }

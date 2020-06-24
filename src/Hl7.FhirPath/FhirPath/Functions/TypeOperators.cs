@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 
 namespace Hl7.FhirPath.Functions
@@ -18,24 +19,24 @@ namespace Hl7.FhirPath.Functions
     {
         public static bool Is(this ITypedElement focus, string type)
         {
-            if (focus.InstanceType != null)
+            if (focus.InstanceTypeD != null)
             {
-                return Is(focus.InstanceType, type);     // I have no information about classes/subclasses
+                return Is(focus.InstanceTypeD, type);     // I have no information about classes/subclasses
             }
             else
                 throw Error.InvalidOperation("Is operator is called on untyped data");
         }
 
-        public static bool Is(string instanceType, string declaredType)
+        public static bool Is(TypeDefinition instanceType, string declaredType)
         {
-            // Bit of a hack, this hardwires the FhirPath implementation to FHIR
-            if (!instanceType.Contains(".")) instanceType = "FHIR." + instanceType;
+            // Bit of a hack since I don't have model information here (yet)
+            var fullInstanceTypeName = @"{instanceType.DeclaringModel.Name}.{instanceType.Name}";
             if (declaredType.Contains("."))
-                return instanceType == declaredType;
+                return fullInstanceTypeName == declaredType;
             else
             {
-                return instanceType == "System." + declaredType ||
-                        instanceType == "FHIR." + declaredType;
+                return fullInstanceTypeName == "System." + declaredType ||
+                        fullInstanceTypeName == "FHIR." + declaredType;
             }
         }
 

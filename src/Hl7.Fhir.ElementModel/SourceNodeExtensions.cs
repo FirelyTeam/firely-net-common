@@ -201,6 +201,7 @@ namespace Hl7.Fhir.ElementModel
         /// Adapting an <c>ISourceNode</c> to a <see cref="ITypedElement"/> without adding type information to it.
         /// </summary>
         /// <param name="node"></param>
+        /// <param name="model"></param>
         /// <returns></returns>
         /// <remarks>In contrast to <see cref="ToTypedElement(ISourceNode, IStructureDefinitionSummaryProvider, string, TypedElementSettings)"/>,
         /// this method simulates an <c>ITypedElement</c> on top of an <c>ISourceNode</c>, without adding type information to
@@ -210,8 +211,10 @@ namespace Hl7.Fhir.ElementModel
         [Obsolete("WARNING! For internal API use only. Turning an untyped SourceNode into an ITypedElement without providing" +
 "type information (see other overload) will cause side-effects with components in the API that are not prepared to deal with" +
 "missing type information. Please don't use this overload unless you know what you are doing.")]
-        public static ITypedElement ToTypedElement(this ISourceNode node) =>
-        new SourceNodeToTypedElementAdapter(node);
+        //public static ITypedElement ToTypedElement(this ISourceNode node, ModelDefinition model) =>
+        //new SourceNodeToTypedElementAdapter(model, node);
+
+        public static ITypedElement ToTypedElement(this ISourceNode node) => throw new NotImplementedException();
 
 #pragma warning disable 612, 618
         /// <summary>

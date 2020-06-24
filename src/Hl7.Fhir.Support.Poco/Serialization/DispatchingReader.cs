@@ -64,12 +64,12 @@ namespace Hl7.Fhir.Serialization
                 return reader.Deserialize(null);
             }
 
-            if (_current.InstanceType is null)
+            if (_current.InstanceTypeD is null)
                 ComplexTypeReader.RaiseFormatError(
                     "Underlying data source was not able to provide the actual instance type of the resource.", _current.Location);
 
             ClassMapping mapping = prop.IsDatatypeChoice
-                ? getMappingForType(memberName, _current.InstanceType)
+                ? getMappingForType(memberName, _current.InstanceTypeD.Name)
                 : _inspector.GetOrAddClassMappingForType(prop.NativeType);
 
 

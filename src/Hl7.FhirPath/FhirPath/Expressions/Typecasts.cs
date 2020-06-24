@@ -6,6 +6,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
@@ -30,13 +31,13 @@ namespace Hl7.FhirPath.Expressions
         {
             if (source is ITypedElement element)
             {
-                if (element.InstanceType == "Quantity")
+                if (element.InstanceTypeD.Name == "Quantity")
                 {
                     // Need to downcast from a FHIR Quantity to a System.Quantity
                     return ParseQuantity(element);
                 }
                 else
-                    throw new InvalidCastException($"Cannot convert from '{element.InstanceType}' to Quantity");
+                    throw new InvalidCastException($"Cannot convert from '{element.InstanceTypeD.Name}' to Quantity");
             }
 
             throw new InvalidCastException($"Cannot convert from '{source.GetType().Name}' to Quantity");
@@ -112,7 +113,7 @@ namespace Hl7.FhirPath.Expressions
                     // to make sure we return null in that case. We assume the primitives
                     // start with a lower-case letter, which is true in FHIR but not
                     // in general.
-                    var isFhirPrimitive = Char.IsLower(element.InstanceType[0]);
+                    var isFhirPrimitive = element.InstanceTypeD is PrimitiveTypeDefinition;
                     if (isFhirPrimitive)
                         instance = element.Value;
                 }
@@ -183,7 +184,7 @@ namespace Hl7.FhirPath.Expressions
                 return values.Count > 1 ? "collection of " + String.Join("/", types) : types.Single();
             }
             else if (value is ITypedElement te)
-                return te.InstanceType;
+                return te.InstanceTypeD.Name;
             else
                 return value.GetType().Name;
         }

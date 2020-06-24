@@ -445,6 +445,8 @@ namespace Hl7.Fhir.ElementModel
 
         public string ShortPath { get; private set; }
 
+        public TypeDefinition InstanceTypeD => throw new NotImplementedException();
+
         public override string ToString() =>
             $"{(InstanceType != null ? ($"[{InstanceType}] ") : "")}{_source}";
 

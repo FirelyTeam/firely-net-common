@@ -46,9 +46,9 @@ namespace Hl7.FhirPath.Functions
 
             // TODO: this is actually a cast with knowledge of FHIR->System mappings, we don't want that here anymore
             // Convert quantities
-            if (left.InstanceType == "Quantity" && l == null)
+            if (left.InstanceTypeD?.Name == "Quantity" && l == null)
                 l = Typecasts.ParseQuantity(left);
-            if (right.InstanceType == "Quantity" && r == null)
+            if (right.InstanceTypeD?.Name == "Quantity" && r == null)
                 r = Typecasts.ParseQuantity(right);
 
             // Compare primitives (or extended primitives)
@@ -106,9 +106,9 @@ namespace Hl7.FhirPath.Functions
 
             // TODO: this is actually a cast with knowledge of FHIR->System mappings, we don't want that here anymore
             // Convert quantities
-            if (left.InstanceType == "Quantity" && l == null)
+            if (left.InstanceTypeD?.Name == "Quantity" && l == null)
                 l = Typecasts.ParseQuantity(left);
-            if (right.InstanceType == "Quantity" && r == null)
+            if (right.InstanceTypeD?.Name == "Quantity" && r == null)
                 r = Typecasts.ParseQuantity(right);
 
             // Compare primitives (or extended primitives)

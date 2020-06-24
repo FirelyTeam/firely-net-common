@@ -33,7 +33,7 @@ namespace Hl7.Fhir.ElementModel.Adapters
 
         public object Value => Current.Value;
 
-        public string Type => Current.InstanceType;
+        public string Type => throw new NotImplementedException("This class will be removed from 2.0");
 
         public string Name => Current.Name;
 

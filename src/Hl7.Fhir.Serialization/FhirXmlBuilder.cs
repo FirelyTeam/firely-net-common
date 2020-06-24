@@ -113,7 +113,7 @@ namespace Hl7.Fhir.Serialization
             // xhtml children require special treament:
             // - They don't use an xml "value" attribute to represent the value, instead their Value is inserted verbatim into the parent
             // - They cannot have child nodes - the "Value" on the node contains all children as raw xml text
-            var isXhtml = source.InstanceType == "xhtml" ||
+            var isXhtml = source.InstanceTypeD?.Name == "xhtml" ||
                 serializationInfo?.Representation == XmlRepresentation.XHtml ||
                 xmlDetails?.Namespace?.GetName("div") == XmlNs.XHTMLDIV;
 
@@ -145,7 +145,7 @@ namespace Hl7.Fhir.Serialization
                             (usesAttribute ? "" : XmlNs.FHIR);
             bool atRoot = parent is XDocument;
             var localName = serializationInfo?.IsChoiceElement == true ?
-                            source.Name + source.InstanceType.Capitalize() : source.Name;
+                            source.Name + source.InstanceTypeD.Name.Capitalize() : source.Name;
 
             // If the node is represented by an attribute (e.g. an "id" child), write
             // an attribute with the child's name + the child's Value into the parent
@@ -168,7 +168,7 @@ namespace Hl7.Fhir.Serialization
             // If this needs to be serialized as a contained resource, do so
             var containedResourceType = atRoot ? null :
                             (serializationInfo?.IsResource == true ?
-                                            source.InstanceType :
+                                            source.InstanceTypeD.Name :
                                             source.Annotation<IResourceTypeSupplier>()?.ResourceType);
 
             XElement containedResource = null;

@@ -28,7 +28,7 @@ namespace Hl7.Fhir.ElementModel
             return new PrimitiveElement
             {
                 Value = value,
-                InstanceType = TypeSpecifier.Quantity.FullName,
+                InstanceTypeD = SystemModelDefinition.Quantity,
                 Name = "@QuantityAsPrimitiveValue@"
             };
         }
@@ -39,14 +39,18 @@ namespace Hl7.Fhir.ElementModel
 
         public PrimitiveElement(object value, string name = null, bool useFullTypeName = false)
         {
+
             if (value == null) throw new ArgumentNullException(nameof(value));
 
             var systemType = NamedTypeSpecifier.ForNativeType(value.GetType());
             if(!TypeSpecifier.PrimitiveTypes.Contains(systemType))
                 throw new ArgumentException("The supplied value cannot be represented with a System primitive.", nameof(value));
-           
+
+            InstanceTypeD = SystemModelDefinition.ForNativeType(value.GetType());
+            if(InstanceTypeD == null)
+                throw new ArgumentException("The supplied value cannot be represented with a System primitive.", nameof(value));
+
             Value = Any.ConvertToSystemValue(value);
-            InstanceType = useFullTypeName ? systemType.FullName : systemType.Name;
             Name = name ?? "@primitivevalue@";
         }
 
@@ -54,11 +58,9 @@ namespace Hl7.Fhir.ElementModel
 
         public object Value { get; private set; }
 
-        public string InstanceType { get; private set; }
+        public TypeDefinition InstanceTypeD { get; private set; }
 
         public string Location => Name;
-
-        public IElementDefinitionSummary Definition => this;
 
         string IElementDefinitionSummary.ElementName => Name;
 
@@ -82,11 +84,13 @@ namespace Hl7.Fhir.ElementModel
 
         int IElementDefinitionSummary.Order => 0;
 
-        string IStructureDefinitionSummary.TypeName => InstanceType;
+        string IStructureDefinitionSummary.TypeName => InstanceTypeD?.Name;
 
         bool IStructureDefinitionSummary.IsAbstract => false;
 
         bool IStructureDefinitionSummary.IsResource => false;
+
+        public IElementDefinitionSummary Definition => throw new NotImplementedException();
 
         public override bool Equals(object obj) => obj is ITypedElement ite && Equals(ite.Value, Value);
 

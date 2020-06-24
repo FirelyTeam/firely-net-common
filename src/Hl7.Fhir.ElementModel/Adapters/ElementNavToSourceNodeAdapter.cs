@@ -55,16 +55,17 @@ namespace Hl7.Fhir.ElementModel.Adapters
                 .Where(c => c.Name.MatchesPrefix(name));
 
 
-        public string Name
-        {
-            get
-            {
-                var typeInfo = Current.Annotation<ITypedElement>()?.Definition;
+        public string Name => throw new NotImplementedException("This class will be removed in 2.0");
+        //public string Name
+        //{
+        //    get
+        //    {
+        //        var typeInfo = Current.Annotation<ITypedElement>()?.Definition;
 
-                return typeInfo?.IsChoiceElement == true ?
-                    Current.Name + Current.Type.Capitalize() : Current.Name;
-            }
-        }
+        //        return typeInfo?.IsChoiceElement == true ?
+        //            Current.Name + Current.Type.Capitalize() : Current.Name;
+        //    }
+        //}
 
         public object Value => Current.Value == null ? null :
             PrimitiveTypeConverter.ConvertTo<string>(Current.Value);

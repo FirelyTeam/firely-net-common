@@ -17,35 +17,47 @@ namespace Hl7.Fhir.ElementModel.Adapters
     internal class SourceNodeToTypedElementAdapter : ITypedElement, IAnnotated, IExceptionSource
     {
         public readonly ISourceNode Current;
+        private readonly ModelDefinition _model;
 
-        public SourceNodeToTypedElementAdapter(ISourceNode node)
+        public SourceNodeToTypedElementAdapter(ModelDefinition model, ISourceNode node)
         {
             Current = node ?? throw Error.ArgumentNull(nameof(node));
+            _model = model ?? throw Error.ArgumentNull(nameof(model));
 
             if (node is IExceptionSource ies && ies.ExceptionHandler == null)
                 ies.ExceptionHandler = (o, a) => ExceptionHandler.NotifyOrThrow(o, a);
         }
 
-        private SourceNodeToTypedElementAdapter(SourceNodeToTypedElementAdapter parent, ISourceNode sourceNode)
+        private SourceNodeToTypedElementAdapter(SourceNodeToTypedElementAdapter parent, ISourceNode sourceNode, ModelDefinition model)
         {
-            this.Current = sourceNode;
-            this.ExceptionHandler = parent.ExceptionHandler;
+            Current = sourceNode;
+            ExceptionHandler = parent.ExceptionHandler;
+            _model = model;
         }
 
         public ExceptionNotificationHandler ExceptionHandler { get; set; }
 
         public string Name => Current.Name;
 
-        public string InstanceType => Current.GetResourceTypeIndicator(); 
+        public TypeDefinition InstanceTypeD
+        {
+            get 
+            {
+                var instanceType = Current.GetResourceTypeIndicator();
+                return instanceType == null ? 
+                    null : 
+                    _model.TryGetType(instanceType, out var definition) ? definition: null;
+            }
+        }
 
         public object Value => Current.Text;
 
         public string Location => Current.Location;
 
-        public IElementDefinitionSummary Definition => null;
+        public IElementDefinitionSummary Definition => throw new NotImplementedException();
 
         public IEnumerable<ITypedElement> Children(string name) =>
-            Current.Children(name).Select(c => new SourceNodeToTypedElementAdapter(this, c));
+            Current.Children(name).Select(c => new SourceNodeToTypedElementAdapter(this, c, _model));
 
         IEnumerable<object> IAnnotated.Annotations(Type type) => Current.Annotations(type);
     }

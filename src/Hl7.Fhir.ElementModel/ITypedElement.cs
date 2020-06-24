@@ -38,7 +38,9 @@ namespace Hl7.Fhir.ElementModel
         /// <summary>
         /// Type of the node. If a FHIR type, this is just a simple string, otherwise a StructureDefinition url for a type defined as a logical model.
         /// </summary>
-        string InstanceType { get; }
+        //string InstanceType { get; }
+
+        TypeDefinition InstanceTypeD { get; }
 
         /// <summary>
         /// The value of the node (if it represents a primitive FHIR value)

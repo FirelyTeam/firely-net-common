@@ -87,28 +87,30 @@ namespace Hl7.Fhir.ElementModel
         public static IReadOnlyCollection<IElementDefinitionSummary> ChildDefinitions(this ITypedElement me,
             IStructureDefinitionSummaryProvider provider)
         {
-            if (me.Definition != null)
-            {
-                // If this is a backbone element, the child type is the nested complex type
-                if (me.Definition.Type[0] is IStructureDefinitionSummary be)
-                    return be.GetElements();
-                else
-                {
-                    if (me.InstanceType != null)
-                    {
-                        var si = provider.Provide(me.InstanceType);
-                        if (si != null) return si.GetElements();
-                    }
-                }
+            throw new NotImplementedException();
 
-            }
+//            if (me.Definition != null)
+//            {
+//                // If this is a backbone element, the child type is the nested complex type
+//                if (me.Definition.Type[0] is IStructureDefinitionSummary be)
+//                    return be.GetElements();
+//                else
+//                {
+//                    if (me.InstanceType != null)
+//                    {
+//                        var si = provider.Provide(me.InstanceType);
+//                        if (si != null) return si.GetElements();
+//                    }
+//                }
 
-            // Note: fall-through in all failure cases - return empty collection
-#if NET40
-            return new ReadOnlyList<IElementDefinitionSummary>();
-#else
-            return new List<IElementDefinitionSummary>();
-#endif
+//            }
+
+//            // Note: fall-through in all failure cases - return empty collection
+//#if NET40
+//            return new ReadOnlyList<IElementDefinitionSummary>();
+//#else
+//            return new List<IElementDefinitionSummary>();
+//#endif
         }
 
 

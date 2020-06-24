@@ -8,6 +8,7 @@
 
 
 using Hl7.Fhir.Serialization;
+using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
@@ -39,8 +40,8 @@ namespace Hl7.Fhir.ElementModel.Adapters
         {
             get
             {
-                return Current.Definition?.IsChoiceElement == true ?
-                    Current.Name + Current.InstanceType.Capitalize() : Current.Name;
+                return  Current.Definition?.IsChoiceElement == true ?
+                    Current.Name + Current.InstanceTypeD.Name.Capitalize() : Current.Name;
             }
         }
 
@@ -53,7 +54,7 @@ namespace Hl7.Fhir.ElementModel.Adapters
         {
             get
             {
-                return Current.Definition?.IsResource == true ? Current.InstanceType : null;
+                return Current.Definition?.IsResource == true ? Current.InstanceTypeD?.Name : null;
             }
         }
 

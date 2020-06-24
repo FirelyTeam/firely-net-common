@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * Copyright (c) 2018, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
@@ -6,6 +6,7 @@
  * available at https://github.com/FirelyTeam/fhir-net-api/blob/master/LICENSE
  */
 
+using Hl7.Fhir.Model.Primitives;
 using Hl7.Fhir.Support.Utility;
 using Hl7.Fhir.Utility;
 using System;
@@ -66,6 +67,73 @@ namespace Hl7.Fhir.Specification
         }
     }
 
+
+    public class SystemModelDefinition : ModelDefinition
+    {
+        public static TypeDefinition Any => throw new NotImplementedException();
+        public static TypeDefinition Boolean => throw new NotImplementedException();
+        public static TypeDefinition Code => throw new NotImplementedException();
+        public static TypeDefinition Concept => throw new NotImplementedException();
+        public static TypeDefinition Date => throw new NotImplementedException();
+        public static TypeDefinition DateTime => throw new NotImplementedException();
+        public static TypeDefinition Decimal => throw new NotImplementedException();
+        public static TypeDefinition Integer => throw new NotImplementedException();
+        public static TypeDefinition Integer64 => throw new NotImplementedException();
+        public static TypeDefinition Quantity => throw new NotImplementedException();
+        public static TypeDefinition String => throw new NotImplementedException();
+        public static TypeDefinition Time => throw new NotImplementedException();
+
+
+        /// <summary>
+        /// Maps a C# type to a system type
+        /// </summary>
+        /// <param name="dotNetType">Value to determine the type for.</param>
+        /// <returns></returns>
+        public static TypeDefinition ForNativeType(Type dotNetType)
+        {
+            if (dotNetType == null) throw new ArgumentNullException(nameof(dotNetType));
+
+            // NOTE: Keep Any.TryConvertToSystemValue, TypeSpecifier.TryGetNativeType and TypeSpecifier.ForNativeType in sync
+            if (t<bool>())
+                return Boolean;
+            else if (t<int>() || t<short>() || t<ushort>() || t<uint>())
+                return Integer;
+            else if (t<long>() || t<ulong>())
+                return Integer64;
+            else if (t<PartialTime>())
+                return Time;
+            else if (t<PartialDate>())
+                return Date;
+            else if (t<PartialDateTime>() || t<DateTimeOffset>())
+                return DateTime;
+            else if (t<float>() || t<double>() || t<decimal>())
+                return Decimal;
+            else if (t<string>() || t<char>() || t<Uri>())
+                return String;
+            else if (t<Quantity>())
+                return Quantity;
+            else if (t<Coding>() || dotNetType.CanBeTreatedAsType(typeof(Enum)))
+                return Code;
+            else if (t<Concept>())
+                return Concept;
+#pragma warning disable IDE0046 // Convert to conditional expression
+            else if (t<object>())
+#pragma warning restore IDE0046 // Convert to conditional expression
+                return Any;
+            else
+                return null;
+
+            bool t<A>() => dotNetType == typeof(A);
+        }
+
+        private SystemModelDefinition(string name, string version, IEnumerable<TypeDefinition> types, DeferredModelInitializer<AnnotationList> annotationsInitializer) : base(name, version, types, annotationsInitializer)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+
+
     public class ModelDefinition : IAnnotated, IReadOnlyDictionary<string, TypeDefinition>
     {
         protected static readonly AnnotationList EMPTY_ANNOTATIONS = new AnnotationList();
@@ -78,16 +146,21 @@ namespace Hl7.Fhir.Specification
             if (types is null) throw new ArgumentNullException(nameof(types));
 
             foreach (var type in types) type.DeclaringModel = this;
-            _types = types.ToDictionary(md => md.Name);            
+            _types = types.ToDictionary(md => md.Name);
         }
 
         public ModelDefinition(string name, string version, IEnumerable<TypeDefinition> types, AnnotationList annotations = null)
-                : this(name,version,types, _ => annotations ?? EMPTY_ANNOTATIONS)
+                : this(name, version, types, _ => annotations ?? EMPTY_ANNOTATIONS)
         {
             // no additional initializations
         }
 
+        public override string ToString() => $"{Name}-{Version}";
 
+        // TODO: Can we build a system that guarantees that there are no deadlocks/loops:
+        // -> ModelDefinition.Annotations initializer calls TypeDefinition.Annotations, typedef initializer calls modeldef.annotations....
+        // separate "annotations" from "skratchpad"?  (= storage/indices for quick access to say list of conformance resources)
+        // or just forbid calling properties that are lazy-initialized on an object before that object has been initialized by the model space?
         protected virtual void Initialize()
         {
             _annotations = _annotationsInitializer(this.DeclaringSpace);
@@ -147,17 +220,18 @@ namespace Hl7.Fhir.Specification
 
     // TODO: Generate code in poco-modelinfo that references some of these using readonlies (e.g. ModelInfo.Patient, etc.)
     // TODO: Do the above for the system typespace too
+    // TODO: Override equals and == to make sure it's not just reference equality
     public abstract class TypeDefinition : IAnnotated
     {
         protected static readonly Lazy<AnnotationList> EMPTY_ANNOTATION_LIST = new Lazy<AnnotationList>(() => new AnnotationList());
 
         public TypeDefinition(string name, Lazy<TypeDefinition> @base) :
-            this(name, @base, annotations: null, isAbstract: false, isOrdered: false, binding: null, identifier:null)
+            this(name, @base, annotations: null, isAbstract: false, isOrdered: false, binding: null, identifier: null)
         {
 
         }
 
-        public TypeDefinition(string name, Lazy<TypeDefinition> @base, Lazy<AnnotationList> annotations, 
+        public TypeDefinition(string name, Lazy<TypeDefinition> @base, Lazy<AnnotationList> annotations,
             bool isAbstract, bool isOrdered, string binding, string identifier)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -195,6 +269,9 @@ namespace Hl7.Fhir.Specification
         /// <returns></returns>
         public IEnumerable<object> Annotations(Type type) => _delayedAnnotations.Value.OfType(type);
         private readonly Lazy<AnnotationList> _delayedAnnotations;
+
+        // TODO: Add FullName() (which includes model name?)
+        public override string ToString() => Name;
     }
 
 
@@ -204,7 +281,7 @@ namespace Hl7.Fhir.Specification
         {
         }
 
-        public PrimitiveTypeDefinition(string name, Lazy<TypeDefinition> @base, Lazy<AnnotationList> annotations, 
+        public PrimitiveTypeDefinition(string name, Lazy<TypeDefinition> @base, Lazy<AnnotationList> annotations,
             bool isAbstract, bool isOrdered, string binding, string identifier) : base(name, @base, annotations, isAbstract, isOrdered, binding, identifier)
         {
         }
@@ -212,7 +289,7 @@ namespace Hl7.Fhir.Specification
 
     public class ComplexTypeDefinition : TypeDefinition
     {
-        public ComplexTypeDefinition(string name, Lazy<TypeDefinition> @base, Lazy<IReadOnlyList<MemberDefinition>> members): base(name, @base)
+        public ComplexTypeDefinition(string name, Lazy<TypeDefinition> @base, Lazy<IReadOnlyList<MemberDefinition>> members) : base(name, @base)
         {
             _delayedMembers = members ?? throw new ArgumentNullException(nameof(members));
         }
@@ -225,7 +302,7 @@ namespace Hl7.Fhir.Specification
         }
 
         public IReadOnlyList<MemberDefinition> Members => _delayedMembers.Value;
-           
+
         private readonly Lazy<IReadOnlyList<MemberDefinition>> _delayedMembers;
     }
 

@@ -90,13 +90,13 @@ namespace Hl7.Fhir.ElementModel
 
         public string Name => Source.Name;
 
-        public string InstanceType => Source.InstanceType;
-
         public object Value => Source.Value;
 
         public string Location => Source.Location;
 
-        public IElementDefinitionSummary Definition => Source.Definition;
+        public TypeDefinition InstanceTypeD => Source.InstanceTypeD;
+
+        public IElementDefinitionSummary Definition => throw new NotImplementedException();
 
         private (bool included, bool mandatory) included(ITypedElement node)
         {
@@ -106,7 +106,7 @@ namespace Hl7.Fhir.ElementModel
             if (!scope.Location.Contains(".")) return (true,false);
 
             bool atRootBundle() => atBundle() && scope.ParentResource == null;
-            bool atBundle() => scope.NearestResourceType == "Bundle";
+            bool atBundle() => scope.NearestResourceType?.Name == "Bundle";
 
             switch (_settings.PreserveBundle)
             {
@@ -141,8 +141,10 @@ namespace Hl7.Fhir.ElementModel
                 return loc == f || loc.StartsWith(f + ".") || loc.StartsWith(f + "[");    // include matches + children
             }
 
-            if (_settings.ExcludeMarkdown && scope.InstanceType == "markdown") return (false,false);
-            if (_settings.ExcludeNarrative & scope.InstanceType == "Narrative") return (false,false);
+            // This is a FHIR-specific hack, but that's how these excludes are defined, so it is not
+            // *that* bizarre to have the explicit type names here.
+            if (_settings.ExcludeMarkdown && scope.InstanceTypeD?.Name == "markdown") return (false,false);
+            if (_settings.ExcludeNarrative & scope.InstanceTypeD?.Name == "Narrative") return (false,false);
 
             return (included,mandatory);
         }

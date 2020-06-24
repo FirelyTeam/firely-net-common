@@ -155,14 +155,6 @@ namespace Hl7.FhirPath.Tests
             }
         }
 
-        public string InstanceType
-        {
-            get
-            {
-                return "NotAPrimitiveType";
-            }
-        }
-
         public object Value
         {
             get
@@ -172,6 +164,8 @@ namespace Hl7.FhirPath.Tests
         }
 
         public IElementDefinitionSummary Definition => null;
+
+        public TypeDefinition InstanceTypeD => throw new System.NotImplementedException();
 
         public IEnumerable<ITypedElement> Children(string name = null) => new ITypedElement[0];
     }
