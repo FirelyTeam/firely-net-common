@@ -11,6 +11,8 @@ using System;
 
 namespace Hl7.Fhir.Specification
 {
+
+
     public class ElementDefinitionSummary : IElementDefinitionSummary
     {
         private ElementDefinitionSummary() { }

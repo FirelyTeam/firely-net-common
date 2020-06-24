@@ -8,6 +8,7 @@
 
 using Hl7.Fhir.Utility;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,17 +30,19 @@ namespace Hl7.Fhir.Support.Utility
             annotations.AddOrUpdate(
                 annotation.GetType(),
                 new List<object>() { annotation },
-                (t, existingList) => new List<object>(existingList) { annotation });
+                update);
+
+            List<object> update(Type t, List<object> existing)
+            {
+                existing.Add(annotation);
+                return existing;
+            }
         }
 
         public void RemoveAnnotations(Type type) => annotations.TryRemove(type, out _);
 
-        public IEnumerable<object> Annotations(Type type)
-        {
-            if (annotations.TryGetValue(type, out var values))
-                return values;
-            return Enumerable.Empty<object>();
-        }
+        public IEnumerable<object> Annotations(Type type) 
+            => annotations.TryGetValue(type, out var values) ? values : Enumerable.Empty<object>();
 
         /// <summary>
         /// Returns all annotations of type <paramref name="type"/>
@@ -52,12 +55,13 @@ namespace Hl7.Fhir.Support.Utility
         public bool IsEmpty => annotations.IsEmpty;
 
         /// <summary>
-        /// Adds all the annotations from the <paramref name="source"/> to here. It will remove all existing annotations
+        /// Adds all the annotations from the <paramref name="source"/> to here.
         /// </summary>
         /// <param name="source"></param>
         public void AddRange(AnnotationList source)
         {
-            _annotations = new Lazy<ConcurrentDictionary<Type, List<object>>>(() => new ConcurrentDictionary<Type, List<object>>(source.annotations));
+            _annotations = new Lazy<ConcurrentDictionary<Type, List<object>>>(
+                () => new ConcurrentDictionary<Type, List<object>>(source.annotations) );
         }
     }
 }
