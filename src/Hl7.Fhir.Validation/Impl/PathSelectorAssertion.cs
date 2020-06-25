@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl
 {
-    public class PathSelectorAssertion : IAssertion, IValidatable
+    public class PathSelectorAssertion : IValidatable
     {
         private readonly string _path;
         private readonly IAssertion _other;

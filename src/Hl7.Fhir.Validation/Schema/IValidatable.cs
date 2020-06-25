@@ -16,7 +16,7 @@ namespace Hl7.Fhir.Validation.Schema
     /// <summary>
     /// Implemented by assertions that work on a single ITypedElement.
     /// </summary>
-    public interface IValidatable
+    public interface IValidatable : IAssertion
     {
         Task<Assertions> Validate(ITypedElement input, ValidationContext vc);
     }

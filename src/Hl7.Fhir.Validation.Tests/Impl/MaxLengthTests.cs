@@ -1,69 +1,80 @@
-﻿using Hl7.Fhir.ElementModel;
+﻿using FluentAssertions;
+using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Validation.Impl;
+using Hl7.Fhir.Validation.Impl.Tests;
 using Hl7.Fhir.Validation.Schema;
-using Hl7.Fhir.Validation.Tests.Impl;
+using Hl7.Fhir.Validation.Tests.Support;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Linq;
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Tests.Schema
 {
+    internal class MaxLengthAssertionData : SimpleAssertionDataAttribute
+    {
+        public override IEnumerable<object[]> GetData()
+        {
+            yield return new object[]
+            {
+                new MaxLength(10),
+                ElementNode.ForPrimitive("12345678901"),
+                false, Issue.CONTENT_ELEMENT_VALUE_TOO_LONG, "LengthTooLong"
+            };
+            yield return new object[]
+            {
+                new MaxLength(10),
+                ElementNode.ForPrimitive("1234567890"),
+                true, null, "Length correct"
+            };
+            yield return new object[]
+            {
+                new MaxLength(10),
+                ElementNode.ForPrimitive("1"),
+                true, null, "Length correct"
+            };
+            yield return new object[]
+            {
+                new MaxLength(10),
+                ElementNode.ForPrimitive(""),
+                true, null, "Empty string is correct"
+            };
+            // TODO debatable: is MaxLength for an integer valid? It is now Undecided.
+            yield return new object[]
+            {
+                new MaxLength(10),
+                ElementNode.ForPrimitive(90),
+                false, null, "MaxLength constraint on a non-string primitive is undecided == not succesful"
+            };
+        }
+    }
+
     [TestClass]
     public class MaxLengthTests : SimpleAssertionTests
     {
-        public MaxLengthTests() : base(new MaxLength(10)) { }
-
         [TestMethod]
-        public async Task LengthTooLong()
+        public void InvalidConstructors()
         {
-            var node = ElementNode.ForPrimitive("12345678901");
+            Action action = () => new MaxLength(0);
+            action.Should().Throw<IncorrectElementDefinitionException>();
 
-            var result = await _validatable.Validate(node, null).ConfigureAwait(false);
-
-            Assert.IsNotNull(result);
-            Assert.IsFalse(result.Result.IsSuccessful);
-            var evidence = result.Result.Evidence.OfType<IssueAssertion>();
-            Assert.AreEqual(1, evidence.Count());
-            Assert.AreEqual(1005, evidence.Single().IssueNumber);
+            action = () => new MaxLength(-9);
+            action.Should().Throw<IncorrectElementDefinitionException>();
         }
 
         [TestMethod]
-        public async Task LengthCorrect()
+        public void CorrectConstructor()
         {
-            var node = ElementNode.ForPrimitive("1234567890");
+            var assertion = new MaxLength(4);
 
-            var result = await _validatable.Validate(node, null).ConfigureAwait(false);
-
-            Assert.IsNotNull(result);
-            Assert.IsTrue(result.Result.IsSuccessful);
+            assertion.Should().NotBeNull();
+            assertion.Key.Should().Be("maxLength");
+            assertion.Value.Should().Be(4);
         }
 
-        [TestMethod]
-        public async Task ValidateWithOtherThanString()
-        {
-            // TODO debatable: is MaxLength for an integer valid? It is now Undecided.
-            var node = ElementNode.ForPrimitive(90);
-
-            var result = await _validatable.Validate(node, null).ConfigureAwait(false);
-
-            Assert.IsFalse(result.Result.IsSuccessful, "MaxLength constraint on a non-string primitive is undecided == not succesful");
-        }
-
-        [TestMethod]
-        public async Task ValidateWithEmptyString()
-        {
-            var node = ElementNode.ForPrimitive("");
-
-            var result = await _validatable.Validate(node, null).ConfigureAwait(false);
-
-            Assert.IsTrue(result.Result.IsSuccessful, "MaxLength constraint on an empty string must be succesful");
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(IncorrectElementDefinitionException), "A negative number was allowed.")]
-        public void InitializeWithNegativeMaxLength()
-        {
-            new MaxLength(-1);
-        }
+        [DataTestMethod]
+        [MaxLengthAssertionData]
+        public override Task SimpleAssertionTestcases(SimpleAssertion assertion, ITypedElement input, bool expectedResult, Issue expectedIssue, string failureMessage)
+            => base.SimpleAssertionTestcases(assertion, input, expectedResult, expectedIssue, failureMessage);
     }
 }

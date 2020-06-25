@@ -11,6 +11,7 @@ using Hl7.Fhir.ElementModel.Functions;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Validation.Schema;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl
@@ -21,7 +22,7 @@ namespace Hl7.Fhir.Validation.Impl
 
         public Fixed(ITypedElement fixedValue)
         {
-            this._fixed = fixedValue;
+            this._fixed = fixedValue ?? throw new ArgumentNullException(nameof(fixedValue));
         }
 
         public Fixed(object fixedValue) : this(ElementNode.ForPrimitive(fixedValue)) { }

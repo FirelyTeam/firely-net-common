@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Schema
 {
-    public interface IGroupValidatable
+    public interface IGroupValidatable: IAssertion
     {
         Task<Assertions> Validate(IEnumerable<ITypedElement> input, ValidationContext vc);
     }

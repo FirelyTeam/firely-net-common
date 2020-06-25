@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Schema
 {
-    public abstract class SimpleAssertion : IAssertion, IValidatable
+    public abstract class SimpleAssertion : IValidatable
     {
 
         public virtual JToken ToJson() => new JProperty(Key, Value);

@@ -10,7 +10,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
     [TestClass]
     public class AllAssertionTests
     {
-        private class SuccessAssertion : IAssertion, IValidatable
+        private class SuccessAssertion : IValidatable
         {
             public JToken ToJson()
             {
@@ -19,11 +19,11 @@ namespace Hl7.Fhir.Validation.Tests.Schema
 
             public Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
             {
-                return Task.FromResult(Assertions.Success + new TraceText("Success Assertion"));
+                return Task.FromResult(Assertions.Success + new Trace("Success Assertion"));
             }
         }
 
-        private class FailureAssertion : IAssertion, IValidatable
+        private class FailureAssertion : IValidatable
         {
             public JToken ToJson()
             {
@@ -32,7 +32,7 @@ namespace Hl7.Fhir.Validation.Tests.Schema
 
             public Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
             {
-                return Task.FromResult(Assertions.Failure + new TraceText("Failure Assertion"));
+                return Task.FromResult(Assertions.Failure + new Trace("Failure Assertion"));
             }
         }
 

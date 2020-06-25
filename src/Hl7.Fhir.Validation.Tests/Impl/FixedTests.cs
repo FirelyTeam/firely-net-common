@@ -1,82 +1,112 @@
-﻿using Hl7.Fhir.ElementModel;
+﻿using FluentAssertions;
+using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Model.Primitives;
 using Hl7.Fhir.Validation.Impl;
+using Hl7.Fhir.Validation.Impl.Tests;
 using Hl7.Fhir.Validation.Schema;
+using Hl7.Fhir.Validation.Tests.Support;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Tests.Impl
 {
-    [TestClass]
-    public class FixedTests
+    internal class FixedAssertionData : SimpleAssertionDataAttribute
     {
-        private static IEnumerable<object[]> TestData()
+        public override IEnumerable<object[]> GetData()
         {
             // integer
-            yield return new object[] { 90, 91, false, "result must be false [int]" };
-            yield return new object[] { 90, 90, true, "result must be true [int]" };
-
+            yield return new object[]
+            {
+                new Fixed(10),
+                ElementNode.ForPrimitive(91),
+                false, Issue.CONTENT_DOES_NOT_MATCH_FIXED_VALUE, "result must be false [int]"
+            };
+            yield return new object[]
+            {
+                new Fixed(90),
+                ElementNode.ForPrimitive(90),
+                true, null, "result must be true [int]"
+            };
             // string
-            yield return new object[] { "test", "testfailure", false, "result must be false [string]" };
-            yield return new object[] { "test", "test", true, "result must be true [string]" };
-
-            // date
-            yield return new object[] { PartialDate.Parse("2019-09-05"), PartialDate.Parse("2019-09-04"), false, "result must be false [date]" };
-            yield return new object[] { PartialDate.Parse("2019-09-05"), PartialDate.Parse("2019-09-05"), true, "result must be true [date]" };
-
+            yield return new object[]
+            {
+                new Fixed("test"),
+                ElementNode.ForPrimitive("testfailure"),
+                false, Issue.CONTENT_DOES_NOT_MATCH_FIXED_VALUE, "result must be false [string]"
+            };
+            yield return new object[]
+            {
+                new Fixed("test"),
+                ElementNode.ForPrimitive("test"),
+                true, null,"result must be true [string]"
+            };
             // boolean
-            yield return new object[] { true, false, false, "result must be false [boolean]" };
-            yield return new object[] { true, true, true, "result must be true [boolean]" };
-
+            yield return new object[]
+            {
+                new Fixed(true),
+                ElementNode.ForPrimitive(false),
+                false, Issue.CONTENT_DOES_NOT_MATCH_FIXED_VALUE, "result must be false [boolean]"
+            };
+            yield return new object[]
+            {
+                new Fixed(true),
+                ElementNode.ForPrimitive(true),
+                true, null, "result must be true [boolean]"
+            };
             // mixed primitive types
-            yield return new object[] { PartialDate.Parse("2019-09-05"), 20190905, false, "result must be false [mixed]" };
+            yield return new object[]
+            {
+                new Fixed(PartialDate.Parse("2019-09-05")),
+                ElementNode.ForPrimitive(20190905),
+                false, Issue.CONTENT_DOES_NOT_MATCH_FIXED_VALUE, "result must be false [mixed]"
+            };
+            // Complex Types
+            yield return new object[]
+            {
+                new Fixed(Foo.CreateHumanName("Brown", new[] { "Joe" } )),
+                Foo.CreateHumanName("Brown", new[] { "Joe" } ),
+                true, null, "The input should match: family name should be Brown, and given name is Joe"
+            };
+            yield return new object[]
+            {
+                new Fixed(Foo.CreateHumanName("Brown", new[] { "Joe" } )),
+                ElementNode.ForPrimitive("Brown, Joe Patrick"),
+                false, Issue.CONTENT_DOES_NOT_MATCH_FIXED_VALUE, "String and HumanName are different"
+            };
+            yield return new object[]
+            {
+                new Fixed(Foo.CreateHumanName("Brown", new[] { "Joe", "Patrick" } )),
+                Foo.CreateHumanName("Brown", new[] { "Patrick", "Joe" } ),
+                false, Issue.CONTENT_DOES_NOT_MATCH_FIXED_VALUE, "The input should not match the fixed"
+            };
+        }
+    }
+
+    [TestClass]
+    public class FixedTests : SimpleAssertionTests
+    {
+        [TestMethod]
+        public void InvalidConstructors()
+        {
+            Action action = () => new Fixed(null);
+            action.Should().Throw<ArgumentNullException>();
+        }
+
+        [TestMethod]
+        public void CorrectConstructor()
+        {
+            var assertion = new Fixed(4);
+
+            assertion.Should().NotBeNull();
+            assertion.Key.Should().Be("fixed[x]");
+            assertion.Value.Should().BeAssignableTo<ITypedElement>();
         }
 
         [DataTestMethod]
-        [DynamicData(nameof(TestData), DynamicDataSourceType.Method)]
-        public async Task FixedTestcases(object fixedValue, object input, bool expectedResult, string failureMessage)
-        {
-            var validatable = new Fixed(fixedValue);
-            var result = await validatable.Validate(ElementNode.ForPrimitive(input), new ValidationContext()).ConfigureAwait(false);
-
-            Assert.IsNotNull(result);
-            Assert.IsTrue(result.Result.IsSuccessful == expectedResult, failureMessage);
-        }
-
-        [TestMethod]
-        public async Task FixedHumanName()
-        {
-            var fixedValue = ElementNode.Root("HumanName");
-            fixedValue.Add("family", "Brown", "string");
-            fixedValue.Add("given", "Joe", "string");
-            fixedValue.Add("given", "Patrick", "string");
-
-            var validatable = new Fixed(fixedValue);
-            var result = await validatable.Validate(ElementNode.ForPrimitive("Brown, Joe Patrick"), new ValidationContext()).ConfigureAwait(false);
-
-            Assert.IsNotNull(result);
-            Assert.IsFalse(result.Result.IsSuccessful, "String and HumanName are different");
-        }
-
-        [TestMethod]
-        public async Task FixedHumanNameDifferentInstance()
-        {
-            var fixedValue = ElementNode.Root("HumanName");
-            fixedValue.Add("family", "Brown", "string");
-            fixedValue.Add("given", "Joe", "string");
-            fixedValue.Add("given", "Patrick", "string");
-
-            var input = ElementNode.Root("HumanName");
-            input.Add("family", "Brown", "string");
-            input.Add("given", "Patrick", "string");
-            input.Add("given", "Joe", "string");
-
-            var validatable = new Fixed(fixedValue);
-            var result = await validatable.Validate(input, new ValidationContext()).ConfigureAwait(false);
-
-            Assert.IsNotNull(result);
-            Assert.IsFalse(result.Result.IsSuccessful, "The input (HumanName) is slightly different than the fixed value");
-        }
+        [FixedAssertionData]
+        public override Task SimpleAssertionTestcases(SimpleAssertion assertion, ITypedElement input, bool expectedResult, Issue expectedIssue, string failureMessage)
+            => base.SimpleAssertionTestcases(assertion, input, expectedResult, expectedIssue, failureMessage);
     }
 }

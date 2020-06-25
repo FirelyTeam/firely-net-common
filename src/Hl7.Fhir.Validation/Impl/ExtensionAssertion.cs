@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl
 {
-    public class ExtensionAssertion : IAssertion, IGroupValidatable
+    public class ExtensionAssertion : IGroupValidatable
     {
         private readonly Func<Uri, Task<IElementSchema>> _getSchema;
         private readonly Uri _referencedUri;

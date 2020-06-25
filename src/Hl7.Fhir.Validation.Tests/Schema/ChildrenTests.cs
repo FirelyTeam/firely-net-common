@@ -133,7 +133,7 @@ namespace Hl7.Fhir.Validation.Schema.Tests
     }
 
 
-    class VisitorAssertion : IAssertion, IValidatable
+    class VisitorAssertion : IValidatable
     {
         private readonly IAssertion _visited;
 

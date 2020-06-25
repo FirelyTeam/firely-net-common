@@ -1,97 +1,112 @@
-﻿using Hl7.Fhir.ElementModel;
+﻿using FluentAssertions;
+using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Model.Primitives;
 using Hl7.Fhir.Validation.Impl;
+using Hl7.Fhir.Validation.Impl.Tests;
 using Hl7.Fhir.Validation.Schema;
+using Hl7.Fhir.Validation.Tests.Support;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Tests.Impl
 {
-    [TestClass]
-    public class PatternTests
+    internal class PatternAssertionData : SimpleAssertionDataAttribute
     {
-        public static IEnumerable<object[]> TestData()
+        public override IEnumerable<object[]> GetData()
         {
             // integer
-            yield return new object[] { 90, 91, false, "result must be false [int]" };
-            yield return new object[] { 90, 90, true, "result must be true [int]" };
-
+            yield return new object[]
+            {
+                new Pattern(10),
+                ElementNode.ForPrimitive(91),
+                false, Issue.CONTENT_DOES_NOT_MATCH_PATTERN_VALUE, "result must be false [int]"
+            };
+            yield return new object[]
+            {
+                new Pattern(90),
+                ElementNode.ForPrimitive(90),
+                true, null, "result must be true [int]"
+            };
             // string
-            yield return new object[] { "test", "testfailure", false, "result must be false [string]" };
-            yield return new object[] { "test", "test", true, "result must be true [string]" };
-
+            yield return new object[]
+            {
+                new Pattern("test"),
+                ElementNode.ForPrimitive("testfailure"),
+                false, Issue.CONTENT_DOES_NOT_MATCH_PATTERN_VALUE, "result must be false [string]"
+            };
+            yield return new object[]
+            {
+                new Pattern("test"),
+                ElementNode.ForPrimitive("test"),
+                true, null,"result must be true [string]"
+            };
             // boolean
-            yield return new object[] { true, false, false, "result must be false [boolean]" };
-            yield return new object[] { true, true, true, "result must be true [boolean]" };
-
+            yield return new object[]
+            {
+                new Pattern(true),
+                ElementNode.ForPrimitive(false),
+                false, Issue.CONTENT_DOES_NOT_MATCH_PATTERN_VALUE, "result must be false [boolean]"
+            };
+            yield return new object[]
+            {
+                new Pattern(true),
+                ElementNode.ForPrimitive(true),
+                true, null, "result must be true [boolean]"
+            };
             // mixed primitive types
-            yield return new object[] { PartialDate.Parse("2019-09-05"), 20190905, false, "result must be false [mixed]" };
+            yield return new object[]
+            {
+                new Pattern(PartialDate.Parse("2019-09-05")),
+                ElementNode.ForPrimitive(20190905),
+                false, Issue.CONTENT_DOES_NOT_MATCH_PATTERN_VALUE, "result must be false [mixed]"
+            };
+            // Complex types
+            yield return new object[]
+            {
+                new Pattern(Foo.CreateHumanName("Brown", new[] { "Joe" } )),
+                Foo.CreateHumanName("Brown", new[] { "Joe", "Patrick" } ),
+                true, null, "The input should match the pattern: family name should be Brown, and given name is Joe"
+            };
+            yield return new object[]
+            {
+                new Pattern(Foo.CreateHumanName("Brown", new[] { "Joe" } )),
+                ElementNode.ForPrimitive("Brown, Joe Patrick"),
+                false, Issue.CONTENT_DOES_NOT_MATCH_PATTERN_VALUE, "String and HumanName are different"
+            };
+            yield return new object[]
+            {
+                new Pattern(Foo.CreateHumanName("Brown", new[] { "Joe" } )),
+                Foo.CreateHumanName("Brown", new string[0] ),
+                false, Issue.CONTENT_DOES_NOT_MATCH_PATTERN_VALUE, "The input should not match the pattern"
+            };
+        }
+    }
+
+    [TestClass]
+    public class PatternTests : SimpleAssertionTests
+    {
+        [TestMethod]
+        public void InvalidConstructors()
+        {
+            Action action = () => new Pattern(null);
+            action.Should().Throw<ArgumentNullException>();
+        }
+
+        [TestMethod]
+        public void CorrectConstructor()
+        {
+            var assertion = new Pattern(4);
+
+            assertion.Should().NotBeNull();
+            assertion.Key.Should().Be("pattern[x]");
+            assertion.Value.Should().BeAssignableTo<ITypedElement>();
         }
 
         [DataTestMethod]
-        [DynamicData(nameof(TestData), DynamicDataSourceType.Method)]
-        public async Task PrimitivePatternTestcases(object patternValue, object input, bool expectedResult, string failureMessage)
-        {
-            var validatable = new Pattern(patternValue);
-            var result = await validatable.Validate(ElementNode.ForPrimitive(input), ValidationContext.CreateDefault()).ConfigureAwait(false);
-
-            Assert.IsNotNull(result);
-            Assert.IsTrue(result.Result.IsSuccessful == expectedResult, failureMessage);
-        }
-
-        [TestMethod]
-        public async Task PatternHumanName()
-        {
-            var patternValue = ElementNode.Root("HumanName");
-            patternValue.Add("family", "Brown", "string");
-            patternValue.Add("given", "Joe", "string");
-            patternValue.Add("given", "Patrick", "string");
-
-            var validatable = new Pattern(patternValue);
-            var result = await validatable.Validate(ElementNode.ForPrimitive("Brown, Joe Patrick"), new ValidationContext()).ConfigureAwait(false);
-
-            Assert.IsNotNull(result);
-            Assert.IsFalse(result.Result.IsSuccessful, "String and HumanName are different");
-        }
-
-        [TestMethod]
-        public async Task ComplexTypePattern()
-        {
-            var patternValue = ElementNode.Root("HumanName");
-            patternValue.Add("family", "Brown", "string");
-            patternValue.Add("given", "Joe", "string");
-
-            var input = ElementNode.Root("HumanName");
-            input.Add("family", "Brown", "string");
-            input.Add("given", "Joe", "string");
-            input.Add("given", "Patrick", "string");
-
-            var validatable = new Pattern(patternValue);
-            var result = await validatable.Validate(input, new ValidationContext()).ConfigureAwait(false);
-
-            Assert.IsNotNull(result);
-            Assert.IsTrue(result.Result.IsSuccessful, "The input should match the pattern: family name should be Brown, and given name is Joe");
-        }
-
-        [TestMethod]
-        public async Task NotMatchingComplexTypePattern()
-        {
-            var patternValue = ElementNode.Root("HumanName");
-            patternValue.Add("family", "Brown", "string");
-            patternValue.Add("given", "Joe", "string");
-            patternValue.Add("given", "Donald", "string");
-
-            var input = ElementNode.Root("HumanName");
-            input.Add("family", "Brown", "string");
-            input.Add("given", "Joe", "string");
-
-            var validatable = new Pattern(patternValue);
-            var result = await validatable.Validate(input, new ValidationContext()).ConfigureAwait(false);
-
-            Assert.IsNotNull(result);
-            Assert.IsFalse(result.Result.IsSuccessful, "The input should not match the pattern");
-        }
-
+        [PatternAssertionData]
+        public override Task SimpleAssertionTestcases(SimpleAssertion assertion, ITypedElement input, bool expectedResult, Issue expectedIssue, string failureMessage)
+            => base.SimpleAssertionTestcases(assertion, input, expectedResult, expectedIssue, failureMessage);
     }
 }

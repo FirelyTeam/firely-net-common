@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl
 {
-    public class AnyAssertion : IAssertion, IValidatable, IGroupValidatable
+    public class AnyAssertion : IValidatable, IGroupValidatable
     {
         private readonly IAssertion[] _members;
 

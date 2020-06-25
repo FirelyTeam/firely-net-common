@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl
 {
-    public class BindingAssertion : IAssertion, IValidatable
+    public class BindingAssertion : IValidatable
     {
         public enum BindingStrength
         {

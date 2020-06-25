@@ -3,6 +3,7 @@ using Hl7.Fhir.ElementModel.Functions;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Validation.Schema;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl
@@ -13,7 +14,7 @@ namespace Hl7.Fhir.Validation.Impl
 
         public Pattern(ITypedElement patternValue)
         {
-            this._pattern = patternValue;
+            this._pattern = patternValue ?? throw new ArgumentNullException(nameof(patternValue));
         }
 
         public Pattern(object fixedValue) : this(ElementNode.ForPrimitive(fixedValue)) { }

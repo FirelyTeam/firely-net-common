@@ -1,111 +1,117 @@
-﻿using Hl7.Fhir.Model;
+﻿using FluentAssertions;
+using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Model;
 using Hl7.Fhir.Validation.Impl;
+using Hl7.Fhir.Validation.Impl.Tests;
 using Hl7.Fhir.Validation.Schema;
 using Hl7.Fhir.Validation.Tests.Support;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Tests.Impl
 {
-    [TestClass]
-    public class MinValueTests : SimpleAssertionTests
+    internal class MinValueAssertionData : SimpleAssertionDataAttribute
     {
-        public MinValueTests() : base(new MinMaxValue(PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(4), MinMax.MinValue))
+        private readonly IValidatable _validatableMinValue = new MinMaxValue(PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(4), MinMax.MinValue);
+        private readonly IValidatable _validatableMaxValue = new MinMaxValue(PrimitiveTypeExtensions.ToTypedElement<Date, string>("1905-08-23"), MinMax.MaxValue);
+
+        public override IEnumerable<object[]> GetData()
         {
+            yield return new object[]
+            {
+                _validatableMinValue,
+                PrimitiveTypeExtensions.ToTypedElement<FhirString, string>("a string"),
+                false, Issue.CONTENT_ELEMENT_PRIMITIVE_VALUE_NOT_COMPARABLE, "CompareWithOtherPrimitive"
+            };
+            yield return new object[]
+            {
+                _validatableMinValue,
+                PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(3),
+                false, Issue.CONTENT_ELEMENT_PRIMITIVE_VALUE_TOO_SMALL, "LessThan"
+            };
+            yield return new object[]
+            {
+                _validatableMinValue,
+                PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(4),
+                true, null, "Equals"
+            };
+            yield return new object[]
+            {
+                _validatableMinValue,
+                PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(5),
+                true, null, "GreatThan"
+            };
 
+            yield return new object[]
+            {
+                _validatableMaxValue,
+                PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(2),
+                false, Issue.CONTENT_ELEMENT_PRIMITIVE_VALUE_NOT_COMPARABLE, "CompareWithOtherPrimitive"
+            };
+            yield return new object[]
+            {
+                _validatableMaxValue,
+                PrimitiveTypeExtensions.ToTypedElement<Date, string>("1905-01-01"),
+                true, null, "LessThan"
+            };
+            yield return new object[]
+            {
+                _validatableMaxValue,
+                PrimitiveTypeExtensions.ToTypedElement<Date, string>("1905"),
+                true, null, "PartialEquals"
+            };
+            yield return new object[]
+            {
+                _validatableMaxValue,
+                PrimitiveTypeExtensions.ToTypedElement<Date, string>("1905-08-23"),
+                true, null, "Equals"
+            };
+            yield return new object[]
+            {
+                _validatableMaxValue,
+                PrimitiveTypeExtensions.ToTypedElement<Date, string>("1905-12-31"),
+                false, Issue.CONTENT_ELEMENT_PRIMITIVE_VALUE_TOO_LARGE, "GreaterThan"
+            };
+            yield return new object[]
+            {
+                _validatableMaxValue,
+                PrimitiveTypeExtensions.ToTypedElement<Date, string>("1906"),
+                false, Issue.CONTENT_ELEMENT_PRIMITIVE_VALUE_TOO_LARGE, "PartialGreaterThan"
+            };
         }
-
-        [TestMethod]
-        public async Task CompareWithOtherPrimitive()
-        {
-            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<FhirString, string>("a string"), new ValidationContext()).ConfigureAwait(false);
-
-            Assert.IsFalse(result.Result.IsSuccessful);
-
-        }
-
-        [TestMethod]
-        public async Task LessThen()
-        {
-            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(3), new ValidationContext()).ConfigureAwait(false);
-
-            Assert.IsFalse(result.Result.IsSuccessful);
-        }
-
-        [TestMethod]
-        public async Task Equals()
-        {
-            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(4), new ValidationContext()).ConfigureAwait(false);
-
-            Assert.IsTrue(result.Result.IsSuccessful);
-        }
-
-        [TestMethod]
-        public async Task GreaterThen()
-        {
-            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(5), new ValidationContext()).ConfigureAwait(false);
-
-            Assert.IsTrue(result.Result.IsSuccessful);
-        }
-
     }
 
     [TestClass]
-    public class MaxValueTests : SimpleAssertionTests
+    public class MinMaxValueTests : SimpleAssertionTests
     {
-        public MaxValueTests() : base(new MinMaxValue(PrimitiveTypeExtensions.ToTypedElement<Date, string>("1905-08-23"), MinMax.MaxValue))
+        [TestMethod]
+        public void InvalidConstructors()
         {
+            Action action = () => new MinMaxValue(null, MinMax.MaxValue);
+            action.Should().Throw<ArgumentNullException>();
 
+            var humanNameValue = ElementNode.Root("HumanName");
+            humanNameValue.Add("family", "Brown", "string");
+
+            action = () => new MinMaxValue(humanNameValue, MinMax.MaxValue);
+            action.Should().Throw<IncorrectElementDefinitionException>();
         }
 
         [TestMethod]
-        public async Task CompareWithOtherPrimitive()
+        public void CorrectConstructor()
         {
-            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(2), new ValidationContext()).ConfigureAwait(false);
+            var assertion = new MinMaxValue(PrimitiveTypeExtensions.ToTypedElement<Integer, int?>(4), MinMax.MaxValue);
 
-            Assert.IsFalse(result.Result.IsSuccessful);
-
+            assertion.Should().NotBeNull();
+            assertion.Key.Should().Be("maxValue[x]");
+            assertion.Value.Should().BeAssignableTo<ITypedElement>();
         }
 
-        [TestMethod]
-        public async Task LessThen()
-        {
-            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Date, string>("1905-01-01"), new ValidationContext()).ConfigureAwait(false);
-
-            Assert.IsTrue(result.Result.IsSuccessful);
-        }
-
-        [TestMethod]
-        public async Task PartialEquals()
-        {
-            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Date, string>("1905"), new ValidationContext()).ConfigureAwait(false);
-
-            Assert.IsTrue(result.Result.IsSuccessful);
-        }
-
-        [TestMethod]
-        public async Task Equals()
-        {
-            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Date, string>("1905-08-23"), new ValidationContext()).ConfigureAwait(false);
-
-            Assert.IsTrue(result.Result.IsSuccessful);
-        }
-
-        [TestMethod]
-        public async Task GreaterThen()
-        {
-            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Date, string>("1905-12-31"), new ValidationContext()).ConfigureAwait(false);
-
-            Assert.IsFalse(result.Result.IsSuccessful);
-        }
-
-        [TestMethod]
-        public async Task PartialGreaterThen()
-        {
-            var result = await _validatable.Validate(PrimitiveTypeExtensions.ToTypedElement<Date, string>("1906"), new ValidationContext()).ConfigureAwait(false);
-
-            Assert.IsFalse(result.Result.IsSuccessful);
-        }
-
+        [DataTestMethod]
+        [MinValueAssertionData]
+        public override Task SimpleAssertionTestcases(SimpleAssertion assertion, ITypedElement input, bool expectedResult, Issue expectedIssue, string failureMessage)
+            => base.SimpleAssertionTestcases(assertion, input, expectedResult, expectedIssue, failureMessage);
     }
 }

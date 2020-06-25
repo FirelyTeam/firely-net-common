@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl
 {
-    public class CardinalityAssertion : IAssertion, IGroupValidatable
+    public class CardinalityAssertion : IGroupValidatable
     {
         private readonly int? _min;
         private readonly int _max;

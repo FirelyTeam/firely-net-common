@@ -32,7 +32,7 @@ namespace Hl7.Fhir.Validation.Impl
 
         public MinMaxValue(ITypedElement minMaxValue, MinMax minMaxType)
         {
-            _minMaxValue = minMaxValue ?? throw new IncorrectElementDefinitionException($"{nameof(minMaxValue)} cannot be null");
+            _minMaxValue = minMaxValue ?? throw new ArgumentNullException($"{nameof(minMaxValue)} cannot be null");
             _minMaxType = minMaxType;
 
             _key = $"{_minMaxType.GetLiteral().Uncapitalize()}[x]";
@@ -57,7 +57,9 @@ namespace Hl7.Fhir.Validation.Impl
             // TODO : what to do if Value is not IComparable?
             if (input.Value is IComparable instanceValue)
             {
-                if (input.InstanceType != _minMaxValue.InstanceType) return Task.FromResult(Assertions.Failure);
+                if (input.InstanceType != _minMaxValue.InstanceType)
+                    return Task.FromResult(Assertions.Empty + ResultAssertion.CreateFailure(new IssueAssertion(Issue.CONTENT_ELEMENT_PRIMITIVE_VALUE_NOT_COMPARABLE, input.Location, $"Value '{instanceValue}' cannot be compared with {_minMaxValue.Value})")));
+
                 if (instanceValue.CompareTo(_minMaxValue.Value) == comparisonOutcome)
                 {
                     var label = comparisonOutcome == -1 ? "smaller than" :

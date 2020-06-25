@@ -87,7 +87,7 @@ namespace Hl7.Fhir.Validation.Impl
             }
             catch (Exception e)
             {
-                result += new TraceText($"Evaluation of FhirPath for constraint '{_key}' failed: {e.Message}");
+                result += new Trace($"Evaluation of FhirPath for constraint '{_key}' failed: {e.Message}");
             }
 
             if (!success)

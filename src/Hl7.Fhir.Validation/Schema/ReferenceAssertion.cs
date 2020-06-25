@@ -19,7 +19,7 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Schema
 {
-    public class ReferenceAssertion : IAssertion, IGroupValidatable
+    public class ReferenceAssertion : IGroupValidatable
     {
         private const string RESOURCE_URI = "http://hl7.org/fhir/StructureDefinition/Resource";
         private const string REFERENCE_URI = "http://hl7.org/fhir/StructureDefinition/Reference";

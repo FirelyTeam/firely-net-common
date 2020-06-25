@@ -9,6 +9,7 @@
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Validation.Schema;
+using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -21,7 +22,7 @@ namespace Hl7.Fhir.Validation.Impl
 
         public RegExAssertion(string pattern)
         {
-            _pattern = pattern;
+            _pattern = pattern ?? throw new ArgumentNullException(nameof(pattern));
             _regex = new Regex(pattern);
         }
 
@@ -31,16 +32,12 @@ namespace Hl7.Fhir.Validation.Impl
 
         public override Task<Assertions> Validate(ITypedElement input, ValidationContext vc)
         {
-            if (_pattern != null)
-            {
-                var regex = new Regex(_pattern);
-                var value = toStringRepresentation(input);
-                var success = Regex.Match(value, $"^{_regex}$").Success;
+            var value = toStringRepresentation(input);
+            var success = _regex.Match(value).Success;
 
-                if (!success)
-                {
-                    return Task.FromResult(Assertions.Empty + ResultAssertion.CreateFailure(new IssueAssertion(Issue.CONTENT_ELEMENT_INVALID_PRIMITIVE_VALUE, input.Location, $"Value '{value}' does not match regex '{regex}'")));
-                }
+            if (!success)
+            {
+                return Task.FromResult(Assertions.Empty + ResultAssertion.CreateFailure(new IssueAssertion(Issue.CONTENT_ELEMENT_INVALID_PRIMITIVE_VALUE, input.Location, $"Value '{value}' does not match regex '{_pattern}'")));
             }
 
             return Task.FromResult(Assertions.Success);

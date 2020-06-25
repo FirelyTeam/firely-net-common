@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Impl
 {
-    public class SliceAssertion : IAssertion, IGroupValidatable
+    public class SliceAssertion : IGroupValidatable
     {
         public class Slice : IAssertion
         {
