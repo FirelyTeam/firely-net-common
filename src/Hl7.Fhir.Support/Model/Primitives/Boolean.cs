@@ -10,7 +10,7 @@ using System;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public abstract class Boolean
+    public static class Boolean
     {
         public static bool Parse(string value) =>
             TryParse(value, out var result) ? result : throw new FormatException("Boolean value is in an invalid format.");
@@ -33,5 +33,26 @@ namespace Hl7.Fhir.Model.Primitives
                 return false;
             }
         }
+
+        // Comparison functions work according to the rules described for CQL, 
+        // see https://cql.hl7.org/09-b-cqlreference.html#comparison-operators-4
+        // for more details.
+
+        /// <summary>
+        /// Compares two booleans according to CQL equality rules.
+        /// </summary>
+        /// <param name="l"></param>
+        /// <param name="r"></param>
+        /// <returns>Return true if both arguments are exactly the same boolean value, false otherwise. Returns null if any of the
+        /// arguments are null.</returns>
+        public static bool IsEqualTo(bool l, bool r) => l == r;
+
+        /// <summary>
+        /// Compares two booleans according to CQL equivalence rules.
+        /// </summary>
+        /// <param name="l"></param>
+        /// <param name="r"></param>
+        /// <returns>Return true if both arguments are exactly the same boolean value, false otherwise</returns>
+        public static bool IsEquivalentTo(bool l, bool r) => l == r;
     }
 }

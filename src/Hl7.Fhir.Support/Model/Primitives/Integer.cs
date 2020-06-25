@@ -11,7 +11,7 @@ using System.Xml;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public abstract class Integer
+    public static class Integer
     {
         public static int Parse(string value) =>
             TryParse(value, out int result) ? result : throw new FormatException("Integer value is in an invalid format.");
@@ -22,5 +22,23 @@ namespace Hl7.Fhir.Model.Primitives
             value = val;
             return succ;
         }
+
+
+        /// <summary>
+        /// Compares two integers according to CQL equality rules.
+        /// </summary>
+        /// <param name="l"></param>
+        /// <param name="r"></param>
+        /// <returns>Return true if both arguments are exactly the same integer value, false otherwise. Returns null if any of the
+        /// arguments are null.</returns>
+        public static bool IsEqualTo(int l, int r) => l == r;          
+
+        /// <summary>
+        /// Compares two integers according to CQL equivalence rules.
+        /// </summary>
+        /// <param name="l"></param>
+        /// <param name="r"></param>
+        /// <returns>Return true if both arguments are exactly the same integer value, false otherwise</returns>
+        public static bool IsEquivalentTo(int l, int r) => l == r;
     }
 }

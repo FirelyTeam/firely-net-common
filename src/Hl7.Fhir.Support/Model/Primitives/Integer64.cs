@@ -22,5 +22,22 @@ namespace Hl7.Fhir.Model.Primitives
             value = val;
             return succ;
         }
+
+        /// <summary>
+        /// Compares two 64-bit integers according to CQL equality rules.
+        /// </summary>
+        /// <param name="l"></param>
+        /// <param name="r"></param>
+        /// <returns>Return true if both arguments are exactly the same integer value, false otherwise. Returns null if any of the
+        /// arguments are null.</returns>
+        public static bool IsEqualTo(long l, long r) => l == r;
+
+        /// <summary>
+        /// Compares two 64-bit integers according to CQL equivalence rules.
+        /// </summary>
+        /// <param name="l"></param>
+        /// <param name="r"></param>
+        /// <returns>Return true if both arguments are exactly the same integer value, false otherwise</returns>
+        public static bool IsEquivalentTo(long l, long r) => l == r;
     }
 }

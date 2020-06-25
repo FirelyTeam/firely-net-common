@@ -14,29 +14,30 @@ namespace Hl7.Fhir.Model.Primitives
 {
     public static class Any
     {
-        public static bool IsEqualTo(object l, object r)
+        public static bool? IsEqualTo(object l, object r)
         {
-            if (l == null && r == null) return true;
-            if (l == null || r == null) return false;
+            if (l == null || r == null) return null;
+
+            // this really should be handled by casts outside this func (and in the engine?)
+            l = UpcastOperand(l, r);
+            r = UpcastOperand(r, l);
 
             if (l is string lstr && r is string rstr)
-                return lstr.IsEqualTo(rstr);
+                return String.IsEqualTo(lstr,rstr);
             else if (l is bool lbl && r is bool rbl)
-                return lbl.IsEqualTo(rbl);
+                return Boolean.IsEqualTo(lbl, rbl);
+            else if (l is int lint && r is int rint)
+                return Integer.IsEqualTo(lint, rint);
             else if (l is long llng && r is long rlng)
-                return llng.IsEqualTo(rlng);
+                return Integer64.IsEqualTo(llng, rlng);
             else if (l is decimal ldec && r is decimal rdec)
-                return ldec.IsEqualTo(rdec);
-            else if (l is long llng2 && r is decimal rdec2)     // this really should be handled by casts outside this func (and in the engine?)
-                return ((decimal)llng2).IsEqualTo(rdec2);
-            else if (l is decimal ldec3 && r is long rlng3)     // this really should be handled by casts outside this func (and in the engine?)
-                return ldec3.IsEqualTo((decimal)rlng3);
+                return Decimal.IsEqualTo(ldec,rdec);
             else if (l is PartialTime lpt && r is PartialTime rpt)
                 return lpt.IsEqualTo(rpt);
             else if (l is PartialDateTime lpdt && r is PartialDateTime rpdt)
                 return lpdt.IsEqualTo(rpdt);
             else if (l is PartialDate lpd && r is PartialDate rpd)
-                return lpd.IsEqualTo(rpd);
+                return PartialDate.IsEqualTo(lpd,rpd);
             else if (l is Quantity lq && r is Quantity rq)
                 return lq.IsEqualTo(rq);
             else
@@ -46,29 +47,40 @@ namespace Hl7.Fhir.Model.Primitives
                 return false;
         }
 
+        internal static object UpcastOperand(object value, object other)
+        {
+            if (value is int && other is long) return (long)value;
+            if (value is long && other is decimal) return (decimal)value;
+
+            // nothing to upcast, return value;
+            return value;
+        }
+
         public static bool IsEquivalentTo(object l, object r)
         {
             if (l == null && r == null) return true;
             if (l == null || r == null) return false;
 
+            // this really should be handled by casts outside this func (and in the engine?)
+            l = UpcastOperand(l, r);
+            r = UpcastOperand(r, l);
+
             if (l is string lstr && r is string rstr)
-                return lstr.IsEquivalentTo(rstr);
+                return String.IsEquivalentTo(lstr,rstr);
             else if (l is bool lbl && r is bool rbl)
-                return lbl.IsEquivalentTo(rbl);
+                return Boolean.IsEquivalentTo(lbl, rbl);
+            else if (l is int lint && r is int rint)
+                return Integer.IsEquivalentTo(lint,rint);
             else if (l is long llng && r is long rlng)
-                return llng.IsEquivalentTo(rlng);
+                return Integer64.IsEquivalentTo(llng, rlng);
             else if (l is decimal ldec && r is decimal rdec)
-                return ldec.IsEquivalentTo(rdec);
-            else if (l is long llng2 && r is decimal rdec2)     // this really should be handled by casts outside this func (and in the engine?)
-                return ((decimal)llng2).IsEquivalentTo(rdec2);
-            else if (l is decimal ldec3 && r is long rlng3)     // this really should be handled by casts outside this func (and in the engine?)
-                return ldec3.IsEquivalentTo((decimal)rlng3);
+                return Decimal.IsEquivalentTo(ldec,rdec);
             else if (l is PartialTime lpt && r is PartialTime rpt)
                 return lpt.IsEquivalentTo(rpt);
             else if (l is PartialDateTime lpdt && r is PartialDateTime rpdt)
                 return lpdt.IsEquivalentTo(rpdt);
             else if (l is PartialDate lpd && r is PartialDate rpd)
-                return lpd.IsEquivalentTo(rpd);
+                return PartialDate.IsEquivalentTo(lpd,rpd);
             else if (l is Quantity lq && r is Quantity rq)
                 return lq.IsEquivalentTo(rq);
             else

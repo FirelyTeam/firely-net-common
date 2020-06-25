@@ -128,9 +128,6 @@ namespace Hl7.Fhir.Model.Primitives
             return DateTimeOffset.TryParse(parseableDT, out value._parsedValue);
         }
 
-        public bool IsEqualTo(PartialDate other) => this == other;
-        public bool IsEquivalentTo(PartialDate other) => throw new NotImplementedException();
-
         // TODO: Note, this enables comparisons between values that did or did not have timezones, need to fix.
         private DateTimeOffset toComparable() => _parsedValue.ToUniversalTime();
 
@@ -161,5 +158,48 @@ namespace Hl7.Fhir.Model.Primitives
 
         public int CompareTo(PartialDate obj) => CompareTo((object)obj);
         public override bool Equals(object obj) => obj is PartialDate date && Equals(date);
+
+        // Comparison functions work according to the rules described for CQL, 
+        // see https://cql.hl7.org/09-b-cqlreference.html#comparison-operators-4
+        // for more details.
+
+        /// <summary>
+        /// Compares two (partial) dates according to CQL equality rules.
+        /// </summary>
+        /// <param name="l"></param>
+        /// <param name="r"></param>
+        /// <returns>true is the precision of the dates is the same and the individual components for
+        /// each precision are the same.</returns>
+        /// <remarks>
+        /// The comparison is performed by considering each precision in order, beginning with years 
+        /// (or hours for time values). If the values are the same, comparison proceeds to the next precision; 
+        /// if the values are different, the comparison stops and the result is false. If one input has a value 
+        /// for the precision and the other does not, the comparison stops and the result is null; if neither
+        /// input has a value for the precision, or the last precision has been reached, the comparison stops
+        /// and the result is true. For the purposes of comparison, seconds and milliseconds are combined as a 
+        /// single precision using a decimal, with decimal equality semantics.</remarks>
+        public static bool? IsEqualTo(PartialDate l, PartialDate r)
+        {
+            if (l.Precision != r.Precision) return null;
+            return l.toComparable() == r.toComparable();
+        }
+
+        /// <summary>
+        /// Compares two (partial) dates according to CQL equivalence rules.
+        /// </summary>
+        /// <param name="l"></param>
+        /// <param name="r"></param>
+        /// <returns>true is the precision of the dates is the same and the individual components for
+        /// each precision are the same.</returns>
+        /// <remarks>For Date, DateTime, and Time values, the comparison is performed in the same way as 
+        /// it is for equality, except that if one input has a value for a given precision and the other 
+        /// does not, the comparison stops and the result is false, rather than null. As with equality, 
+        /// the second and millisecond precisions are combined as a single precision using a decimal, 
+        /// with decimal equivalence semantics.</remarks>
+        public static bool IsEquivalentTo(PartialDate l, PartialDate r)
+        {
+            if (l.Precision != r.Precision) return false;
+            return l.toComparable() == r.toComparable();
+        }
     }
 }
