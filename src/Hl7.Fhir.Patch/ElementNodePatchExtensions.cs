@@ -17,55 +17,55 @@ namespace Hl7.Fhir.Patch
         /// <summary>
         /// Apply <paramref name="patchDocument"/> to this <see cref="ElementNode"/>
         /// </summary>
-        /// <param name="this"><see cref="ElementNode"/> to apply patch to</param>
-        /// <param name="patchDocument"><see cref="PatchDocument"/> to apply to this <see cref="ElementNode"/></param>
-        public static void Apply (this ElementNode @this, PatchDocument patchDocument)
+        /// <param name="original"><see cref="ElementNode"/> to apply patch to</param>
+        /// <param name="patchDocument"><see cref="IPatchDocument"/> to apply to this <see cref="ElementNode"/></param>
+        internal static void Apply (this ElementNode original, IPatchDocument patchDocument)
         {
-            patchDocument.ApplyTo(@this);
+            patchDocument.ApplyTo(original);
         }
 
         /// <summary>
         /// Apply <paramref name="patchDocument"/> to this <see cref="ElementNode"/>
         /// </summary>
-        /// <param name="this"><see cref="ElementNode"/> to apply patch to</param>
-        /// <param name="patchDocument"><see cref="PatchDocument"/> to apply to this <see cref="ElementNode"/></param>
+        /// <param name="original"><see cref="ElementNode"/> to apply patch to</param>
+        /// <param name="patchDocument"><see cref="IPatchDocument"/> to apply to this <see cref="ElementNode"/></param>
         /// <param name="logErrorAction">Action to log errors</param>
-        public static void Apply (this ElementNode @this, PatchDocument patchDocument, Action<PatchError> logErrorAction)
+        internal static void Apply (this ElementNode original, IPatchDocument patchDocument, Action<PatchError> logErrorAction)
         {
-            patchDocument.ApplyTo(@this, logErrorAction);
+            patchDocument.ApplyTo(original, logErrorAction);
         }
 
         /// <summary>
         /// Apply <paramref name="patchDocument"/> to this <see cref="ElementNode"/>
         /// </summary>
-        /// <param name="this"><see cref="ElementNode"/> to apply patch to</param>
-        /// <param name="patchDocument"><see cref="PatchDocument"/> to apply to this <see cref="ElementNode"/></param>
+        /// <param name="original"><see cref="ElementNode"/> to apply patch to</param>
+        /// <param name="patchDocument"><see cref="IPatchDocument"/> to apply to this <see cref="ElementNode"/></param>
         /// <param name="adapter">IObjectAdapter instance to use when applying</param>
         /// <param name="logErrorAction">Action to log errors</param>
-        public static void Apply (this ElementNode @this, PatchDocument patchDocument, IObjectAdapter adapter, Action<PatchError> logErrorAction)
+        internal static void Apply (this ElementNode original, IPatchDocument patchDocument, IObjectAdapter adapter, Action<PatchError> logErrorAction)
         {
-            patchDocument.ApplyTo(@this, adapter, logErrorAction);
+            patchDocument.ApplyTo(original, adapter, logErrorAction);
         }
 
         /// <summary>
         /// Apply <paramref name="patchDocument"/> to this <see cref="ElementNode"/>
         /// </summary>
-        /// <param name="this"><see cref="ElementNode"/> to apply patch to</param>
-        /// <param name="patchDocument"><see cref="PatchDocument"/> to apply to this <see cref="ElementNode"/></param>
+        /// <param name="original"><see cref="ElementNode"/> to apply patch to</param>
+        /// <param name="patchDocument"><see cref="IPatchDocument"/> to apply to this <see cref="ElementNode"/></param>
         /// <param name="adapter">IObjectAdapter instance to use when applying</param>
-        public static void Apply (this ElementNode @this, PatchDocument patchDocument, IObjectAdapter adapter)
+        internal static void Apply (this ElementNode original, IPatchDocument patchDocument, IObjectAdapter adapter)
         {
-            patchDocument.ApplyTo(@this, adapter);
+            patchDocument.ApplyTo(original, adapter);
         }
 
         /// <summary>
         /// Apply <paramref name="patchDocument"/> to a copy of this <see cref="ITypedElement"/> and return the patched <see cref="ElementNode"/>
         /// </summary>
-        /// <param name="this"><see cref="ElementNode"/> to apply patch to</param>
-        /// <param name="patchDocument"><see cref="PatchDocument"/> to apply to this <see cref="ElementNode"/></param>
-        public static ElementNode Apply (this ITypedElement @this, PatchDocument patchDocument)
+        /// <param name="original"><see cref="ElementNode"/> to apply patch to</param>
+        /// <param name="patchDocument"><see cref="IPatchDocument"/> to apply to this <see cref="ElementNode"/></param>
+        public static ITypedElement Apply (this ITypedElement original, IPatchDocument patchDocument)
         {
-            var elementNode = ElementNode.FromElement(@this);
+            var elementNode = ElementNode.FromElement(original);
             patchDocument.ApplyTo(elementNode);
             return elementNode;
         }
@@ -73,12 +73,12 @@ namespace Hl7.Fhir.Patch
         /// <summary>
         /// Apply <paramref name="patchDocument"/> to a copy of this <see cref="ITypedElement"/> and return the patched <see cref="ElementNode"/>
         /// </summary>
-        /// <param name="this"><see cref="ElementNode"/> to apply patch to</param>
-        /// <param name="patchDocument"><see cref="PatchDocument"/> to apply to this <see cref="ElementNode"/></param>
+        /// <param name="original"><see cref="ElementNode"/> to apply patch to</param>
+        /// <param name="patchDocument"><see cref="IPatchDocument"/> to apply to this <see cref="ElementNode"/></param>
         /// <param name="logErrorAction">Action to log errors</param>
-        public static ElementNode Apply (this ITypedElement @this, PatchDocument patchDocument, Action<PatchError> logErrorAction)
+        public static ITypedElement Apply (this ITypedElement original, IPatchDocument patchDocument, Action<PatchError> logErrorAction)
         {
-            var elementNode = ElementNode.FromElement(@this);
+            var elementNode = ElementNode.FromElement(original);
             patchDocument.ApplyTo(elementNode, logErrorAction);
             return elementNode;
         }
@@ -86,13 +86,13 @@ namespace Hl7.Fhir.Patch
         /// <summary>
         /// Apply <paramref name="patchDocument"/> to a copy of this <see cref="ITypedElement"/> and return the patched <see cref="ElementNode"/>
         /// </summary>
-        /// <param name="this"><see cref="ElementNode"/> to apply patch to</param>
-        /// <param name="patchDocument"><see cref="PatchDocument"/> to apply to this <see cref="ElementNode"/></param>
+        /// <param name="original"><see cref="ElementNode"/> to apply patch to</param>
+        /// <param name="patchDocument"><see cref="IPatchDocument"/> to apply to this <see cref="ElementNode"/></param>
         /// <param name="adapter">IObjectAdapter instance to use when applying</param>
         /// <param name="logErrorAction">Action to log errors</param>
-        public static ElementNode Apply (this ITypedElement @this, PatchDocument patchDocument, IObjectAdapter adapter, Action<PatchError> logErrorAction)
+        public static ITypedElement Apply (this ITypedElement original, IPatchDocument patchDocument, IObjectAdapter adapter, Action<PatchError> logErrorAction)
         {
-            var elementNode = ElementNode.FromElement(@this);
+            var elementNode = ElementNode.FromElement(original);
             patchDocument.ApplyTo(elementNode, adapter, logErrorAction);
             return elementNode;
         }
@@ -100,12 +100,12 @@ namespace Hl7.Fhir.Patch
         /// <summary>
         /// Apply <paramref name="patchDocument"/> to a copy of this <see cref="ITypedElement"/> and return the patched <see cref="ElementNode"/>
         /// </summary>
-        /// <param name="this"><see cref="ElementNode"/> to apply patch to</param>
-        /// <param name="patchDocument"><see cref="PatchDocument"/> to apply to this <see cref="ElementNode"/></param>
+        /// <param name="original"><see cref="ElementNode"/> to apply patch to</param>
+        /// <param name="patchDocument"><see cref="IPatchDocument"/> to apply to this <see cref="ElementNode"/></param>
         /// <param name="adapter">IObjectAdapter instance to use when applying</param>
-        public static ElementNode Apply (this ITypedElement @this, PatchDocument patchDocument, IObjectAdapter adapter)
+        public static ITypedElement Apply (this ITypedElement original, IPatchDocument patchDocument, IObjectAdapter adapter)
         {
-            var elementNode = ElementNode.FromElement(@this);
+            var elementNode = ElementNode.FromElement(original);
             patchDocument.ApplyTo(elementNode, adapter);
             return elementNode;
         }

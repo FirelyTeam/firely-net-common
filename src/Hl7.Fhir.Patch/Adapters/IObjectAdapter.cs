@@ -35,7 +35,7 @@ namespace Hl7.Fhir.Patch.Adapters
         /// </summary>
         /// <param name="operation">The add operation.</param>
         /// <param name="objectToApplyTo">Object to apply the operation to.</param>
-        void Add(Operation operation, object objectToApplyTo);
+        void Add(AddOperation operation, object objectToApplyTo);
 
         /// <summary>
         /// Using the "insert" operation a new value is inserted into the target array
@@ -58,7 +58,7 @@ namespace Hl7.Fhir.Patch.Adapters
         /// </summary>
         /// <param name="operation">The add operation.</param>
         /// <param name="objectToApplyTo">Object to apply the operation to.</param>
-        void Insert (Operation operation, object objectToApplyTo);
+        void Insert (InsertOperation operation, object objectToApplyTo);
 
         /// <summary>
         /// Using the "delete" operation the value at the target location is deleted.
@@ -76,7 +76,7 @@ namespace Hl7.Fhir.Patch.Adapters
         /// </summary>
         /// <param name="operation">The remove operation.</param>
         /// <param name="objectToApplyTo">Object to apply the operation to.</param>
-        void Delete (Operation operation, object objectToApplyTo);
+        void Delete (DeleteOperation operation, object objectToApplyTo);
 
         /// <summary>
         /// Using the "replace" operation the value at the target location is replaced
@@ -92,7 +92,7 @@ namespace Hl7.Fhir.Patch.Adapters
         /// </summary>
         /// <param name="operation">The replace operation.</param>
         /// <param name="objectToApplyTo">Object to apply the operation to.</param>
-        void Replace(Operation operation, object objectToApplyTo);
+        void Replace(ReplaceOperation operation, object objectToApplyTo);
 
         /// <summary>
         /// Using the "move" operation the value at a source index in the target array is removed
@@ -117,6 +117,6 @@ namespace Hl7.Fhir.Patch.Adapters
         /// </summary>
         /// <param name="operation">The move operation.</param>
         /// <param name="objectToApplyTo">Object to apply the operation to.</param>
-        void Move (Operation operation, object objectToApplyTo);
+        void Move (MoveOperation operation, object objectToApplyTo);
     }
 }

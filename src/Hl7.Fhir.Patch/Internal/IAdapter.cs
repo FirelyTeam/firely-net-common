@@ -19,31 +19,26 @@ namespace Hl7.Fhir.Patch.Internal
         bool TryAdd(
             object target,
             string name,
-            IStructureDefinitionSummaryProvider contractResolver,
             object value,
             out string errorMessage);
 
         bool TryInsert (
             object target,
             int index,
-            IStructureDefinitionSummaryProvider contractResolver,
             object value,
             out string errorMessage);
 
         bool TryDelete(
             object target,
-            IStructureDefinitionSummaryProvider contractResolver,
             out string errorMessage);
 
         bool TryReplace(
             object target,
-            IStructureDefinitionSummaryProvider contractResolver,
             object value,
             out string errorMessage);
 
         bool TryGet (
             object target,
-            IStructureDefinitionSummaryProvider contractResolver,
             out object value,
             out string errorMessage);
     }

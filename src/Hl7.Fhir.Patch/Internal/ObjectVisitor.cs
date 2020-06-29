@@ -10,6 +10,7 @@ using System;
 using System.Linq;
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Patch.Adapters;
+using Hl7.Fhir.Specification;
 using Hl7.FhirPath;
 
 namespace Hl7.Fhir.Patch.Internal
@@ -43,7 +44,7 @@ namespace Hl7.Fhir.Patch.Internal
             _adapterFactory = adapterFactory ?? throw new ArgumentNullException(nameof(adapterFactory));
         }
 
-        public bool TryVisit(ref object target, out IAdapter adapter, out string errorMessage)
+        public bool TryVisit(IStructureDefinitionSummaryProvider provider, ref object target, out IAdapter adapter, out string errorMessage)
         {
             
             if (!(target is ITypedElement typedTarget))
@@ -73,14 +74,14 @@ namespace Hl7.Fhir.Patch.Internal
                 return false;
             }
 
-            adapter = SelectAdapter(target);
+            adapter = SelectAdapter(target, provider);
             errorMessage = null;
             return true;
         }
 
-        private IAdapter SelectAdapter(object targetObject)
+        private IAdapter SelectAdapter(object targetObject, IStructureDefinitionSummaryProvider provider)
         {
-            return _adapterFactory.Create(targetObject);
+            return _adapterFactory.Create(targetObject, provider);
         }
     }
 }

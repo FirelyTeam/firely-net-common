@@ -6,13 +6,39 @@
  * available at https://github.com/FirelyTeam/fhir-net-api/blob/master/LICENSE
  */
 
-using Hl7.Fhir.Patch.Operations;
-using System.Collections.Generic;
+using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Patch.Adapters;
+using System;
 
 namespace Hl7.Fhir.Patch
 {
     public interface IPatchDocument
     {
-        IList<Operation> GetOperations();
+        /// <summary>
+        /// Apply this IPatchDocument
+        /// </summary>
+        /// <param name="objectToApplyTo">Object to apply the IPatchDocument to</param>
+        void ApplyTo (ElementNode objectToApplyTo);
+        /// <summary>
+        /// Apply this IPatchDocument
+        /// </summary>
+        /// <param name="objectToApplyTo">Object to apply the IPatchDocument to</param>
+        /// <param name="logErrorAction">Action to log errors</param>
+        void ApplyTo (ElementNode objectToApplyTo, Action<PatchError> logErrorAction);
+
+        /// <summary>
+        /// Apply this IPatchDocument
+        /// </summary>
+        /// <param name="objectToApplyTo">Object to apply the IPatchDocument to</param>
+        /// <param name="adapter">IObjectAdapter instance to use when applying</param>
+        /// <param name="logErrorAction">Action to log errors</param>
+        void ApplyTo (ElementNode objectToApplyTo, IObjectAdapter adapter, Action<PatchError> logErrorAction);
+
+        /// <summary>
+        /// Apply this IPatchDocument
+        /// </summary>
+        /// <param name="objectToApplyTo">Object to apply the IPatchDocument to</param>
+        /// <param name="adapter">IObjectAdapter instance to use when applying</param>
+        void ApplyTo (ElementNode objectToApplyTo, IObjectAdapter adapter);
     }
 }

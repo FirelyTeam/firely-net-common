@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Patch.Adapters;
 using Hl7.Fhir.Specification;
 
 namespace Hl7.Fhir.Patch.Internal
@@ -20,10 +21,18 @@ namespace Hl7.Fhir.Patch.Internal
     /// </summary>
     internal class CollectionAdapter : IAdapter
     {
+        private readonly IStructureDefinitionSummaryProvider _provider;
+        private readonly IAdapterFactory _adapterFactory;
+
+        public CollectionAdapter (IStructureDefinitionSummaryProvider provider, IAdapterFactory adapterFactory)
+        {
+            _provider = provider ?? throw new ArgumentNullException(nameof(provider));
+            _adapterFactory = adapterFactory ?? throw new ArgumentNullException(nameof(adapterFactory));
+        }
+
         public virtual bool TryAdd(
             object target,
             string name,
-            IStructureDefinitionSummaryProvider contractResolver,
             object value,
             out string errorMessage)
         {
@@ -34,7 +43,6 @@ namespace Hl7.Fhir.Patch.Internal
         public virtual bool TryInsert (
             object target,
             int index,
-            IStructureDefinitionSummaryProvider contractResolver,
             object value,
             out string errorMessage)
         {
@@ -48,7 +56,7 @@ namespace Hl7.Fhir.Patch.Internal
             }
 
             var sampleElement = collection.First();
-            if ( !TryConvertValue(value, sampleElement.Definition, out var convertedValue) )
+            if ( !ValueValidator.IsValueValidElement(value, sampleElement.Definition, out var valueNode) )
             {
                 errorMessage = $"The value '{value}' is invalid for target location.";
                 return false;
@@ -60,11 +68,11 @@ namespace Hl7.Fhir.Patch.Internal
                 // if inserting to the end of the array use a simpler Add method
                 if ( index == arraySize )
                 {
-                    parent.Add(contractResolver, convertedValue, sampleElement.Name);
+                    parent.Add(_provider, valueNode, sampleElement.Name);
                 }
                 else
                 {
-                    parent.Insert(contractResolver, convertedValue, index, sampleElement.Name);
+                    parent.Insert(_provider, valueNode, index, sampleElement.Name);
                 }
 
                 errorMessage = null;
@@ -79,7 +87,6 @@ namespace Hl7.Fhir.Patch.Internal
 
         public virtual bool TryDelete(
             object target,
-            IStructureDefinitionSummaryProvider contractResolver,
             out string errorMessage)
         {
             var collection = (IEnumerable<ITypedElement>) target;
@@ -89,13 +96,13 @@ namespace Hl7.Fhir.Patch.Internal
                 return false;
             }
 
-            var adapter = new ElementNodeAdapter();
-            return adapter.TryDelete(collection.First(), contractResolver, out errorMessage);
+            object newTarget = collection.First();
+            IAdapter adapter = _adapterFactory.Create(newTarget, _provider);
+            return adapter.TryDelete(newTarget, out errorMessage);
         }
 
         public virtual bool TryReplace(
             object target,
-            IStructureDefinitionSummaryProvider contractResolver,
             object value,
             out string errorMessage)
         {
@@ -106,13 +113,13 @@ namespace Hl7.Fhir.Patch.Internal
                 return false;
             }
 
-            var adapter = new ElementNodeAdapter();
-            return adapter.TryReplace(collection.First(), contractResolver, value, out errorMessage);
+            object newTarget = collection.First();
+            IAdapter adapter = _adapterFactory.Create(newTarget, _provider);
+            return adapter.TryReplace(newTarget, value, out errorMessage);
         }
 
         public virtual bool TryGet (
             object target,
-            IStructureDefinitionSummaryProvider contractResolver,
             out object value,
             out string errorMessage)
         {
@@ -124,26 +131,9 @@ namespace Hl7.Fhir.Patch.Internal
                 return false;
             }
 
-            var adapter = new ElementNodeAdapter();
-            return adapter.TryGet(collection.First(), contractResolver, out value, out errorMessage);
-        }
-
-        protected virtual bool TryConvertValue (object value, IElementDefinitionSummary propertyDefinition, out ElementNode convertedValue)
-        {
-            if ( !(value is ITypedElement typedValue) )
-            {
-                convertedValue = null;
-                return false;
-            }
-
-            if ( propertyDefinition.Type.Any(t => t.GetTypeName() == typedValue.InstanceType) )
-            {
-                convertedValue = ElementNode.FromElement(typedValue);
-                return true;
-            }
-
-            convertedValue = null;
-            return false;
+            object newTarget = collection.First();
+            IAdapter adapter = _adapterFactory.Create(newTarget, _provider);
+            return adapter.TryGet(newTarget, out value, out errorMessage);
         }
     }
 }

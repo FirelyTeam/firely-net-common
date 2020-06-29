@@ -22,27 +22,27 @@ namespace Hl7.Fhir.Patch.Adapters
         /// <summary>
         /// Initializes a new instance of <see cref="ObjectAdapter"/>.
         /// </summary>
-        /// /// <param name="contractResolver">The <see cref="IStructureDefinitionSummaryProvider"/>.</param>
+        /// /// <param name="provider">The <see cref="IStructureDefinitionSummaryProvider"/>.</param>
         /// <param name="logErrorAction">The <see cref="Action"/> for logging <see cref="PatchError"/>.</param>
         public ObjectAdapter (
-            IStructureDefinitionSummaryProvider contractResolver,
+            IStructureDefinitionSummaryProvider provider,
             Action<PatchError> logErrorAction):
-            this(contractResolver, logErrorAction, new AdapterFactory())
+            this(provider, logErrorAction, new AdapterFactory())
         {
         }
 
         /// <summary>
         /// Initializes a new instance of <see cref="ObjectAdapter"/>.
         /// </summary>
-        /// <param name="contractResolver">The <see cref="IStructureDefinitionSummaryProvider"/>.</param>
+        /// <param name="provider">The <see cref="IStructureDefinitionSummaryProvider"/>.</param>
         /// <param name="logErrorAction">The <see cref="Action"/> for logging <see cref="PatchError"/>.</param>
         /// <param name="adapterFactory">The <see cref="IAdapterFactory"/> to use when creating adaptors.</param>
         public ObjectAdapter (
-            IStructureDefinitionSummaryProvider contractResolver,
+            IStructureDefinitionSummaryProvider provider,
             Action<PatchError> logErrorAction,
             IAdapterFactory adapterFactory)
          {
-            ContractResolver = contractResolver ?? throw new ArgumentNullException(nameof(contractResolver));
+            Provider = provider ?? throw new ArgumentNullException(nameof(provider));
             LogErrorAction = logErrorAction;
             AdapterFactory = adapterFactory ?? throw new ArgumentNullException(nameof(adapterFactory));
          }
@@ -50,7 +50,7 @@ namespace Hl7.Fhir.Patch.Adapters
         /// <summary>
         /// Gets or sets the <see cref="IStructureDefinitionSummaryProvider"/>.
         /// </summary>
-        public IStructureDefinitionSummaryProvider ContractResolver { get; }
+        public IStructureDefinitionSummaryProvider Provider { get; }
 
         /// <summary>
         /// Gets or sets the <see cref="IAdapterFactory"/>
@@ -62,7 +62,7 @@ namespace Hl7.Fhir.Patch.Adapters
         /// </summary>
         public Action<PatchError> LogErrorAction { get; }
 
-        public void Add(Operation operation, object objectToApplyTo)
+        public void Add(AddOperation operation, object objectToApplyTo)
         {
             if (operation == null)
             {
@@ -74,7 +74,7 @@ namespace Hl7.Fhir.Patch.Adapters
                 throw new ArgumentNullException(nameof(objectToApplyTo));
             }
 
-            Add(operation.path, operation.name, operation.value, objectToApplyTo, operation);
+            Add(operation.Path, operation.Name, operation.Value, objectToApplyTo, operation);
         }
 
         /// <summary>
@@ -111,14 +111,14 @@ namespace Hl7.Fhir.Patch.Adapters
             var visitor = new ObjectVisitor(path, AdapterFactory);
 
             object target = objectToApplyTo;
-            if (!visitor.TryVisit(ref target, out var adapter, out var errorMessage))
+            if (!visitor.TryVisit(Provider, ref target, out var adapter, out var errorMessage))
             {
                 var error = CreatePathNotFoundError(objectToApplyTo, operation, errorMessage);
                 ErrorReporter(error);
                 return;
             }
 
-            if (!adapter.TryAdd(target, name, ContractResolver, value, out errorMessage))
+            if (!adapter.TryAdd(target, name, value, out errorMessage))
             {
                 var error = CreateOperationFailedError(objectToApplyTo, operation, errorMessage);
                 ErrorReporter(error);
@@ -126,7 +126,7 @@ namespace Hl7.Fhir.Patch.Adapters
             }
         }
 
-        public void Insert (Operation operation, object objectToApplyTo)
+        public void Insert (InsertOperation operation, object objectToApplyTo)
         {
             if ( operation == null )
             {
@@ -138,7 +138,7 @@ namespace Hl7.Fhir.Patch.Adapters
                 throw new ArgumentNullException(nameof(objectToApplyTo));
             }
 
-            Insert(operation.path, operation.index, operation.value, objectToApplyTo, operation);
+            Insert(operation.Path, operation.Index, operation.Value, objectToApplyTo, operation);
         }
 
         /// <summary>
@@ -147,7 +147,7 @@ namespace Hl7.Fhir.Patch.Adapters
         /// </summary>
         private void Insert (
             CompiledExpression path,
-            int? index,
+            int index,
             object value,
             object objectToApplyTo,
             Operation operation)
@@ -155,11 +155,6 @@ namespace Hl7.Fhir.Patch.Adapters
             if ( path == null )
             {
                 throw new ArgumentNullException(nameof(path));
-            }
-
-            if ( index == null )
-            {
-                throw new ArgumentNullException(nameof(index));
             }
 
             if ( objectToApplyTo == null )
@@ -175,14 +170,14 @@ namespace Hl7.Fhir.Patch.Adapters
             var visitor = new ObjectVisitor(path, AdapterFactory);
 
             object target = objectToApplyTo;
-            if ( !visitor.TryVisit(ref target, out var adapter, out var errorMessage) )
+            if ( !visitor.TryVisit(Provider, ref target, out var adapter, out var errorMessage) )
             {
                 var error = CreatePathNotFoundError(objectToApplyTo, operation, errorMessage);
                 ErrorReporter(error);
                 return;
             }
 
-            if ( !adapter.TryInsert(target, index.Value, ContractResolver, value, out errorMessage) )
+            if ( !adapter.TryInsert(target, index, value, out errorMessage) )
             {
                 var error = CreateOperationFailedError(objectToApplyTo, operation, errorMessage);
                 ErrorReporter(error);
@@ -190,7 +185,7 @@ namespace Hl7.Fhir.Patch.Adapters
             }
         }
 
-        public void Delete(Operation operation, object objectToApplyTo)
+        public void Delete(DeleteOperation operation, object objectToApplyTo)
         {
             if (operation == null)
             {
@@ -202,7 +197,7 @@ namespace Hl7.Fhir.Patch.Adapters
                 throw new ArgumentNullException(nameof(objectToApplyTo));
             }
 
-            Delete(operation.path, objectToApplyTo, operation);
+            Delete(operation.Path, objectToApplyTo, operation);
         }
 
         /// <summary>
@@ -217,14 +212,14 @@ namespace Hl7.Fhir.Patch.Adapters
             var visitor = new ObjectVisitor(path, AdapterFactory);
 
             object target = objectToApplyTo;
-            if (!visitor.TryVisit(ref target, out var adapter, out var errorMessage))
+            if (!visitor.TryVisit(Provider, ref target, out var adapter, out var errorMessage))
             {
                 var error = CreatePathNotFoundError(objectToApplyTo, operationToReport, errorMessage);
                 ErrorReporter(error);
                 return;
             }
 
-            if (!adapter.TryDelete(target, ContractResolver, out errorMessage))
+            if (!adapter.TryDelete(target, out errorMessage))
             {
                 var error = CreateOperationFailedError(objectToApplyTo, operationToReport, errorMessage);
                 ErrorReporter(error);
@@ -232,7 +227,7 @@ namespace Hl7.Fhir.Patch.Adapters
             }
         }
 
-        public void Replace(Operation operation, object objectToApplyTo)
+        public void Replace(ReplaceOperation operation, object objectToApplyTo)
         {
             if (operation == null)
             {
@@ -244,17 +239,17 @@ namespace Hl7.Fhir.Patch.Adapters
                 throw new ArgumentNullException(nameof(objectToApplyTo));
             }
 
-            var visitor = new ObjectVisitor(operation.path, AdapterFactory);
+            var visitor = new ObjectVisitor(operation.Path, AdapterFactory);
 
             object target = objectToApplyTo;
-            if (!visitor.TryVisit(ref target, out var adapter, out var errorMessage))
+            if (!visitor.TryVisit(Provider, ref target, out var adapter, out var errorMessage))
             {
                 var error = CreatePathNotFoundError(objectToApplyTo, operation, errorMessage);
                 ErrorReporter(error);
                 return;
             }
 
-            if (!adapter.TryReplace(target, ContractResolver, operation.value, out errorMessage))
+            if (!adapter.TryReplace(target, operation.Value, out errorMessage))
             {
                 var error = CreateOperationFailedError(objectToApplyTo, operation, errorMessage);
                 ErrorReporter(error);
@@ -262,7 +257,7 @@ namespace Hl7.Fhir.Patch.Adapters
             }
         }
 
-        public void Move (Operation operation, object objectToApplyTo)
+        public void Move (MoveOperation operation, object objectToApplyTo)
         {
             if ( operation == null )
             {
@@ -274,25 +269,15 @@ namespace Hl7.Fhir.Patch.Adapters
                 throw new ArgumentNullException(nameof(objectToApplyTo));
             }
 
-            if ( operation.path == null )
-            {
-                throw new ArgumentNullException(nameof(operation.path));
-            }
-
-            if ( operation.source == null )
-            {
-                throw new ArgumentNullException(nameof(operation.source));
-            }
-
             // Get value at the 'path' location at 'source' index and insert value at the 'destionation' index
-            CompiledExpression sourcePath = (ITypedElement el, EvaluationContext ctx) => operation.path(el, ctx).Where((_, i) => i == operation.source);
+            CompiledExpression sourcePath = (ITypedElement el, EvaluationContext ctx) => operation.Path(el, ctx).Where((_, i) => i == operation.Source);
             if ( TryGetValue(sourcePath, objectToApplyTo, operation, out var propertyValue) )
             {
                 // delete that value
                 Delete(sourcePath, objectToApplyTo, operation);
 
                 // add that value to the path location
-                Insert(operation.path, operation.destination, propertyValue, objectToApplyTo, operation);
+                Insert(operation.Path, operation.Destination, propertyValue, objectToApplyTo, operation);
             }
         }
 
@@ -321,7 +306,7 @@ namespace Hl7.Fhir.Patch.Adapters
             var visitor = new ObjectVisitor(path, AdapterFactory);
 
             object target = objectToGetValueFrom;
-            if (!visitor.TryVisit(ref target, out var adapter, out var errorMessage))
+            if (!visitor.TryVisit(Provider, ref target, out var adapter, out var errorMessage))
             {
                 propertyValue = null;
                 var error = CreatePathNotFoundError(objectToGetValueFrom, operation, errorMessage);
@@ -329,7 +314,7 @@ namespace Hl7.Fhir.Patch.Adapters
                 return false;
             }
 
-            if ( !adapter.TryGet(target, ContractResolver, out propertyValue, out errorMessage) )
+            if ( !adapter.TryGet(target, out propertyValue, out errorMessage) )
             {
                 var error = CreateOperationFailedError(objectToGetValueFrom, operation, errorMessage);
                 ErrorReporter(error);
@@ -352,7 +337,7 @@ namespace Hl7.Fhir.Patch.Adapters
             return new PatchError(
                 target,
                 operation,
-                errorMessage ?? $"The '{operation.op}' operation at path could not be performed.");
+                errorMessage ?? $"The '{operation.OperationType:G}' operation at path could not be performed.");
         }
 
         private PatchError CreatePathNotFoundError(object target, Operation operation, string errorMessage)
@@ -360,7 +345,7 @@ namespace Hl7.Fhir.Patch.Adapters
             return new PatchError(
                 target,
                 operation,
-                errorMessage ?? $"For operation '{operation.op}', the target location specified by path was not found.");
+                errorMessage ?? $"For operation '{operation.OperationType:G}', the target location specified by path was not found.");
         }
     }
 }

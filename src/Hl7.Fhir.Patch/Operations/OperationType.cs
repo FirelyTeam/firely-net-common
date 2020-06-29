@@ -14,7 +14,6 @@ namespace Hl7.Fhir.Patch.Operations
         Insert,
         Delete,
         Replace,
-        Move,
-        Invalid
+        Move
     }
 }

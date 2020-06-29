@@ -14,7 +14,6 @@ using Hl7.Fhir.Patch.Exceptions;
 using Hl7.Fhir.Patch.Internal;
 using Hl7.Fhir.Patch.Operations;
 using Hl7.Fhir.Specification;
-using Hl7.FhirPath;
 
 namespace Hl7.Fhir.Patch
 {
@@ -23,159 +22,56 @@ namespace Hl7.Fhir.Patch
     // .NET or architecture doesn't contain a shared DTO layer.
     public class PatchDocument : IPatchDocument
     {
-        public List<Operation> Operations { get; private set; }
+        public List<Operation> Operations { get; }
 
-        public IStructureDefinitionSummaryProvider ContractResolver { get; set; }
+        public IStructureDefinitionSummaryProvider Provider { get; set; }
 
         public PatchDocument()
         {
             Operations = new List<Operation>();
-            ContractResolver = null;
+            Provider = null;
         }
 
-        public PatchDocument(List<Operation> operations, IStructureDefinitionSummaryProvider contractResolver)
+        public PatchDocument(List<Operation> operations, IStructureDefinitionSummaryProvider provider)
         {
-            if (operations == null)
-            {
-                throw new ArgumentNullException(nameof(operations));
-            }
-
-            if ( contractResolver == null )
-            {
-                throw new ArgumentNullException(nameof(contractResolver));
-            }
-
-            Operations = operations;
-            ContractResolver = contractResolver;
+            Operations = operations ?? throw new ArgumentNullException(nameof(operations));
+            Provider = provider ?? throw new ArgumentNullException(nameof(provider));
         }
 
         /// <summary>
-        /// Add operation.  Will result in, for example,
-        /// { "op": "add", "path": "/a/b", "name": "c", "value": [ "foo", "bar" ] }
+        /// Add operation to this PatchDocument
         /// </summary>
-        /// <param name="path">target location</param>
-        /// <param name="name">name of the element to add</param>
-        /// <param name="value">value</param>
+        /// <param name="operationToAdd"><see cref="Operation"/> to add to this <see cref="PatchDocument"/></param>
         /// <returns>The <see cref="PatchDocument"/> for chaining.</returns>
-        public PatchDocument Add(CompiledExpression path, string name, object value)
+        public PatchDocument Add(Operation operationToAdd)
         {
-            if (path == null)
+            if (operationToAdd == null)
             {
-                throw new ArgumentNullException(nameof(path));
+                throw new ArgumentNullException(nameof(operationToAdd));
             }
 
-            if ( name == null )
-            {
-                throw new ArgumentNullException(nameof(name));
-            }
-
-            Operations.Add(new Operation(OperationType.Add.ToString("G"), path, name, value));
+            Operations.Add(operationToAdd);
             return this;
         }
 
-        /// <summary>
-        /// Insert operation.  Will result in, for example,
-        /// { "op": "insert", "path": "/a/b/c", "index": 2, "value": { "foo": "bar" } }
-        /// </summary>
-        /// <param name="path">target location</param>
-        /// <param name="index">target index</param>
-        /// <param name="value">value</param>
-        /// <returns>The <see cref="PatchDocument"/> for chaining.</returns>
-        public PatchDocument Insert (CompiledExpression path, int index, object value)
-        {
-            if ( path == null )
-            {
-                throw new ArgumentNullException(nameof(path));
-            }
-
-            Operations.Add(new Operation(OperationType.Insert.ToString("G"), path, index, value));
-            return this;
-        }
-
-        /// <summary>
-        /// Delete value at target location.  Will result in, for example,
-        /// { "op": "delete", "path": "/a/b/c" }
-        /// </summary>
-        /// <param name="path">target location</param>
-        /// <returns>The <see cref="PatchDocument"/> for chaining.</returns>
-        public PatchDocument Delete(CompiledExpression path)
-        {
-            if (path == null)
-            {
-                throw new ArgumentNullException(nameof(path));
-            }
-
-            Operations.Add(new Operation(OperationType.Delete.ToString("G"), path));
-            return this;
-        }
-
-        /// <summary>
-        /// Replace value.  Will result in, for example,
-        /// { "op": "replace", "path": "/a/b/c", "value": 42 }
-        /// </summary>
-        /// <param name="path">target location</param>
-        /// <param name="value">value</param>
-        /// <returns>The <see cref="PatchDocument"/> for chaining.</returns>
-        public PatchDocument Replace(CompiledExpression path, object value)
-        {
-            if (path == null)
-            {
-                throw new ArgumentNullException(nameof(path));
-            }
-
-            Operations.Add(new Operation(OperationType.Replace.ToString("G"), path, value));
-            return this;
-        }
-
-        /// <summary>
-        /// Removes value at specified location and add it to the target location.  Will result in, for example:
-        /// { "op": "move", "source": 3, "destination": 5, "path": "/a/b/d" }
-        /// </summary>
-        /// <param name="path">target location</param>
-        /// <param name="source">index to move element from</param>
-        /// <param name="destination">index to move element to</param>
-        /// <returns>The <see cref="PatchDocument"/> for chaining.</returns>
-        public PatchDocument Move(CompiledExpression path, int source, int destination)
-        {
-            if (path == null)
-            {
-                throw new ArgumentNullException(nameof(path));
-            }
-
-            Operations.Add(new Operation(OperationType.Move.ToString("G"), path, source, destination));
-            return this;
-        }
-
-        /// <summary>
-        /// Apply this PatchDocument
-        /// </summary>
-        /// <param name="objectToApplyTo">Object to apply the PatchDocument to</param>
-        public void ApplyTo(ElementNode objectToApplyTo)
+        /// <inheritdoc />
+        public void ApplyTo (ElementNode objectToApplyTo)
         {
             if (objectToApplyTo == null)
             {
                 throw new ArgumentNullException(nameof(objectToApplyTo));
             }
 
-            ApplyTo(objectToApplyTo, new ObjectAdapter(ContractResolver, null, new AdapterFactory()));
+            ApplyTo(objectToApplyTo, new ObjectAdapter(Provider, null, new AdapterFactory()));
         }
 
-        /// <summary>
-        /// Apply this PatchDocument
-        /// </summary>
-        /// <param name="objectToApplyTo">Object to apply the PatchDocument to</param>
-        /// <param name="logErrorAction">Action to log errors</param>
+        /// <inheritdoc />
         public void ApplyTo(ElementNode objectToApplyTo, Action<PatchError> logErrorAction)
         {
-            ApplyTo(objectToApplyTo, new ObjectAdapter(ContractResolver, logErrorAction, new AdapterFactory()), logErrorAction);
+            ApplyTo(objectToApplyTo, new ObjectAdapter(Provider, logErrorAction, new AdapterFactory()), logErrorAction);
         }
 
-        /// <summary>
-        /// Apply this PatchDocument
-        /// </summary>
-        /// <param name="objectToApplyTo">Object to apply the PatchDocument to</param>
-        /// <param name="adapter">IObjectAdapter instance to use when applying</param>
-        /// <param name="logErrorAction">Action to log errors</param>
+        /// <inheritdoc />
         public void ApplyTo(ElementNode objectToApplyTo, IObjectAdapter adapter, Action<PatchError> logErrorAction)
         {
             if (objectToApplyTo == null)
@@ -205,11 +101,7 @@ namespace Hl7.Fhir.Patch
             }
         }
 
-        /// <summary>
-        /// Apply this PatchDocument
-        /// </summary>
-        /// <param name="objectToApplyTo">Object to apply the PatchDocument to</param>
-        /// <param name="adapter">IObjectAdapter instance to use when applying</param>
+        /// <inheritdoc />
         public void ApplyTo(ElementNode objectToApplyTo, IObjectAdapter adapter)
         {
             if (objectToApplyTo == null)
@@ -227,32 +119,6 @@ namespace Hl7.Fhir.Patch
             {
                 op.Apply(objectToApplyTo, adapter);
             }
-        }
-
-        IList<Operation> IPatchDocument.GetOperations()
-        {
-            var allOps = new List<Operation>();
-
-            if (Operations != null)
-            {
-                foreach (var op in Operations)
-                {
-                    var untypedOp = new Operation
-                    {
-                        op = op.op,
-                        value = op.value,
-                        path = op.path,
-                        name = op.name,
-                        index = op.index,
-                        source = op.source,
-                        destination = op.destination
-                    };
-
-                    allOps.Add(untypedOp);
-                }
-            }
-
-            return allOps;
         }
     }
 }
