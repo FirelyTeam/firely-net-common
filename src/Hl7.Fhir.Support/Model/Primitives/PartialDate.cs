@@ -153,7 +153,7 @@ namespace Hl7.Fhir.Model.Primitives
         }
 
         public bool Equals(PartialDate other) => this.Precision == other.Precision && other.toComparable() == toComparable();
-        public override int GetHashCode() => toComparable().GetHashCode();
+        public override int GetHashCode() => (Precision, toComparable()).GetHashCode();
         public override string ToString() => _original;
 
         public int CompareTo(PartialDate obj) => CompareTo((object)obj);
@@ -164,26 +164,33 @@ namespace Hl7.Fhir.Model.Primitives
         // for more details.
 
         /// <summary>
-        /// Compares two (partial) dates according to CQL equality rules.
+        /// Compares two (partial)date/times according to CQL equality rules.
         /// </summary>
         /// <param name="l"></param>
         /// <param name="r"></param>
-        /// <returns>true is the precision of the dates is the same and the individual components for
+        /// <returns>true is the precision of the date/times is the same and the individual components for
         /// each precision are the same.</returns>
         /// <remarks>
         /// The comparison is performed by considering each precision in order, beginning with years 
-        /// (or hours for time values). If the values are the same, comparison proceeds to the next precision; 
-        /// if the values are different, the comparison stops and the result is false. If one input has a value 
-        /// for the precision and the other does not, the comparison stops and the result is null; if neither
-        /// input has a value for the precision, or the last precision has been reached, the comparison stops
+        /// (or hours for time values), and respecting timezone offsets. If the values are the same, comparison
+        /// proceeds to the next precision; if the values are different, the comparison stops and the result is false. 
+        /// If one input has a value for the precision and the other does not, the comparison stops and the result is null; 
+        /// if neither input has a value for the precision, or the last precision has been reached, the comparison stops
         /// and the result is true. For the purposes of comparison, seconds and milliseconds are combined as a 
-        /// single precision using a decimal, with decimal equality semantics.</remarks>
+        /// single precision using a decimal, with decimal equality semantics.
+        /// </remarks>
         public static bool? IsEqualTo(PartialDate l, PartialDate r)
         {
-            if (l.Precision != r.Precision) return null;
+            // My interpretation is that if one value has a timezone, and the other does not, 
+            // we cannot compare the two.
+            if (l.HasOffset ^ r.HasOffset) return null;
+
+            if ( l.Years != r.Years) return false;
+
+            
             return l.toComparable() == r.toComparable();
         }
-
+  
         /// <summary>
         /// Compares two (partial) dates according to CQL equivalence rules.
         /// </summary>

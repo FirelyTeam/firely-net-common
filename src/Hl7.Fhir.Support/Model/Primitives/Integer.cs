@@ -1,44 +1,51 @@
 ﻿/* 
- * Copyright (c) 2015, Firely (info@fire.ly) and contributors
+ * Copyright (c) 2020, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+#nullable enable
+
 using System;
 using System.Xml;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public static class Integer
+    public class Integer: Any, IEquatable<Integer>, IComparable, IComparable<Integer>
     {
+        public Integer() : this(default) { }
+
+        public Integer(int value) => Value = value;
+
+        public int Value { get; }
+
         public static int Parse(string value) =>
-            TryParse(value, out int result) ? result : throw new FormatException("Integer value is in an invalid format.");
+            TryParse(value, out int result) ? result : throw new FormatException($"String '{value}' was not recognized as a valid integer.");
 
         public static bool TryParse(string representation, out int value)
         {
+            if (representation == null) throw new ArgumentNullException(nameof(representation));
+
             (var succ, var val) = Any.DoConvert(() => XmlConvert.ToInt32(representation));
             value = val;
             return succ;
         }
 
-
         /// <summary>
-        /// Compares two integers according to CQL equality rules.
+        /// Compares two integers according to CQL equality (and equivalence) rules.
         /// </summary>
-        /// <param name="l"></param>
-        /// <param name="r"></param>
-        /// <returns>Return true if both arguments are exactly the same integer value, false otherwise. Returns null if any of the
-        /// arguments are null.</returns>
-        public static bool IsEqualTo(int l, int r) => l == r;          
+        /// <returns>Return true if both arguments are exactly the same integer value, false otherwise.
+        /// </returns>
+        public bool Equals(Integer other) => other is { } && Int32.Equals(Value, other.Value);
 
-        /// <summary>
-        /// Compares two integers according to CQL equivalence rules.
-        /// </summary>
-        /// <param name="l"></param>
-        /// <param name="r"></param>
-        /// <returns>Return true if both arguments are exactly the same integer value, false otherwise</returns>
-        public static bool IsEquivalentTo(int l, int r) => l == r;
+        public override int GetHashCode() => Value.GetHashCode();
+        public override string ToString() => Value.ToString();
+
+        public override bool Equals(object obj) => obj is Integer i && Equals(i);
+        public static bool operator ==(Integer a, Integer b) => Equals(a, b);
+        public static bool operator !=(Integer a, Integer b) => !Equals(a, b);
+
     }
 }

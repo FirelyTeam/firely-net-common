@@ -137,6 +137,25 @@ namespace Hl7.FhirPath.Functions
             }
         }
 
+
+        internal static bool? DoCompare(int? compareResult, string op)
+        {
+            if (compareResult == null) return null;
+
+            var result = op switch
+            {
+                "<" => compareResult == -1,
+                "<=" => compareResult != 1,
+                "=" => compareResult == 0,
+                ">" => compareResult == 1,
+                ">=" => compareResult != -1,
+                _ => throw new ArgumentException($"Unknown comparison op '{op}'", nameof(op))
+            };
+
+            return result;
+        }
+
+
         internal class ValueProviderEqualityComparer : IEqualityComparer<ITypedElement>
         {
             public bool Equals(ITypedElement x, ITypedElement y)

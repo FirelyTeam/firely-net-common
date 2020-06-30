@@ -1,58 +1,61 @@
 ﻿/* 
- * Copyright (c) 2015, Firely (info@fire.ly) and contributors
+ * Copyright (c) 2020, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+#nullable enable
+
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public static class Boolean
+    public class Boolean : Any, IEquatable<Boolean>
     {
-        public static bool Parse(string value) =>
-            TryParse(value, out var result) ? result : throw new FormatException("Boolean value is in an invalid format.");
+        public static Boolean True = new Boolean(true);
+        public static Boolean False = new Boolean(false);
 
-        public static bool TryParse(string representation, out bool value)
+        public Boolean() : this(default) { }
+        public Boolean(bool value) => Value = value;
+      
+        public bool Value { get; }
+
+        public static Boolean Parse(string value) =>
+            TryParse(value, out var result) ? result! : throw new FormatException($"String '{value}' was not recognized as a valid boolean.");
+
+        public static bool TryParse(string representation, out Boolean? value)
         {
+            if (representation is null) throw new ArgumentNullException(nameof(representation));
+
             if (representation == "true")
             {
-                value = true;
+                value = True;
                 return true;
             }
             else if (representation == "false")
             {
-                value = false;
+                value = False;
                 return true;
             }
             else
             {
                 value = default;
-                return false;
+                return false;               
             }
         }
 
-        // Comparison functions work according to the rules described for CQL, 
-        // see https://cql.hl7.org/09-b-cqlreference.html#comparison-operators-4
-        // for more details.
+        public override int GetHashCode() => Value.GetHashCode();
+        public override string ToString() => Value.ToString();                           
+        public override bool Equals(object obj) => obj is Boolean b && Equals(b);
 
-        /// <summary>
-        /// Compares two booleans according to CQL equality rules.
-        /// </summary>
-        /// <param name="l"></param>
-        /// <param name="r"></param>
-        /// <returns>Return true if both arguments are exactly the same boolean value, false otherwise. Returns null if any of the
-        /// arguments are null.</returns>
-        public static bool IsEqualTo(bool l, bool r) => l == r;
+        public bool Equals(Boolean other) => other is { } && bool.Equals(Value, other.Value);
 
-        /// <summary>
-        /// Compares two booleans according to CQL equivalence rules.
-        /// </summary>
-        /// <param name="l"></param>
-        /// <param name="r"></param>
-        /// <returns>Return true if both arguments are exactly the same boolean value, false otherwise</returns>
-        public static bool IsEquivalentTo(bool l, bool r) => l == r;
+        public static bool operator ==(Boolean a, Boolean b) => Equals(a, b);
+        public static bool operator !=(Boolean a, Boolean b) => !Equals(a,b);
+
+        public static implicit operator bool(Boolean b) => b.Value;
     }
 }

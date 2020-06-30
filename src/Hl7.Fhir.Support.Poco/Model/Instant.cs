@@ -93,8 +93,8 @@ namespace Hl7.Fhir.Model
             return new Instant(DateTimeOffset.Now);
         }
 
-        public Primitives.PartialDateTime? ToPartialDateTime() => 
-            Value != null ? (Primitives.PartialDateTime?)Primitives.PartialDateTime.FromDateTimeOffset(Value.Value) : null;
+        public Primitives.PartialDateTime ToPartialDateTime() => 
+            Value != null ? Primitives.PartialDateTime.FromDateTimeOffset(Value.Value) : null;
 
     }
 }

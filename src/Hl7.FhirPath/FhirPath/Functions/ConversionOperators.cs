@@ -168,24 +168,21 @@ namespace Hl7.FhirPath.Functions
         /// </summary>
         /// <param name="focus"></param>
         /// <returns></returns>
-        public static PartialDateTime? ToDateTime(this ITypedElement focus)
+        public static PartialDateTime ToDateTime(this ITypedElement focus)
         {
             var val = focus?.Value;
             if (val == null) return null;
 
-            switch (val)
+            return val switch
             {
-                case PartialDateTime pdt:
-                    return pdt;
-                case string s:
-                    return convertString(s);
-                default:
-                    return null;
-            }
+                PartialDateTime pdt => pdt,
+                string s => convertString(s),
+                _ => null,
+            };
 
-            PartialDateTime? convertString(string si) =>
+            static PartialDateTime convertString(string si) =>
                    PartialDateTime.TryParse(si, out var result) ?
-                        result : (PartialDateTime?)null;
+                        result : default;
         }
 
 

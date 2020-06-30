@@ -1,24 +1,44 @@
 ﻿/* 
- * Copyright (c) 2015, Firely (info@fire.ly) and contributors
+ * Copyright (c) 2020, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+#nullable enable
 
 using System;
 using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public struct PartialDateTime : IComparable, IComparable<PartialDateTime>, IEquatable<PartialDateTime>
+    public class PartialDateTime : Any, IComparable, IComparable<PartialDateTime>, IEquatable<PartialDateTime>
     {
+        private PartialDateTime(string original, DateTimeOffset parsedValue, PartialPrecision precision, bool hasOffset)
+        {
+            _original = original;
+            _parsedValue = parsedValue;
+            Precision = precision;
+            HasOffset = hasOffset;
+        }
         public static PartialDateTime Parse(string representation) =>
-            TryParse(representation, out var result) ? result : throw new FormatException("DateTime value is in an invalid format.");
+            TryParse(representation, out var result) ? result : throw new FormatException($"String '{representation}' was not recognized as a valid partial datetime.");
 
-        public static bool TryParse(string representation, out PartialDateTime value) =>
-            tryParse(representation, out value);
+        public static bool TryParse(string representation, out PartialDateTime value) => tryParse(representation, out value);
+
+        public static PartialDateTime FromDateTimeOffset(DateTimeOffset dto)
+        {
+            var representation = dto.ToString(FMT_FULL);
+            return Parse(representation);
+        }
+
+        [Obsolete("FromDateTime() has been renamed to FromDateTimeOffset()")]
+        public static PartialDateTime FromDateTime(DateTimeOffset dto) => FromDateTimeOffset(dto);
+
+        public static PartialDateTime Now() => FromDateTimeOffset(DateTimeOffset.Now);
+
+        public static PartialDateTime Today() => PartialDateTime.Parse(DateTimeOffset.Now.ToString("yyyy-MM-ddK"));
 
         public int? Years => Precision >= PartialPrecision.Year ? _parsedValue.Year : (int?)null;
         public int? Months => Precision >= PartialPrecision.Month ? _parsedValue.Month : (int?)null;
@@ -63,25 +83,16 @@ namespace Hl7.Fhir.Model.Primitives
 
         public const string FMT_FULL = "yyyy-MM-dd'T'HH:mm:ss.FFFFFFFK";
 
-        public static PartialDateTime FromDateTimeOffset(DateTimeOffset dto)
-        {
-            var representation = dto.ToString(FMT_FULL);
-            return Parse(representation);
-        }
-
-        [Obsolete("FromDateTime() has been renamed to FromDateTimeOffset()")]
-        public static PartialDateTime FromDateTime(DateTimeOffset dto) => FromDateTimeOffset(dto);
-
-        public static PartialDateTime Now() => FromDateTimeOffset(DateTimeOffset.Now);
-
-        public static PartialDateTime Today() => PartialDateTime.Parse(DateTimeOffset.Now.ToString("yyyy-MM-ddK"));
-
         private static bool tryParse(string representation, out PartialDateTime value)
         {
-            value = new PartialDateTime();
+            if (representation is null) throw new ArgumentNullException(nameof(representation));
             
             var matches = DATETIMEREGEX.Match(representation);
-            if (!matches.Success) return false;
+            if (!matches.Success)
+            {
+                value = new PartialDateTime(representation, default, default, default);
+                return false;
+            }
 
             var yrg = matches.Groups["year"];
             var mong = matches.Groups["month"];
@@ -92,17 +103,14 @@ namespace Hl7.Fhir.Model.Primitives
             var fracg = matches.Groups["frac"];
             var offset = matches.Groups["offset"];
 
-            value.Precision =
-                        fracg.Success ? PartialPrecision.Fraction :
-                        secg.Success ? PartialPrecision.Second :
-                        ming.Success ? PartialPrecision.Minute :
-                        hrg.Success ? PartialPrecision.Hour :
-                        dayg.Success ? PartialPrecision.Day :
-                        mong.Success ? PartialPrecision.Month :
-                        PartialPrecision.Year;
-
-            value.HasOffset = offset.Success;
-            value._original = representation;
+            var prec =
+                    fracg.Success ? PartialPrecision.Fraction :
+                    secg.Success ? PartialPrecision.Second :
+                    ming.Success ? PartialPrecision.Minute :
+                    hrg.Success ? PartialPrecision.Hour :
+                    dayg.Success ? PartialPrecision.Day :
+                    mong.Success ? PartialPrecision.Month :
+                    PartialPrecision.Year;
 
             var parseableDT = yrg.Value +
                   (mong.Success ? mong.Value : "-01") +
@@ -113,41 +121,99 @@ namespace Hl7.Fhir.Model.Primitives
                   (fracg.Success ? fracg.Value : "") +
                   (offset.Success ? offset.Value : "Z");
 
-            value._original = representation;
-            return DateTimeOffset.TryParse(parseableDT, out value._parsedValue);
+            var success = DateTimeOffset.TryParse(parseableDT, out var parsedValue);
+            value = new PartialDateTime(representation, parsedValue, prec, offset.Success);
+            return success;            
         }
 
-        public bool IsEqualTo(PartialDateTime other) => this == other;
-
-        public bool IsEquivalentTo(PartialDateTime other) => throw new NotImplementedException();
-
-        // TODO: Note, this enables comparisons between values that did or did not have timezones, need to fix.
         private DateTimeOffset toComparable() => _parsedValue.ToUniversalTime();
 
-        public static bool operator <(PartialDateTime a, PartialDateTime b) => a.toComparable() < b.toComparable();
-        public static bool operator <=(PartialDateTime a, PartialDateTime b) => a.toComparable() <= b.toComparable();
-        public static bool operator >(PartialDateTime a, PartialDateTime b) => a.toComparable() > b.toComparable();
-        public static bool operator >=(PartialDateTime a, PartialDateTime b) => a.toComparable() >= b.toComparable();
-        public static bool operator ==(PartialDateTime a, PartialDateTime b) => Equals(a, b);
-        public static bool operator !=(PartialDateTime a, PartialDateTime b) => !(a == b);
+        public bool Equals(PartialDateTime other) => TryCompare(other, out var result) && result == 0;
 
         public int CompareTo(object obj)
         {
-            if (obj == null) return 1;
+            if (obj is null) return 1;      // as defined by the .NET framework guidelines
 
             if (obj is PartialDateTime p)
             {
-                return (this < p) ? -1 :
-                    (this > p) ? 1 : 0;
+                return TryCompare(p, out var comparison) ? 
+                    comparison : throw new ArgumentException($"Value {this} and {p} cannot be compared, since the precision is different.");                
             }
             else
-                throw new ArgumentException($"Object is not a {nameof(PartialDateTime)}");
+                throw new ArgumentException($"Object is not a {nameof(PartialDate)}");
         }
 
-        public bool Equals(PartialDateTime other) => this.Precision == other.Precision && other.toComparable() == toComparable();
-        public override int GetHashCode() => toComparable().GetHashCode();
+        /// <summary>
+        /// Compares two (partial)date/times according to CQL ordering rules.
+        /// </summary> 
+        /// <param name="other"></param>
+        /// <param name="comparison">the result of the comparison: 0 if this and other are equal, 
+        /// -1 if this is smaller than other and +1 if this is bigger than other.</param>
+        /// <returns>true is the values can be compared (have the same precision) or false otherwise.</returns>
+        /// <remarks>The comparison is performed by considering each precision in order, beginning with years 
+        /// (or hours for time values). If the values are the same, comparison proceeds to the next precision; 
+        /// if the values are different, the comparison stops and the result is false. If one input has a value 
+        /// for the precision and the other does not, the comparison stops and the values cannot be compared; if neither
+        /// input has a value for the precision, or the last precision has been reached, the comparison stops
+        /// and the result is true. For the purposes of comparison, seconds and milliseconds are combined as a 
+        /// single precision using a decimal, with decimal equality semantics.</remarks>
+        public bool TryCompare(PartialDateTime other, out int comparison)
+        {
+            comparison = 0;
+            if (other is null) return false;
+
+            var c = CompareDateTimeParts(toComparable(), Precision, other.toComparable(), other.Precision);
+            comparison = c.GetValueOrDefault(0);
+            return c != null;
+        }
+
+        internal static int? CompareDateTimeParts(DateTimeOffset l, PartialPrecision lPrec, DateTimeOffset r, PartialPrecision rPrec)
+        {
+            if (l.Year != r.Year) return l.Year.CompareTo(r.Year);
+
+            if (lPrec < PartialPrecision.Month ^ rPrec < PartialPrecision.Month) return null;
+            if (l.Month != r.Month) return l.Month.CompareTo(r.Month);
+
+            if (lPrec < PartialPrecision.Day ^ rPrec < PartialPrecision.Day) return null;
+            if (l.Day != r.Day) return l.Day.CompareTo(r.Day);
+
+            if (lPrec < PartialPrecision.Hour ^ rPrec < PartialPrecision.Hour) return null;
+            if (l.Hour != r.Hour) return l.Hour.CompareTo(r.Hour);
+
+            if (lPrec < PartialPrecision.Minute ^ rPrec < PartialPrecision.Minute) return null;
+            if (l.Minute != r.Minute) return l.Minute.CompareTo(r.Minute);
+
+            if (lPrec < PartialPrecision.Second ^ rPrec < PartialPrecision.Second) return null;
+
+            // Note that DateTimeOffset rounds fractional
+            // parts to millis (i.e. 12:00:00.12345 would be rounded to 12:00:00.123),
+            // so I am not going to bother with the subtle decimal comparison semantics in ordering 
+            // as described by the spec ("Note that for the purposes of comparison, seconds and milliseconds
+            // are combined as a single precision using a decimal, with *decimal comparison semantics*.")
+            // as "decimal comparison semantics" aren't specified anyway. The spec describes
+            // equals/equivalence for decimals, but not ordering as far as I can see. I will
+            // consider second/millisecond precision to be a single precision, i.e.  12:00:01 == 12:00:01.1
+            // is false, rather than null.
+            //
+            // These simplifications makes my life easier here, otherwise I'd have to create ordering
+            // and equivalence as separate functions.
+            if (l.Second != r.Second) return l.Second.CompareTo(r.Second);
+            if (l.Millisecond != r.Millisecond) return l.Millisecond.CompareTo(r.Millisecond);
+
+            return 0;
+        }
+
+        public override int GetHashCode() => _original.GetHashCode();
         public override string ToString() => _original;
-        public int CompareTo(PartialDateTime obj) => CompareTo((object)obj);
         public override bool Equals(object obj) => obj is PartialDateTime dt && Equals(dt);
+        public static bool operator ==(PartialDateTime a, PartialDateTime b) => Equals(a, b);
+        public static bool operator !=(PartialDateTime a, PartialDateTime b) => !Equals(a,b);
+
+        public int CompareTo(PartialDateTime obj) => CompareTo((object)obj);
+
+        public static bool operator <(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) == -1;
+        public static bool operator <=(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) != 1;
+        public static bool operator >(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) == 1;
+        public static bool operator >=(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) != -1;
     }
 }

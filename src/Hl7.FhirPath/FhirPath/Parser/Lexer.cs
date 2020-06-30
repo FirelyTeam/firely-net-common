@@ -162,11 +162,11 @@ namespace Hl7.FhirPath.Parser
                    from num in Parse.Number
                    from dot in Parse.Char('.')
                    from fraction in Parse.Number
-                   select Fhir.Model.Primitives.Decimal.Parse(num + dot + fraction);
+                   select (decimal)Fhir.Model.Primitives.Decimal.Parse(num + dot + fraction);
 
         // BOOL: 'true' | 'false';
         public static readonly Parser<bool> Bool =
-            Parse.String("true").XOr(Parse.String("false")).Text().Select(s => Fhir.Model.Primitives.Boolean.Parse(s));
+            Parse.String("true").XOr(Parse.String("false")).Text().Select(s => (bool)Fhir.Model.Primitives.Boolean.Parse(s));
 
         //qualifiedIdentifier
         //   : identifier ('.' identifier)*

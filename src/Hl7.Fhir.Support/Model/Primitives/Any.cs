@@ -6,93 +6,96 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+#nullable enable
+
 using Hl7.Fhir.Language;
 using Hl7.Fhir.Utility;
 using System;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public static class Any
+    public abstract class Any
     {
-        public static bool? IsEqualTo(object l, object r)
-        {
-            if (l == null || r == null) return null;
+        public static bool? IsEqualTo(object l, object r) => throw new NotImplementedException();
+        //{
+        //    if (l == null || r == null) return null;
 
-            // this really should be handled by casts outside this func (and in the engine?)
-            l = UpcastOperand(l, r);
-            r = UpcastOperand(r, l);
+        //    // this really should be handled by casts outside this func (and in the engine?)
+        //    l = UpcastOperand(l, r);
+        //    r = UpcastOperand(r, l);
 
-            if (l is string lstr && r is string rstr)
-                return String.IsEqualTo(lstr,rstr);
-            else if (l is bool lbl && r is bool rbl)
-                return Boolean.IsEqualTo(lbl, rbl);
-            else if (l is int lint && r is int rint)
-                return Integer.IsEqualTo(lint, rint);
-            else if (l is long llng && r is long rlng)
-                return Integer64.IsEqualTo(llng, rlng);
-            else if (l is decimal ldec && r is decimal rdec)
-                return Decimal.IsEqualTo(ldec,rdec);
-            else if (l is PartialTime lpt && r is PartialTime rpt)
-                return lpt.IsEqualTo(rpt);
-            else if (l is PartialDateTime lpdt && r is PartialDateTime rpdt)
-                return lpdt.IsEqualTo(rpdt);
-            else if (l is PartialDate lpd && r is PartialDate rpd)
-                return PartialDate.IsEqualTo(lpd,rpd);
-            else if (l is Quantity lq && r is Quantity rq)
-                return lq.IsEqualTo(rq);
-            else
-                // the spec says that this should be false - you can compare
-                // anything to anything!
-                //throw new ArgumentException("Can only compare System primitives string, bool, long, decimal and partial date/dateTime/time.");
-                return false;
-        }
+        //    if (l is string lstr && r is string rstr)
+        //        return String.IsEqualTo(lstr,rstr);
+        //    else if (l is bool lbl && r is bool rbl)
+        //        return Boolean.IsEqualTo(lbl, rbl);
+        //    else if (l is int lint && r is int rint)
+        //        return Integer.IsEqualTo(lint, rint);
+        //    else if (l is long llng && r is long rlng)
+        //        return Integer64.IsEqualTo(llng, rlng);
+        //    else if (l is decimal ldec && r is decimal rdec)
+        //        return Decimal.IsEqualTo(ldec,rdec);
+        //    else if (l is PartialTime lpt && r is PartialTime rpt)
+        //        return PartialTime.IsEqualTo(lpt,rpt);
+        //    else if (l is PartialDateTime lpdt && r is PartialDateTime rpdt)
+        //        return PartialDateTime.AreEqual(lpdt,rpdt);
+        //    else if (l is PartialDate lpd && r is PartialDate rpd)
+        //        return PartialDate.IsEqualTo(lpd,rpd);
+        //    else if (l is Quantity lq && r is Quantity rq)
+        //        return lq.IsEqualTo(rq);
+        //    else
+        //        // the spec says that this should be false - you can compare
+        //        // anything to anything!
+        //        //throw new ArgumentException("Can only compare System primitives string, bool, long, decimal and partial date/dateTime/time.");
+        //        return false;
+        //}
 
-        internal static object UpcastOperand(object value, object other)
-        {
-            if (value is int && other is long) return (long)value;
-            if (value is long && other is decimal) return (decimal)value;
+        //internal static object UpcastOperand(object value, object other)
+        //{
+        //    if (value is int && other is long) return (long)value;
+        //    if (value is int && other is decimal) return (decimal)value;
+        //    if (value is long && other is decimal) return (decimal)value;
 
-            // nothing to upcast, return value;
-            return value;
-        }
+        //    // nothing to upcast, return value;
+        //    return value;
+        //}
 
-        public static bool IsEquivalentTo(object l, object r)
-        {
-            if (l == null && r == null) return true;
-            if (l == null || r == null) return false;
+        public static bool IsEquivalentTo(object l, object r) => throw new NotImplementedException();
+        //{
+        //    if (l == null && r == null) return true;
+        //    if (l == null || r == null) return false;
 
-            // this really should be handled by casts outside this func (and in the engine?)
-            l = UpcastOperand(l, r);
-            r = UpcastOperand(r, l);
+        //    // this really should be handled by casts outside this func (and in the engine?)
+        //    l = UpcastOperand(l, r);
+        //    r = UpcastOperand(r, l);
 
-            if (l is string lstr && r is string rstr)
-                return String.IsEquivalentTo(lstr,rstr);
-            else if (l is bool lbl && r is bool rbl)
-                return Boolean.IsEquivalentTo(lbl, rbl);
-            else if (l is int lint && r is int rint)
-                return Integer.IsEquivalentTo(lint,rint);
-            else if (l is long llng && r is long rlng)
-                return Integer64.IsEquivalentTo(llng, rlng);
-            else if (l is decimal ldec && r is decimal rdec)
-                return Decimal.IsEquivalentTo(ldec,rdec);
-            else if (l is PartialTime lpt && r is PartialTime rpt)
-                return lpt.IsEquivalentTo(rpt);
-            else if (l is PartialDateTime lpdt && r is PartialDateTime rpdt)
-                return lpdt.IsEquivalentTo(rpdt);
-            else if (l is PartialDate lpd && r is PartialDate rpd)
-                return PartialDate.IsEquivalentTo(lpd,rpd);
-            else if (l is Quantity lq && r is Quantity rq)
-                return lq.IsEquivalentTo(rq);
-            else
-                // the spec says that this should be false - you can compare
-                // anything to anything!
-                // throw new ArgumentException("Can only compare System primitives string, bool, long, decimal and partial date/dateTime/time.");
-                return false;
-        }
+        //    if (l is string lstr && r is string rstr)
+        //        return String.IsEquivalentTo(lstr,rstr);
+        //    else if (l is bool lbl && r is bool rbl)
+        //        return Boolean.IsEquivalentTo(lbl, rbl);
+        //    else if (l is int lint && r is int rint)
+        //        return Integer.IsEquivalentTo(lint,rint);
+        //    else if (l is long llng && r is long rlng)
+        //        return Integer64.IsEquivalentTo(llng, rlng);
+        //    else if (l is decimal ldec && r is decimal rdec)
+        //        return Decimal.IsEquivalentTo(ldec,rdec);
+        //    else if (l is PartialTime lpt && r is PartialTime rpt)
+        //        return  PartialTime.IsEquivalentTo(lpt,rpt);
+        //    else if (l is PartialDateTime lpdt && r is PartialDateTime rpdt)
+        //        return PartialDateTime.AreEquivalent(lpdt,rpdt);
+        //    else if (l is PartialDate lpd && r is PartialDate rpd)
+        //        return PartialDate.IsEquivalentTo(lpd,rpd);
+        //    else if (l is Quantity lq && r is Quantity rq)
+        //        return lq.IsEquivalentTo(rq);
+        //    else
+        //        // the spec says that this should be false - you can compare
+        //        // anything to anything!
+        //        // throw new ArgumentException("Can only compare System primitives string, bool, long, decimal and partial date/dateTime/time.");
+        //        return false;
+        //}
 
         public static object Parse(string value, TypeSpecifier systemType)
         {
-            if (value == null) return null;
+            if (value is null) throw new ArgumentNullException(nameof(value));
 
             if (TryParse(value, systemType, out object result))
                 return result;
@@ -102,11 +105,7 @@ namespace Hl7.Fhir.Model.Primitives
 
         public static bool TryParse(string value, TypeSpecifier systemType, out object parsed)
         {
-            if (value == null)
-            {
-                parsed = null;
-                return true;
-            }
+            if (value == null) throw new ArgumentNullException(nameof(value));
 
             (bool succ, object output) result;
 
