@@ -95,7 +95,7 @@ namespace Hl7.Fhir.Serialization
                     "DELETE" => OperationType.Delete,
                     "REPLACE" => OperationType.Replace,
                     "MOVE" => OperationType.Move,
-                    _ => null
+                    _ => (OperationType?)null
                 };
 
                 if ( operationType == null )
