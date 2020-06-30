@@ -8,7 +8,6 @@
 
 using System;
 using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Patch.Adapters;
 
 namespace Hl7.Fhir.Patch
 {
@@ -40,11 +39,11 @@ namespace Hl7.Fhir.Patch
         /// </summary>
         /// <param name="original"><see cref="ElementNode"/> to apply patch to</param>
         /// <param name="patchDocument"><see cref="IPatchDocument"/> to apply to this <see cref="ElementNode"/></param>
-        /// <param name="adapter">IObjectAdapter instance to use when applying</param>
+        /// <param name="patchHelper">PatchHelper instance to use when applying</param>
         /// <param name="logErrorAction">Action to log errors</param>
-        internal static void Apply (this ElementNode original, IPatchDocument patchDocument, IObjectAdapter adapter, Action<PatchError> logErrorAction)
+        internal static void Apply (this ElementNode original, IPatchDocument patchDocument, PatchHelper patchHelper, Action<PatchError> logErrorAction)
         {
-            patchDocument.ApplyTo(original, adapter, logErrorAction);
+            patchDocument.ApplyTo(original, patchHelper, logErrorAction);
         }
 
         /// <summary>
@@ -52,10 +51,10 @@ namespace Hl7.Fhir.Patch
         /// </summary>
         /// <param name="original"><see cref="ElementNode"/> to apply patch to</param>
         /// <param name="patchDocument"><see cref="IPatchDocument"/> to apply to this <see cref="ElementNode"/></param>
-        /// <param name="adapter">IObjectAdapter instance to use when applying</param>
-        internal static void Apply (this ElementNode original, IPatchDocument patchDocument, IObjectAdapter adapter)
+        /// <param name="patchHelper">PatchHelper instance to use when applying</param>
+        internal static void Apply (this ElementNode original, IPatchDocument patchDocument, PatchHelper patchHelper)
         {
-            patchDocument.ApplyTo(original, adapter);
+            patchDocument.ApplyTo(original, patchHelper);
         }
 
         /// <summary>
@@ -88,12 +87,12 @@ namespace Hl7.Fhir.Patch
         /// </summary>
         /// <param name="original"><see cref="ElementNode"/> to apply patch to</param>
         /// <param name="patchDocument"><see cref="IPatchDocument"/> to apply to this <see cref="ElementNode"/></param>
-        /// <param name="adapter">IObjectAdapter instance to use when applying</param>
+        /// <param name="patchHelper">PatchHelper instance to use when applying</param>
         /// <param name="logErrorAction">Action to log errors</param>
-        public static ITypedElement Apply (this ITypedElement original, IPatchDocument patchDocument, IObjectAdapter adapter, Action<PatchError> logErrorAction)
+        public static ITypedElement Apply (this ITypedElement original, IPatchDocument patchDocument, PatchHelper patchHelper, Action<PatchError> logErrorAction)
         {
             var elementNode = ElementNode.FromElement(original);
-            patchDocument.ApplyTo(elementNode, adapter, logErrorAction);
+            patchDocument.ApplyTo(elementNode, patchHelper, logErrorAction);
             return elementNode;
         }
 
@@ -102,11 +101,11 @@ namespace Hl7.Fhir.Patch
         /// </summary>
         /// <param name="original"><see cref="ElementNode"/> to apply patch to</param>
         /// <param name="patchDocument"><see cref="IPatchDocument"/> to apply to this <see cref="ElementNode"/></param>
-        /// <param name="adapter">IObjectAdapter instance to use when applying</param>
-        public static ITypedElement Apply (this ITypedElement original, IPatchDocument patchDocument, IObjectAdapter adapter)
+        /// <param name="patchHelper">PatchHelper instance to use when applying</param>
+        public static ITypedElement Apply (this ITypedElement original, IPatchDocument patchDocument, PatchHelper patchHelper)
         {
             var elementNode = ElementNode.FromElement(original);
-            patchDocument.ApplyTo(elementNode, adapter);
+            patchDocument.ApplyTo(elementNode, patchHelper);
             return elementNode;
         }
     }

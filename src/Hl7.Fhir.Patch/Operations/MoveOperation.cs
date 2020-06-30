@@ -7,7 +7,9 @@
  */
 
 using System;
-using Hl7.Fhir.Patch.Adapters;
+using System.Linq;
+using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Patch.Internal;
 using Hl7.FhirPath;
 
 namespace Hl7.Fhir.Patch.Operations
@@ -31,19 +33,67 @@ namespace Hl7.Fhir.Patch.Operations
             Destination = destination;
         }
 
-        public override void Apply(object objectToApplyTo, IObjectAdapter adapter)
+        public override void Apply (object objectToApplyTo, PatchHelper patchHelper)
         {
-            if (objectToApplyTo == null)
+            if ( patchHelper == null )
+            {
+                throw new ArgumentNullException(nameof(patchHelper));
+            }
+
+            if ( objectToApplyTo == null )
             {
                 throw new ArgumentNullException(nameof(objectToApplyTo));
             }
 
-            if (adapter == null)
+            // Get value at the 'path' location at 'source' index and insert value at the 'destionation' index
+            CompiledExpression sourcePath = (ITypedElement el, EvaluationContext ctx) => Path(el, ctx).Where((_, i) => i == Source);
+            if ( TryGetValue(patchHelper, sourcePath, objectToApplyTo, out var elementValue) )
             {
-                throw new ArgumentNullException(nameof(adapter));
+                // delete that value
+                var deleteOperation = new DeleteOperation(sourcePath) { Parent = this };
+                deleteOperation.Apply(objectToApplyTo, patchHelper);
+
+                // add that value to the path location
+                var insertOperation = new InsertOperation(Path, Destination, elementValue) { Parent = this };
+                insertOperation.Apply(objectToApplyTo, patchHelper);
+            }
+        }
+
+        private bool TryGetValue (
+            PatchHelper patchHelper,
+            CompiledExpression path,
+            object objectToGetValueFrom,
+            out object elementValue)
+        {
+            if ( path == null )
+            {
+                throw new ArgumentNullException(nameof(path));
             }
 
-            adapter.Move(this, objectToApplyTo);
+            if ( objectToGetValueFrom == null )
+            {
+                throw new ArgumentNullException(nameof(objectToGetValueFrom));
+            }
+
+            var visitor = new ObjectVisitor(path, patchHelper.AdapterFactory);
+
+            object target = objectToGetValueFrom;
+            if ( !visitor.TryVisit(patchHelper.Provider, ref target, out var adapter, out var errorMessage) )
+            {
+                elementValue = null;
+                var error = patchHelper.CreatePathNotFoundError(objectToGetValueFrom, this, errorMessage);
+                patchHelper.ErrorReporter(error);
+                return false;
+            }
+
+            if ( !adapter.TryGet(target, out elementValue, out errorMessage) )
+            {
+                var error = patchHelper.CreateOperationFailedError(objectToGetValueFrom, this, errorMessage);
+                patchHelper.ErrorReporter(error);
+                return false;
+            }
+
+            return true;
         }
     }
 }

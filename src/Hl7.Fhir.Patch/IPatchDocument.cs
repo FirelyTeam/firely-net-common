@@ -7,7 +7,6 @@
  */
 
 using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Patch.Adapters;
 using System;
 
 namespace Hl7.Fhir.Patch
@@ -32,13 +31,13 @@ namespace Hl7.Fhir.Patch
         /// <param name="objectToApplyTo">Object to apply the IPatchDocument to</param>
         /// <param name="adapter">IObjectAdapter instance to use when applying</param>
         /// <param name="logErrorAction">Action to log errors</param>
-        void ApplyTo (ElementNode objectToApplyTo, IObjectAdapter adapter, Action<PatchError> logErrorAction);
+        void ApplyTo (ElementNode objectToApplyTo, PatchHelper adapter, Action<PatchError> logErrorAction);
 
         /// <summary>
         /// Apply this IPatchDocument
         /// </summary>
         /// <param name="objectToApplyTo">Object to apply the IPatchDocument to</param>
         /// <param name="adapter">IObjectAdapter instance to use when applying</param>
-        void ApplyTo (ElementNode objectToApplyTo, IObjectAdapter adapter);
+        void ApplyTo (ElementNode objectToApplyTo, PatchHelper adapter);
     }
 }

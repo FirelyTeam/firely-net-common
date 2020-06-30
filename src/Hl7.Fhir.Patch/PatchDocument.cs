@@ -26,16 +26,20 @@ namespace Hl7.Fhir.Patch
 
         public IStructureDefinitionSummaryProvider Provider { get; set; }
 
+        public IAdapterFactory AdapterFactory { get; set; }
+
         public PatchDocument()
         {
             Operations = new List<Operation>();
+            AdapterFactory = new AdapterFactory();
             Provider = null;
         }
 
-        public PatchDocument(List<Operation> operations, IStructureDefinitionSummaryProvider provider)
+        public PatchDocument(List<Operation> operations, IStructureDefinitionSummaryProvider provider, IAdapterFactory adapterFactory = null)
         {
             Operations = operations ?? throw new ArgumentNullException(nameof(operations));
             Provider = provider ?? throw new ArgumentNullException(nameof(provider));
+            AdapterFactory = adapterFactory ?? new AdapterFactory();
         }
 
         /// <summary>
@@ -62,17 +66,17 @@ namespace Hl7.Fhir.Patch
                 throw new ArgumentNullException(nameof(objectToApplyTo));
             }
 
-            ApplyTo(objectToApplyTo, new ObjectAdapter(Provider, null, new AdapterFactory()));
+            ApplyTo(objectToApplyTo, new PatchHelper(Provider, null, AdapterFactory));
         }
 
         /// <inheritdoc />
         public void ApplyTo(ElementNode objectToApplyTo, Action<PatchError> logErrorAction)
         {
-            ApplyTo(objectToApplyTo, new ObjectAdapter(Provider, logErrorAction, new AdapterFactory()), logErrorAction);
+            ApplyTo(objectToApplyTo, new PatchHelper(Provider, logErrorAction, AdapterFactory), logErrorAction);
         }
 
         /// <inheritdoc />
-        public void ApplyTo(ElementNode objectToApplyTo, IObjectAdapter adapter, Action<PatchError> logErrorAction)
+        public void ApplyTo(ElementNode objectToApplyTo, PatchHelper adapter, Action<PatchError> logErrorAction)
         {
             if (objectToApplyTo == null)
             {
@@ -102,7 +106,7 @@ namespace Hl7.Fhir.Patch
         }
 
         /// <inheritdoc />
-        public void ApplyTo(ElementNode objectToApplyTo, IObjectAdapter adapter)
+        public void ApplyTo(ElementNode objectToApplyTo, PatchHelper adapter)
         {
             if (objectToApplyTo == null)
             {

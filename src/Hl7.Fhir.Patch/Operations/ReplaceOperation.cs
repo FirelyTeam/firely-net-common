@@ -7,7 +7,7 @@
  */
 
 using System;
-using Hl7.Fhir.Patch.Adapters;
+using Hl7.Fhir.Patch.Internal;
 using Hl7.FhirPath;
 
 namespace Hl7.Fhir.Patch.Operations
@@ -24,19 +24,34 @@ namespace Hl7.Fhir.Patch.Operations
         {
         }
 
-        public override void Apply(object objectToApplyTo, IObjectAdapter adapter)
+        public override void Apply (object objectToApplyTo, PatchHelper patchHelper)
         {
-            if (objectToApplyTo == null)
+            if ( patchHelper == null )
+            {
+                throw new ArgumentNullException(nameof(patchHelper));
+            }
+
+            if ( objectToApplyTo == null )
             {
                 throw new ArgumentNullException(nameof(objectToApplyTo));
             }
 
-            if (adapter == null)
+            var visitor = new ObjectVisitor(Path, patchHelper.AdapterFactory);
+
+            object target = objectToApplyTo;
+            if ( !visitor.TryVisit(patchHelper.Provider, ref target, out var adapter, out var errorMessage) )
             {
-                throw new ArgumentNullException(nameof(adapter));
+                var error = patchHelper.CreatePathNotFoundError(objectToApplyTo, this, errorMessage);
+                patchHelper.ErrorReporter(error);
+                return;
             }
 
-            adapter.Replace(this, objectToApplyTo);
+            if ( !adapter.TryReplace(target, Value, out errorMessage) )
+            {
+                var error = patchHelper.CreateOperationFailedError(objectToApplyTo, this, errorMessage);
+                patchHelper.ErrorReporter(error);
+                return;
+            }
         }
     }
 }
