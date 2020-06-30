@@ -63,7 +63,7 @@ namespace Hl7.Fhir.Patch
         {
             return new PatchError(
                 target,
-                operation,
+                operation.Parent ?? operation,
                 errorMessage ?? $"The '{(operation.Parent ?? operation).OperationType:G}' operation at path could not be performed.");
         }
 
@@ -71,7 +71,7 @@ namespace Hl7.Fhir.Patch
         {
             return new PatchError(
                 target,
-                operation,
+                operation.Parent ?? operation,
                 errorMessage ?? $"For operation '{(operation.Parent ?? operation).OperationType:G}', the target location specified by path was not found.");
         }
     }

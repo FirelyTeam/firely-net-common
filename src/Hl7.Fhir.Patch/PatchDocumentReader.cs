@@ -71,7 +71,7 @@ namespace Hl7.Fhir.Serialization
                         _ => (ParameterName?)null
                     };
 
-                    if ( parameter == null )
+                    if ( paramName == null )
                     {
                         errorReporter(Error.Argument("parameter.part.Name", $"Operation parameter name '${partName}' is not a valid parameter name"));
                         return null;
