@@ -24,23 +24,20 @@ namespace Hl7.FhirPath.Functions
             var val = focus?.Value;
             if (val == null) return null;
 
-            switch (val)
+            return val switch
             {
-                case bool b:
-                    return b;
-                case string s:
-                    return convertString(s);
-                case long l:
-                    return l == 1 ? true :
-                        l == 0 ? false : (bool?)null;
-                case decimal d:
-                    return d == 1.0m ? true :
-                        d == 0.0m ? false : (bool?)null;
-                default:
-                    return null;
-            }
+                bool b => b,
+                string s => convertString(s),
+                long l => l == 1 
+                        ? true :
+                            l == 0 ? false : (bool?)null,
+                decimal d => d == 1.0m 
+                        ? true :
+                            d == 0.0m ? false : (bool?)null,
+                _ => null,
+            };
 
-            bool? convertString(string si)
+            static bool? convertString(string si)
             {
                 switch (si.ToLower())
                 {
@@ -82,19 +79,15 @@ namespace Hl7.FhirPath.Functions
             var val = focus?.Value;
             if (val == null) return null;
 
-            switch (val)
+            return val switch
             {
-                case long l:
-                    return l;
-                case string s:
-                    return convertString(s);
-                case bool b:
-                    return b ? 1L : 0L;
-                default:
-                    return null;
-            }
+                long l => l,
+                string s => convertString(s),
+                bool b => b ? 1L : 0L,
+                _ => null,
+            };
 
-            long? convertString(string si)
+            static long? convertString(string si)
             {
                 try
                 {
@@ -125,23 +118,17 @@ namespace Hl7.FhirPath.Functions
             var val = focus?.Value;
             if (val == null) return null;
 
-            switch (val)
+            return val switch
             {
-                case decimal d:
-                    return d;
-                case long l:
-                    return l;
-                case int i:
-                    return i;
-                case string s:
-                    return convertString(s);
-                case bool b:
-                    return b ? 1m : 0m;
-                default:
-                    return null;
-            }
+                decimal d => d,
+                long l => l,
+                int i => i,
+                string s => convertString(s),
+                bool b => b ? 1m : 0m,
+                _ => null,
+            };
 
-            decimal? convertString(string si)
+            static decimal? convertString(string si)
             {
                 try
                 {
@@ -199,30 +186,19 @@ namespace Hl7.FhirPath.Functions
         /// </summary>
         /// <param name="focus"></param>
         /// <returns></returns>
-        public static PartialTime? ToTime(this ITypedElement focus)
+        public static PartialTime ToTime(this ITypedElement focus)
         {
             var val = focus?.Value;
             if (val == null) return null;
 
-            switch (val)
+            return val switch
             {
-                case PartialTime pt:
-                    return pt;
-                case string s:
-                    return convertString(s);
-                default:
-                    return null;
-            }
+                PartialTime pt => pt,
+                string s => convertString(s),
+                _ => null,
+            };
 
-            PartialTime? convertString(string si)
-            {
-                // Inconsistenty, the format for a time requires the 'T' prefix, while
-                // convertsToDateTime() does not expect a '@'.
-                //if (!si.StartsWith("T")) return null;
-
-                return PartialTime.TryParse(si, out var result) ?
-                     result : (PartialTime?)null;
-            }
+            static PartialTime convertString(string si) => PartialTime.TryParse(si, out var result) ? result : null;
         }
 
 
@@ -239,26 +215,21 @@ namespace Hl7.FhirPath.Functions
         /// </summary>
         /// <param name="focus"></param>
         /// <returns></returns>
-        public static PartialDate? ToDate(this ITypedElement focus)
+        public static PartialDate ToDate(this ITypedElement focus)
         {
             var val = focus?.Value;
             if (val == null) return null;
 
-            switch (val)
+            return val switch
             {
-                case PartialDate pt:
-                    return pt;
-                case string s:
-                    return convertString(s);
-                default:
-                    return null;
-            }
+                PartialDate pt => pt,
+                string s => convertString(s),
+                _ => null,
+            };
 
-            PartialDate? convertString(string si)
-            {
-                return PartialDate.TryParse(si, out var result) ?
-                     result : (PartialDate?)null;
-            }
+            static PartialDate convertString(string si) =>
+                PartialDate.TryParse(si, out var result) ?
+                     result : null;
         }
 
 
@@ -275,31 +246,22 @@ namespace Hl7.FhirPath.Functions
         /// </summary>
         /// <param name="focus"></param>
         /// <returns></returns>
-        public static Quantity? ToQuantity(this ITypedElement focus)
+        public static Quantity ToQuantity(this ITypedElement focus)
         {
             var val = focus?.Value;
             if (val == null) return null;
 
-            switch (val)
+            return val switch
             {
-                case Quantity q:
-                    return q;
-                case long l:
-                    return new Quantity((decimal)l);
-                case decimal d:
-                    return new Quantity(d);
-                case string s:
-                    return convertString(s);
-                case bool b:
-                    return b == true ? new Quantity(1.0) : new Quantity(0.0);
-                default:
-                    return null;
-            }
+                Quantity q => q,
+                long l => new Quantity((decimal)l),
+                decimal d => new Quantity(d),
+                string s => convertString(s),
+                bool b => b == true ? new Quantity(1.0) : new Quantity(0.0),
+                _ => null,
+            };
 
-            Quantity? convertString(string si) =>
-                Quantity.TryParse(si, out var result) ?
-                        result : (Quantity?)null;
-
+            static Quantity convertString(string si) => Quantity.TryParse(si, out var result) ?result : null;
         }
 
         /// <summary>
@@ -308,7 +270,6 @@ namespace Hl7.FhirPath.Functions
         /// <param name="focus"></param>
         /// <returns></returns>
         public static bool ConvertsToQuantity(this ITypedElement focus) => ToQuantity(focus) != null;
-
 
 
         /// <summary>
@@ -321,27 +282,18 @@ namespace Hl7.FhirPath.Functions
             var val = focus?.Value;
             if (val == null) return null;
 
-            switch (val)
+            return val switch
             {
-                case string s:
-                    return s;
-                case long l:
-                    return XmlConvert.ToString(l);
-                case decimal d:
-                    return XmlConvert.ToString(d);
-                case PartialDate pd:
-                    return pd.ToString();
-                case PartialDateTime pdt:
-                    return pdt.ToString();
-                case PartialTime pt:
-                    return pt.ToString();   // again, this inconsistency.
-                case bool b:
-                    return b ? "true" : "false";
-                case Quantity q:
-                    return q.ToString();
-                default:
-                    return null;
-            }
+                string s => s,
+                long l => XmlConvert.ToString(l),
+                decimal d => XmlConvert.ToString(d),
+                PartialDate pd => pd.ToString(),
+                PartialDateTime pdt => pdt.ToString(),
+                PartialTime pt => pt.ToString(),// again, this inconsistency.
+                bool b => b ? "true" : "false",
+                Quantity q => q.ToString(),
+                _ => null,
+            };
         }
 
         /// <summary>

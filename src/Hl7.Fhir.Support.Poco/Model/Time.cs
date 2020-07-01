@@ -73,7 +73,7 @@ namespace Hl7.Fhir.Model
         public static bool IsValidValue(string value) 
             => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
 
-        public Primitives.PartialTime? ToTime() 
-            => Value != null ? (Primitives.PartialTime?)Primitives.PartialTime.Parse(Value) : null;
+        public Primitives.PartialTime ToTime() 
+            => Value != null ? Primitives.PartialTime.Parse(Value) : null;
     }
 }

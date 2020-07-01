@@ -65,19 +65,5 @@ namespace Hl7.Fhir.Support.Tests.Language
                 TypeSpecifier.ForNativeType(typeof(IEnumerable<Guid>)));
         }
 
-        [TestMethod]
-        public void TestGetNativeType()
-        {
-            Assert.AreEqual(typeof(string), TypeSpecifier.String.GetNativeType());
-            Assert.AreEqual(typeof(Quantity), TypeSpecifier.Quantity.GetNativeType());
-            Assert.AreEqual(typeof(object), TypeSpecifier.Any.GetNativeType());
-            Assert.AreEqual(typeof(PartialTime), TypeSpecifier.Time.GetNativeType());
-            Assert.AreEqual(typeof(Guid), TypeSpecifier.ForNativeType(typeof(Guid)).GetNativeType());
-
-#if !NET40
-            Assert.ThrowsException<NotSupportedException>(() => TypeSpecifier.GetByName("DotNet", "NoSuchType").GetNativeType());
-            Assert.ThrowsException<NotSupportedException>(() => TypeSpecifier.GetByName("Internal", "NoSuchType").GetNativeType());
-#endif
-        }
     }
 }

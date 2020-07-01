@@ -11,12 +11,14 @@
 using Hl7.Fhir.Language;
 using Hl7.Fhir.Utility;
 using System;
+using System.Reflection;
 
 namespace Hl7.Fhir.Model.Primitives
 {
     public abstract class Any
     {
-        public static bool? IsEqualTo(object l, object r) => throw new NotImplementedException();
+        // move this code into fhirpath engine
+        //public static bool? IsEqualTo(object l, object r)
         //{
         //    if (l == null || r == null) return null;
 
@@ -59,7 +61,7 @@ namespace Hl7.Fhir.Model.Primitives
         //    return value;
         //}
 
-        public static bool IsEquivalentTo(object l, object r) => throw new NotImplementedException();
+        // public static bool IsEquivalentTo(object l, object r)
         //{
         //    if (l == null && r == null) return true;
         //    if (l == null || r == null) return false;
@@ -93,84 +95,76 @@ namespace Hl7.Fhir.Model.Primitives
         //        return false;
         //}
 
-        public static object Parse(string value, TypeSpecifier systemType)
+
+        public static bool TryGetByName(string name, out Type? result)
+        {
+            result = get();
+            return result != null;
+
+            Type? get() =>
+                name switch
+                {
+                    "Any" => typeof(Any),
+                    "Boolean" => typeof(Boolean),
+                    "Code" => typeof(Coding),
+                    "Concept" => typeof(Concept),
+                    "Decimal" => typeof(Decimal),
+                    "Integer" => typeof(Integer),
+                    "Integer64" => typeof(Integer64),
+                    "Date" => typeof(PartialDate),
+                    "DateTime" => typeof(PartialDateTime),
+                    "Time" => typeof(PartialTime),
+                    "Quantity" => typeof(Quantity),
+                    "String" => typeof(String),
+                    "Void" => typeof(void),
+                    _ => null,
+                };
+        }
+
+        public static object Parse(string value, Type primitiveType)
         {
             if (value is null) throw new ArgumentNullException(nameof(value));
 
-            if (TryParse(value, systemType, out object result))
-                return result;
-            else
-                throw new FormatException($"Input string '{value}' was not in a correct format for type '{systemType}'.");
+            return TryParse(value, primitiveType, out var result) ? result! : 
+                throw new FormatException($"Input string '{value}' was not in a correct format for type '{primitiveType}'.");
         }
 
-        public static bool TryParse(string value, TypeSpecifier systemType, out object parsed)
+        public static bool TryParse(string value, Type primitiveType, out object? parsed)
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
+            if (!typeof(Any).IsAssignableFrom(primitiveType)) throw new ArgumentException($"Must be a subclass of {nameof(Any)}.", nameof(primitiveType));
 
-            (bool succ, object output) result;
+            bool success;
+            (success, parsed) = parse();
+            return success;
 
-            if (systemType == TypeSpecifier.Boolean)
+            (bool success, object? p) parse()
             {
-                var success = Boolean.TryParse(value, out var p);
-                result = (success, p);
+                if(primitiveType == typeof(Boolean) )
+                    return (Boolean.TryParse(value, out var p), p);
+                else if (primitiveType == typeof(Coding))
+                    return (Coding.TryParse(value, out var p), p);
+                else if (primitiveType == typeof(Concept))
+                    return (success: Concept.TryParse(value, out var p), p);
+                else if (primitiveType == typeof(Decimal))
+                    return (success: Decimal.TryParse(value, out var p), p);
+                else if (primitiveType == typeof(Integer))
+                    return (success: Integer.TryParse(value, out var p), p);
+                else if (primitiveType == typeof(Integer64))
+                    return (success: Integer64.TryParse(value, out var p), p);
+                else if (primitiveType == typeof(PartialDate))
+                    return (success: PartialDate.TryParse(value, out var p), p);
+                else if (primitiveType == typeof(PartialDateTime))
+                    return (success: PartialDateTime.TryParse(value, out var p), p);
+                else if (primitiveType == typeof(PartialTime))
+                    return (success: PartialTime.TryParse(value, out var p), p);
+                else if (primitiveType == typeof(Quantity))
+                    return (success: Quantity.TryParse(value, out var p), p);
+                else if (primitiveType == typeof(String))
+                    return (success: String.TryParse(value, out var p), p);
+                else
+                    return (false, null);
             }
-            else if (systemType == TypeSpecifier.Code)
-            {
-                var success = Coding.TryParse(value, out var p);
-                result = (success, p);
-            }
-            else if (systemType == TypeSpecifier.Concept)
-            {
-                var success = Concept.TryParse(value, out var p);
-                result = (success, p);
-            }
-            else if (systemType == TypeSpecifier.Date)
-            {
-                var success = PartialDate.TryParse(value, out var p);
-                result = (success, p);
-            }
-            else if (systemType == TypeSpecifier.DateTime)
-            {
-                var success = PartialDateTime.TryParse(value, out var p);
-                result = (success, p);
-            }
-            else if (systemType == TypeSpecifier.Decimal)
-            {
-                var success = Decimal.TryParse(value, out var p);
-                result = (success, p);
-            }
-            else if (systemType == TypeSpecifier.Integer)
-            {
-                var success = Integer.TryParse(value, out var p);
-                result = (success, p);
-            }
-            else if (systemType == TypeSpecifier.Integer64)
-            {
-                var success = Integer64.TryParse(value, out var p);
-                result = (success, p);
-            }
-            else if (systemType == TypeSpecifier.Quantity)
-            {
-                var success = Quantity.TryParse(value, out var p);
-                result = (success, p);
-            }
-            else if (systemType == TypeSpecifier.String)
-            {
-                var success = String.TryParse(value, out var p);
-                result = (success, p);
-            }
-            else if (systemType == TypeSpecifier.Time)
-            {
-                var success = PartialTime.TryParse(value, out var p);
-                result = (success, p);
-            }
-            else
-                result = (false, null);
-
-            parsed = result.output;
-            return result.succ;
-
-
         }
 
         internal static (bool, T) DoConvert<T>(Func<T> parser)
@@ -191,12 +185,12 @@ namespace Hl7.Fhir.Model.Primitives
         /// <summary>
         /// Converts a primitive .NET instance to a System-based instance.
         /// </summary>
-        public static object ConvertToSystemValue(object value)
+        public static object? ConvertToSystemValue(object value)
         {
             if (value == null) return null;
 
-            if (TryConvertToSystemValue(value, out object result))
-                return result;
+            if (TryConvertToSystemValue(value, out object? result))
+                return result!;
             else
                 throw new NotSupportedException($"There is no known System type corresponding to the .NET type {value.GetType().Name} of this instance (with value '{value}').");
         }
@@ -204,7 +198,7 @@ namespace Hl7.Fhir.Model.Primitives
         /// <summary>
         /// Try to converts a .NET instance to a System-based instance.
         /// </summary>
-        public static bool TryConvertToSystemValue(object value, out object primitiveValue)
+        public static bool TryConvertToSystemValue(object value, out object? primitiveValue)
         {
             if (value == null)
             {

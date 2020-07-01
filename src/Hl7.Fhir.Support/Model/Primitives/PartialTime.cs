@@ -1,23 +1,51 @@
 ﻿/* 
- * Copyright (c) 2019, Firely (info@fire.ly) and contributors
+ * Copyright (c) 2020, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+#nullable enable
+
 using System;
 using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public struct PartialTime : IComparable, IComparable<PartialTime>, IEquatable<PartialTime>
+    public class PartialTime : Any, IComparable, IComparable<PartialTime>, IEquatable<PartialTime>
     {
-        public static PartialTime Parse(string representation) =>
-            TryParse(representation, out var result) ? result : throw new FormatException("Time value is in an invalid format.");
+        private PartialTime(string original, DateTimeOffset parsedValue, PartialPrecision precision, bool hasOffset)
+        {
+            _original = original;
+            _parsedValue = parsedValue;
+            Precision = precision;
+            HasOffset = hasOffset;
+        }
 
-        public static bool TryParse(string representation, out PartialTime value) =>
-            tryParse(representation, out value);
+        public static PartialTime Parse(string representation) =>
+            TryParse(representation, out var result) ? result : throw new FormatException($"String '{representation}' was not recognized as a valid partial time.");
+
+        public static bool TryParse(string representation, out PartialTime value) => tryParse(representation, out value);
+
+        public static PartialTime FromDateTimeOffset(DateTimeOffset dto, PartialPrecision prec = PartialPrecision.Fraction,
+        bool includeOffset = false)
+        {
+            string formatString = prec switch
+            {
+                PartialPrecision.Hour => "HH",
+                PartialPrecision.Minute => "HH:mm",
+                PartialPrecision.Second => "HH:mm:ss",
+                _ => "HH:mm:ss.FFFFFFF",
+            };
+
+            if (includeOffset) formatString += "K";
+
+            var representation = dto.ToString(formatString);
+            return Parse(representation);
+        }
+
+        public static PartialTime Now(bool includeOffset = false) => FromDateTimeOffset(DateTimeOffset.Now, includeOffset: includeOffset);
 
         public int? Hours => Precision >= PartialPrecision.Hour ? _parsedValue.Hour : (int?)null;
         public int? Minutes => Precision >= PartialPrecision.Minute ? _parsedValue.Minute : (int?)null;
@@ -29,8 +57,8 @@ namespace Hl7.Fhir.Model.Primitives
         /// </summary>
         public TimeSpan? Offset => HasOffset ? _parsedValue.Offset : (TimeSpan?)null;
 
-        private string _original;
-        private DateTimeOffset _parsedValue;
+        private readonly string _original;
+        private readonly DateTimeOffset _parsedValue;
 
         /// <summary>
         /// The precision of the time available. 
@@ -68,54 +96,17 @@ namespace Hl7.Fhir.Model.Primitives
                     _parsedValue.Minute, _parsedValue.Second, _parsedValue.Millisecond,
                     HasOffset ? _parsedValue.Offset : defaultOffset);
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="dto"></param>
-        /// <param name="prec"></param>
-        /// <param name="includeOffset">Whether to include the timezone offset.</param>
-        /// <returns></returns>
-        public static PartialTime FromDateTimeOffset(DateTimeOffset dto, PartialPrecision prec = PartialPrecision.Fraction,
-                bool includeOffset = false)
-        {
-            string formatString;
-
-            switch (prec)
-            {
-                case PartialPrecision.Hour:
-                    formatString = "HH";
-                    break;
-                case PartialPrecision.Minute:
-                    formatString = "HH:mm";
-                    break;
-                case PartialPrecision.Second:
-                    formatString = "HH:mm:ss";
-                    break;
-                case PartialPrecision.Fraction:                    
-                default:
-                    formatString = "HH:mm:ss.FFFFFFF";
-                    break;
-            }
-
-            if (includeOffset) formatString += "K";
-
-            var representation = dto.ToString(formatString);
-            return Parse(representation);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="includeOffset">Whether to include the timezone offset.</param>
-        /// <returns></returns>
-        public static PartialTime Now(bool includeOffset = false) => FromDateTimeOffset(DateTimeOffset.Now, includeOffset: includeOffset);
 
         private static bool tryParse(string representation, out PartialTime value)
         {
-            value = new PartialTime();
+            if (representation is null) throw new ArgumentNullException(nameof(representation));
 
             var matches = PARTIALTIMEREGEX.Match(representation);
-            if (!matches.Success) return false;
+            if (!matches.Success)
+            {
+                value = new PartialTime(representation, default, default, default);
+                return false;
+            }
 
             var hrg = matches.Groups["hours"];
             var ming = matches.Groups["minutes"];
@@ -123,13 +114,11 @@ namespace Hl7.Fhir.Model.Primitives
             var fracg = matches.Groups["frac"];
             var offset = matches.Groups["offset"];
 
-            value.Precision =
+            var prec =
                         fracg.Success ? PartialPrecision.Fraction :
                         secg.Success ? PartialPrecision.Second :
                         ming.Success ? PartialPrecision.Minute :
                         PartialPrecision.Hour;
-
-            value.HasOffset = offset.Success;
 
             var parseableDT = $"2016-01-01T" +
                     (hrg.Success ? hrg.Value : "00") +
@@ -137,80 +126,81 @@ namespace Hl7.Fhir.Model.Primitives
                     (secg.Success ? secg.Value : ":00") +
                     (fracg.Success ? fracg.Value : "") +
                     (offset.Success ? offset.Value : "Z");
-
-            value._original = representation;
-            return DateTimeOffset.TryParse(parseableDT, out value._parsedValue);
+            
+            var success = DateTimeOffset.TryParse(parseableDT, out var parsedValue);
+            value = new PartialTime(representation, parsedValue, prec, offset.Success);
+            return success;
         }
 
-        // TODO: Note, this enables comparisons between values that did or did not have timezones, need to fix.
-        private DateTimeOffset toComparable() => _parsedValue.ToUniversalTime();
+        /// <summary>
+        /// Compare two partial times based on CQL equality rules
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns>returns true if the values have the same precision, and each time component is exactly the same. Times with timezones are normalized
+        /// to zulu before comparison is done. Throws an <see cref="ArgumentException"/> if the arguments differ in precision.</returns>
+        /// <remarks>See <see cref="TryCompare(PartialTime, out int)"/> for more details.</remarks>
+        public bool Equals(PartialTime other) => CompareTo(other) == 0;
 
-        public static bool operator <(PartialTime a, PartialTime b) => a.toComparable() < b.toComparable();
-        public static bool operator <=(PartialTime a, PartialTime b) => a.toComparable() <= b.toComparable();
-        public static bool operator >(PartialTime a, PartialTime b) => a.toComparable() > b.toComparable();
-        public static bool operator >=(PartialTime a, PartialTime b) => a.toComparable() >= b.toComparable();
+        /// <inheritdoc cref="Equals(PartialTime)"/>
+        public override bool Equals(object obj) => obj is PartialTime t && Equals(t);
         public static bool operator ==(PartialTime a, PartialTime b) => Equals(a, b);
-        public static bool operator !=(PartialTime a, PartialTime b) => !(a == b);
+        public static bool operator !=(PartialTime a, PartialTime b) => !Equals(a, b);
 
+
+        /// <summary>
+        /// Compare two partial times based on CQL equality rules
+        /// </summary>
+        /// <remarks>See <see cref="TryCompare(PartialTime, out int)"/> for more details.</remarks>
         public int CompareTo(object obj)
         {
-            if (obj == null) return 1;
+            if (obj is null) return 1;      // as defined by the .NET framework guidelines
 
             if (obj is PartialTime p)
             {
-                return (this < p) ? -1 :
-                     (this > p) ? 1 : 0;
+                return TryCompare(p, out var comparison) ?
+                    comparison : throw new ArgumentException($"Value {this} and {p} cannot be compared, since the precision is different.");
             }
             else
                 throw new ArgumentException($"Object is not a {nameof(PartialTime)}");
         }
 
-        public bool Equals(PartialTime other) => this.Precision == other.Precision && other.toComparable() == toComparable();
-        public override int GetHashCode() => (Precision,toComparable()).GetHashCode();
-        public override string ToString() => _original;
-
+        /// <inheritdoc cref="CompareTo(object)"/>
         public int CompareTo(PartialTime obj) => CompareTo((object)obj);
-        public override bool Equals(object obj) => obj is PartialTime time && Equals(time);
+
+        public static bool operator <(PartialTime a, PartialTime b) => a.CompareTo(b) == -1;
+        public static bool operator <=(PartialTime a, PartialTime b) => a.CompareTo(b) != 1;
+        public static bool operator >(PartialTime a, PartialTime b) => a.CompareTo(b) == 1;
+        public static bool operator >=(PartialTime a, PartialTime b) => a.CompareTo(b) != -1;
 
         /// <summary>
-        /// Compares two (partial) times according to CQL equality rules.
-        /// </summary>
-        /// <param name="l"></param>
-        /// <param name="r"></param>
-        /// <returns>true is the precision of the times is the same and the individual components for
-        /// each precision are the same.</returns>
-        /// <remarks>
-        /// The comparison is performed by considering each precision in order, beginning with years 
-        /// (or hours for time values). If the values are the same, comparison proceeds to the next precision; 
+        /// Compares two (partial)times according to CQL ordering rules.
+        /// </summary> 
+        /// <param name="other"></param>
+        /// <param name="comparison">the result of the comparison: 0 if this and other are equal, 
+        /// -1 if this is smaller than other and +1 if this is bigger than other.</param>
+        /// <returns>true is the values can be compared (have the same precision) or false otherwise.</returns>
+        /// <remarks>The comparison is performed by considering each precision in order, beginning with hours.
+        /// If the values are the same, comparison proceeds to the next precision; 
         /// if the values are different, the comparison stops and the result is false. If one input has a value 
-        /// for the precision and the other does not, the comparison stops and the result is null; if neither
+        /// for the precision and the other does not, the comparison stops and the values cannot be compared; if neither
         /// input has a value for the precision, or the last precision has been reached, the comparison stops
         /// and the result is true. For the purposes of comparison, seconds and milliseconds are combined as a 
         /// single precision using a decimal, with decimal equality semantics.</remarks>
-        public static bool? IsEqualTo(PartialTime l, PartialTime r)
+        public bool TryCompare(PartialTime other, out int comparison)
         {
-            if (l.Precision != r.Precision) return null;
-            return l.toComparable() == r.toComparable();
+            if (other is null)
+            {
+                comparison = 1; // as defined by the .NET framework guidelines
+                return true;
+            }
+            else
+                return PartialDateTime.CompareDateTimeParts(_parsedValue, Precision, other._parsedValue, other.Precision, out comparison);
         }
 
-        /// <summary>
-        /// Compares two (partial) times according to CQL equivalence rules.
-        /// </summary>
-        /// <param name="l"></param>
-        /// <param name="r"></param>
-        /// <returns>true is the precision of the times is the same and the individual components for
-        /// each precision are the same.</returns>
-        /// <remarks>For Date, DateTime, and Time values, the comparison is performed in the same way as 
-        /// it is for equality, except that if one input has a value for a given precision and the other 
-        /// does not, the comparison stops and the result is false, rather than null. As with equality, 
-        /// the second and millisecond precisions are combined as a single precision using a decimal, 
-        /// with decimal equivalence semantics.</remarks>
-        public static bool IsEquivalentTo(PartialTime l, PartialTime r)
-        {
-            if (l.Precision != r.Precision) return false;
-            return l.toComparable() == r.toComparable();
-        }
+        public override int GetHashCode() => _original.GetHashCode();
+        public override string ToString() => _original;
 
+        public static explicit operator PartialTime(DateTimeOffset dto) => FromDateTimeOffset(dto);
     }
 }
 

@@ -1,23 +1,49 @@
 ﻿/* 
- * Copyright (c) 2015, Firely (info@fire.ly) and contributors
+ * Copyright (c) 2020, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+#nullable enable
+
 using System;
 using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public struct PartialDate : IComparable, IComparable<PartialDate>, IEquatable<PartialDate>
+    public class PartialDate : Any, IComparable, IComparable<PartialDate>, IEquatable<PartialDate>
     {
-        public static PartialDate Parse(string value) =>
-            TryParse(value, out PartialDate result) ? result : throw new FormatException("Date value is in an invalid format.");
+        private PartialDate(string original, DateTimeOffset parsedValue, PartialPrecision precision, bool hasOffset)
+        {
+            _original = original;
+            _parsedValue = parsedValue;
+            Precision = precision;
+            HasOffset = hasOffset;
+        }
 
-        public static bool TryParse(string representation, out PartialDate value) =>
-            tryParse(representation, out value);
+        public static PartialDate Parse(string representation) =>
+            TryParse(representation, out var result) ? result : throw new FormatException($"String '{representation}' was not recognized as a valid partial date.");
+
+        public static bool TryParse(string representation, out PartialDate value) => tryParse(representation, out value);
+
+        public static PartialDate FromDateTimeOffset(DateTimeOffset dto, PartialPrecision prec = PartialPrecision.Day,
+        bool includeOffset = false)
+        {
+            string formatString = prec switch
+            {
+                PartialPrecision.Year => "yyyy",
+                PartialPrecision.Month => "yyyy-MM",
+                _ => "yyyy-MM-dd",
+            };
+            if (includeOffset) formatString += "K";
+
+            var representation = dto.ToString(formatString);
+            return Parse(representation);
+        }
+
+        public static PartialDate Today(bool includeOffset = false) => FromDateTimeOffset(DateTimeOffset.Now, includeOffset: includeOffset);
 
         /// <summary>
         /// The precision of the date available. 
@@ -33,8 +59,8 @@ namespace Hl7.Fhir.Model.Primitives
         /// </summary>
         public TimeSpan? Offset => HasOffset ? _parsedValue.Offset : (TimeSpan?)null;
 
-        private string _original;
-        private DateTimeOffset _parsedValue;
+        private readonly string _original;
+        private readonly DateTimeOffset _parsedValue;
 
         /// <summary>
         /// Whether the time specifies an offset to UTC
@@ -69,144 +95,110 @@ namespace Hl7.Fhir.Model.Primitives
                 new DateTimeOffset(_parsedValue.Year, _parsedValue.Month, _parsedValue.Day, hours, minutes, seconds, milliseconds,
                         HasOffset ? _parsedValue.Offset : defaultOffset);
 
-        public static PartialDate FromDateTimeOffset(DateTimeOffset dto, PartialPrecision prec = PartialPrecision.Day,
-                bool includeOffset = false)
-        {
-            string formatString;
-
-            switch(prec)
-            {
-                case PartialPrecision.Year:
-                    formatString = "yyyy";
-                    break;
-                case PartialPrecision.Month:
-                    formatString = "yyyy-MM";
-                    break;
-                case PartialPrecision.Day:
-                default:
-                    formatString = "yyyy-MM-dd";
-                    break;
-            }
-
-            if (includeOffset) formatString += "K";
-
-            var representation = dto.ToString(formatString);
-            return Parse(representation);
-        }
-
-        public static PartialDate Today(bool includeOffset = false) => FromDateTimeOffset(DateTimeOffset.Now, includeOffset: includeOffset);
-
         /// <summary>
         /// Converts the partial date to a full DateTimeOffset instance.
         /// </summary>
         /// <returns></returns>
         private static bool tryParse(string representation, out PartialDate value)
         {
-            value = new PartialDate();
+            if (representation is null) throw new ArgumentNullException(nameof(representation));
+
+            
 
             var matches = PARTIALDATEREGEX.Match(representation);
-            if (!matches.Success) return false;
+            if (!matches.Success)
+            {
+                value = new PartialDate(representation, default, default, default);
+                return false;
+            }
 
             var y = matches.Groups["year"];
             var m = matches.Groups["month"];
             var d = matches.Groups["day"];
             var offset = matches.Groups["offset"];
 
-            value.Precision =
+            var prec =
                 d.Success ? PartialPrecision.Day :
                 m.Success ? PartialPrecision.Month :
                 PartialPrecision.Year;
-            value.HasOffset = offset.Success;
-
+            
             var parseableDT = y.Value +
                 (m.Success ? m.Value : "-01") +
                 (d.Success ? d.Value : "-01") +
                 "T" + "00:00:00" +
                 (offset.Success ? offset.Value : "Z");
 
-            value._original = representation;
-            return DateTimeOffset.TryParse(parseableDT, out value._parsedValue);
+            var success = DateTimeOffset.TryParse(parseableDT, out var parsedValue);
+            value = new PartialDate(representation, parsedValue, prec, offset.Success);
+            return success;
         }
 
-        // TODO: Note, this enables comparisons between values that did or did not have timezones, need to fix.
-        private DateTimeOffset toComparable() => _parsedValue.ToUniversalTime();
+        /// <summary>
+        /// Compare two partial dates based on CQL equality rules
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns>returns true if the values have the same precision, and each date component is exactly the same. Dates with timezones are normalized
+        /// to zulu before comparison is done. Throws an <see cref="ArgumentException"/> if the arguments differ in precision.</returns>
+        /// <remarks>See <see cref="TryCompare(PartialDate, out int)"/> for more details.</remarks>
+        public bool Equals(PartialDate other) => CompareTo(other) == 0;
 
-        public static bool operator <(PartialDate a, PartialDate b) => a.toComparable() < b.toComparable();
-        public static bool operator <=(PartialDate a, PartialDate b) => a.toComparable() <= b.toComparable();
-        public static bool operator >(PartialDate a, PartialDate b) => a.toComparable() > b.toComparable();
-        public static bool operator >=(PartialDate a, PartialDate b) => a.toComparable() >= b.toComparable();
-        public static bool operator ==(PartialDate a, PartialDate b) => a.Equals(b);
-        public static bool operator !=(PartialDate a, PartialDate b) => !(a == b);
+        /// <inheritdoc cref="Equals(PartialDate)"/>
+        public override bool Equals(object obj) => obj is PartialDate dt && Equals(dt);
+        public static bool operator ==(PartialDate a, PartialDate b) => Equals(a, b);
+        public static bool operator !=(PartialDate a, PartialDate b) => !Equals(a, b);
 
+        /// <summary>
+        /// Compare two partial dates based on CQL equality rules
+        /// </summary>
+        /// <remarks>See <see cref="TryCompare(PartialDate, out int)"/> for more details.</remarks>
         public int CompareTo(object obj)
         {
-            if (obj == null) return 1;
+            if (obj is null) return 1;      // as defined by the .NET framework guidelines
 
             if (obj is PartialDate p)
             {
-                if (this < p) return -1;
-                if (this > p) return 1;
-                return 0;
+                return TryCompare(p, out var comparison) ?
+                    comparison : throw new ArgumentException($"Value {this} and {p} cannot be compared, since the precision is different.");
             }
             else
                 throw new ArgumentException($"Object is not a {nameof(PartialDate)}");
         }
 
-        public bool Equals(PartialDate other) => this.Precision == other.Precision && other.toComparable() == toComparable();
-        public override int GetHashCode() => (Precision, toComparable()).GetHashCode();
+        /// <inheritdoc cref="CompareTo(object)"/>
+        public int CompareTo(PartialDate obj) => CompareTo((object)obj);
+
+        public static bool operator <(PartialDate a, PartialDate b) => a.CompareTo(b) == -1;
+        public static bool operator <=(PartialDate a, PartialDate b) => a.CompareTo(b) != 1;
+        public static bool operator >(PartialDate a, PartialDate b) => a.CompareTo(b) == 1;
+        public static bool operator >=(PartialDate a, PartialDate b) => a.CompareTo(b) != -1;
+
+        /// <summary>
+        /// Compares two (partial)dates according to CQL ordering rules.
+        /// </summary> 
+        /// <param name="other"></param>
+        /// <param name="comparison">the result of the comparison: 0 if this and other are equal, 
+        /// -1 if this is smaller than other and +1 if this is bigger than other.</param>
+        /// <returns>true is the values can be compared (have the same precision) or false otherwise.</returns>
+        /// <remarks>The comparison is performed by considering each precision in order, beginning with years. 
+        /// If the values are the same, comparison proceeds to the next precision; 
+        /// if the values are different, the comparison stops and the result is false. If one input has a value 
+        /// for the precision and the other does not, the comparison stops and the values cannot be compared; if neither
+        /// input has a value for the precision, or the last precision has been reached, the comparison stops
+        /// and the result is true.</remarks>
+        public bool TryCompare(PartialDate other, out int comparison)
+        {
+            if (other is null)
+            {
+                comparison = 1; // as defined by the .NET framework guidelines
+                return true;
+            }
+            else
+                return PartialDateTime.CompareDateTimeParts(_parsedValue, Precision, other._parsedValue, other.Precision, out comparison);
+        }
+
+        public override int GetHashCode() => _original.GetHashCode();
         public override string ToString() => _original;
 
-        public int CompareTo(PartialDate obj) => CompareTo((object)obj);
-        public override bool Equals(object obj) => obj is PartialDate date && Equals(date);
-
-        // Comparison functions work according to the rules described for CQL, 
-        // see https://cql.hl7.org/09-b-cqlreference.html#comparison-operators-4
-        // for more details.
-
-        /// <summary>
-        /// Compares two (partial)date/times according to CQL equality rules.
-        /// </summary>
-        /// <param name="l"></param>
-        /// <param name="r"></param>
-        /// <returns>true is the precision of the date/times is the same and the individual components for
-        /// each precision are the same.</returns>
-        /// <remarks>
-        /// The comparison is performed by considering each precision in order, beginning with years 
-        /// (or hours for time values), and respecting timezone offsets. If the values are the same, comparison
-        /// proceeds to the next precision; if the values are different, the comparison stops and the result is false. 
-        /// If one input has a value for the precision and the other does not, the comparison stops and the result is null; 
-        /// if neither input has a value for the precision, or the last precision has been reached, the comparison stops
-        /// and the result is true. For the purposes of comparison, seconds and milliseconds are combined as a 
-        /// single precision using a decimal, with decimal equality semantics.
-        /// </remarks>
-        public static bool? IsEqualTo(PartialDate l, PartialDate r)
-        {
-            // My interpretation is that if one value has a timezone, and the other does not, 
-            // we cannot compare the two.
-            if (l.HasOffset ^ r.HasOffset) return null;
-
-            if ( l.Years != r.Years) return false;
-
-            
-            return l.toComparable() == r.toComparable();
-        }
-  
-        /// <summary>
-        /// Compares two (partial) dates according to CQL equivalence rules.
-        /// </summary>
-        /// <param name="l"></param>
-        /// <param name="r"></param>
-        /// <returns>true is the precision of the dates is the same and the individual components for
-        /// each precision are the same.</returns>
-        /// <remarks>For Date, DateTime, and Time values, the comparison is performed in the same way as 
-        /// it is for equality, except that if one input has a value for a given precision and the other 
-        /// does not, the comparison stops and the result is false, rather than null. As with equality, 
-        /// the second and millisecond precisions are combined as a single precision using a decimal, 
-        /// with decimal equivalence semantics.</remarks>
-        public static bool IsEquivalentTo(PartialDate l, PartialDate r)
-        {
-            if (l.Precision != r.Precision) return false;
-            return l.toComparable() == r.toComparable();
-        }
+        public static explicit operator PartialDate(DateTimeOffset dto) => FromDateTimeOffset(dto);
     }
 }

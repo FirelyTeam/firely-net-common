@@ -53,8 +53,8 @@ namespace Hl7.Fhir.Model.Primitives
         /// </summary>
         public TimeSpan? Offset => HasOffset ? _parsedValue.Offset : (TimeSpan?)null;
 
-        private string _original;
-        private DateTimeOffset _parsedValue;
+        private readonly string _original;
+        private readonly DateTimeOffset _parsedValue;
 
         /// <summary>
         /// The precision of the date and time available. 
@@ -126,13 +126,25 @@ namespace Hl7.Fhir.Model.Primitives
             return success;            
         }
 
-        public bool Equals(PartialDateTime other) => TryCompare(other, out var result) && result == 0;
+        /// <summary>
+        /// Compare two partial datetimess based on CQL equality rules
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns>returns true if the values have the same precision, and each date component is exactly the same. Datetimes with timezones are normalized
+        /// to zulu before comparison is done. Throws an <see cref="ArgumentException"/> if the arguments differ in precision.</returns>
+        /// <remarks>See <see cref="TryCompare(PartialDateTime, out int)"/> for more details.</remarks>
+        public bool Equals(PartialDateTime other) => CompareTo(other) == 0;
 
+        /// <inheritdoc cref="Equals(PartialDateTime)"/>
         public override bool Equals(object obj) => obj is PartialDateTime dt && Equals(dt);
         public static bool operator ==(PartialDateTime a, PartialDateTime b) => Equals(a, b);
         public static bool operator !=(PartialDateTime a, PartialDateTime b) => !Equals(a, b);
 
 
+        /// <summary>
+        /// Compare two partial datetimes based on CQL equality rules
+        /// </summary>
+        /// <remarks>See <see cref="TryCompare(PartialDateTime, out int)"/> for more details.</remarks>
         public int CompareTo(object obj)
         {
             if (obj is null) return 1;      // as defined by the .NET framework guidelines
@@ -143,9 +155,10 @@ namespace Hl7.Fhir.Model.Primitives
                     comparison : throw new ArgumentException($"Value {this} and {p} cannot be compared, since the precision is different.");                
             }
             else
-                throw new ArgumentException($"Object is not a {nameof(PartialDate)}");
+                throw new ArgumentException($"Object is not a {nameof(PartialDateTime)}");
         }
 
+        /// <inheritdoc cref="CompareTo(object)"/>
         public int CompareTo(PartialDateTime obj) => CompareTo((object)obj);
 
         public static bool operator <(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) == -1;
@@ -161,8 +174,8 @@ namespace Hl7.Fhir.Model.Primitives
         /// <param name="comparison">the result of the comparison: 0 if this and other are equal, 
         /// -1 if this is smaller than other and +1 if this is bigger than other.</param>
         /// <returns>true is the values can be compared (have the same precision) or false otherwise.</returns>
-        /// <remarks>The comparison is performed by considering each precision in order, beginning with years 
-        /// (or hours for time values). If the values are the same, comparison proceeds to the next precision; 
+        /// <remarks>The comparison is performed by considering each precision in order, beginning with years.
+        /// If the values are the same, comparison proceeds to the next precision; 
         /// if the values are different, the comparison stops and the result is false. If one input has a value 
         /// for the precision and the other does not, the comparison stops and the values cannot be compared; if neither
         /// input has a value for the precision, or the last precision has been reached, the comparison stops
@@ -170,51 +183,59 @@ namespace Hl7.Fhir.Model.Primitives
         /// single precision using a decimal, with decimal equality semantics.</remarks>
         public bool TryCompare(PartialDateTime other, out int comparison)
         {
-            comparison = 0;
-            if (other is null) return false;
-
-            var c = CompareDateTimeParts(_parsedValue, Precision, other._parsedValue, other.Precision);
-            comparison = c.GetValueOrDefault(0);
-            return c != null;
+            if (other is null)
+            {
+                comparison = 1; // as defined by the .NET framework guidelines
+                return true;
+            }
+            else
+                return PartialDateTime.CompareDateTimeParts(_parsedValue, Precision, other._parsedValue, other.Precision, out comparison);
         }
 
-        internal static int? CompareDateTimeParts(DateTimeOffset l, PartialPrecision lPrec, DateTimeOffset r, PartialPrecision rPrec)
+        internal static bool CompareDateTimeParts(DateTimeOffset l, PartialPrecision lPrec, DateTimeOffset r, PartialPrecision rPrec, out int comparison)
         {
             l = l.ToUniversalTime();
             r = r.ToUniversalTime();
 
-            if (l.Year != r.Year) return l.Year.CompareTo(r.Year);
+            bool success;
+            (comparison,success) = docomp();
+            return success;
+            
+            (int, bool) docomp()
+            {
+                if (l.Year != r.Year) return (l.Year.CompareTo(r.Year), true);
 
-            if (lPrec < PartialPrecision.Month ^ rPrec < PartialPrecision.Month) return null;
-            if (l.Month != r.Month) return l.Month.CompareTo(r.Month);
+                if (lPrec < PartialPrecision.Month ^ rPrec < PartialPrecision.Month) return (0, false);
+                if (l.Month != r.Month) return (l.Month.CompareTo(r.Month), true);
 
-            if (lPrec < PartialPrecision.Day ^ rPrec < PartialPrecision.Day) return null;
-            if (l.Day != r.Day) return l.Day.CompareTo(r.Day);
+                if (lPrec < PartialPrecision.Day ^ rPrec < PartialPrecision.Day) return (0,false);
+                if (l.Day != r.Day) return (l.Day.CompareTo(r.Day),true);
 
-            if (lPrec < PartialPrecision.Hour ^ rPrec < PartialPrecision.Hour) return null;
-            if (l.Hour != r.Hour) return l.Hour.CompareTo(r.Hour);
+                if (lPrec < PartialPrecision.Hour ^ rPrec < PartialPrecision.Hour) return (0,false);
+                if (l.Hour != r.Hour) return (l.Hour.CompareTo(r.Hour),true);
 
-            if (lPrec < PartialPrecision.Minute ^ rPrec < PartialPrecision.Minute) return null;
-            if (l.Minute != r.Minute) return l.Minute.CompareTo(r.Minute);
+                if (lPrec < PartialPrecision.Minute ^ rPrec < PartialPrecision.Minute) return (0,false);
+                if (l.Minute != r.Minute) return (l.Minute.CompareTo(r.Minute),true);
 
-            if (lPrec < PartialPrecision.Second ^ rPrec < PartialPrecision.Second) return null;
+                if (lPrec < PartialPrecision.Second ^ rPrec < PartialPrecision.Second) return (0,false);
 
-            // Note that DateTimeOffset rounds fractional
-            // parts to millis (i.e. 12:00:00.12345 would be rounded to 12:00:00.123),
-            // so I am not going to bother with the subtle decimal comparison semantics in ordering 
-            // as described by the spec ("Note that for the purposes of comparison, seconds and milliseconds
-            // are combined as a single precision using a decimal, with *decimal comparison semantics*.")
-            // as "decimal comparison semantics" aren't specified anyway. The spec describes
-            // equals/equivalence for decimals, but not ordering as far as I can see. I will
-            // consider second/millisecond precision to be a single precision, i.e.  12:00:01 == 12:00:01.1
-            // is false, rather than null.
-            //
-            // These simplifications makes my life easier here, otherwise I'd have to create ordering
-            // and equivalence as separate functions.
-            if (l.Second != r.Second) return l.Second.CompareTo(r.Second);
-            if (l.Millisecond != r.Millisecond) return l.Millisecond.CompareTo(r.Millisecond);
+                // Note that DateTimeOffset rounds fractional
+                // parts to millis (i.e. 12:00:00.12345 would be rounded to 12:00:00.123),
+                // so I am not going to bother with the subtle decimal comparison semantics in ordering 
+                // as described by the spec ("Note that for the purposes of comparison, seconds and milliseconds
+                // are combined as a single precision using a decimal, with *decimal comparison semantics*.")
+                // as "decimal comparison semantics" aren't specified anyway. The spec describes
+                // equals/equivalence for decimals, but not ordering as far as I can see. I will
+                // consider second/millisecond precision to be a single precision, i.e.  12:00:01 == 12:00:01.1
+                // is false, rather than null.
+                //
+                // These simplifications makes my life easier here, otherwise I'd have to create ordering
+                // and equivalence as separate functions.
+                if (l.Second != r.Second) return (l.Second.CompareTo(r.Second),true);
+                if (l.Millisecond != r.Millisecond) return (l.Millisecond.CompareTo(r.Millisecond),true);
 
-            return 0;
+                return (0,true);
+            }
         }
 
         public override int GetHashCode() => _original.GetHashCode();

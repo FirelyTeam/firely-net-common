@@ -7,7 +7,7 @@
  */
 
 using Hl7.Fhir.Language;
-using Hl7.Fhir.Model.Primitives;
+using P=Hl7.Fhir.Model.Primitives;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using System;
@@ -120,25 +120,25 @@ namespace Hl7.Fhir.ElementModel
         // R3 and R4, these value (and url and id elements by the way) will indicate which type
         // of "universal" primitive there are, implicitly specifying the mapping between primitive
         // FHIR types and primitive System types.
-        private static TypeSpecifier tryMapFhirPrimitiveTypeToSystemType(string fhirType)
+        private static Type tryMapFhirPrimitiveTypeToSystemType(string fhirType)
         {
             switch (fhirType)
             {
                 case "boolean":
-                    return TypeSpecifier.Boolean;
+                    return typeof(P.Boolean);
                 case "integer":
                 case "unsignedInt":
                 case "positiveInt":
-                    return TypeSpecifier.Integer;
+                    return typeof(P.Integer);
                 case "time":
-                    return TypeSpecifier.Time;
+                    return typeof(P.PartialTime);
                 case "date":
-                    return TypeSpecifier.Date;
+                    return typeof(P.PartialDate);
                 case "instant":
                 case "dateTime":
-                    return TypeSpecifier.DateTime;
+                    return typeof(P.PartialDateTime);
                 case "decimal":
-                    return TypeSpecifier.Decimal;
+                    return typeof(P.Decimal);
                 case "string":
                 case "code":
                 case "id":
@@ -150,7 +150,7 @@ namespace Hl7.Fhir.ElementModel
                 case "markdown":
                 case "base64Binary":
                 case "xhtml":
-                    return TypeSpecifier.String;
+                    return typeof(P.String);
                 default:
                     return null;
             }
@@ -179,14 +179,14 @@ namespace Hl7.Fhir.ElementModel
                 if (Uri.IsWellFormedUriString(InstanceType, UriKind.Absolute))
                 {
                     var summary = Provider.Provide(InstanceType);
-                    var valueType = summary?.GetElements().Where(e => e.ElementName.Equals("value")).FirstOrDefault()?.Type.FirstOrDefault()?.GetTypeName();
-                    var specifier = TypeSpecifier.GetByName(valueType);
-                    return Any.Parse(sourceText, specifier);
+                    var valueType = summary?.GetElements().FirstOrDefault(e => e.ElementName.Equals("value"))?.Type.FirstOrDefault()?.GetTypeName();
+                    if (!P.Any.TryGetByName(valueType, out ts))
+                        throw new InvalidOperationException($"Cannot figure out what the primitive type is for the value of logical type '{InstanceType}'.");
                 }
 
                 // Finally, we have a (potentially) unparsed string + type info
                 // parse this primitive into the desired type
-                if (Any.TryParse(sourceText, ts, out var val))
+                if (P.Any.TryParse(sourceText, ts, out var val))
                     return val;
                 else
                 {
@@ -225,7 +225,7 @@ namespace Hl7.Fhir.ElementModel
                     instanceType = info.Type
                         .OfType<IStructureDefinitionReference>()
                         .Select(t => t.ReferredType)
-                        .FirstOrDefault(t => string.Compare(t, suffix, StringComparison.OrdinalIgnoreCase) == 0);
+                        .FirstOrDefault(t => string.Compare(t, suffix, System.StringComparison.OrdinalIgnoreCase) == 0);
 
                     if (string.IsNullOrEmpty(instanceType))
                         raiseTypeError($"Choice element '{current.Name}' is suffixed with unexpected type '{suffix}'", current, location: current.Location);

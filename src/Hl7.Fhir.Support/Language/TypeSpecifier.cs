@@ -153,61 +153,7 @@ namespace Hl7.Fhir.Language
             //    return GetByName(DOTNET_NAMESPACE + "." + ns, n);
             //}
         }
-
-        public Type GetNativeType()
-        {
-            if (!TryGetNativeType(out var nativeType))
-                throw new NotSupportedException($"There is no known .NET type for {FullName}.");
-            else
-                return nativeType;
-        }
-
-
-        /// <summary>
-        /// Returns the .NET type used to represent this TypeSpecifier.
-        /// </summary>
-        /// <returns></returns>
-        public bool TryGetNativeType(out Type result)
-        {
-            result = Namespace == DOTNET_NAMESPACE ? getFromDotNet() : getFromKnownSystemTypes();
-            return result != null;
-
-            Type getFromDotNet() => Type.GetType(Name, throwOnError: false);
-
-            // NOTE: Keep Any.TryConvertToSystemValue, TypeSpecifier.TryGetNativeType and TypeSpecifier.ForNativeType in sync
-            Type getFromKnownSystemTypes()
-            {
-                if (this == Any)
-                    return typeof(object);
-                else if (this == Boolean)
-                    return typeof(bool);
-                else if (this == Code)
-                    return typeof(Coding);
-                else if (this == Concept)
-                    return typeof(Concept);
-                else if (this == Date)
-                    return typeof(PartialDate);
-                else if (this == DateTime)
-                    return typeof(PartialDateTime);
-                else if (this == Decimal)
-                    return typeof(decimal);
-                else if (this == Integer)
-                    return typeof(int);
-                else if (this == Integer64)
-                    return typeof(long);
-                else if (this == Quantity)
-                    return typeof(Quantity);
-                else if (this == String)
-                    return typeof(string);
-#pragma warning disable IDE0046 // Convert to conditional expression
-                else if (this == Time)
-#pragma warning restore IDE0046 // Convert to conditional expression
-                    return typeof(PartialTime);
-                else
-                    return null;
-            }
-        }
-
+   
         public override bool Equals(object obj) => Equals(obj as TypeSpecifier);
         public bool Equals(TypeSpecifier other) => other != null && Name == other.Name && Namespace == other.Namespace;
 

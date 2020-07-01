@@ -53,7 +53,7 @@ namespace Hl7.Fhir.Model.Primitives
         /// <remarks>The same as <see cref="Equals(Decimal, DecimalComparison)" />
         /// with a comparison of <see cref="DecimalComparison.IgnoreTrailingZeroes" />"/>
         /// </remarks>
-        public bool Equals(Decimal other) => other is { } && decimal.Equals(Value,other.Value);
+        public bool Equals(Decimal other) => Equals(other, CQL_EQUALS_COMPARISON);
 
         /// <summary>
         /// Compares two decimals according to CQL equivalence rules.
@@ -70,6 +70,7 @@ namespace Hl7.Fhir.Model.Primitives
                 DecimalComparison.IgnoreTrailingZeroes =>
                     Value == other.Value,      // default .NET decimal behaviour
                 DecimalComparison.RoundToSmallestScale => scaleEq(Value, other.Value),
+                _ => throw new NotImplementedException(),
             };
 
             // The CQL and FhirPath spec talk about 'precision' (number of digits), but might mean 'scale' 
@@ -83,6 +84,9 @@ namespace Hl7.Fhir.Model.Primitives
                 return lr == rr;
             }
         }
+
+        public const DecimalComparison CQL_EQUALS_COMPARISON = DecimalComparison.IgnoreTrailingZeroes;
+        public const DecimalComparison CQL_EQUIVALENCE_COMPARISON = DecimalComparison.RoundToSmallestScale;
 
         public override bool Equals(object obj) => obj is Decimal d && Equals(d);
         public static bool operator ==(Decimal a, Decimal b) => Equals(a, b);

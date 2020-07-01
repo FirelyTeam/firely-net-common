@@ -45,7 +45,7 @@ namespace Hl7.FhirPath.Expressions
         }
 
 
-        internal static Fhir.Model.Primitives.Quantity? ParseQuantity(ITypedElement qe)
+        internal static Fhir.Model.Primitives.Quantity ParseQuantity(ITypedElement qe)
         {
             var value = qe.Children("value").SingleOrDefault()?.Value as decimal?;
             if (value == null) return null;
