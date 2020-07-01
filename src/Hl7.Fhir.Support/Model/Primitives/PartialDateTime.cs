@@ -126,9 +126,12 @@ namespace Hl7.Fhir.Model.Primitives
             return success;            
         }
 
-        private DateTimeOffset toComparable() => _parsedValue.ToUniversalTime();
-
         public bool Equals(PartialDateTime other) => TryCompare(other, out var result) && result == 0;
+
+        public override bool Equals(object obj) => obj is PartialDateTime dt && Equals(dt);
+        public static bool operator ==(PartialDateTime a, PartialDateTime b) => Equals(a, b);
+        public static bool operator !=(PartialDateTime a, PartialDateTime b) => !Equals(a, b);
+
 
         public int CompareTo(object obj)
         {
@@ -142,6 +145,14 @@ namespace Hl7.Fhir.Model.Primitives
             else
                 throw new ArgumentException($"Object is not a {nameof(PartialDate)}");
         }
+
+        public int CompareTo(PartialDateTime obj) => CompareTo((object)obj);
+
+        public static bool operator <(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) == -1;
+        public static bool operator <=(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) != 1;
+        public static bool operator >(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) == 1;
+        public static bool operator >=(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) != -1;
+
 
         /// <summary>
         /// Compares two (partial)date/times according to CQL ordering rules.
@@ -162,13 +173,16 @@ namespace Hl7.Fhir.Model.Primitives
             comparison = 0;
             if (other is null) return false;
 
-            var c = CompareDateTimeParts(toComparable(), Precision, other.toComparable(), other.Precision);
+            var c = CompareDateTimeParts(_parsedValue, Precision, other._parsedValue, other.Precision);
             comparison = c.GetValueOrDefault(0);
             return c != null;
         }
 
         internal static int? CompareDateTimeParts(DateTimeOffset l, PartialPrecision lPrec, DateTimeOffset r, PartialPrecision rPrec)
         {
+            l = l.ToUniversalTime();
+            r = r.ToUniversalTime();
+
             if (l.Year != r.Year) return l.Year.CompareTo(r.Year);
 
             if (lPrec < PartialPrecision.Month ^ rPrec < PartialPrecision.Month) return null;
@@ -205,15 +219,7 @@ namespace Hl7.Fhir.Model.Primitives
 
         public override int GetHashCode() => _original.GetHashCode();
         public override string ToString() => _original;
-        public override bool Equals(object obj) => obj is PartialDateTime dt && Equals(dt);
-        public static bool operator ==(PartialDateTime a, PartialDateTime b) => Equals(a, b);
-        public static bool operator !=(PartialDateTime a, PartialDateTime b) => !Equals(a,b);
 
-        public int CompareTo(PartialDateTime obj) => CompareTo((object)obj);
-
-        public static bool operator <(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) == -1;
-        public static bool operator <=(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) != 1;
-        public static bool operator >(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) == 1;
-        public static bool operator >=(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) != -1;
+        public static explicit operator PartialDateTime(DateTimeOffset dto) => FromDateTimeOffset(dto);
     }
 }

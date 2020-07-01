@@ -21,15 +21,15 @@ namespace Hl7.Fhir.Model.Primitives
 
         public int Value { get; }
 
-        public static int Parse(string value) =>
-            TryParse(value, out int result) ? result : throw new FormatException($"String '{value}' was not recognized as a valid integer.");
+        public static Integer Parse(string value) =>
+            TryParse(value, out var result) ? result : throw new FormatException($"String '{value}' was not recognized as a valid integer.");
 
-        public static bool TryParse(string representation, out int value)
+        public static bool TryParse(string representation, out Integer value)
         {
             if (representation == null) throw new ArgumentNullException(nameof(representation));
 
             (var succ, var val) = Any.DoConvert(() => XmlConvert.ToInt32(representation));
-            value = val;
+            value = new Integer(val);
             return succ;
         }
 
@@ -38,14 +38,33 @@ namespace Hl7.Fhir.Model.Primitives
         /// </summary>
         /// <returns>Return true if both arguments are exactly the same integer value, false otherwise.
         /// </returns>
-        public bool Equals(Integer other) => other is { } && Int32.Equals(Value, other.Value);
-
-        public override int GetHashCode() => Value.GetHashCode();
-        public override string ToString() => Value.ToString();
+        public bool Equals(Integer other) => other is { } && int.Equals(Value, other.Value);
 
         public override bool Equals(object obj) => obj is Integer i && Equals(i);
         public static bool operator ==(Integer a, Integer b) => Equals(a, b);
         public static bool operator !=(Integer a, Integer b) => !Equals(a, b);
 
+        public int CompareTo(object obj)
+        {
+            if (obj is null) return 1;      // as defined by the .NET framework guidelines
+
+            if (obj is Integer i)
+                return Value.CompareTo(i.Value);
+            else
+                throw new ArgumentException($"Object is not a {nameof(Integer)}", nameof(obj));
+        }
+
+        public int CompareTo(Integer obj) => CompareTo((object)obj);
+
+        public static bool operator <(Integer a, Integer b) => a.CompareTo(b) == -1;
+        public static bool operator <=(Integer a, Integer b) => a.CompareTo(b) != 1;
+        public static bool operator >(Integer a, Integer b) => a.CompareTo(b) == 1;
+        public static bool operator >=(Integer a, Integer b) => a.CompareTo(b) != -1;
+
+        public override int GetHashCode() => Value.GetHashCode();
+        public override string ToString() => Value.ToString();
+
+        public static implicit operator int(Integer i) => i.Value;
+        public static explicit operator Integer(int i) => new Integer(i);
     }
 }

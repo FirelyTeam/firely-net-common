@@ -48,7 +48,7 @@ namespace Hl7.Fhir.Model.Primitives
 
 
         /// <summary>
-        /// Compares two decimals according to CQL ordering rules.
+        /// Compares two decimals according to CQL equality rules.
         /// </summary>
         /// <remarks>The same as <see cref="Equals(Decimal, DecimalComparison)" />
         /// with a comparison of <see cref="DecimalComparison.IgnoreTrailingZeroes" />"/>
@@ -56,7 +56,7 @@ namespace Hl7.Fhir.Model.Primitives
         public bool Equals(Decimal other) => other is { } && decimal.Equals(Value,other.Value);
 
         /// <summary>
-        /// Compares two decimals according to CQL ordering rules.
+        /// Compares two decimals according to CQL equivalence rules.
         /// </summary>
         public bool Equals(Decimal other, DecimalComparison comparisonType) 
         {
@@ -84,6 +84,10 @@ namespace Hl7.Fhir.Model.Primitives
             }
         }
 
+        public override bool Equals(object obj) => obj is Decimal d && Equals(d);
+        public static bool operator ==(Decimal a, Decimal b) => Equals(a, b);
+        public static bool operator !=(Decimal a, Decimal b) => !Equals(a, b);
+
         public static int Scale(decimal d, bool ignoreTrailingZeroes)
         {
             var sr = d.ToString(CultureInfo.InvariantCulture);
@@ -102,15 +106,12 @@ namespace Hl7.Fhir.Model.Primitives
             if (obj is Decimal d)
                 return decimal.Compare(Value, d.Value);
             else
-                throw new ArgumentException($"Object is not a {nameof(PartialDate)}", nameof(obj));
+                throw new ArgumentException($"Object is not a {nameof(Decimal)}", nameof(obj));
         }
 
         public override int GetHashCode() => Value.GetHashCode();
         public override string ToString() => Value.ToString();
 
-        public override bool Equals(object obj) => obj is Decimal d && Equals(d);
-        public static bool operator ==(Decimal a, Decimal b) => Equals(a, b);
-        public static bool operator !=(Decimal a, Decimal b) => !Equals(a, b);
 
         public int CompareTo(Decimal obj) => CompareTo((object)obj);
 
