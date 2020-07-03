@@ -15,7 +15,7 @@ using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public class Quantity : Any, IEquatable<Quantity>, IComparable<Quantity>, IComparable
+    public class Quantity : Any, IComparable
     {
         public const string UCUM = "http://unitsofmeasure.org";
         public const string UCUM_UNIT = "1";
@@ -24,11 +24,11 @@ namespace Hl7.Fhir.Model.Primitives
         public string? Unit { get; }
         public string System => UCUM;
 
-        public Quantity(double value, string unit =UCUM_UNIT) : this((decimal)value, unit)
+        public Quantity(double value, string unit = UCUM_UNIT) : this((decimal)value, unit)
         {
         }
 
-        public Quantity(decimal value, string unit=UCUM_UNIT)
+        public Quantity(decimal value, string unit = UCUM_UNIT)
         {
             Value = value;
             Unit = unit;
@@ -139,42 +139,53 @@ namespace Hl7.Fhir.Model.Primitives
         /// </summary>
         /// <param name="other"></param>
         /// <returns>true if the values have comparable units, and the converted values are the same according to decimal equality rules.
-        /// Throws an <see cref="ArgumentException"/> if the arguments have incomparable units.</returns>
-        /// <remarks>See <see cref="TryCompare(Quantity, QuantityComparison, out int)"/> for more details.</remarks>
-        public bool Equals(Quantity other) => CompareTo(other) == 0;
+        /// </returns>
+        /// <remarks>See <see cref="TryCompareTo(Quantity, out int)"/> for more details.</remarks>
+        public override bool Equals(object other) => other is Quantity q && Equals(q, CQL_EQUALS_COMPARISON);
+
+
+        public bool Equals(Quantity other, QuantityComparison comparisonType) => TryEquals(other, comparisonType, out var result) && result == true;
 
         /// <summary>
         /// Compares two quantities according to CQL equivalence rules.
         /// </summary>
-        public bool Equals(Quantity other, QuantityComparison comparisonType) => CompareTo(other, comparisonType) == 0;
+        /// <remarks>For time-valued quantities, the comparison of
+        /// calendar durations and definite quantity durations above seconds is determined by the <paramref name="comparisonType"/></remarks>
+        public bool TryEquals(Quantity other, QuantityComparison comparisonType, out bool result)
+        {
+            var l = this;
+            var r = other;
 
-        /// <inheritdoc cref="Equals(Quantity)"/>
-        public override bool Equals(object obj) => obj is Quantity q && Equals(q);
+            if (comparisonType.HasFlag(QuantityComparison.CompareCalendarUnits))
+            {
+                l = new Quantity(l.Value, normalizeCalenderUnit(l.Unit) ?? "1");
+                r = new Quantity(r.Value, normalizeCalenderUnit(r.Unit) ?? "1");
+            }
+
+            var success = l.TryCompareTo(r, out var comparison);
+            result = comparison == 0;
+            return success;
+        }
+
         public static bool operator ==(Quantity a, Quantity b) => Equals(a, b);
         public static bool operator !=(Quantity a, Quantity b) => !Equals(a, b);
-
-        public int CompareTo(object obj) => CompareTo(obj, CQL_EQUALS_COMPARISON);
 
         /// <summary>
         /// Compare two partial datetimes based on CQL equivalence rules
         /// </summary>
-        /// <remarks>See <see cref="TryCompare(Quantity, QuantityComparison, out int)"/> for more details.</remarks>
-        public int CompareTo(object obj, QuantityComparison comparisonType)
+        /// <remarks>See <see cref="TryCompareTo(Quantity, out int)"/> for more details.</remarks>
+        public int CompareTo(object obj)
         {
             if (obj is null) return 1;      // as defined by the .NET framework guidelines
 
             if (obj is Quantity q)
             {
-                return TryCompare(q, comparisonType, out var comparison) ?
+                return TryCompareTo(q, out var comparison) ?
                     comparison : throw new ArgumentException($"Value {this} and {q} cannot be compared, since the units are incompatible.");
             }
             else
                 throw new ArgumentException($"Object is not a {nameof(Quantity)}");
         }
-
-        public int CompareTo(Quantity obj) => CompareTo((object)obj);
-
-        public int CompareTo(Quantity obj, QuantityComparison comparisonType) => CompareTo((object)obj, comparisonType);
 
         public static bool operator <(Quantity a, Quantity b) => a.CompareTo(b) == -1;
         public static bool operator <=(Quantity a, Quantity b) => a.CompareTo(b) != 1;
@@ -185,46 +196,33 @@ namespace Hl7.Fhir.Model.Primitives
         /// Compares two quantities according to CQL ordering rules.
         /// </summary> 
         /// <param name="other"></param>
-        /// <param name="comparisonType"></param>
         /// <param name="comparison">the result of the comparison: 0 if this and other are equal, 
         /// -1 if this is smaller than other and +1 if this is bigger than other.</param>
         /// <returns>true is the values can be compared (have comparable units) or false otherwise.</returns>
         /// <remarks>the dimensions of each quantity must be the same, but not necessarily the unit. For example, units of 'cm' and 'm' can be compared, 
         /// but units of 'cm2' and 'cm' cannot. The comparison will be made using the most granular unit of either input. 
-        /// Quantities with invalid units cannot be compared. For time-valued quantities, the comparison of calendar durations and definite 
-        /// quantity durations above seconds is determined by the <paramref name="comparisonType"/></remarks>
-        public bool TryCompare(Quantity other, QuantityComparison comparisonType, out int comparison)
+        /// Quantities with invalid units cannot be compared.</remarks>
+        public bool TryCompareTo(Quantity other, out int comparison)
         {
             if (other is null)
             {
                 comparison = 1; // as defined by the .NET framework guidelines
                 return true;
             }
-            else
-            {
-                // Need to use our metrics library here, but for now, we'll just refuse to compare
-                // if the units are not the same.
-                // If we DO implement it, make sure comparison of time-valued quantities (i.e. minutes), 
-                // calendar durations (i.e. year) and definite quantity durations ('a', annum) cannot be
-                // compared (though seconds and miliseconds can). 
-                // See http://hl7.org/fhirpath/#quantity and http://hl7.org/fhirpath/#comparison for more details.
-                var unitL = this.Unit;
-                var unitR = other.Unit;
 
-                if(comparisonType.HasFlag(QuantityComparison.CompareCalendarUnits))
-                {
-                    unitL = normalizeCalenderUnit(unitL);
-                    unitR = normalizeCalenderUnit(unitR);
-                }
+            // Need to use our metrics library here, but for now, we'll just refuse to compare
+            // if the units are not the same.
+            // If we DO implement it, make sure comparison of time-valued quantities (i.e. minutes), 
+            // calendar durations (i.e. year) and definite quantity durations ('a', annum) cannot be
+            // compared (and thus this function returns false) (though seconds and miliseconds can). 
+            // See http://hl7.org/fhirpath/#quantity and http://hl7.org/fhirpath/#comparison for more details.
+            if (Unit != other.Unit)
+                throw Error.NotSupported("Comparing quantities with different units is not yet supported");
 
-                if (unitL != unitR)
-                    throw Error.NotSupported("Comparing quantities with different units is not yet supported");
-
-                comparison = decimal.Compare(this.Value,other.Value);   // aligns with Decimal
-                return true;
-            }
+            comparison = decimal.Compare(Value, other.Value);   // aligns with Decimal
+            return true;
         }
-          
+
 
         private string? normalizeCalenderUnit(string? unit)
         {

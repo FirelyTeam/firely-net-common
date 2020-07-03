@@ -9,11 +9,10 @@
 #nullable enable
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public class Boolean : Any, IEquatable<Boolean>
+    public class Boolean : Any
     {
         public static Boolean True = new Boolean(true);
         public static Boolean False = new Boolean(false);
@@ -48,10 +47,8 @@ namespace Hl7.Fhir.Model.Primitives
         }
 
         public override int GetHashCode() => Value.GetHashCode();
-        public override string ToString() => Value.ToString();                           
-        public override bool Equals(object obj) => obj is Boolean b && Equals(b);
-
-        public bool Equals(Boolean other) => other is { } && bool.Equals(Value, other.Value);
+        public override string ToString() => Value.ToString();
+        public override bool Equals(object obj) => obj is Boolean b && Value == b.Value;
 
         public static bool operator ==(Boolean a, Boolean b) => Equals(a, b);
         public static bool operator !=(Boolean a, Boolean b) => !Equals(a,b);

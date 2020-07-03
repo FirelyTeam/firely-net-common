@@ -14,7 +14,7 @@ using System.Linq;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public class Concept : Any, IEquatable<Concept>
+    public class Concept : Any
     {
         public Concept(IEnumerable<Coding> codes, string? display=null)
         {
@@ -29,8 +29,8 @@ namespace Hl7.Fhir.Model.Primitives
         public static Concept Parse(string representation) => throw new NotImplementedException();
         public static bool TryParse(string representation, out Concept? value) => throw new NotImplementedException();
 
-        public override bool Equals(object obj) => obj is Concept concept && Equals(concept);
-        public bool Equals(Concept other) => other is { } && Enumerable.SequenceEqual(Codes, other.Codes) && Display == other.Display;
+        public override bool Equals(object obj) => obj is Concept c && Enumerable.SequenceEqual(Codes, c.Codes) && Display == c.Display;
+
         public override int GetHashCode() => (Codes, Display).GetHashCode();
         public override string ToString() => string.Join(", ", Codes) + Display != null ? $" \"{Display}\"" : "";
         public static bool operator ==(Concept left, Concept right) => left.Equals(right);

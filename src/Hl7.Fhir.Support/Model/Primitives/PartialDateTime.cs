@@ -13,7 +13,7 @@ using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public class PartialDateTime : Any, IComparable, IComparable<PartialDateTime>, IEquatable<PartialDateTime>
+    public class PartialDateTime : Any, IComparable
     {
         private PartialDateTime(string original, DateTimeOffset parsedValue, PartialPrecision precision, bool hasOffset)
         {
@@ -129,14 +129,18 @@ namespace Hl7.Fhir.Model.Primitives
         /// <summary>
         /// Compare two partial datetimess based on CQL equality rules
         /// </summary>
-        /// <param name="other"></param>
         /// <returns>returns true if the values have the same precision, and each date component is exactly the same. Datetimes with timezones are normalized
         /// to zulu before comparison is done. Throws an <see cref="ArgumentException"/> if the arguments differ in precision.</returns>
-        /// <remarks>See <see cref="TryCompare(PartialDateTime, out int)"/> for more details.</remarks>
-        public bool Equals(PartialDateTime other) => CompareTo(other) == 0;
+        /// <remarks>See <see cref="TryCompareTo(PartialDateTime, out int)"/> for more details.</remarks>
+        public override bool Equals(object obj) => obj is PartialDateTime pd && TryCompareTo(pd, out var result) && result == 0;
 
-        /// <inheritdoc cref="Equals(PartialDateTime)"/>
-        public override bool Equals(object obj) => obj is PartialDateTime dt && Equals(dt);
+        public bool TryEquals(PartialDateTime other, out bool result)
+        {
+            var success = TryCompareTo(other, out var comparison);
+            result = comparison == 0;
+            return success;
+        }
+
         public static bool operator ==(PartialDateTime a, PartialDateTime b) => Equals(a, b);
         public static bool operator !=(PartialDateTime a, PartialDateTime b) => !Equals(a, b);
 
@@ -144,28 +148,19 @@ namespace Hl7.Fhir.Model.Primitives
         /// <summary>
         /// Compare two partial datetimes based on CQL equality rules
         /// </summary>
-        /// <remarks>See <see cref="TryCompare(PartialDateTime, out int)"/> for more details.</remarks>
+        /// <remarks>See <see cref="TryCompareTo(PartialDateTime, out int)"/> for more details.</remarks>
         public int CompareTo(object obj)
         {
             if (obj is null) return 1;      // as defined by the .NET framework guidelines
 
             if (obj is PartialDateTime p)
             {
-                return TryCompare(p, out var comparison) ? 
+                return TryCompareTo(p, out var comparison) ? 
                     comparison : throw new ArgumentException($"Value {this} and {p} cannot be compared, since the precision is different.");                
             }
             else
                 throw new ArgumentException($"Object is not a {nameof(PartialDateTime)}");
         }
-
-        /// <inheritdoc cref="CompareTo(object)"/>
-        public int CompareTo(PartialDateTime obj) => CompareTo((object)obj);
-
-        public static bool operator <(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) == -1;
-        public static bool operator <=(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) != 1;
-        public static bool operator >(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) == 1;
-        public static bool operator >=(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) != -1;
-
 
         /// <summary>
         /// Compares two (partial)date/times according to CQL ordering rules.
@@ -181,7 +176,7 @@ namespace Hl7.Fhir.Model.Primitives
         /// input has a value for the precision, or the last precision has been reached, the comparison stops
         /// and the result is true. For the purposes of comparison, seconds and milliseconds are combined as a 
         /// single precision using a decimal, with decimal equality semantics.</remarks>
-        public bool TryCompare(PartialDateTime other, out int comparison)
+        public bool TryCompareTo(PartialDateTime other, out int comparison)
         {
             if (other is null)
             {
@@ -189,7 +184,7 @@ namespace Hl7.Fhir.Model.Primitives
                 return true;
             }
             else
-                return PartialDateTime.CompareDateTimeParts(_parsedValue, Precision, other._parsedValue, other.Precision, out comparison);
+                return CompareDateTimeParts(_parsedValue, Precision, other._parsedValue, other.Precision, out comparison);
         }
 
         internal static bool CompareDateTimeParts(DateTimeOffset l, PartialPrecision lPrec, DateTimeOffset r, PartialPrecision rPrec, out int comparison)
@@ -237,6 +232,12 @@ namespace Hl7.Fhir.Model.Primitives
                 return (0,true);
             }
         }
+
+        public static bool operator <(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) == -1;
+        public static bool operator <=(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) != 1;
+        public static bool operator >(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) == 1;
+        public static bool operator >=(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) != -1;
+
 
         public override int GetHashCode() => _original.GetHashCode();
         public override string ToString() => _original;

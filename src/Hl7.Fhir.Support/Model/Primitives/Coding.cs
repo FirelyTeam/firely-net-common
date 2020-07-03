@@ -12,7 +12,7 @@ using System;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public class Coding : Any, IEquatable<Coding>
+    public class Coding : Any
     {
         public Coding(string? system, string code, string? display=null)
         {
@@ -30,8 +30,7 @@ namespace Hl7.Fhir.Model.Primitives
 
         public override int GetHashCode() => (System, Code, Display).GetHashCode();
         public override string ToString() => $"{Code}@{System} " + Display ?? "";
-        public override bool Equals(object obj) => obj is Coding coding && Equals(coding);
-        public bool Equals(Coding other) => other is { } && System == other.System && Code == other.Code && Display == other.Display;
+        public override bool Equals(object obj) => obj is Coding c && System == c.System && Code == c.Code && Display == c.Display;
         public static bool operator ==(Coding left, Coding right) => left.Equals(right);
         public static bool operator !=(Coding left, Coding right) => !left.Equals(right);
 

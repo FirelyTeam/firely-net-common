@@ -13,7 +13,7 @@ using System.Xml;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public class Integer: Any, IEquatable<Integer>, IComparable, IComparable<Integer>
+    public class Integer: Any, IComparable
     {
         public Integer() : this(default) { }
 
@@ -34,16 +34,21 @@ namespace Hl7.Fhir.Model.Primitives
         }
 
         /// <summary>
-        /// Compares two integers according to CQL equality (and equivalence) rules.
+        /// Determines if two integers are equal according to CQL equality rules.
         /// </summary>
-        /// <returns>Return true if both arguments are exactly the same integer value, false otherwise.
-        /// </returns>
-        public bool Equals(Integer other) => other is { } && int.Equals(Value, other.Value);
+        /// <remarks>For integers, CQL and .NET equality rules are aligned.
+        /// </remarks>
+        public override bool Equals(object obj) => obj is Integer i && Value == i.Value;
 
-        public override bool Equals(object obj) => obj is Integer i && Equals(i);
         public static bool operator ==(Integer a, Integer b) => Equals(a, b);
         public static bool operator !=(Integer a, Integer b) => !Equals(a, b);
 
+        /// <summary>
+        /// Compares two integers, according to CQL equality rules
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        /// <remarks>For integers, CQL and .NET comparison rules are aligned.</remarks>
         public int CompareTo(object obj)
         {
             if (obj is null) return 1;      // as defined by the .NET framework guidelines
@@ -53,8 +58,6 @@ namespace Hl7.Fhir.Model.Primitives
             else
                 throw new ArgumentException($"Object is not a {nameof(Integer)}", nameof(obj));
         }
-
-        public int CompareTo(Integer obj) => CompareTo((object)obj);
 
         public static bool operator <(Integer a, Integer b) => a.CompareTo(b) == -1;
         public static bool operator <=(Integer a, Integer b) => a.CompareTo(b) != 1;

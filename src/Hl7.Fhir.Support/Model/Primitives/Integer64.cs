@@ -13,7 +13,7 @@ using System.Xml;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public class Integer64: Any, IEquatable<Integer64>, IComparable, IComparable<Integer64>
+    public class Integer64: Any, IComparable
     {
         public Integer64() : this(default) { }
 
@@ -34,16 +34,20 @@ namespace Hl7.Fhir.Model.Primitives
         }
 
         /// <summary>
-        /// Compares two 64-bit integers according to CQL equality (and equivalence) rules.
+        /// Determines if two 64-bit integers are equal according to CQL equality rules.
         /// </summary>
-        /// <returns>Return true if both arguments are exactly the same integer value, false otherwise. 
-        /// </returns>
-        public bool Equals(Integer64 other) => other is { } && long.Equals(Value, other.Value);
-
-        public override bool Equals(object obj) => obj is Integer64 i && Equals(i);
+        /// <remarks>For 64-bits integers, CQL and .NET equality rules are aligned.
+        /// </remarks>
+        public override bool Equals(object obj) => obj is Integer64 i && Value == i.Value;
         public static bool operator ==(Integer64 a, Integer64 b) => Equals(a, b);
         public static bool operator !=(Integer64 a, Integer64 b) => !Equals(a, b);
 
+        /// <summary>
+        /// Compares two 64-bit integers according to CQL equality rules
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        /// <remarks>For 64-bit integers, CQL and .NET comparison rules are aligned.</remarks>
         public int CompareTo(object obj)
         {
             if (obj is null) return 1;      // as defined by the .NET framework guidelines
@@ -53,8 +57,6 @@ namespace Hl7.Fhir.Model.Primitives
             else
                 throw new ArgumentException($"Object is not a {nameof(Integer64)}", nameof(obj));
         }
-
-        public int CompareTo(Integer64 obj) => CompareTo((object)obj);
 
         public static bool operator <(Integer64 a, Integer64 b) => a.CompareTo(b) == -1;
         public static bool operator <=(Integer64 a, Integer64 b) => a.CompareTo(b) != 1;
