@@ -6,12 +6,10 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+using Hl7.Fhir.ElementModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Hl7.Fhir.ElementModel;
 
 namespace Hl7.FhirPath.Functions
 {
@@ -42,8 +40,8 @@ namespace Hl7.FhirPath.Functions
         {
             if (find == String.Empty)
             {
-                // weird, but as specified:  "abc".replace("","x") = "xaxbxc"
-                return replace + String.Join(replace, me.ToCharArray());
+                // weird, but as specified:  "abc".replace("","x") = "xaxbxcx"
+                return replace + String.Join(replace, me.ToCharArray()) + replace;
             }
             else
                 return me.Replace(find, replace);

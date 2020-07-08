@@ -21,34 +21,7 @@ namespace Hl7.FhirPath.Tests
     [TestClass]
     public class BasicFunctionsTest
     {     
-        [TestMethod]
-        public void IsDistinctWorksOnEmptyCollections()
-        {
-            isB("{}.isDistinct()", true);
-            isB("(2).isDistinct()", true);
-        }
-
-        private static void isB(string expr, object value = null)
-        {
-            ITypedElement dummy = ElementNode.ForPrimitive(value ?? true);
-            Assert.IsTrue(dummy.IsBoolean(expr, true));
-        }
-
-        private static object scalar(string expr)
-        {
-            ITypedElement dummy = ElementNode.ForPrimitive(true);
-            return dummy.Scalar(expr);
-        }
-
-        [TestMethod]
-        public void TestExist()
-        {
-            isB(@"{}.empty()");
-            isB(@"1.empty().not()");
-            isB(@"1.exists()");
-            isB(@"({}.substring(0)).empty()");
-            isB(@"('hello'.substring({})).empty()");
-        }
+       
 
         [TestMethod]
         public void TestDynaBinding()
