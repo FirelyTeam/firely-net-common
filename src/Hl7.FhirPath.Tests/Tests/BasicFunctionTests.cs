@@ -19,14 +19,7 @@ namespace Hl7.FhirPath.Tests
     [TestClass]
     public class BasicFunctionsTest
     {     
-        [TestMethod]
-        public void IsDistinctWorksOnEmptyCollections()
-        {
-            ITypedElement dummy = ElementNode.ForPrimitive(true);
-
-            Assert.IsTrue(dummy.IsBoolean("{}.isDistinct()", true));
-            Assert.IsTrue(dummy.IsBoolean("(2).isDistinct()", true));
-        }
+       
 
         [TestMethod]
         public void StringConcatenationAndEmpty()

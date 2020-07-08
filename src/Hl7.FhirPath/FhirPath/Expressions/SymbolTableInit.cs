@@ -8,6 +8,7 @@
 
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Model.Primitives;
+using Hl7.FhirPath.FhirPath.Functions;
 using Hl7.FhirPath.Functions;
 using System;
 using System.Collections.Generic;
@@ -23,11 +24,16 @@ namespace Hl7.FhirPath.Expressions
             // Functions that operate on the focus, without null propagation
             t.Add("empty", (IEnumerable<object> f) => !f.Any());
             t.Add("exists", (IEnumerable<object> f) => f.Any());
+
             t.Add("count", (IEnumerable<object> f) => f.Count());
             t.Add("trace", (IEnumerable<ITypedElement> f, string name, EvaluationContext ctx)
                     => f.Trace(name, ctx));
 
+            //t.Add("exists", (IEnumerable<ITypedElement> f) => f.Any(e => (e.Value as bool?) == true));
             t.Add("allTrue", (IEnumerable<ITypedElement> f) => f.All(e => e.Value as bool? == true));
+            t.Add("anyTrue", (IEnumerable<ITypedElement> f) => f.Any(e => e.Value as bool? == true));
+            t.Add("allFalse", (IEnumerable<ITypedElement> f) => f.All(e => e.Value as bool? == false));
+            t.Add("anyFalse", (IEnumerable<ITypedElement> f) => f.Any(e => e.Value as bool? == false));
             t.Add("combine", (IEnumerable<ITypedElement> l, IEnumerable<ITypedElement> r) => l.Concat(r));
             t.Add("binary.|", (object f, IEnumerable<ITypedElement> l, IEnumerable<ITypedElement> r) => l.DistinctUnion(r));
             t.Add("union", (IEnumerable<ITypedElement> l, IEnumerable<ITypedElement> r) => l.DistinctUnion(r));
@@ -63,8 +69,10 @@ namespace Hl7.FhirPath.Expressions
 
             t.Add("unary.-", (object f, long a) => -a, doNullProp: true);
             t.Add("unary.-", (object f, decimal a) => -a, doNullProp: true);
+            t.Add("unary.-", (object f, Quantity a) => new Quantity(-a.Value, a.Unit), doNullProp: true);
             t.Add("unary.+", (object f, long a) => a, doNullProp: true);
             t.Add("unary.+", (object f, decimal a) => a, doNullProp: true);
+            t.Add("unary.+", (object f, Quantity a) => a, doNullProp: true);
 
             t.Add("binary.*", (object f, long a, long b) => a * b, doNullProp: true);
             t.Add("binary.*", (object f, decimal a, decimal b) => a * b, doNullProp: true);
@@ -159,6 +167,20 @@ namespace Hl7.FhirPath.Expressions
             t.Add("replace", (string f, string regex, string subst) => f.FpReplace(regex, subst), doNullProp: true);
             t.Add("length", (string f) => f.Length, doNullProp: true);
             t.Add("split", (string f, string seperator) => f.FpSplit(seperator), doNullProp: true);
+
+            // Math functions
+            t.Add("abs", (decimal f) => Math.Abs(f), doNullProp: true);
+            t.Add("abs", (Quantity f) => new Quantity(Math.Abs(f.Value), f.Unit), doNullProp: true);
+            t.Add("ceiling", (decimal f) => Math.Ceiling(f), doNullProp: true);
+            t.Add("exp", (decimal f) => Math.Exp(Convert.ToDouble(f)), doNullProp: true);
+            t.Add("floor", (decimal f) => Math.Floor(f), doNullProp: true);
+            t.Add("ln", (decimal f) => Math.Log(Convert.ToDouble(f)), doNullProp: true);
+            t.Add("log", (decimal f, decimal @base) => Math.Log(Convert.ToDouble(f), Convert.ToDouble(@base)), doNullProp: true);
+            t.Add("power", (decimal f, decimal exponent) => Math.Pow(Convert.ToDouble(f), Convert.ToDouble(exponent)), doNullProp: true);
+            t.Add("round", (decimal f, long precision) => Math.Round(f, Convert.ToInt32(precision)), doNullProp: true);
+            t.Add("round", (decimal f) => Math.Round(f), doNullProp: true);
+            t.Add("sqrt", (decimal f) => f.Sqrt(), doNullProp: true);
+            t.Add("truncate", (decimal f) => Math.Truncate(Convert.ToDouble(f)), doNullProp: true);
 
             // The next two functions existed pre-normative, so we have kept them.
             t.Add("is", (ITypedElement f, string name) => f.Is(name), doNullProp: true);
