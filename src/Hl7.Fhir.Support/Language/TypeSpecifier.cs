@@ -19,8 +19,9 @@ namespace Hl7.Fhir.Language
         public static readonly TypeSpecifier DateTime = new TypeSpecifier(SYSTEM_NAMESPACE, "DateTime");
         public static readonly TypeSpecifier Decimal = new TypeSpecifier(SYSTEM_NAMESPACE, "Decimal");
         public static readonly TypeSpecifier Integer = new TypeSpecifier(SYSTEM_NAMESPACE, "Integer");
-        public static readonly TypeSpecifier Integer64 = new TypeSpecifier(SYSTEM_NAMESPACE, "Integer64");
+        public static readonly TypeSpecifier Long = new TypeSpecifier(SYSTEM_NAMESPACE, "Long");
         public static readonly TypeSpecifier Quantity = new TypeSpecifier(SYSTEM_NAMESPACE, "Quantity");
+        public static readonly TypeSpecifier Ratio = new TypeSpecifier(SYSTEM_NAMESPACE, "Ratio");
         public static readonly TypeSpecifier String = new TypeSpecifier(SYSTEM_NAMESPACE, "String");
         public static readonly TypeSpecifier Time = new TypeSpecifier(SYSTEM_NAMESPACE, "Time");
 
@@ -28,13 +29,13 @@ namespace Hl7.Fhir.Language
         public static readonly TypeSpecifier Void = new TypeSpecifier(SYSTEM_NAMESPACE, "Void");
 
         public static readonly TypeSpecifier[] AllTypes = new[] { Any, Boolean, Code, Concept,
-                Date, DateTime, Decimal, Integer, Integer64, Quantity, String, Time };
+                Date, DateTime, Decimal, Integer, Long, Quantity, Ratio, String, Time };
 
         /// <summary>
         /// This is the list of supported types for the primitive values in ITypedElement.Value
         /// </summary>
         public static readonly TypeSpecifier[] PrimitiveTypes =
-            new[] { Boolean, Code, Date, DateTime, Decimal, Integer, Integer64, String, Time };
+            new[] { Boolean, Code, Date, DateTime, Decimal, Integer, Long, String, Time };
 
 
         protected TypeSpecifier(string @namespace, string name)
@@ -70,9 +71,10 @@ namespace Hl7.Fhir.Language
                     "DateTime" => DateTime,
                     "Decimal" => Decimal,
                     "Integer" => Integer,
-                    "Integer64" => Integer64,
+                    "Long" => Long,
                     "Quantity" => Quantity,
                     "String" => String,
+                    "Ratio" => Ratio,
                     "Time" => Time,
                     "Void" => Void,
                     _ => null,
@@ -115,7 +117,7 @@ namespace Hl7.Fhir.Language
             else if (t<int>() || t<short>() || t<ushort>() || t<uint>())
                 return Integer;
             else if (t<long>() || t<ulong>())
-                return Integer64;
+                return Long;
             else if (t<PartialTime>())
                 return Time;
             else if (t<PartialDate>())
@@ -128,7 +130,9 @@ namespace Hl7.Fhir.Language
                 return String;
             else if (t<Quantity>())
                 return Quantity;
-            else if (t<Coding>() || dotNetType.CanBeTreatedAsType(typeof(Enum)))
+            else if (t<Ratio>())
+                return Ratio;
+            else if (t<Code>() || dotNetType.CanBeTreatedAsType(typeof(Enum)))
                 return Code;
             else if (t<Concept>())
                 return Concept;

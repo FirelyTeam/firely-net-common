@@ -58,8 +58,10 @@ namespace Hl7.Fhir.Support.Utility
         public override int GetHashCode() => throw new NotImplementedException("Should be overridden in subclass of Result");
 
         public static Result<T> operator &(Result<T> l, Result<T> r) => l.Combine(r);
-        public static bool operator ==(Result<T> l, Result<T> r) => l.Equals(r);
-        public static bool operator !=(Result<T> l, Result<T> r) => !l.Equals(r);
+        public static bool operator ==(Result<T> l, Result<T> r) => Equals(l,r);
+        public static bool operator !=(Result<T> l, Result<T> r) => !Equals(l,r);
+        //public static bool operator true(Result<T> l) => l is Ok<bool> ok && ok == true;
+        //public static bool operator false(Result<T> l) => !(l is Ok<bool> ok && ok == true);
     }
 
     public class Ok : Ok<Unit> 
@@ -74,7 +76,7 @@ namespace Hl7.Fhir.Support.Utility
 
         public Ok(T value) => Value = value ?? throw new ArgumentNullException(nameof(value));
 
-        public static implicit operator Ok<T>(T value) => new Ok<T>(value);
+        public static explicit operator Ok<T>(T value) => new Ok<T>(value);
         public static implicit operator T(Ok<T> value) => value.Value;
 
         public override string ToString() => Value?.ToString();

@@ -6,14 +6,16 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+#nullable enable
+
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Model.Primitives;
 using Hl7.FhirPath;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using Hl7.FhirPath.Expressions;
+using Hl7.Fhir.Support.Utility;
 
 namespace Hl7.FhirPath.Functions
 {
@@ -21,6 +23,11 @@ namespace Hl7.FhirPath.Functions
     {
         public static bool? IsEqualTo(this IEnumerable<ITypedElement> left, IEnumerable<ITypedElement> right, bool compareNames = false)
         {
+            // If one or both of the arguments is an empty collection, a comparison operator will return an empty collection.
+            // (though we might handle this more generally with the null-propagating functionality of the compiler
+            // framework already.
+            if (left is null || right is null) return null;
+
             var r = right.GetEnumerator();
 
             foreach (var l in left)
@@ -37,14 +44,22 @@ namespace Hl7.FhirPath.Functions
                 return true;
         }
 
+        // Note that the Equals as defined by FhirPath/CQL only returns empty when one or both of the arguments
+        // are empty. Otherwise, it will return either false or true. Uncomparable values (i.e. datetimes
+        // with incompatible precisions) are mapped to false, as are arguments of different types.
         public static bool? IsEqualTo(this ITypedElement left, ITypedElement right, bool compareNames = false)
         {
+            // If one or both of the arguments is an empty collection, a comparison operator will return an empty collection.
+            // (though we might handle this more generally with the null-propagating functionality of the compiler
+            // framework already.
+            if (left is null || right is null) return null;
+
             // TODO: Merge with ElementNodeComparator.IsEqualTo
 
             if (compareNames && (left.Name != right.Name)) return false;
 
-            var l = left?.Value;
-            var r = right?.Value;
+            var l = left.Value;
+            var r = right.Value;
 
             // TODO: this is actually a cast with knowledge of FHIR->System mappings, we don't want that here anymore
             // Convert quantities
@@ -54,15 +69,15 @@ namespace Hl7.FhirPath.Functions
                 r = Typecasts.ParseQuantity(right);
 
             // Compare primitives (or extended primitives)
-            if (l != null && r != null)
+            if (l != null && r != null && Any.TryConvertToSystemValue(l, out var lAny) && Any.TryConvertToSystemValue(r, out var rAny))
             {
-                return Any.IsEqualTo(l, r);
+                return IsEqualTo(lAny, rAny);
             }
             else if (l == null && r == null)
             {
                 // Compare complex types (extensions on primitives are not compared, but handled (=ignored) above
-                var childrenL = left.Children();
-                var childrenR = right.Children();
+                var childrenL = left!.Children();
+                var childrenR = right!.Children();
 
                 return childrenL.IsEqualTo(childrenR, compareNames: true);    // NOTE: Assumes null will never be returned when any() children exist
             }
@@ -70,9 +85,26 @@ namespace Hl7.FhirPath.Functions
             {
                 // Else, we're comparing a complex (without a value) to a primitive which (probably) should return false
                 return false;
-            }          
+            }
         }
- 
+
+        public static bool? IsEqualTo(Any? left, Any? right)
+        {
+            // If one or both of the arguments is an empty collection, a comparison operator will return an empty collection.
+            // (though we might handle this more generally with the null-propagating functionality of the compiler
+            // framework already.
+            if (left == null || right == null) return null;
+
+            // Try to convert both operands to a common type if they differ.
+            // When that fails, the CompareTo function on each type will itself
+            // report an error if they cannot handle that.
+            // TODO: in the end the engine/compiler will handle this and report an overload resolution fail
+            Any.TryCoerce(ref left, ref right);
+
+            return left is ICqlEquatable cqle ? cqle.IsEqualTo(right) : null;
+        }
+
+
         public static bool IsEquivalentTo(this IEnumerable<ITypedElement> left, IEnumerable<ITypedElement> right, bool compareNames = false)
         {
             var r = right.ToList();
@@ -84,19 +116,20 @@ namespace Hl7.FhirPath.Functions
                 if (!r.Any(ri => l.IsEquivalentTo(ri, compareNames))) return false;
             }
 
-            if (count != r.Count)
-                return false;
-            else
-                return true;
+            return count == r.Count;
         }
 
 
         public static bool IsEquivalentTo(this ITypedElement left, ITypedElement right, bool compareNames = false)
         {
+            // Note that because of this behaviour, we should switch off null-propagating behaviour of IsEquivalent to
+            if (left is null && right is null) return true;
+            if (left is null || right is null) return false;
+
             if (compareNames && !namesAreEquivalent(left, right)) return false;
 
-            var l = left?.Value;
-            var r = right?.Value;
+            var l = left.Value;
+            var r = right.Value;
 
             // TODO: this is actually a cast with knowledge of FHIR->System mappings, we don't want that here anymore
             // Convert quantities
@@ -106,13 +139,9 @@ namespace Hl7.FhirPath.Functions
                 r = Typecasts.ParseQuantity(right);
 
             // Compare primitives (or extended primitives)
-            // TODO: Define IsEquivalentTo for ALL datatypes in ITypedElement.value and move to Support assembly + test
-            // TODO: Define on object, so this switch can be removed here
-            // TODO: Move this IsEquivalentTo to the ElementModel assembly
-            // Maybe create an interface?
-            if (l != null && r != null)
+            if (l != null && r != null && Any.TryConvertToSystemValue(l, out var lAny) && Any.TryConvertToSystemValue(r, out var rAny))
             {
-                return Any.IsEquivalentTo(l, r);
+                return IsEquivalentTo(lAny, rAny);
             }
             else if (l == null && r == null)
             {
@@ -137,22 +166,57 @@ namespace Hl7.FhirPath.Functions
             }
         }
 
-
-        internal static bool? DoCompare(int? compareResult, string op)
+        public static bool IsEquivalentTo(Any? left, Any? right)
         {
-            if (compareResult == null) return null;
+            if (left == null && right == null) return true;
+            if (left == null || right == null) return false;
 
-            var result = op switch
+            // Try to convert both operands to a common type if they differ.
+            // When that fails, the CompareTo function on each type will itself
+            // report an error if they cannot handle that.
+            // TODO: in the end the engine/compiler will handle this and report an overload resolution fail
+            Any.TryCoerce(ref left, ref right);
+
+            return left is ICqlEquatable cqle ? cqle.IsEquivalentTo(right) : false;
+        }
+
+
+
+
+        public static bool? Compare(Any left, Any right, string op)
+        {
+            // If one or both of the arguments is an empty collection, a comparison operator will return an empty collection.
+            // (though we might handle this more generally with the null-propagating functionality of the compiler
+            // framework already.
+            if (left == null || right == null) return null;
+
+            // Try to convert both operands to a common type if they differ.
+            // When that fails, the CompareTo function on each type will itself
+            // report an error if they cannot handle that.
+            // TODO: in the end the engine/compiler will handle this and report an overload resolution fail
+            Any.TryCoerce(ref left, ref right);
+
+            if (left is ICqlOrderable orderable) return interpret(orderable.CompareTo(right));
+
+            // Now, only the non-comparables are left (coding, concept, boolean).
+            // TODO: We should be able to retrieve the cql name of the type, not the
+            // dotnet type somehow.
+            throw new InvalidOperationException($"Values of type {left.GetType().Name} is not an ordered type and cannot be compared.");
+
+            bool? interpret(int? compareResult)
             {
-                "<" => compareResult == -1,
-                "<=" => compareResult != 1,
-                "=" => compareResult == 0,
-                ">" => compareResult == 1,
-                ">=" => compareResult != -1,
-                _ => throw new ArgumentException($"Unknown comparison op '{op}'", nameof(op))
-            };
+                if (compareResult is null) return null;
 
-            return result;
+                return op switch
+                {
+                    "<" => compareResult == -1,
+                    "<=" => compareResult != 1,
+                    "=" => compareResult == 0,
+                    ">" => compareResult == 1,
+                    ">=" => compareResult != -1,
+                    _ => throw new ArgumentException($"Unknown comparison op '{op}'", nameof(op))
+                };
+            }
         }
 
 
@@ -167,7 +231,7 @@ namespace Hl7.FhirPath.Functions
                 // The functions Union /Contains/Distinct etc that use
                 // this equality should probably also be changed to use
                 // 3-valued equality.
-                return x.IsEqualTo(y) == true;   
+                return x.IsEqualTo(y) == true;
             }
 
             public int GetHashCode(ITypedElement element)

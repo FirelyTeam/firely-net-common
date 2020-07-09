@@ -16,13 +16,13 @@ namespace Hl7.Fhir.Model.Primitives
 {
     public class Concept : Any
     {
-        public Concept(IEnumerable<Coding> codes, string? display=null)
+        public Concept(IEnumerable<Code> codes, string? display=null)
         {
             Codes = codes.ToArray();
             Display = display;
         }
 
-        public IReadOnlyCollection<Coding> Codes { get; }
+        public IReadOnlyCollection<Code> Codes { get; }
 
         public string? Display { get; }
 
@@ -33,8 +33,9 @@ namespace Hl7.Fhir.Model.Primitives
 
         public override int GetHashCode() => (Codes, Display).GetHashCode();
         public override string ToString() => string.Join(", ", Codes) + Display != null ? $" \"{Display}\"" : "";
-        public static bool operator ==(Concept left, Concept right) => left.Equals(right);
+        public static bool operator ==(Concept left, Concept right) => Equals(left,right);
         public static bool operator !=(Concept left, Concept right) => !Equals(left,right);
 
+        // Does not support equality, equivalence and ordering in the CQL sense, so no explicit implementations of these interfaces
     }
 }

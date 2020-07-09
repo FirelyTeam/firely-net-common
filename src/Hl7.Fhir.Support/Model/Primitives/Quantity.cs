@@ -8,14 +8,16 @@
 
 #nullable enable
 
+using Hl7.Fhir.Support.Utility;
 using Hl7.Fhir.Utility;
 using System;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using static Hl7.Fhir.Support.Utility.Result;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public class Quantity : Any, IComparable
+    public class Quantity : Any, IComparable, ICqlEquatable, ICqlOrderable
     {
         public const string UCUM = "http://unitsofmeasure.org";
         public const string UCUM_UNIT = "1";
@@ -140,19 +142,21 @@ namespace Hl7.Fhir.Model.Primitives
         /// <param name="other"></param>
         /// <returns>true if the values have comparable units, and the converted values are the same according to decimal equality rules.
         /// </returns>
-        /// <remarks>See <see cref="TryCompareTo(Quantity, out int)"/> for more details.</remarks>
+        /// <remarks>See <see cref="TryCompareTo(Quantity)"/> for more details.</remarks>
         public override bool Equals(object other) => other is Quantity q && Equals(q, CQL_EQUALS_COMPARISON);
 
 
-        public bool Equals(Quantity other, QuantityComparison comparisonType) => TryEquals(other, comparisonType, out var result) && result == true;
+        public bool Equals(Any other, QuantityComparison comparisonType) => other is Quantity q && TryEquals(q, comparisonType).Success;
 
         /// <summary>
         /// Compares two quantities according to CQL equivalence rules.
         /// </summary>
         /// <remarks>For time-valued quantities, the comparison of
         /// calendar durations and definite quantity durations above seconds is determined by the <paramref name="comparisonType"/></remarks>
-        public bool TryEquals(Quantity other, QuantityComparison comparisonType, out bool result)
+        public Result<bool> TryEquals(Quantity other, QuantityComparison comparisonType)
         {
+            if (other is null) return false;
+
             var l = this;
             var r = other;
 
@@ -162,9 +166,7 @@ namespace Hl7.Fhir.Model.Primitives
                 r = new Quantity(r.Value, normalizeCalenderUnit(r.Unit) ?? "1");
             }
 
-            var success = l.TryCompareTo(r, out var comparison);
-            result = comparison == 0;
-            return success;
+            return l.TryCompareTo(r).Select(r => r == 0);
         }
 
         public static bool operator ==(Quantity a, Quantity b) => Equals(a, b);
@@ -173,18 +175,15 @@ namespace Hl7.Fhir.Model.Primitives
         /// <summary>
         /// Compare two partial datetimes based on CQL equivalence rules
         /// </summary>
-        /// <remarks>See <see cref="TryCompareTo(Quantity, out int)"/> for more details.</remarks>
+        /// <remarks>See <see cref="TryCompareTo(Quantity)"/> for more details.</remarks>
         public int CompareTo(object obj)
         {
-            if (obj is null) return 1;      // as defined by the .NET framework guidelines
-
-            if (obj is Quantity q)
+            return obj switch
             {
-                return TryCompareTo(q, out var comparison) ?
-                    comparison : throw new ArgumentException($"Value {this} and {q} cannot be compared, since the units are incompatible.");
-            }
-            else
-                throw new ArgumentException($"Object is not a {nameof(Quantity)}");
+                null => 1,
+                Quantity q => TryCompareTo(q).ValueOrElse(e => throw e),
+                _ => throw NotSameTypeComparison(this, obj)
+            };
         }
 
         public static bool operator <(Quantity a, Quantity b) => a.CompareTo(b) == -1;
@@ -196,31 +195,27 @@ namespace Hl7.Fhir.Model.Primitives
         /// Compares two quantities according to CQL ordering rules.
         /// </summary> 
         /// <param name="other"></param>
-        /// <param name="comparison">the result of the comparison: 0 if this and other are equal, 
-        /// -1 if this is smaller than other and +1 if this is bigger than other.</param>
-        /// <returns>true is the values can be compared (have comparable units) or false otherwise.</returns>
+        /// <returns>the result of the comparison: 0 if this and other are equal, 
+        /// -1 if this is smaller than other and +1 if this is bigger than other.</returns>
         /// <remarks>the dimensions of each quantity must be the same, but not necessarily the unit. For example, units of 'cm' and 'm' can be compared, 
         /// but units of 'cm2' and 'cm' cannot. The comparison will be made using the most granular unit of either input. 
         /// Quantities with invalid units cannot be compared.</remarks>
-        public bool TryCompareTo(Quantity other, out int comparison)
+        public Result<int> TryCompareTo(Quantity other)
         {
-            if (other is null)
-            {
-                comparison = 1; // as defined by the .NET framework guidelines
-                return true;
-            }
+            if (other is null) return 1; // as defined by the .NET framework guidelines
 
             // Need to use our metrics library here, but for now, we'll just refuse to compare
             // if the units are not the same.
             // If we DO implement it, make sure comparison of time-valued quantities (i.e. minutes), 
             // calendar durations (i.e. year) and definite quantity durations ('a', annum) cannot be
-            // compared (and thus this function returns false) (though seconds and miliseconds can). 
+            // compared (and thus this function returns failure) (though seconds and miliseconds can). 
             // See http://hl7.org/fhirpath/#quantity and http://hl7.org/fhirpath/#comparison for more details.
+            // Throw not supported now, in the future we will need to turn this into a Fail()
+            // result for units that can really not be compared according to UCUM.
             if (Unit != other.Unit)
                 throw Error.NotSupported("Comparing quantities with different units is not yet supported");
 
-            comparison = decimal.Compare(Value, other.Value);   // aligns with Decimal
-            return true;
+            return decimal.Compare(Value, other.Value);   // aligns with Decimal
         }
 
 
@@ -246,7 +241,22 @@ namespace Hl7.Fhir.Model.Primitives
 
         public override int GetHashCode() => (Unit, Value).GetHashCode();
 
-        public override string ToString() => $"{Value.ToString(CultureInfo.InvariantCulture)} '{Unit}'";
+        public override string ToString() => $"{Value.ToString(CultureInfo.InvariantCulture)}" + (Unit != "1" ? $"'{Unit}'" : "");
+
+        bool? ICqlEquatable.IsEqualTo(Any other) => 
+            other is Quantity q && TryEquals(q, CQL_EQUALS_COMPARISON) is Ok<bool> ok ? ok.Value : (bool?)null; 
+
+        // Note that, in contrast to equals, this will return false if operators cannot be compared (as described by the spec)
+        bool ICqlEquatable.IsEquivalentTo(Any other) => other is Quantity q && TryEquals(q, CQL_EQUIVALENCE_COMPARISON).Success;
+
+        int? ICqlOrderable.CompareTo(Any other)
+        {
+            if (other is null) return null;
+            if (!(other is Quantity q)) throw NotSameTypeComparison(this, other);
+
+            return TryCompareTo(q) is Ok<int> ok ? ok.Value : (int?)null;
+        }
+
     }
 
     /// <summary>Specifies the comparison rules for quantities.</summary>

@@ -1,4 +1,5 @@
 ﻿using Hl7.Fhir.Model.Primitives;
+using Hl7.Fhir.Support.Utility;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -30,11 +31,12 @@ namespace HL7.FhirPath.Tests.Tests
         [TestMethod]
         public void TestEquality()
         {
+            // TODO: these are unit tests, also add integration test for actual EquialityOperations.Equals and
+            // through to FhirPath
+
             // Test chapter 6.1 - Equality
             var tests = new (object, object, bool?)[]
             {
-                (null, null, null),
-
                 (0L, 0L, true),
                 (-4L, -4L, true),
                 (5L, 5L, true),
@@ -56,7 +58,7 @@ namespace HL7.FhirPath.Tests.Tests
                 ("left", "right", false),
                 ("left", " left", false),
                 ("left", "lEft", false),
-                (null, "right", null),
+                ("right", null, null),
 
                 (PartialDate.Parse("2001"), PartialDate.Parse("2001"), true),
                 (PartialDate.Parse("2001-01"), PartialDate.Parse("2001-01"), true),
@@ -67,6 +69,7 @@ namespace HL7.FhirPath.Tests.Tests
                 (PartialDate.Parse("2001"), PartialDate.Parse("2002-01"), false),   // false, not null - first compare components, then precision!
                 (PartialDate.Parse("2001-01"), PartialDate.Parse("2001-02"), false),
                 (PartialDate.Parse("2010-06-02"), PartialDate.Parse("2010-06-03"), false),
+                (PartialDate.Parse("2010-06-02"), null, null),
 
                 (PartialDateTime.Parse("2015-01-01"), PartialDateTime.Parse("2015-01-01"), true),
                 (PartialDateTime.Parse("2015-01-01"), PartialDateTime.Parse("2015-01"), null),
@@ -76,11 +79,11 @@ namespace HL7.FhirPath.Tests.Tests
                 (PartialDateTime.Parse("2015-01-02T13:40:50+00:10"), PartialDateTime.Parse("2015-01-02T13:41:50+00:10"), false),
                 (PartialDateTime.Parse("2015-01-02T13:40:50+00:10"), PartialDateTime.Parse("2015-01-02T13:41+00:10"), false),
                 (PartialDateTime.Parse("2015-01-02T13:40:50+00:10"), PartialDateTime.Parse("2015-01-02"), null),
+                (PartialDateTime.Parse("2010-06-02"), null, null),
 
                 (PartialTime.Parse("12:00:00"), PartialTime.Parse("12:00:00"), true),
-                (PartialTime.Parse("12:00:00"), PartialTime.Parse("12:00:00.00"), null),
+                (PartialTime.Parse("12:00:00"), PartialTime.Parse("12:00:00.00"), true),
                 (PartialTime.Parse("12:00:00"), PartialTime.Parse("12:00"), null),
-
                 (PartialTime.Parse("13:40:50+02:00"), PartialTime.Parse("13:40:50+02:00"), true),
                 (PartialTime.Parse("13:40:50+00:00"), PartialTime.Parse("13:40:50Z"), true),
                 (PartialTime.Parse("13:40:50+00:10"), PartialTime.Parse("13:40:50Z"), false),
@@ -89,18 +92,24 @@ namespace HL7.FhirPath.Tests.Tests
                 (PartialTime.Parse("13:45:02+00:00"), PartialTime.Parse("13:45:02+01:00"), false),
                 (PartialTime.Parse("13:45:02+01:00"), PartialTime.Parse("13:45:03+01:00"), false),
                 (PartialTime.Parse("13:45:02+00:00"), PartialTime.Parse("13:46+01:00"), false),
+                (PartialTime.Parse("13:45:02+00:00"), null, null),
 
                 (Quantity.Parse("24.0 'kg'"), Quantity.Parse("24.0 'kg'"), true),
                 (Quantity.Parse("24 'kg'"), Quantity.Parse("24.0 'kg'"), true),
                 (Quantity.Parse("24 'kg'"), Quantity.Parse("24.0 'kg'"), true),
                 (Quantity.Parse("24.0 'kg'"), Quantity.Parse("25.0 'kg'"), false),
+                (Quantity.Parse("24.0 'kg'"), null, null),
             };
 
             foreach (var (a,b,s) in tests) doTest(a,b,s);
 
-            void doTest(object a,object b, bool? s)
+            void doTest(object a,object b, Result<bool> s)
             {
-                var result = Any.IsEqualTo(a, b);
+                Assert.IsTrue(Any.TryConvertToSystemValue(a, out var aAny));
+                Any bAny = null;
+                if (!Any.TryConvertToSystemValue(b, out bAny)) bAny = null;
+
+                var result = aAny is ICqlEquatable ce ? ce.IsEqualTo(bAny) : false;
 
                 if(result != s)
                 {
@@ -208,9 +217,12 @@ namespace HL7.FhirPath.Tests.Tests
 
             foreach (var (a, b, s) in tests) doTest(a, b, s);
 
-            void doTest(object a, object b, bool s)
+            void doTest(object a, object b, Result<bool> s)
             {
-                var result = Any.IsEquivalentTo(a, b);
+                Assert.IsTrue(Any.TryConvertToSystemValue(a, out var aAny));
+                Assert.IsTrue(Any.TryConvertToSystemValue(b, out var bAny));
+
+                var result = aAny is ICqlEquatable ce ? ce.IsEquivalentTo(bAny) : false;
 
                 if (result != s)
                 {
@@ -218,6 +230,7 @@ namespace HL7.FhirPath.Tests.Tests
                             $"but was '{sn(result)}' for {sn((a ?? b)?.GetType().Name)}");
                 }
             }
+
         }
 
     }

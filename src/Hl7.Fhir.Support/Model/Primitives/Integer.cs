@@ -8,12 +8,14 @@
 
 #nullable enable
 
+using Hl7.Fhir.Support.Utility;
 using System;
 using System.Xml;
+using static Hl7.Fhir.Support.Utility.Result;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public class Integer: Any, IComparable
+    public class Integer: Any, IComparable, ICqlEquatable, ICqlOrderable
     {
         public Integer() : this(default) { }
 
@@ -51,12 +53,12 @@ namespace Hl7.Fhir.Model.Primitives
         /// <remarks>For integers, CQL and .NET comparison rules are aligned.</remarks>
         public int CompareTo(object obj)
         {
-            if (obj is null) return 1;      // as defined by the .NET framework guidelines
-
-            if (obj is Integer i)
-                return Value.CompareTo(i.Value);
-            else
-                throw new ArgumentException($"Object is not a {nameof(Integer)}", nameof(obj));
+            return obj switch
+            {
+                null => 1,
+                Integer i => Value.CompareTo(i.Value),
+                _ => throw NotSameTypeComparison(this,obj)
+            };
         }
 
         public static bool operator <(Integer a, Integer b) => a.CompareTo(b) == -1;
@@ -68,6 +70,14 @@ namespace Hl7.Fhir.Model.Primitives
         public override string ToString() => Value.ToString();
 
         public static implicit operator int(Integer i) => i.Value;
+        public static implicit operator Long(Integer i) => new Long(i.Value);
+        public static implicit operator Decimal(Integer i) => new Decimal(i.Value);
+        public static implicit operator Quantity(Integer i) => new Quantity((decimal)i.Value,"1");
+
         public static explicit operator Integer(int i) => new Integer(i);
+
+        bool? ICqlEquatable.IsEqualTo(Any other) => other is { } ? Equals(other) : (bool?)null;
+        bool ICqlEquatable.IsEquivalentTo(Any other) => Equals(other);
+        int? ICqlOrderable.CompareTo(Any other) => other is { } ? CompareTo(other) : (int?)null;
     }
 }

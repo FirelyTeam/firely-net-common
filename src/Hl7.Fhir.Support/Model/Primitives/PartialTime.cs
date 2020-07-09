@@ -8,12 +8,14 @@
 
 #nullable enable
 
+using Hl7.Fhir.Support.Utility;
 using System;
 using System.Text.RegularExpressions;
+using static Hl7.Fhir.Support.Utility.Result;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public class PartialTime : Any, IComparable
+    public class PartialTime : Any, IComparable, ICqlEquatable, ICqlOrderable
     {
         private PartialTime(string original, DateTimeOffset parsedValue, PartialPrecision precision, bool hasOffset)
         {
@@ -126,7 +128,7 @@ namespace Hl7.Fhir.Model.Primitives
                     (secg.Success ? secg.Value : ":00") +
                     (fracg.Success ? fracg.Value : "") +
                     (offset.Success ? offset.Value : "Z");
-            
+
             var success = DateTimeOffset.TryParse(parseableDT, out var parsedValue);
             value = new PartialTime(representation, parsedValue, prec, offset.Success);
             return success;
@@ -135,18 +137,12 @@ namespace Hl7.Fhir.Model.Primitives
         /// <summary>
         /// Compare two partial times based on CQL equality rules
         /// </summary>
-        /// <param name="other"></param>
-        /// <returns>returns true if the values have the same precision, and each time component is exactly the same. Times with timezones are normalized
+        /// <returns>returns true if the values have the same precision, and each date component is exactly the same. Datetimes with timezones are normalized
         /// to zulu before comparison is done. Throws an <see cref="ArgumentException"/> if the arguments differ in precision.</returns>
-        /// <remarks>See <see cref="TryCompareTo(PartialTime, out int)"/> for more details.</remarks>
-        public override bool Equals(object other) => other is PartialTime pt && TryCompareTo(pt, out var result) && result == 0;
+        /// <remarks>See <see cref="TryCompareTo(PartialTime)"/> for more details.</remarks>
+        public override bool Equals(object obj) => obj is PartialTime pd && TryEquals(pd).Success;
 
-        public bool TryEquals(PartialTime other, out bool result)
-        {
-            var success = TryCompareTo(other, out var comparison);
-            result = comparison == 0;
-            return success;
-        }
+        public Result<bool> TryEquals(PartialTime other) => TryCompareTo(other).Select(i => i == 0);
 
         public static bool operator ==(PartialTime a, PartialTime b) => Equals(a, b);
         public static bool operator !=(PartialTime a, PartialTime b) => !Equals(a, b);
@@ -154,43 +150,34 @@ namespace Hl7.Fhir.Model.Primitives
         /// <summary>
         /// Compare two partial times based on CQL equality rules
         /// </summary>
-        /// <remarks>See <see cref="TryCompareTo(PartialTime, out int)"/> for more details.</remarks>
+        /// <remarks>See <see cref="TryCompareTo(PartialTime)"/> for more details.</remarks>
         public int CompareTo(object obj)
         {
-            if (obj is null) return 1;      // as defined by the .NET framework guidelines
-
-            if (obj is PartialTime p)
+            return obj switch
             {
-                return TryCompareTo(p, out var comparison) ?
-                    comparison : throw new ArgumentException($"Value {this} and {p} cannot be compared, since the precision is different.");
-            }
-            else
-                throw new ArgumentException($"Object is not a {nameof(PartialTime)}");
+                null => 1,
+                PartialTime p => TryCompareTo(p).ValueOrElse(e => throw e),
+                _ => throw new ArgumentException($"Object is not a {nameof(PartialTime)}")
+            };
         }
 
         /// <summary>
         /// Compares two (partial)times according to CQL ordering rules.
         /// </summary> 
         /// <param name="other"></param>
-        /// <param name="comparison">the result of the comparison: 0 if this and other are equal, 
-        /// -1 if this is smaller than other and +1 if this is bigger than other.</param>
-        /// <returns>true is the values can be compared (have the same precision) or false otherwise.</returns>
-        /// <remarks>The comparison is performed by considering each precision in order, beginning with hours.
+        /// <returns>An <see cref="Support.Utility.Ok{T}"/> with an integer value representing the reseult of the comparison: 0 if this and other are equal, 
+        /// -1 if this is smaller than other and +1 if this is bigger than other, or the other is null. If the values are incomparable
+        /// this function returns a <see cref="Support.Utility.Fail{T}"/> with the reason why the comparison between the two values was impossible.
+        /// </returns>
+        /// <remarks>The comparison is performed by considering each precision in order, beginning with hours. 
         /// If the values are the same, comparison proceeds to the next precision; 
         /// if the values are different, the comparison stops and the result is false. If one input has a value 
         /// for the precision and the other does not, the comparison stops and the values cannot be compared; if neither
         /// input has a value for the precision, or the last precision has been reached, the comparison stops
-        /// and the result is true. For the purposes of comparison, seconds and milliseconds are combined as a 
-        /// single precision using a decimal, with decimal equality semantics.</remarks>
-        public bool TryCompareTo(PartialTime other, out int comparison)
+        /// and the result is true.</remarks>
+        public Result<int> TryCompareTo(PartialTime other)
         {
-            if (other is null)
-            {
-                comparison = 1; // as defined by the .NET framework guidelines
-                return true;
-            }
-            else
-                return PartialDateTime.CompareDateTimeParts(_parsedValue, Precision, other._parsedValue, other.Precision, out comparison);
+            return other is null ? Ok(1) : PartialDateTime.CompareDateTimeParts(_parsedValue, Precision, other._parsedValue, other.Precision);
         }
 
         public static bool operator <(PartialTime a, PartialTime b) => a.CompareTo(b) == -1;
@@ -202,6 +189,21 @@ namespace Hl7.Fhir.Model.Primitives
         public override string ToString() => _original;
 
         public static explicit operator PartialTime(DateTimeOffset dto) => FromDateTimeOffset(dto);
+
+        bool? ICqlEquatable.IsEqualTo(Any other) => other is PartialTime pd &&
+            TryEquals(pd) is Ok<bool> ok ? ok.Value : (bool?)null;
+
+        // Note that, in contrast to equals, this will return false if operators cannot be compared (as described by the spec)
+        bool ICqlEquatable.IsEquivalentTo(Any other) => other is PartialTime pd && TryEquals(pd).Success;
+
+        int? ICqlOrderable.CompareTo(Any other)
+        {
+            if (other is null) return null;
+            if (!(other is PartialTime pd)) throw NotSameTypeComparison(this, other);
+
+            return TryCompareTo(pd) is Ok<int> ok ? ok.Value : (int?)null;
+        }
+
     }
 }
 

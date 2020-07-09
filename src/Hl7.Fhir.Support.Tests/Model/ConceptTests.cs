@@ -17,9 +17,9 @@ namespace Hl7.FhirPath.Tests
         [TestMethod]
         public void ConceptConstructor()
         {
-            var someCodings = new[] { new Coding("http://system1", "codeA"), new Coding("http://system2", "codeB") };
-            var sameCodings = new[] { new Coding("http://system1", "codeA"), new Coding("http://system2", "codeB") };
-            var someOtherCodings = new[] { new Coding("http://system1", "codeB"), new Coding("http://system2", "codeC") };
+            var someCodings = new[] { new Code("http://system1", "codeA"), new Code("http://system2", "codeB") };
+            var sameCodings = new[] { new Code("http://system1", "codeA"), new Code("http://system2", "codeB") };
+            var someOtherCodings = new[] { new Code("http://system1", "codeB"), new Code("http://system2", "codeC") };
 
             var newCds = new Concept(someCodings);
 

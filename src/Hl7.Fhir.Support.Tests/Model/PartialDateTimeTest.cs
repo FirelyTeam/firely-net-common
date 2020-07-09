@@ -136,7 +136,7 @@ namespace Hl7.FhirPath.Tests
             Assert.AreEqual(1, PartialDateTime.Parse("2012-03-04T13:00:00Z").CompareTo(PartialDateTime.Parse("2012-03-04T12:00:00Z")));
             Assert.AreEqual(-1, PartialDateTime.Parse("2012-03-04T13:00:00Z").CompareTo(PartialDateTime.Parse("2012-03-04T18:00:00+02:00")));
             Assert.AreEqual(0, PartialDateTime.Parse("2015-01-01").CompareTo(PartialDateTime.Parse("2015-01-01")));
-            Assert.AreEqual(false, PartialDateTime.Parse("2015-01-01").TryCompareTo(PartialDateTime.Parse("2015-01"), out var _));
+            Assert.IsTrue(PartialDateTime.Parse("2015-01-01").TryCompareTo(PartialDateTime.Parse("2015-01")).Success);
         }
     }
 }

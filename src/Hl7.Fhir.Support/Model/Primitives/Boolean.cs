@@ -8,11 +8,13 @@
 
 #nullable enable
 
+using Hl7.Fhir.Support.Utility;
 using System;
+using static Hl7.Fhir.Support.Utility.Result;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public class Boolean : Any
+    public class Boolean : Any, ICqlEquatable
     {
         public static Boolean True = new Boolean(true);
         public static Boolean False = new Boolean(false);
@@ -50,9 +52,12 @@ namespace Hl7.Fhir.Model.Primitives
         public override string ToString() => Value.ToString();
         public override bool Equals(object obj) => obj is Boolean b && Value == b.Value;
 
-        public static bool operator ==(Boolean a, Boolean b) => Equals(a, b);
+        public static bool operator ==(Boolean a, Boolean b) => Equals(a,b);
         public static bool operator !=(Boolean a, Boolean b) => !Equals(a,b);
 
         public static implicit operator bool(Boolean b) => b.Value;
+
+        bool? ICqlEquatable.IsEqualTo(Any other) => other is { } ? (bool?)Equals(other) : null;
+        bool ICqlEquatable.IsEquivalentTo(Any other) => Equals(other);
     }
 }

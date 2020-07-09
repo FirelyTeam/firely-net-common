@@ -8,12 +8,13 @@
 
 #nullable enable
 
+using Hl7.Fhir.Support.Utility;
 using System;
 using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public class PartialDate : Any, IComparable
+    public class PartialDate : Any, IComparable, ICqlEquatable, ICqlOrderable
     {
         private PartialDate(string original, DateTimeOffset parsedValue, PartialPrecision precision, bool hasOffset)
         {
@@ -69,7 +70,7 @@ namespace Hl7.Fhir.Model.Primitives
 
         private static readonly string DATEFORMAT =
             $"(?<year>[0-9]{{4}}) ((?<month>-[0-9][0-9]) ((?<day>-[0-9][0-9]) )?)? {PartialTime.OFFSETFORMAT}?";
-        public static readonly Regex PARTIALDATEREGEX = new Regex("^" + DATEFORMAT +  "$", RegexOptions.IgnorePatternWhitespace);
+        public static readonly Regex PARTIALDATEREGEX = new Regex("^" + DATEFORMAT + "$", RegexOptions.IgnorePatternWhitespace);
 
         /// <summary>
         /// Converts the partial date to a full DateTimeOffset instance.
@@ -119,7 +120,7 @@ namespace Hl7.Fhir.Model.Primitives
                 d.Success ? PartialPrecision.Day :
                 m.Success ? PartialPrecision.Month :
                 PartialPrecision.Year;
-            
+
             var parseableDT = y.Value +
                 (m.Success ? m.Value : "-01") +
                 (d.Success ? d.Value : "-01") +
@@ -136,76 +137,70 @@ namespace Hl7.Fhir.Model.Primitives
         /// </summary>
         /// <returns>returns true if the values are both PartialDates, have the same precision and each date component is exactly the same. 
         /// Dates with timezones are normalized to zulu before comparison is done.</returns>
-        /// <remarks>See <see cref="TryCompareTo(PartialDate, out int)"/> for more details.</remarks>
-        public override bool Equals(object obj) => obj is PartialDate pd && TryCompareTo(pd, out var result) && result == 0;
+        /// <remarks>See <see cref="TryCompareTo(PartialDate)"/> for more details.</remarks>
+        public override bool Equals(object obj) => obj is PartialDate pd && TryEquals(pd).Success;
 
+        public Result<bool> TryEquals(PartialDate other) => TryCompareTo(other).Select(i => i == 0);
 
-        /// <summary>
-        /// Determines if two partial dates are equal according to CQL equality rules.
-        /// </summary>
-        /// <param name="other"></param>
-        /// <param name="result">true if each date component is exactly the same. Dates with timezones are normalized to zulu before comparison is done.</param>
-        /// <returns>returns true if the partial dates can be compared.</returns>
-        /// <remarks>See <see cref="TryCompareTo(PartialDate, out int)"/> for more details.</remarks>
-        public bool TryEquals(PartialDate other, out bool result)
-        {
-            var success = TryCompareTo(other, out var comparison);
-            result = comparison == 0;
-            return success;
-        }
-                        
         public static bool operator ==(PartialDate a, PartialDate b) => Equals(a, b);
         public static bool operator !=(PartialDate a, PartialDate b) => !Equals(a, b);
 
         /// <summary>
         /// Compare two partial dates according to CQL equality rules
         /// </summary>
-        /// <remarks>See <see cref="TryCompareTo(PartialDate, out int)"/> for more details.</remarks>
+        /// <remarks>See <see cref="TryCompareTo(PartialDate)"/> for more details.</remarks>
         public int CompareTo(object obj)
         {
-            if (obj is null) return 1;      // as defined by the .NET framework guidelines
-
-            if (obj is PartialDate p)
+            return obj switch
             {
-                return TryCompareTo(p, out var comparison) ?
-                    comparison : throw new ArgumentException($"Value {this} and {p} cannot be compared, since the precision is different.");
-            }
-            else
-                throw new ArgumentException($"Object is not a {nameof(PartialDate)}");
+                null => 1,
+                PartialDate p => TryCompareTo(p).ValueOrElse(e => throw e),
+                _ => throw NotSameTypeComparison(this, obj)
+            };
         }
 
         /// <summary>
         /// Compares two (partial)dates according to CQL ordering rules.
         /// </summary> 
         /// <param name="other"></param>
-        /// <param name="comparison">the result of the comparison: 0 if this and other are equal, 
-        /// -1 if this is smaller than other and +1 if this is bigger than other, or the other is null.</param>
-        /// <returns>true is the values can be compared (have the same precision) or false otherwise.</returns>
+        /// <returns>An <see cref="Support.Utility.Ok{T}"/> with an integer value representing the reseult of the comparison: 0 if this and other are equal, 
+        /// -1 if this is smaller than other and +1 if this is bigger than other, or the other is null. If the values are incomparable
+        /// this function returns a <see cref="Support.Utility.Fail{T}"/> with the reason why the comparison between the two values was impossible.
+        /// </returns>
         /// <remarks>The comparison is performed by considering each precision in order, beginning with years. 
         /// If the values are the same, comparison proceeds to the next precision; 
         /// if the values are different, the comparison stops and the result is false. If one input has a value 
         /// for the precision and the other does not, the comparison stops and the values cannot be compared; if neither
         /// input has a value for the precision, or the last precision has been reached, the comparison stops
         /// and the result is true.</remarks>
-        public bool TryCompareTo(PartialDate other, out int comparison)
+        public Result<int> TryCompareTo(PartialDate other)
         {
-            if (other is null)
-            {
-                comparison = 1; // as defined by the .NET framework guidelines
-                return true;
-            }
-            else
-                return PartialDateTime.CompareDateTimeParts(_parsedValue, Precision, other._parsedValue, other.Precision, out comparison);
+            return other is null ? 1 : PartialDateTime.CompareDateTimeParts(_parsedValue, Precision, other._parsedValue, other.Precision);
         }
 
         public static bool operator <(PartialDate a, PartialDate b) => a.CompareTo(b) == -1;
         public static bool operator <=(PartialDate a, PartialDate b) => a.CompareTo(b) != 1;
         public static bool operator >(PartialDate a, PartialDate b) => a.CompareTo(b) == 1;
-        public static bool operator >=(PartialDate a, PartialDate b) => a.CompareTo(b) != -1;      
+        public static bool operator >=(PartialDate a, PartialDate b) => a.CompareTo(b) != -1;
 
         public override int GetHashCode() => _original.GetHashCode();
         public override string ToString() => _original;
 
+        public static implicit operator PartialDateTime(PartialDate pd) => throw new NotImplementedException();
         public static explicit operator PartialDate(DateTimeOffset dto) => FromDateTimeOffset(dto);
+
+        bool? ICqlEquatable.IsEqualTo(Any other) => other is PartialDate pd &&
+            TryEquals(pd) is Ok<bool> ok ? ok.Value : (bool?)null;
+
+        // Note that, in contrast to equals, this will return false if operators cannot be compared (as described by the spec)
+        bool ICqlEquatable.IsEquivalentTo(Any other) => other is PartialDate pd && TryEquals(pd).Success;
+
+        int? ICqlOrderable.CompareTo(Any other)
+        {
+            if (other is null) return null;
+            if (!(other is PartialDate pd)) throw NotSameTypeComparison(this, other);
+            
+            return TryCompareTo(pd) is Ok<int> ok ? ok.Value : (int?)null;
+        }
     }
 }

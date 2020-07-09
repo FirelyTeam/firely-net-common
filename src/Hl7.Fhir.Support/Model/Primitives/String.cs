@@ -8,12 +8,14 @@
 
 #nullable enable
 
+using Hl7.Fhir.Support.Utility;
 using System;
 using System.Globalization;
+using static Hl7.Fhir.Support.Utility.Result;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public class String: Any, IEquatable<String>, IComparable, IComparable<String>
+    public class String: Any, IComparable, ICqlEquatable, ICqlOrderable
     {
         public String() : this(string.Empty) { }
 
@@ -24,6 +26,8 @@ namespace Hl7.Fhir.Model.Primitives
         public static String Parse(string value) =>
             TryParse(value, out var result) ? result : throw new FormatException($"String '{value}' was not recognized as a valid string.");
 
+        // Actually, it's not that trivial, since CQL strings accept a subset of C#'s escape sequences,
+        // we *could* validate those here.
         public static bool TryParse(string representation, out String value)
         {
             if (representation == null) throw new ArgumentNullException(nameof(representation));
@@ -32,27 +36,22 @@ namespace Hl7.Fhir.Model.Primitives
             return true;
         }
 
-        /// <summary>
-        /// Compares two strings according to CQL equality rules.
-        /// </summary>
-        /// <returns></returns>
-        /// <remarks>The same as <see cref="Equals(String, StringComparison)" />
-        /// with a comparison of <see cref="StringComparison.Unicode" />"/>
-        /// </remarks>
-        public bool Equals(String other) => Equals(other, CQL_EQUALS_COMPARISON);
+        public override bool Equals(object obj) => obj is String s && Equals(s, CQL_EQUALS_COMPARISON);
+        public static bool operator ==(String a, String b) => Equals(a,b);
+        public static bool operator !=(String a, String b) => !Equals(a,b);
 
         /// <summary>
         /// Compares two strings according to CQL equivalence rules.
         /// </summary>
-        public bool Equals(String other, StringComparison comparisonType)
+        public bool Equals(Any other, StringComparison comparisonType)
         {
-            if (other is null) return false;
+            if (!(other is String otherS)) return false;
 
             if (comparisonType == StringComparison.Unicode)
-                return string.CompareOrdinal(Value, other.Value) == 0;
+                return string.CompareOrdinal(Value, otherS.Value) == 0;
 
             var l = comparisonType.HasFlag(StringComparison.NormalizeWhitespace) ? normalizeWS(Value) : Value;
-            var r = comparisonType.HasFlag(StringComparison.NormalizeWhitespace) ? normalizeWS(other.Value) : other.Value;
+            var r = comparisonType.HasFlag(StringComparison.NormalizeWhitespace) ? normalizeWS(otherS.Value) : otherS.Value;
 
 #if !NETSTANDARD1_1
             var compareOptions = CompareOptions.None;
@@ -81,21 +80,16 @@ namespace Hl7.Fhir.Model.Primitives
             return new string(dataAsChars);
         }
 
-        public override bool Equals(object obj) => obj is String s && Equals(s);
-        public static bool operator ==(String a, String b) => Equals(a, b);
-        public static bool operator !=(String a, String b) => !Equals(a, b);
 
         public int CompareTo(object obj)
         {
-            if (obj is null) return 1;      // as defined by the .NET framework guidelines
-
-            if (obj is String s)
-                return string.CompareOrdinal(Value, s.Value);
-            else
-                throw new ArgumentException($"Object is not a {nameof(String)}", nameof(obj));
+            return obj switch
+            {
+                null => 1,
+                String s => string.CompareOrdinal(Value, s.Value),
+                _ => throw NotSameTypeComparison(this, obj)
+            };
         }
-
-        public int CompareTo(String obj) => CompareTo((object)obj);
 
         public static bool operator <(String a, String b) => a.CompareTo(b) == -1;
         public static bool operator <=(String a, String b) => a.CompareTo(b) != 1;
@@ -107,6 +101,10 @@ namespace Hl7.Fhir.Model.Primitives
 
         public static implicit operator string(String s) => s.Value;
         public static explicit operator String(string s) => new String(s);
+
+        bool? ICqlEquatable.IsEqualTo(Any other) => other is { } ? Equals(other, CQL_EQUALS_COMPARISON) : (bool?)null;
+        bool ICqlEquatable.IsEquivalentTo(Any other) => Equals(other, CQL_EQUIVALENCE_COMPARISON);
+        int? ICqlOrderable.CompareTo(Any other) => other is { } ? CompareTo(other) : (int?)null;
     }
 
     /// <summary>Specifies the comparison rules for string.</summary>

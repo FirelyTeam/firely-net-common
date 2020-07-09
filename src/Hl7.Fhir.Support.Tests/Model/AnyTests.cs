@@ -45,9 +45,9 @@ namespace Hl7.FhirPath.Tests
                 yield return ("+34", typeof(Integer), true, 34);
                 yield return ("34.5", typeof(Integer), false, default);
 
-                yield return ("64", typeof(Integer64), true, 64L);
-                yield return ("-64", typeof(Integer64), true, -64L);
-                yield return ("+64", typeof(Integer64), true, 64L);
+                yield return ("64", typeof(Long), true, 64L);
+                yield return ("-64", typeof(Long), true, -64L);
+                yield return ("+64", typeof(Long), true, 64L);
                 yield return ("64.5", typeof(Integer), false, default);
 
 

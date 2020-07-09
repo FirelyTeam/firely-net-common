@@ -8,13 +8,15 @@
 
 #nullable enable
 
+using Hl7.Fhir.Support.Utility;
 using System;
 using System.Globalization;
 using System.Linq;
+using static Hl7.Fhir.Support.Utility.Result;
 
 namespace Hl7.Fhir.Model.Primitives
 {
-    public class Decimal : Any, IComparable
+    public class Decimal : Any, IComparable, ICqlEquatable, ICqlOrderable
     {
         public Decimal() : this(default) { }
 
@@ -50,27 +52,30 @@ namespace Hl7.Fhir.Model.Primitives
         /// <summary>
         /// Determines if two decimals are equal according to CQL equality rules.
         /// </summary>
-        /// <remarks>The same as <see cref="Equals(Decimal, DecimalComparison)" />
+        /// <remarks>The same as <see cref="Equals(Any, DecimalComparison)" />
         /// with comparison type <see cref="CQL_EQUALS_COMPARISON"/>. For decimals, CQL and .NET equality
         /// rules are aligned.
         /// </remarks>
         public override bool Equals(object obj) => obj is Decimal d && Equals(d, CQL_EQUALS_COMPARISON);
+        public static bool operator ==(Decimal a, Decimal b) => Equals(a, b);
+        public static bool operator !=(Decimal a, Decimal b) => !Equals(a, b);
+
 
         /// <summary>
         /// Determines equality of two decimals using the specified type of decimal comparsion.
         /// </summary>
-        public bool Equals(Decimal other, DecimalComparison comparisonType) 
+        public bool Equals(Any other, DecimalComparison comparisonType) 
         {
-            if (other is null) return false;
+            if (!(other is Decimal otherD)) return false;
 
             return comparisonType switch
             {
                 DecimalComparison.Strict =>
-                    (Scale(this.Value, ignoreTrailingZeroes: false) == Scale(other.Value, ignoreTrailingZeroes: false)) &&
-                        Value == other.Value,
+                    (Scale(this.Value, ignoreTrailingZeroes: false) == Scale(otherD.Value, ignoreTrailingZeroes: false)) &&
+                        Value == otherD.Value,
                 DecimalComparison.IgnoreTrailingZeroes =>
-                    Value == other.Value,      // default .NET decimal behaviour
-                DecimalComparison.RoundToSmallestScale => scaleEq(Value, other.Value),
+                    Value == otherD.Value,      // default .NET decimal behaviour
+                DecimalComparison.RoundToSmallestScale => scaleEq(Value, otherD.Value),
                 _ => throw new NotImplementedException(),  // cannot happen, just to keep the compiler happy
             };
 
@@ -85,9 +90,6 @@ namespace Hl7.Fhir.Model.Primitives
                 return lr == rr;
             }
         }
-
-        public static bool operator ==(Decimal a, Decimal b) => Equals(a, b);
-        public static bool operator !=(Decimal a, Decimal b) => !Equals(a, b);
 
         public const DecimalComparison CQL_EQUALS_COMPARISON = DecimalComparison.IgnoreTrailingZeroes;
         public const DecimalComparison CQL_EQUIVALENCE_COMPARISON = DecimalComparison.RoundToSmallestScale;
@@ -119,15 +121,18 @@ namespace Hl7.Fhir.Model.Primitives
         /// <remarks>For decimals, CQL and .NET comparison rules are aligned.</remarks>
         public int CompareTo(object obj)
         {
-            if (obj is null) return 1;      // as defined by the .NET framework guidelines
+            return obj switch
+            {
+                // as defined by the .NET framework guidelines
+                null => 1,      
 
-            // The comparison rules for decimals are underdocumented - assume normal dotnet
-            // comparison, which disregards trailing zeroes (= equality comparison according
-            // to CQL).
-            if (obj is Decimal d)
-                return decimal.Compare(Value, d.Value);
-            else
-                throw new ArgumentException($"Object is not a {nameof(Decimal)}", nameof(obj));
+                // The comparison rules for decimals are underdocumented - assume normal dotnet
+                // comparison, which disregards trailing zeroes (= equality comparison according
+                // to CQL).
+                Decimal d => decimal.Compare(Value, d.Value),
+
+                _ => throw NotSameTypeComparison(this,obj)
+            };
         }
 
         public static bool operator <(Decimal a, Decimal b) => a.CompareTo(b) == -1;
@@ -140,7 +145,13 @@ namespace Hl7.Fhir.Model.Primitives
         public override string ToString() => Value.ToString();
 
         public static implicit operator decimal(Decimal d) => d.Value;
-        public static explicit operator Decimal(decimal d) => new Decimal(d);        
+        public static implicit operator Quantity(Decimal d) => new Quantity(d.Value, "1");
+
+        public static explicit operator Decimal(decimal d) => new Decimal(d);
+
+        bool? ICqlEquatable.IsEqualTo(Any other) => other is { } ? Equals(other, CQL_EQUALS_COMPARISON) : (bool?)null;
+        bool ICqlEquatable.IsEquivalentTo(Any other) => Equals(other, CQL_EQUIVALENCE_COMPARISON);
+        int? ICqlOrderable.CompareTo(Any other) => other is { } ? CompareTo(other) : (int?)null;
     }
 
 
