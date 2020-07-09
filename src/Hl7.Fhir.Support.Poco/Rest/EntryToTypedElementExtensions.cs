@@ -16,6 +16,7 @@ namespace Hl7.Fhir.Rest
                 Body = response.Body,
                 Etag = response.Etag,
                 Headers = response.Headers,
+                LastModified = response.LastModified,
                 Location = response.Location,
                 ResponseUri = response.ResponseUri,
                 Status = response.Status
