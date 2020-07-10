@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * Copyright (c) 2015, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
@@ -29,7 +29,6 @@ namespace Hl7.FhirPath.Expressions
             t.Add("trace", (IEnumerable<ITypedElement> f, string name, EvaluationContext ctx)
                     => f.Trace(name, ctx));
 
-            //t.Add("exists", (IEnumerable<ITypedElement> f) => f.Any(e => (e.Value as bool?) == true));
             t.Add("allTrue", (IEnumerable<ITypedElement> f) => f.All(e => e.Value as bool? == true));
             t.Add("anyTrue", (IEnumerable<ITypedElement> f) => f.Any(e => e.Value as bool? == true));
             t.Add("allFalse", (IEnumerable<ITypedElement> f) => f.All(e => e.Value as bool? == false));
@@ -52,8 +51,8 @@ namespace Hl7.FhirPath.Expressions
 
             t.Add("binary.&", (object f, string a, string b) => (a ?? "") + (b ?? ""));
 
-            t.Add("iif", (IEnumerable<ITypedElement> f, bool? condition, IEnumerable<ITypedElement> result) => f.IIf(condition, result));
-            t.Add("iif", (IEnumerable<ITypedElement> f, bool? condition, IEnumerable<ITypedElement> result, IEnumerable<ITypedElement> otherwise) => f.IIf(condition, result, otherwise));
+            t.Add(new CallSignature("iif", typeof(IEnumerable<ITypedElement>), typeof(object), typeof(bool?), typeof(Invokee), typeof(Invokee)), runIif);
+            t.Add(new CallSignature("iif", typeof(IEnumerable<ITypedElement>), typeof(object), typeof(bool?), typeof(Invokee)), runIif);
 
             // Functions that use normal null propagation and work with the focus (buy may ignore it)
             t.Add("not", (IEnumerable<ITypedElement> f) => f.Not(), doNullProp: true);
@@ -176,7 +175,7 @@ namespace Hl7.FhirPath.Expressions
             t.Add("floor", (decimal f) => Math.Floor(f), doNullProp: true);
             t.Add("ln", (decimal f) => Math.Log(Convert.ToDouble(f)), doNullProp: true);
             t.Add("log", (decimal f, decimal @base) => Math.Log(Convert.ToDouble(f), Convert.ToDouble(@base)), doNullProp: true);
-            t.Add("power", (decimal f, decimal exponent) => Math.Pow(Convert.ToDouble(f), Convert.ToDouble(exponent)), doNullProp: true);
+            t.Add("power", (decimal f, decimal exponent) => f.Power(exponent), doNullProp: true);
             t.Add("round", (decimal f, long precision) => Math.Round(f, Convert.ToInt32(precision)), doNullProp: true);
             t.Add("round", (decimal f) => Math.Round(f), doNullProp: true);
             t.Add("sqrt", (decimal f) => f.Sqrt(), doNullProp: true);
@@ -206,6 +205,7 @@ namespace Hl7.FhirPath.Expressions
             t.Add(new CallSignature("select", typeof(IEnumerable<ITypedElement>), typeof(object), typeof(Invokee)), runSelect);
             t.Add(new CallSignature("all", typeof(bool), typeof(object), typeof(Invokee)), runAll);
             t.Add(new CallSignature("any", typeof(bool), typeof(object), typeof(Invokee)), runAny);
+            t.Add(new CallSignature("exists", typeof(bool), typeof(object), typeof(Invokee)), runAny);
             t.Add(new CallSignature("repeat", typeof(IEnumerable<ITypedElement>), typeof(object), typeof(Invokee)), runRepeat);
             t.Add(new CallSignature("trace", typeof(IEnumerable<ITypedElement>), typeof(string), typeof(object), typeof(Invokee)), Trace);
 
@@ -243,6 +243,21 @@ namespace Hl7.FhirPath.Expressions
             return focus;
         }
 
+        private static IEnumerable<ITypedElement> runIif(Closure ctx, IEnumerable<Invokee> arguments)
+        {
+            // iif(criterion: expression, true-result: collection [, otherwise-result: collection]) : collection
+            // note: short-circuit behavior is expected in this function
+            var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
+
+            var expression = arguments.Skip(1).First()(ctx, InvokeeFactory.EmptyArgs);
+            var trueResult = arguments.Skip(2).First();
+            var otherResult = arguments.Skip(3).FirstOrDefault();
+
+            return (expression.BooleanEval() == true)
+                ? trueResult(ctx, InvokeeFactory.EmptyArgs)
+                : otherResult == null ? ElementNode.EmptyList : otherResult(ctx, InvokeeFactory.EmptyArgs);
+        }
+
         private static IEnumerable<ITypedElement> runWhere(Closure ctx, IEnumerable<Invokee> arguments)
         {
             var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
@@ -277,7 +292,15 @@ namespace Hl7.FhirPath.Expressions
         }
 
         private static IEnumerable<ITypedElement> runRepeat(Closure ctx, IEnumerable<Invokee> arguments)
-        {
+        {/*
+            var result = runSelect(ctx, arguments);
+            if (!result.Any())
+                return ElementNode.EmptyList;
+
+            var newContext = ctx.Nest(result);
+            newContext.SetThis(result);
+            return result.Union(runRepeat(newContext, arguments));
+            */
             var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
             var lambda = arguments.Skip(1).First();
 
@@ -301,6 +324,7 @@ namespace Hl7.FhirPath.Expressions
 
                 fullResult.AddRange(newNodes);
             }
+
 
             return fullResult;
         }

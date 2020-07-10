@@ -328,6 +328,8 @@ namespace Hl7.FhirPath.Functions
             {
                 case string s:
                     return s;
+                case int i:
+                    return XmlConvert.ToString(i);
                 case long l:
                     return XmlConvert.ToString(l);
                 case decimal d:
