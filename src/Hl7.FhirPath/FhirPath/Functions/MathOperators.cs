@@ -1,15 +1,19 @@
-﻿using Hl7.Fhir.ElementModel;
-using System;
-using System.Collections.Generic;
+﻿using System;
 
 namespace Hl7.FhirPath.FhirPath.Functions
 {
     internal static class MathOperators
     {
-        public static IEnumerable<ITypedElement> Sqrt(this decimal focus)
+        public static decimal? Sqrt(this decimal focus)
         {
             var result = Math.Sqrt(Convert.ToDouble(focus));
-            if (result != Double.NaN) yield return ElementNode.ForPrimitive(result);
+            return double.IsNaN(result) ? (decimal?)null : Convert.ToDecimal(result);
+        }
+
+        public static decimal? Power(this decimal focus, decimal exponent)
+        {
+            var result = Math.Pow(Convert.ToDouble(focus), Convert.ToDouble(exponent));
+            return double.IsNaN(result) ? (decimal?)null : Convert.ToDecimal(result);
         }
     }
 }
