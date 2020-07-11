@@ -12,6 +12,7 @@ using Hl7.FhirPath.Functions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Hl7.FhirPath.Expressions
 {
@@ -44,6 +45,23 @@ namespace Hl7.FhirPath.Expressions
         public static IEnumerable<ITypedElement> GetThat(Closure context, IEnumerable<Invokee> args)
         {
             return context.GetThat();
+        }
+
+#if NETSTANDARD1_1
+        private static Regex _index = new Regex("\\[(?<index>\\d+)]");
+#else
+        private static Regex _index = new Regex("\\[(?<index>\\d+)]", RegexOptions.Compiled);
+#endif
+
+        public static IEnumerable<ITypedElement> GetIndex(Closure context, IEnumerable<Invokee> args)
+        {
+            var definition = context.GetThis().FirstOrDefault().Definition;
+            if(!definition.IsCollection)
+                return new[] { ElementNode.ForPrimitive("0") };
+
+            var location = context.GetThis().FirstOrDefault().Location;
+            var index = _index.Match(location).Groups["index"].Value;
+            return new[] { ElementNode.ForPrimitive(index) };
         }
 
 
