@@ -352,7 +352,7 @@ namespace Hl7.FhirPath.Expressions
             }
         }
 
-
+        public static readonly AxisExpression Index = new AxisExpression("index");
         public static readonly AxisExpression This = new AxisExpression("this");
         public static readonly AxisExpression That = new AxisExpression("that");
     }
