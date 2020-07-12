@@ -9,6 +9,7 @@
 
 using Hl7.Fhir.ElementModel;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace Hl7.FhirPath.Expressions
@@ -82,10 +83,16 @@ namespace Hl7.FhirPath.Expressions
 #endif
         internal static IEnumerable<ITypedElement> IndexFromLocation(ITypedElement context)
         {
-            if (context is null || !context.Definition.IsCollection)
+            if (context is null)
+                return Enumerable.Empty<ITypedElement>();
+
+            if (!context.Definition?.IsCollection ?? false) // If the element is non-repeating, there is no need to evaluate the regex
                 return new[] { ElementNode.ForPrimitive(0) };
 
-            var index = _indexPattern.Match(context.Location).Groups["index"].Value;
+            var index = _indexPattern.Match(context.Location).Groups["index"]?.Value;
+            if(string.IsNullOrEmpty(index))
+                return new[] { ElementNode.ForPrimitive(0) };
+
             return new[] { ElementNode.ForPrimitive(int.Parse(index)) };
         }
     }
