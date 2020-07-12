@@ -71,5 +71,15 @@ namespace Hl7.FhirPath.Expressions
 
             return nested;
         }
+
+        public static void SetIndex(this Closure ctx, IEnumerable<ITypedElement> value)
+        {
+            ctx.SetValue("builtin.index", value);
+        }
+
+        public static IEnumerable<ITypedElement> GetIndex(this Closure ctx)
+        {
+            return ctx.ResolveValue("builtin.index");
+        }
     }
 }
