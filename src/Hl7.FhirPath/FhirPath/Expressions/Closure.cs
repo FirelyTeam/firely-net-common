@@ -9,6 +9,7 @@
 
 using Hl7.Fhir.ElementModel;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Hl7.FhirPath.Expressions
 {
@@ -27,6 +28,7 @@ namespace Hl7.FhirPath.Expressions
             var input = new[] { root };
             newContext.SetThis(input);
             newContext.SetThat(input);
+            newContext.SetIndex(ElementNode.CreateList(IndexFromLocation(root)));
             newContext.SetOriginalContext(input);
             if (ctx.Container != null) newContext.SetResource(new[] { ctx.Container });
             if (ctx.RootContainer != null) newContext.SetRootResource(new[] { ctx.RootContainer });
@@ -71,6 +73,20 @@ namespace Hl7.FhirPath.Expressions
             }
 
             return null;
+        }
+
+#if NETSTANDARD1_1
+        private static Regex _indexPattern = new Regex("\\[(?<index>\\d+)]$");
+#else
+        private static Regex _indexPattern = new Regex("\\[(?<index>\\d+)]$", RegexOptions.Compiled);
+#endif
+        internal static IEnumerable<ITypedElement> IndexFromLocation(ITypedElement context)
+        {
+            if (context is null || !context.Definition.IsCollection)
+                return new[] { ElementNode.ForPrimitive(0) };
+
+            var index = _indexPattern.Match(context.Location).Groups["index"].Value;
+            return new[] { ElementNode.ForPrimitive(int.Parse(index)) };
         }
     }
 }
