@@ -1,10 +1,8 @@
 ﻿using Hl7.Fhir.Model.Primitives;
 using Hl7.Fhir.Support.Utility;
+using Hl7.FhirPath.Functions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Decimal = Hl7.Fhir.Model.Primitives.Decimal;
+using P = Hl7.Fhir.Model.Primitives;
 
 namespace HL7.FhirPath.Tests.Tests
 {
@@ -24,19 +22,43 @@ namespace HL7.FhirPath.Tests.Tests
             test(10000m, 0);
             test(10000.123m, 3);
 
-            void test(decimal d, int p) => Assert.AreEqual(p, Decimal.Scale(d, ignoreTrailingZeroes: true));
+            static void test(decimal d, int p) => Assert.AreEqual(p, P.Decimal.Scale(d, ignoreTrailingZeroes: true));
         }
 
 
         [TestMethod]
+        public void TestEqualityNullBehaviour()
+        {
+            Assert.IsNull(EqualityOperators.IsEqualTo(null, null));
+            Assert.IsNull(EqualityOperators.IsEqualTo(new Quantity(4.0, "kg"), null));
+            Assert.IsNull(EqualityOperators.IsEqualTo(null, new Quantity(4.0, "kg")));
+
+            Assert.IsTrue(EqualityOperators.IsEquivalentTo(null, null));
+            Assert.IsFalse(EqualityOperators.IsEquivalentTo(new Quantity(4.0, "kg"), null));
+            Assert.IsFalse(EqualityOperators.IsEquivalentTo(null, new Quantity(4.0, "kg")));
+        }
+
+        [TestMethod]
+        public void TestEqualityIncompatibleTypes()
+        {
+            Assert.IsFalse((bool)EqualityOperators.IsEqualTo(new Quantity(4.0, "kg"), new Code("http://nu.nl", "R")));
+            Assert.IsFalse((bool)EqualityOperators.IsEqualTo(new P.Integer(0), new P.String("hi!")));
+
+            Assert.IsFalse(EqualityOperators.IsEquivalentTo(new Quantity(4.0, "kg"), new Code("http://nu.nl", "R")));
+            Assert.IsFalse(EqualityOperators.IsEquivalentTo(new P.Integer(0), new P.String("hi!")));
+        }
+
+        [TestMethod]
         public void TestEquality()
         {
-            // TODO: these are unit tests, also add integration test for actual EquialityOperations.Equals and
-            // through to FhirPath
-
-            // Test chapter 6.1 - Equality
             var tests = new (object, object, bool?)[]
             {
+                (0, 0, true),
+                (-4, -4, true),
+                (5, 5, true),
+                (5, 6, false),
+                (5, null, null),
+
                 (0L, 0L, true),
                 (-4L, -4L, true),
                 (5L, 5L, true),
@@ -58,12 +80,16 @@ namespace HL7.FhirPath.Tests.Tests
                 ("left", "right", false),
                 ("left", " left", false),
                 ("left", "lEft", false),
+                ("\tleft", " lEft", false),
+                ("encyclopaedia", "encyclopædia", false),
+                ("café", "cafe", false),
                 ("right", null, null),
 
                 (PartialDate.Parse("2001"), PartialDate.Parse("2001"), true),
                 (PartialDate.Parse("2001-01"), PartialDate.Parse("2001-01"), true),
                 (PartialDate.Parse("2001-01-30"), PartialDate.Parse("2001-01-30"), true),
                 (PartialDate.Parse("2001-01-30"), PartialDate.Parse("2001-01"), null),
+                (PartialDate.Parse("2002-01-30"), PartialDate.Parse("2001-01"), false),
                 (PartialDate.Parse("2001-01"), PartialDate.Parse("2001"), null),
                 (PartialDate.Parse("2001"), PartialDate.Parse("2002"), false),
                 (PartialDate.Parse("2001"), PartialDate.Parse("2002-01"), false),   // false, not null - first compare components, then precision!
@@ -73,6 +99,7 @@ namespace HL7.FhirPath.Tests.Tests
 
                 (PartialDateTime.Parse("2015-01-01"), PartialDateTime.Parse("2015-01-01"), true),
                 (PartialDateTime.Parse("2015-01-01"), PartialDateTime.Parse("2015-01"), null),
+                (PartialDateTime.Parse("2015-01-01"), PartialDateTime.Parse("2015-02"), false),
                 (PartialDateTime.Parse("2015-01-02T13:40:50+02:00"), PartialDateTime.Parse("2015-01-02T13:40:50+02:00"), true),
                 (PartialDateTime.Parse("2015-01-02T13:40:50+00:00"), PartialDateTime.Parse("2015-01-02T13:40:50Z"), true),
                 (PartialDateTime.Parse("2015-01-02T13:40:50+00:10"), PartialDateTime.Parse("2015-01-02T13:40:50Z"), false),
@@ -84,6 +111,7 @@ namespace HL7.FhirPath.Tests.Tests
                 (PartialTime.Parse("12:00:00"), PartialTime.Parse("12:00:00"), true),
                 (PartialTime.Parse("12:00:00"), PartialTime.Parse("12:00:00.00"), true),
                 (PartialTime.Parse("12:00:00"), PartialTime.Parse("12:00"), null),
+                (PartialTime.Parse("12:00:00"), PartialTime.Parse("12:01"), false),
                 (PartialTime.Parse("13:40:50+02:00"), PartialTime.Parse("13:40:50+02:00"), true),
                 (PartialTime.Parse("13:40:50+00:00"), PartialTime.Parse("13:40:50Z"), true),
                 (PartialTime.Parse("13:40:50+00:10"), PartialTime.Parse("13:40:50Z"), false),
@@ -98,36 +126,33 @@ namespace HL7.FhirPath.Tests.Tests
                 (Quantity.Parse("24 'kg'"), Quantity.Parse("24.0 'kg'"), true),
                 (Quantity.Parse("24 'kg'"), Quantity.Parse("24.0 'kg'"), true),
                 (Quantity.Parse("24.0 'kg'"), Quantity.Parse("25.0 'kg'"), false),
+                //Until we actually implement UCUM, these tests cannot yet be run correctly
+                //(Quantity.Parse("1 year"), Quantity.Parse("1 'a'"), false),
+                //(Quantity.Parse("1 month"), Quantity.Parse("1 'mo'"), false),
+                //(Quantity.Parse("1 hour"), Quantity.Parse("1 'h'"), false),
+                //(Quantity.Parse("1 second"), Quantity.Parse("1 's'"), true),
+                //(Quantity.Parse("1 millisecond"), Quantity.Parse("1 'ms'"), true),
                 (Quantity.Parse("24.0 'kg'"), null, null),
             };
 
-            foreach (var (a,b,s) in tests) doTest(a,b,s);
+            foreach (var (a,b,s) in tests) doTest(a,b,s, nameof(ICqlEquatable.IsEqualTo));          
+        }
 
-            void doTest(object a,object b, Result<bool> s)
+        void doTest(object a, object b, Result<bool> s, string op)
+        {
+            Assert.IsTrue(Any.TryConvertToSystemValue(a, out var aAny));
+            Any bAny = null;
+            if (!Any.TryConvertToSystemValue(b, out bAny)) bAny = null;
+
+            var result = aAny is ICqlEquatable ce ? 
+                (op == nameof(ICqlEquatable.IsEqualTo) ? ce.IsEqualTo(bAny) : ce.IsEquivalentTo(bAny))
+                : false;
+
+            if (result != s)
             {
-                Assert.IsTrue(Any.TryConvertToSystemValue(a, out var aAny));
-                Any bAny = null;
-                if (!Any.TryConvertToSystemValue(b, out bAny)) bAny = null;
-
-                var result = aAny is ICqlEquatable ce ? ce.IsEqualTo(bAny) : false;
-
-                if(result != s)
-                {
-                    Assert.Fail($"IsEqualTo({sn(a)},{sn(b)}) was expected to be '{sn(s)}', " +
-                            $"but was '{sn(result)}' for {sn((a ?? b)?.GetType().Name)}");
-                }             
+                Assert.Fail($"{op}({sn(a)},{sn(b)}) was expected to be '{sn(s)}', " +
+                        $"but was '{sn(result)}' for {sn((a ?? b)?.GetType().Name)}");
             }
-
-            //IsTrue(@"Patient.identifier = Patient.identifier");
-            //IsTrue(@"Patient.identifier.first() != Patient.identifier.skip(1)");
-            //IsTrue(@"(1|2|3) = (1|2|3)");
-            //IsTrue(@"(1|2|3) = (1.0|2.0|3)");
-            //IsTrue(@"(1|Patient.identifier|3) = (1|Patient.identifier|3)");
-            //IsTrue(@"(3|Patient.identifier|1) != (1|Patient.identifier|3)");
-
-            //IsTrue(@"Patient.gender = 'male'"); // gender has an extension
-            //IsTrue(@"Patient.communication = Patient.communication");       // different extensions, same values
-            //IsTrue(@"Patient.communication.first() = Patient.communication.skip(1)");       // different extensions, same values
         }
 
         private static string sn(object x) => x?.ToString() ?? "null";
@@ -137,7 +162,11 @@ namespace HL7.FhirPath.Tests.Tests
         {
             var tests = new (object, object, bool)[]
             {
-                (null, null, true),
+                (0, 0, true),
+                (-4, -4, true),
+                (5, 5, true),
+                (5, 6, false),
+                (5, null, false),
 
                 (0L, 0L, true),
                 (-4L, -4L, true),
@@ -153,11 +182,8 @@ namespace HL7.FhirPath.Tests.Tests
                 (4.0m, 4.000m, true),
                 (400m, 4E2m, true),
                 (4m, 4.1m, true),
-                (4m, 4.14m, true),
-                (1.2m/1.8m, 0.67m, true),
-                (4.2m, 4.14m, false),
-                (4m, 5m, false),
-                (null, -4m, false),
+                (5m, 4m, false),
+                (4m, null, false),
 
                 ("left", "left", true),
                 ("left", "right", false),
@@ -166,40 +192,35 @@ namespace HL7.FhirPath.Tests.Tests
                 ("\tleft", " lEft", true),
                 ("encyclopaedia", "encyclopædia", true),
                 ("café", "cafe", true),
-                (null,"cafe", false),
+                ("right", null, false),
 
                 (PartialDate.Parse("2001"), PartialDate.Parse("2001"), true),
                 (PartialDate.Parse("2001-01"), PartialDate.Parse("2001-01"), true),
                 (PartialDate.Parse("2001-01-30"), PartialDate.Parse("2001-01-30"), true),
                 (PartialDate.Parse("2001-01-30"), PartialDate.Parse("2001-01"), false),
-                (PartialDate.Parse("2001-01"), PartialDate.Parse("2001"), false),
-                (PartialDate.Parse("2001"), PartialDate.Parse("2002"), false),
-                (PartialDate.Parse("2001-01"), PartialDate.Parse("2001-02"), false),
-                (PartialDate.Parse("2010-06-02"), PartialDate.Parse("2010-06-03"), false),
-
-                (PartialDate.Parse("2001"), PartialDate.Parse("2001"), true),
-                (PartialDate.Parse("2001-01"), PartialDate.Parse("2001-01"), true),
-                (PartialDate.Parse("2001-01-30"), PartialDate.Parse("2001-01-30"), true),
-                (PartialDate.Parse("2001-01-30"), PartialDate.Parse("2001-01"), false),
+                (PartialDate.Parse("2002-01-30"), PartialDate.Parse("2001-01"), false),
                 (PartialDate.Parse("2001-01"), PartialDate.Parse("2001"), false),
                 (PartialDate.Parse("2001"), PartialDate.Parse("2002"), false),
                 (PartialDate.Parse("2001"), PartialDate.Parse("2002-01"), false),   // false, not null - first compare components, then precision!
                 (PartialDate.Parse("2001-01"), PartialDate.Parse("2001-02"), false),
                 (PartialDate.Parse("2010-06-02"), PartialDate.Parse("2010-06-03"), false),
+                (PartialDate.Parse("2010-06-02"), null, false),
 
                 (PartialDateTime.Parse("2015-01-01"), PartialDateTime.Parse("2015-01-01"), true),
                 (PartialDateTime.Parse("2015-01-01"), PartialDateTime.Parse("2015-01"), false),
+                (PartialDateTime.Parse("2015-01-01"), PartialDateTime.Parse("2015-02"), false),
                 (PartialDateTime.Parse("2015-01-02T13:40:50+02:00"), PartialDateTime.Parse("2015-01-02T13:40:50+02:00"), true),
                 (PartialDateTime.Parse("2015-01-02T13:40:50+00:00"), PartialDateTime.Parse("2015-01-02T13:40:50Z"), true),
                 (PartialDateTime.Parse("2015-01-02T13:40:50+00:10"), PartialDateTime.Parse("2015-01-02T13:40:50Z"), false),
                 (PartialDateTime.Parse("2015-01-02T13:40:50+00:10"), PartialDateTime.Parse("2015-01-02T13:41:50+00:10"), false),
                 (PartialDateTime.Parse("2015-01-02T13:40:50+00:10"), PartialDateTime.Parse("2015-01-02T13:41+00:10"), false),
                 (PartialDateTime.Parse("2015-01-02T13:40:50+00:10"), PartialDateTime.Parse("2015-01-02"), false),
+                (PartialDateTime.Parse("2010-06-02"), null, false),
 
                 (PartialTime.Parse("12:00:00"), PartialTime.Parse("12:00:00"), true),
-                (PartialTime.Parse("12:00:00"), PartialTime.Parse("12:00:00.00"), false),
+                (PartialTime.Parse("12:00:00"), PartialTime.Parse("12:00:00.00"), true),
                 (PartialTime.Parse("12:00:00"), PartialTime.Parse("12:00"), false),
-
+                (PartialTime.Parse("12:00:00"), PartialTime.Parse("12:01"), false),
                 (PartialTime.Parse("13:40:50+02:00"), PartialTime.Parse("13:40:50+02:00"), true),
                 (PartialTime.Parse("13:40:50+00:00"), PartialTime.Parse("13:40:50Z"), true),
                 (PartialTime.Parse("13:40:50+00:10"), PartialTime.Parse("13:40:50Z"), false),
@@ -208,30 +229,21 @@ namespace HL7.FhirPath.Tests.Tests
                 (PartialTime.Parse("13:45:02+00:00"), PartialTime.Parse("13:45:02+01:00"), false),
                 (PartialTime.Parse("13:45:02+01:00"), PartialTime.Parse("13:45:03+01:00"), false),
                 (PartialTime.Parse("13:45:02+00:00"), PartialTime.Parse("13:46+01:00"), false),
+                (PartialTime.Parse("13:45:02+00:00"), null, false),
 
-                //(Quantity.Parse("24.0 'kg'"), Quantity.Parse("24.0 'kg'"), true),
-                //(Quantity.Parse("24 'kg'"), Quantity.Parse("24.0 'kg'"), true),
-                //(Quantity.Parse("24 'kg'"), Quantity.Parse("24.0 'kg'"), true),
-                //(Quantity.Parse("24.0 'kg'"), Quantity.Parse("25.0 'kg'"), false),
+                (Quantity.Parse("24.0 'kg'"), Quantity.Parse("24.0 'kg'"), true),
+                (Quantity.Parse("24 'kg'"), Quantity.Parse("24.0 'kg'"), true),
+                (Quantity.Parse("24 'kg'"), Quantity.Parse("24.0 'kg'"), true),
+                (Quantity.Parse("24.0 'kg'"), Quantity.Parse("25.0 'kg'"), false),
+                (Quantity.Parse("1 year"), Quantity.Parse("1 'a'"), true),
+                (Quantity.Parse("1 month"), Quantity.Parse("1 'mo'"), true),
+                (Quantity.Parse("1 hour"), Quantity.Parse("1 'h'"), true),
+                (Quantity.Parse("1 second"), Quantity.Parse("1 's'"), true),
+                (Quantity.Parse("1 millisecond"), Quantity.Parse("1 'ms'"), true),
+                (Quantity.Parse("24.0 'kg'"), null, false),
             };
 
-            foreach (var (a, b, s) in tests) doTest(a, b, s);
-
-            void doTest(object a, object b, Result<bool> s)
-            {
-                Assert.IsTrue(Any.TryConvertToSystemValue(a, out var aAny));
-                Assert.IsTrue(Any.TryConvertToSystemValue(b, out var bAny));
-
-                var result = aAny is ICqlEquatable ce ? ce.IsEquivalentTo(bAny) : false;
-
-                if (result != s)
-                {
-                    Assert.Fail($"IsEquivalentTo({sn(a)},{sn(b)}) was expected to be '{sn(s)}', " +
-                            $"but was '{sn(result)}' for {sn((a ?? b)?.GetType().Name)}");
-                }
-            }
-
+            foreach (var (a, b, s) in tests) doTest(a, b, s, nameof(ICqlEquatable.IsEquivalentTo));
         }
-
     }
 }

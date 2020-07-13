@@ -8,10 +8,8 @@
 
 #nullable enable
 
-using Hl7.Fhir.Support.Utility;
 using System;
 using System.Globalization;
-using static Hl7.Fhir.Support.Utility.Result;
 
 namespace Hl7.Fhir.Model.Primitives
 {
@@ -36,7 +34,7 @@ namespace Hl7.Fhir.Model.Primitives
             return true;
         }
 
-        public override bool Equals(object obj) => obj is String s && Equals(s, CQL_EQUALS_COMPARISON);
+        public override bool Equals(object obj) => obj is Any other && Equals(other, CQL_EQUALS_COMPARISON);
         public static bool operator ==(String a, String b) => Equals(a,b);
         public static bool operator !=(String a, String b) => !Equals(a,b);
 

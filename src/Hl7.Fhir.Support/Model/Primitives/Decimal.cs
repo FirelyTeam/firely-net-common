@@ -8,11 +8,9 @@
 
 #nullable enable
 
-using Hl7.Fhir.Support.Utility;
 using System;
 using System.Globalization;
 using System.Linq;
-using static Hl7.Fhir.Support.Utility.Result;
 
 namespace Hl7.Fhir.Model.Primitives
 {

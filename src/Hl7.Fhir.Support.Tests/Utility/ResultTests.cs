@@ -20,8 +20,8 @@ namespace Hl7.Fhir.Support.Utility.Tests
             var e = Fail<int>(ex);
             Assert.AreEqual(Fail<int>(ex),e);
 
-            //Console.WriteLine(r3.Try());
-            //try { Console.WriteLine(e.Try()); } catch(NotFiniteNumberException) { Console.WriteLine("No value!");  }
+            Assert.AreEqual(4, r.ValueOrThrow());
+            Assert.ThrowsException<NotFiniteNumberException>(() => e.ValueOrThrow());
 
             Assert.AreEqual(8,e.ValueOrDefault(8));
             Assert.AreEqual(ex.Message.Length,e.ValueOrElse(e => e.Message.Length));

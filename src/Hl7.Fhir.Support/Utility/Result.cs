@@ -28,13 +28,13 @@ namespace Hl7.Fhir.Support.Utility
                 _ => default
             };
 
-        /*      public T ValueOrThrow() => this switch
-                {
-                    Ok<T> ok => ok.Value,
-                    Fail<T> err => throw err.Error,
-                    _ => default
-                };
-        */
+        public T ValueOrThrow() => this switch
+        {
+            Ok<T> ok => ok.Value,
+            Fail<T> err => throw err.Error,
+            _ => default
+        };
+
 
         public S Handle<S>(Func<T, S> ok, Func<Exception, S> fail) =>
             this switch

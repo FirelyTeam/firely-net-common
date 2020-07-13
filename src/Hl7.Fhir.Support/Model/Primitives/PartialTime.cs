@@ -139,10 +139,10 @@ namespace Hl7.Fhir.Model.Primitives
         /// </summary>
         /// <returns>returns true if the values have the same precision, and each date component is exactly the same. Datetimes with timezones are normalized
         /// to zulu before comparison is done. Throws an <see cref="ArgumentException"/> if the arguments differ in precision.</returns>
-        /// <remarks>See <see cref="TryCompareTo(PartialTime)"/> for more details.</remarks>
-        public override bool Equals(object obj) => obj is PartialTime pd && TryEquals(pd).Success;
+        /// <remarks>See <see cref="TryCompareTo(Any)"/> for more details.</remarks>
+        public override bool Equals(object obj) => obj is Any other && TryEquals(other).ValueOrDefault(false);
 
-        public Result<bool> TryEquals(PartialTime other) => TryCompareTo(other).Select(i => i == 0);
+        public Result<bool> TryEquals(Any other) => other is PartialTime ? TryCompareTo(other).Select(i => i == 0) : false;
 
         public static bool operator ==(PartialTime a, PartialTime b) => Equals(a, b);
         public static bool operator !=(PartialTime a, PartialTime b) => !Equals(a, b);
@@ -150,17 +150,10 @@ namespace Hl7.Fhir.Model.Primitives
         /// <summary>
         /// Compare two partial times based on CQL equality rules
         /// </summary>
-        /// <remarks>See <see cref="TryCompareTo(PartialTime)"/> for more details.</remarks>
-        public int CompareTo(object obj)
-        {
-            return obj switch
-            {
-                null => 1,
-                PartialTime p => TryCompareTo(p).ValueOrElse(e => throw e),
-                _ => throw new ArgumentException($"Object is not a {nameof(PartialTime)}")
-            };
-        }
-
+        /// <remarks>See <see cref="TryCompareTo(Any)"/> for more details.</remarks>
+        public int CompareTo(object obj) => obj is PartialTime p ?
+            TryCompareTo(p).ValueOrThrow() : throw NotSameTypeComparison(this, obj);
+      
         /// <summary>
         /// Compares two (partial)times according to CQL ordering rules.
         /// </summary> 
@@ -175,9 +168,14 @@ namespace Hl7.Fhir.Model.Primitives
         /// for the precision and the other does not, the comparison stops and the values cannot be compared; if neither
         /// input has a value for the precision, or the last precision has been reached, the comparison stops
         /// and the result is true.</remarks>
-        public Result<int> TryCompareTo(PartialTime other)
+        public Result<int> TryCompareTo(Any other)
         {
-            return other is null ? Ok(1) : PartialDateTime.CompareDateTimeParts(_parsedValue, Precision, other._parsedValue, other.Precision);
+            return other switch
+            {
+                null => 1,
+                PartialTime p => PartialDateTime.CompareDateTimeParts(_parsedValue, Precision, p._parsedValue, p.Precision),
+                _ => throw NotSameTypeComparison(this, other)
+            };
         }
 
         public static bool operator <(PartialTime a, PartialTime b) => a.CompareTo(b) == -1;
@@ -190,18 +188,17 @@ namespace Hl7.Fhir.Model.Primitives
 
         public static explicit operator PartialTime(DateTimeOffset dto) => FromDateTimeOffset(dto);
 
-        bool? ICqlEquatable.IsEqualTo(Any other) => other is PartialTime pd &&
-            TryEquals(pd) is Ok<bool> ok ? ok.Value : (bool?)null;
+        bool? ICqlEquatable.IsEqualTo(Any other) => other is { } && TryEquals(other) is Ok<bool> ok ? ok.Value : (bool?)null;
 
         // Note that, in contrast to equals, this will return false if operators cannot be compared (as described by the spec)
-        bool ICqlEquatable.IsEquivalentTo(Any other) => other is PartialTime pd && TryEquals(pd).Success;
+        bool ICqlEquatable.IsEquivalentTo(Any other) => other is { } pd && TryEquals(pd).ValueOrDefault(false);
 
         int? ICqlOrderable.CompareTo(Any other)
         {
             if (other is null) return null;
             if (!(other is PartialTime pd)) throw NotSameTypeComparison(this, other);
 
-            return TryCompareTo(pd) is Ok<int> ok ? ok.Value : (int?)null;
+            return TryCompareTo(pd).Handle(r => r, _ => (int?)null);
         }
 
     }
