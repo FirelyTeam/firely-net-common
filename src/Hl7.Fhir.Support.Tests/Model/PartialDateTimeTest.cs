@@ -126,17 +126,6 @@ namespace Hl7.FhirPath.Tests
             Assert.AreEqual(56, pt.Seconds);
             Assert.AreEqual(567, pt.Millis);
             Assert.AreEqual(plusOne, pt.Offset);
-        }
-
-
-     
-        [TestMethod]
-        public void CheckOrdering()
-        {
-            Assert.AreEqual(1, PartialDateTime.Parse("2012-03-04T13:00:00Z").CompareTo(PartialDateTime.Parse("2012-03-04T12:00:00Z")));
-            Assert.AreEqual(-1, PartialDateTime.Parse("2012-03-04T13:00:00Z").CompareTo(PartialDateTime.Parse("2012-03-04T18:00:00+02:00")));
-            Assert.AreEqual(0, PartialDateTime.Parse("2015-01-01").CompareTo(PartialDateTime.Parse("2015-01-01")));
-            Assert.IsTrue(PartialDateTime.Parse("2015-01-01").TryCompareTo(PartialDateTime.Parse("2015-01")).Success);
-        }
+        }         
     }
 }

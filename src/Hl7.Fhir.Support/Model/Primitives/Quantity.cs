@@ -139,7 +139,7 @@ namespace Hl7.Fhir.Model.Primitives
         /// <summary>
         /// Compare two quantities based on CQL equality rules.
         /// </summary>
-        /// <param name="other"></param>
+        /// <param name="obj"></param>
         /// <returns>true if the values have comparable units, and the converted values are the same according to decimal equality rules.
         /// </returns>
         /// <remarks>See <see cref="TryCompareTo(Any)"/> for more details.</remarks>
@@ -245,14 +245,7 @@ namespace Hl7.Fhir.Model.Primitives
         // Note that, in contrast to equals, this will return false if operators cannot be compared (as described by the spec)
         bool ICqlEquatable.IsEquivalentTo(Any other) => other is { } && TryEquals(other, CQL_EQUIVALENCE_COMPARISON).ValueOrDefault(false);
 
-        int? ICqlOrderable.CompareTo(Any other)
-        {
-            if (other is null) return null;
-            if (!(other is Quantity q)) throw NotSameTypeComparison(this, other);
-
-            return TryCompareTo(q).Handle(r => r, _ => default(int?));
-        }
-
+        int? ICqlOrderable.CompareTo(Any other) => other is { } && TryCompareTo(other) is Ok<int> ok ? ok.Value : (int?)null;
     }
 
     /// <summary>Specifies the comparison rules for quantities.</summary>

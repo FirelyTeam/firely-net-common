@@ -135,35 +135,5 @@ namespace Hl7.FhirPath.Tests
             Assert.AreEqual(plusOne, partialDate.Offset);
         }
 
-        [TestMethod]
-        public void DateComparison()
-        {
-            Assert.IsTrue(PartialDate.Parse("2010-06-03") > PartialDate.Parse("2010-05-03"));
-            Assert.IsTrue(PartialDate.Parse("2010-06-03") < PartialDate.Parse("2010-07-03"));
-            Assert.IsTrue(PartialDate.Parse("2010-12-05") > PartialDate.Parse("2010-12-04"));
-            Assert.IsTrue(PartialDate.Parse("2010-12-03") < PartialDate.Parse("2010-12-04"));
-            Assert.IsTrue(PartialDate.Parse("2011") > PartialDate.Parse("2010"));
-            Assert.IsTrue(PartialDate.Parse("2011") < PartialDate.Parse("2013"));
-            Assert.IsTrue(PartialDate.Parse("2011-03") > PartialDate.Parse("2011-02"));
-            Assert.IsTrue(PartialDate.Parse("2011-03") < PartialDate.Parse("2011-04"));
-            Assert.IsTrue(PartialDate.Parse("2010-12-03+02:00") < PartialDate.Parse("2010-12-04+02:00"));
-            Assert.IsTrue(PartialDate.Parse("2010-12-05+02:00") > PartialDate.Parse("2010-12-04+02:00"));
-            Assert.IsTrue(PartialDate.Parse("2010-12-03+06:00") < PartialDate.Parse("2010-12-04+02:00"));
-            Assert.IsTrue(PartialDate.Parse("2010-12-05+08:00") > PartialDate.Parse("2010-12-04+02:00"));
-        }
-      
-        [TestMethod]
-        public void CheckOrdering()
-        {
-            Assert.AreEqual(0, PartialDate.Parse("2010-06-04").CompareTo(PartialDate.Parse("2010-06-04")));
-            Assert.AreEqual(0, PartialDate.Parse("2010-06").CompareTo(PartialDate.Parse("2010-06")));
-            Assert.AreEqual(0, PartialDate.Parse("2010").CompareTo(PartialDate.Parse("2010")));
-            Assert.AreEqual(1, PartialDate.Parse("2010-06-04").CompareTo(PartialDate.Parse("2010-06-03")));
-            Assert.AreEqual(1, PartialDate.Parse("2010-07").CompareTo(PartialDate.Parse("2010-06")));
-            Assert.AreEqual(1, PartialDate.Parse("2017").CompareTo(PartialDate.Parse("2015")));
-            Assert.AreEqual(-1, PartialDate.Parse("2010-06-04").CompareTo(PartialDate.Parse("2010-06-05")));
-            Assert.AreEqual(-1, PartialDate.Parse("2010-05").CompareTo(PartialDate.Parse("2010-06")));
-            Assert.AreEqual(-1, PartialDate.Parse("2010").CompareTo(PartialDate.Parse("2015")));
-        }
     }
 }

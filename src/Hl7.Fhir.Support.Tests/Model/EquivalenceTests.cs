@@ -2,6 +2,9 @@
 using Hl7.Fhir.Support.Utility;
 using Hl7.FhirPath.Functions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using P = Hl7.Fhir.Model.Primitives;
 
 namespace HL7.FhirPath.Tests.Tests
@@ -36,6 +39,10 @@ namespace HL7.FhirPath.Tests.Tests
             Assert.IsTrue(EqualityOperators.IsEquivalentTo(null, null));
             Assert.IsFalse(EqualityOperators.IsEquivalentTo(new Quantity(4.0, "kg"), null));
             Assert.IsFalse(EqualityOperators.IsEquivalentTo(null, new Quantity(4.0, "kg")));
+
+            Assert.IsNull(EqualityOperators.Compare(null, null, "<="));
+            Assert.IsNull(EqualityOperators.Compare(new Quantity(4.0, "kg"), null, "<"));
+            Assert.IsNull(EqualityOperators.Compare(null, new Quantity(4.0, "kg"), ">"));
         }
 
         [TestMethod]
@@ -46,14 +53,15 @@ namespace HL7.FhirPath.Tests.Tests
 
             Assert.IsFalse(EqualityOperators.IsEquivalentTo(new Quantity(4.0, "kg"), new Code("http://nu.nl", "R")));
             Assert.IsFalse(EqualityOperators.IsEquivalentTo(new P.Integer(0), new P.String("hi!")));
+
+            Assert.ThrowsException<ArgumentException>( () => EqualityOperators.Compare(new Quantity(4.0, "kg"), new Code("http://nu.nl", "R"), "="));
+            Assert.ThrowsException<ArgumentException>( () => EqualityOperators.Compare(new P.Integer(0), new P.String("hi!"), ">="));
         }
 
-        [TestMethod]
-        public void TestEquality()
-        {
-            var tests = new (object, object, bool?)[]
+        internal static IEnumerable<object[]> equalityTestcases() =>
+            new (object, object, bool?)[]
             {
-                (0, 0, true),
+                (1, 1, true),
                 (-4, -4, true),
                 (5, 5, true),
                 (5, 6, false),
@@ -133,34 +141,12 @@ namespace HL7.FhirPath.Tests.Tests
                 //(Quantity.Parse("1 second"), Quantity.Parse("1 's'"), true),
                 //(Quantity.Parse("1 millisecond"), Quantity.Parse("1 'ms'"), true),
                 (Quantity.Parse("24.0 'kg'"), null, null),
-            };
+            }.Select(t => new[] { t.Item1, t.Item2, t.Item3 } );
 
-            foreach (var (a,b,s) in tests) doTest(a,b,s, nameof(ICqlEquatable.IsEqualTo));          
-        }
 
-        void doTest(object a, object b, Result<bool> s, string op)
+        internal static IEnumerable<object> equivalenceTestcases()
         {
-            Assert.IsTrue(Any.TryConvertToSystemValue(a, out var aAny));
-            Any bAny = null;
-            if (!Any.TryConvertToSystemValue(b, out bAny)) bAny = null;
-
-            var result = aAny is ICqlEquatable ce ? 
-                (op == nameof(ICqlEquatable.IsEqualTo) ? ce.IsEqualTo(bAny) : ce.IsEquivalentTo(bAny))
-                : false;
-
-            if (result != s)
-            {
-                Assert.Fail($"{op}({sn(a)},{sn(b)}) was expected to be '{sn(s)}', " +
-                        $"but was '{sn(result)}' for {sn((a ?? b)?.GetType().Name)}");
-            }
-        }
-
-        private static string sn(object x) => x?.ToString() ?? "null";
-
-        [TestMethod]
-        public void TestEquivalence()
-        {
-            var tests = new (object, object, bool)[]
+            return new (object, object, bool)[]
             {
                 (0, 0, true),
                 (-4, -4, true),
@@ -241,9 +227,127 @@ namespace HL7.FhirPath.Tests.Tests
                 (Quantity.Parse("1 second"), Quantity.Parse("1 's'"), true),
                 (Quantity.Parse("1 millisecond"), Quantity.Parse("1 'ms'"), true),
                 (Quantity.Parse("24.0 'kg'"), null, false),
-            };
+            }.Select(t => new[] { t.Item1, t.Item2, t.Item3 });
+        }
 
-            foreach (var (a, b, s) in tests) doTest(a, b, s, nameof(ICqlEquatable.IsEquivalentTo));
+        [DataTestMethod]
+        [DynamicData(nameof(equalityTestcases), DynamicDataSourceType.Method)]
+        public void EqualityTest(object a, object b, bool? s)
+        {
+            doEqEquivTest(a, b, s, nameof(ICqlEquatable.IsEqualTo));
+        }
+
+        [DataTestMethod]
+        [DynamicData(nameof(equivalenceTestcases), DynamicDataSourceType.Method)]
+        public void EquivalenceTest(object a, object b, bool? s)
+        {
+            doEqEquivTest(a, b, s, nameof(ICqlEquatable.IsEquivalentTo));
+        }
+
+        private static void doEqEquivTest(object a, object b, bool? s, string op)
+        {
+            Assert.IsTrue(Any.TryConvertToSystemValue(a, out var aAny));
+            if (!Any.TryConvertToSystemValue(b, out Any bAny)) bAny = null;
+
+            var result = aAny is ICqlEquatable ce ?
+                (op == nameof(ICqlEquatable.IsEqualTo) ? ce.IsEqualTo(bAny) : ce.IsEquivalentTo(bAny))
+                : false;
+
+            if (result != s)
+            {
+                Assert.Fail($"{op}({sn(a)},{sn(b)}) was expected to be '{sn(s)}', " +
+                        $"but was '{sn(result)}' for {sn((a ?? b)?.GetType().Name)}");
+            }
+        }
+
+        private static string sn(object x) => x?.ToString() ?? "null";
+
+
+        internal static IEnumerable<object> orderingTestcases() =>
+            new (object, object, int?)[]
+            {
+                (4, 4, 0),
+                (-4, -3, -1),
+                (5, 6, -1),
+                (5, null, null),
+
+                (4L, 4L, 0),
+                (-4L, -3L, -1),
+                (5L, 6L, -1),
+                (5L, null, null),
+
+                (4m, 4.0m, 0),
+                (4.0m, 4.000m, 0),
+                (401m, 4E2m, 1),
+                (4m, 4.1m, -1),
+                (5m, 4m, 1),
+                (4m, null, null),
+
+                ("left", "left", 0),
+                ("aleft", "bright", -1),
+                ("aaab", "aaac", -1),
+
+                (PartialDate.Parse("2010-06-03"), null,null),
+                (PartialDate.Parse("2010-06-03"), PartialDate.Parse("2010-06-03"),0),
+                (PartialDate.Parse("2010-06"), PartialDate.Parse("2010-06"),0),
+                (PartialDate.Parse("2010"), PartialDate.Parse("2010"),0),
+                (PartialDate.Parse("2010-06-03"), PartialDate.Parse("2010-05-03"),1),
+                (PartialDate.Parse("2010-07-03"), PartialDate.Parse("2010-07-02"),1),
+                (PartialDate.Parse("2011"), PartialDate.Parse("2010"),1),
+                (PartialDate.Parse("2011-03"), PartialDate.Parse("2011-03"),0),
+                (PartialDate.Parse("2011-03"), PartialDate.Parse("2011-02"),1),
+                (PartialDate.Parse("2010-12-05+02:00"), PartialDate.Parse("2010-12-04+02:00"),1),
+                (PartialDate.Parse("2010-12-05+02:00"), PartialDate.Parse("2010-12-05+02:00"),0),
+                (PartialDate.Parse("2010-12-05+08:00"), PartialDate.Parse("2010-12-04+02:00"),1),
+                (PartialDate.Parse("2011-03"), PartialDate.Parse("2011-04-05"),-1),
+                (PartialDate.Parse("2012"), PartialDate.Parse("2011-04-05"),1),
+                (PartialDate.Parse("2011-03"), PartialDate.Parse("2011-03-05"),null),
+                (PartialDate.Parse("2011-03"), PartialDate.Parse("2011"),null),
+
+                (PartialTime.Parse("13:00:00Z"), PartialTime.Parse("12:00:00Z"),1),
+                (PartialTime.Parse("13:00:00Z"), PartialTime.Parse("18:00:00+02:00"), -1),
+                (PartialTime.Parse("12:34:00Z"), PartialTime.Parse("12:33:55+00:00"), 1),
+                (PartialTime.Parse("13:00:00Z"), PartialTime.Parse("13:00:00"), 0),
+                (PartialTime.Parse("13:00Z"), PartialTime.Parse("14Z"), -1),
+                (PartialTime.Parse("13:01:00Z"), PartialTime.Parse("13:00Z"), 1),
+                (PartialTime.Parse("13:01:00Z"), null, null),
+
+                (Quantity.Parse("24.0 'kg'"), Quantity.Parse("24.0 'kg'"), 0),
+                (Quantity.Parse("25 'kg'"), Quantity.Parse("24.0 'kg'"), 1),
+                //Until we actually implement UCUM, these tests cannot yet be run correctly
+                //(Quantity.Parse("1 year"), Quantity.Parse("1 'a'"), true),
+                //(Quantity.Parse("1 month"), Quantity.Parse("1 'mo'"), true),
+                //(Quantity.Parse("1 hour"), Quantity.Parse("1 'h'"), true),
+                //(Quantity.Parse("1 second"), Quantity.Parse("1 's'"), true),
+                //(Quantity.Parse("1 millisecond"), Quantity.Parse("1 'ms'"), true),
+                (Quantity.Parse("24.0 'kg'"), null, null),
+             }.Select(t => new[] { t.Item1, t.Item2, t.Item3 });
+        
+        [DataTestMethod]
+        [DynamicData(nameof(orderingTestcases), DynamicDataSourceType.Method)]
+        public void OrderingTest(object a, object b, int? s)
+        {
+            if (s == 1 || s == -1)
+            {
+                doOrderingTest(a, b, s);
+                doOrderingTest(b, a, -s);
+            }
+            else
+                doOrderingTest(a, b, s);
+        }
+
+        private static void doOrderingTest(object a, object b, int? s)
+        {
+            Assert.IsTrue(Any.TryConvertToSystemValue(a, out var aAny));
+            if (!Any.TryConvertToSystemValue(b, out Any bAny)) bAny = null;
+
+            var result = aAny is ICqlOrderable ce ? ce.CompareTo(bAny) : -100;
+
+            if (result != s)
+            {
+                Assert.Fail($"{nameof(ICqlOrderable.CompareTo)}({sn(a)},{sn(b)}) was expected to be '{sn(s)}', " +
+                        $"but was '{sn(result)}' for {sn((a ?? b)?.GetType().Name)}");
+            }
         }
     }
 }

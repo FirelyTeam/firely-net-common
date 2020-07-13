@@ -72,7 +72,8 @@ namespace Hl7.Fhir.Model.Primitives
         private static readonly string DATETIMEFORMAT =
             $"(?<year>[0-9]{{4}}) ((?<month>-[0-9][0-9]) ((?<day>-[0-9][0-9]) (T{PartialTime.TIMEFORMAT})?)?)? {PartialTime.OFFSETFORMAT}?";
         private static readonly Regex DATETIMEREGEX =
-                new Regex("^" + DATETIMEFORMAT + "$", RegexOptions.IgnorePatternWhitespace);
+                new Regex("^" + DATETIMEFORMAT + "$", 
+                    RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
 
         /// <summary>
         /// Converts the partial datetime to a full DateTimeOffset instance.
@@ -229,13 +230,7 @@ namespace Hl7.Fhir.Model.Primitives
         // Note that, in contrast to equals, this will return false if operators cannot be compared (as described by the spec)
         bool ICqlEquatable.IsEquivalentTo(Any other) => other is { } pd && TryEquals(pd).ValueOrDefault(false);
 
-        int? ICqlOrderable.CompareTo(Any other)
-        {
-            if (other is null) return null;
-            if (!(other is PartialDateTime pd)) throw NotSameTypeComparison(this, other);
-
-            return TryCompareTo(pd).Handle(r => r, _ => (int?)null);
-        }
+        int? ICqlOrderable.CompareTo(Any other) => other is { } && TryCompareTo(other) is Ok<int> ok ? ok.Value : (int?)null;
 
     }
 }

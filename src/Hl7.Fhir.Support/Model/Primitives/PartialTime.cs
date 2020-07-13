@@ -83,7 +83,9 @@ namespace Hl7.Fhir.Model.Primitives
         internal const string OFFSETFORMAT = "(?<offset>Z | (\\+|-) [0-9][0-9]:[0-9][0-9])";
 
         private static readonly Regex PARTIALTIMEREGEX =
-            new Regex("^" + PARTIALTIMEFORMAT + "$", RegexOptions.IgnorePatternWhitespace);
+            new Regex("^" + PARTIALTIMEFORMAT + "$",
+                RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
+
 
         /// <summary>
         /// Converts the partial time to a full DateTimeOffset instance.
@@ -193,14 +195,7 @@ namespace Hl7.Fhir.Model.Primitives
         // Note that, in contrast to equals, this will return false if operators cannot be compared (as described by the spec)
         bool ICqlEquatable.IsEquivalentTo(Any other) => other is { } pd && TryEquals(pd).ValueOrDefault(false);
 
-        int? ICqlOrderable.CompareTo(Any other)
-        {
-            if (other is null) return null;
-            if (!(other is PartialTime pd)) throw NotSameTypeComparison(this, other);
-
-            return TryCompareTo(pd).Handle(r => r, _ => (int?)null);
-        }
-
+        int? ICqlOrderable.CompareTo(Any other) => other is { } && TryCompareTo(other) is Ok<int> ok ? ok.Value : (int?)null;
     }
 }
 
