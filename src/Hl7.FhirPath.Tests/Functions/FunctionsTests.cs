@@ -435,6 +435,31 @@ namespace HL7.FhirPath.Tests
             yield return new object[] { "'a'.truncate()", true, true }; // should throw an error
         }
 
+        public static IEnumerable<object[]> UtilityFunctionTestcases()
+        {
+            // function trace(name : String [, projection: Expression]) : collection
+            yield return new object[] { "{}.trace('test').empty()", true, false };
+            yield return new object[] { "(1 | 2).trace('test') = (1 | 2)", true, false };
+
+            // Current date and time functions
+            yield return new object[] { "now().empty() = false", true, false };
+            yield return new object[] { "timeOfDay().empty() = false", true, false };
+            yield return new object[] { "today().empty() = false", true, false };
+        }
+
+        public static IEnumerable<object[]> BooleanOperatorTestcases()
+        {
+            // function not(): Boolean
+            yield return new object[] { "{}.not().empty() = true", true, false };
+            yield return new object[] { "false.not() = true", true, false };
+            yield return new object[] { "true.not() = false", true, false };
+            yield return new object[] { "(0).toBoolean().not() = true", true, false };
+            yield return new object[] { "(1).toBoolean().not() = false", true, false };
+            yield return new object[] { "('true').toBoolean().not() = false", true, false };
+            yield return new object[] { "('false').toBoolean().not() = true", true, false };
+            yield return new object[] { "(1|2).not() = false", true, true };
+        }
+
         public static IEnumerable<object[]> AllFunctionTestcases()
         {
             return
@@ -446,6 +471,8 @@ namespace HL7.FhirPath.Tests
                 .Union(ConversionFunctionTestcases())
                 .Union(StringManipulationFunctionTestcases())
                 .Union(MathFunctionTestcases())
+                .Union(UtilityFunctionTestcases())
+                .Union(BooleanOperatorTestcases())
                 ;
         }
 
@@ -463,6 +490,21 @@ namespace HL7.FhirPath.Tests
             else
             {
                 dummy.IsBoolean(expression, expected).Should().BeTrue();
+            }
+        }
+
+        [TestMethod]
+        public void TraceTest()
+        {
+            ITypedElement dummy = ElementNode.ForPrimitive(true);
+            var ctx = EvaluationContext.CreateDefault();
+            ctx.Tracer = tracer;
+            dummy.IsBoolean("(1 | 2).trace('test').empty()", true, ctx);
+
+            static void tracer(string name, IEnumerable<ITypedElement> list)
+            {
+                name.Should().Be("test");
+                list.Should().HaveCount(2);
             }
         }
     }
