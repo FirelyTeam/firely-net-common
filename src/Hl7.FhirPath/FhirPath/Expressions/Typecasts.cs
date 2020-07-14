@@ -84,14 +84,14 @@ namespace Hl7.FhirPath.Expressions
             return null;
         }
 
-        private static Cast getFromAnyToDotNetCast(Type anyType, Type toType)
-        {
-            var casts = anyType.GetMember("op_Implicit", BindingFlags.Static | BindingFlags.Public).OfType<MethodInfo>();
-            var mycast = casts.SingleOrDefault(c => c.ReturnType == toType);
+        //private static Cast getFromAnyToDotNetCast(Type anyType, Type toType)
+        //{
+        //    var casts = anyType.GetMember("op_Implicit", BindingFlags.Static | BindingFlags.Public).OfType<MethodInfo>();
+        //    var mycast = casts.SingleOrDefault(c => c.ReturnType == toType);
 
-            if (mycast is null) return null;
-            return o => mycast.Invoke(null, new object[] { o });
-        }
+        //    if (mycast is null) return null;
+        //    return o => mycast.Invoke(null, new object[] { o });
+        //}
 
 
         /// <summary>

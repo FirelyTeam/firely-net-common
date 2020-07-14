@@ -84,8 +84,11 @@ namespace Hl7.Fhir.Model.Primitives
 
         private static readonly Regex PARTIALTIMEREGEX =
             new Regex("^" + PARTIALTIMEFORMAT + "$",
+#if NETSTANDARD1_1
+                RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture);
+#else
                 RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
-
+#endif
 
         /// <summary>
         /// Converts the partial time to a full DateTimeOffset instance.

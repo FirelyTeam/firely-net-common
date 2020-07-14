@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.1;net45</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.1</TargetFrameworks>
+    <TargetFrameworks Condition=" '$(Configuration)' != 'Debug' ">$(TargetFrameworks);net45</TargetFrameworks>
   </PropertyGroup>
 
   <Import Project="..\fhir-net-common.props" />
@@ -11,10 +12,21 @@
     <ContainsTests>true</ContainsTests>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netcoreapp2.1|AnyCPU'">
+    <DefineConstants>DEBUG;TRACE;USE_CODE_GEN</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='FullDebug|netcoreapp2.1|AnyCPU'">
+    <DefineConstants>DEBUG;TRACE;USE_CODE_GEN</DefineConstants>
+    <Optimize>false</Optimize>
+    <NoWarn>1591</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Hl7.Fhir.Serialization\Hl7.Fhir.Serialization.csproj" />
     <ProjectReference Include="..\Hl7.Fhir.Support.Poco\Hl7.Fhir.Support.Poco.csproj" />
     <ProjectReference Include="..\Hl7.Fhir.Support\Hl7.Fhir.Support.csproj" />
+    <ProjectReference Include="..\Hl7.FhirPath\Hl7.FhirPath.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' != 'net40'">

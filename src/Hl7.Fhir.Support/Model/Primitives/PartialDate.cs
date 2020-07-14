@@ -74,8 +74,11 @@ namespace Hl7.Fhir.Model.Primitives
         private static readonly string DATEFORMAT =
             $"(?<year>[0-9]{{4}}) ((?<month>-[0-9][0-9]) ((?<day>-[0-9][0-9]) )?)? {PartialTime.OFFSETFORMAT}?";
         public static readonly Regex PARTIALDATEREGEX = new Regex("^" + DATEFORMAT + "$",
+#if NETSTANDARD1_1
+                RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture);
+#else
                 RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
-
+#endif
         /// <summary>
         /// Converts the partial date to a full DateTimeOffset instance.
         /// </summary>
