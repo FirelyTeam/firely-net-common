@@ -6,9 +6,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using Hl7.Fhir.ElementModel;
 using System;
-using System.Collections.Generic;
 
 namespace Hl7.FhirPath.Functions
 {
@@ -89,12 +87,6 @@ namespace Hl7.FhirPath.Functions
 
             return null;
         }
-
-        public static IEnumerable<ITypedElement> IIf(this IEnumerable<ITypedElement> focus, bool? condition, IEnumerable<ITypedElement> result)
-            => IIf(focus, condition, result, null);
-
-        public static IEnumerable<ITypedElement> IIf(this IEnumerable<ITypedElement> focus, bool? condition, IEnumerable<ITypedElement> result, IEnumerable<ITypedElement> otherwise)
-            => condition == true ? result : otherwise;
     }
 
 }

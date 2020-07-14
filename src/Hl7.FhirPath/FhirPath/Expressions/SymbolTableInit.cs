@@ -8,6 +8,7 @@
 
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Model.Primitives;
+using Hl7.Fhir.Utility;
 using Hl7.FhirPath.FhirPath.Functions;
 using Hl7.FhirPath.Functions;
 using System;
@@ -155,8 +156,10 @@ namespace Hl7.FhirPath.Expressions
             t.Add("upper", (string f) => f.ToUpper(), doNullProp: true);
             t.Add("lower", (string f) => f.ToLower(), doNullProp: true);
             t.Add("toChars", (string f) => f.ToChars(), doNullProp: true);
-            t.Add("substring", (string f, long a) => f.FpSubstring((int)a), doNullProp: true);
-            t.Add("substring", (string f, long a, long b) => f.FpSubstring((int)a, (int)b), doNullProp: true);
+            t.Add("substring", (string f, long a) => f.FpSubstring((int)a, null), doNullProp: true);
+            //special case: only focus should be Null propagated:
+            t.Add(new CallSignature("substring", typeof(string), typeof(string), typeof(long), typeof(long?)),
+                InvokeeFactory.WrapWithPropNullForFocus((string f, long a, long? b) => f.FpSubstring((int)a, (int?)b)));
             t.Add("startsWith", (string f, string fragment) => f.StartsWith(fragment), doNullProp: true);
             t.Add("endsWith", (string f, string fragment) => f.EndsWith(fragment), doNullProp: true);
             t.Add("matches", (string f, string regex) => Regex.IsMatch(f, regex), doNullProp: true);
@@ -253,7 +256,10 @@ namespace Hl7.FhirPath.Expressions
             var trueResult = arguments.Skip(2).First();
             var otherResult = arguments.Skip(3).FirstOrDefault();
 
-            return (expression.BooleanEval() == true)
+            if (expression.Count() > 1)
+                throw Error.InvalidOperation($"Result of {nameof(expression)} is not of type boolean");
+
+            return (expression.BooleanEval() ?? false)
                 ? trueResult(ctx, InvokeeFactory.EmptyArgs)
                 : otherResult == null ? ElementNode.EmptyList : otherResult(ctx, InvokeeFactory.EmptyArgs);
         }
@@ -292,15 +298,7 @@ namespace Hl7.FhirPath.Expressions
         }
 
         private static IEnumerable<ITypedElement> runRepeat(Closure ctx, IEnumerable<Invokee> arguments)
-        {/*
-            var result = runSelect(ctx, arguments);
-            if (!result.Any())
-                return ElementNode.EmptyList;
-
-            var newContext = ctx.Nest(result);
-            newContext.SetThis(result);
-            return result.Union(runRepeat(newContext, arguments));
-            */
+        {
             var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
             var lambda = arguments.Skip(1).First();
 
@@ -324,8 +322,6 @@ namespace Hl7.FhirPath.Expressions
 
                 fullResult.AddRange(newNodes);
             }
-
-
             return fullResult;
         }
 
