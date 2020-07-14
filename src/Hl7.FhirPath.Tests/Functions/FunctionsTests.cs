@@ -206,7 +206,8 @@ namespace HL7.FhirPath.Tests
             yield return new object[] { "(1).exclude(1).empty()", true, false };
             yield return new object[] { "(1).exclude(2) = 1", true, false };
             yield return new object[] { "(1 | 2 | 3).exclude(2) = (1 | 3)", true, false };
-            yield return new object[] { "(1.combine(2.combine(2.combine(3)))).exclude(2) = (1 | 2 | 3)", true, false }; //  Duplicate items will not be eliminated by this function
+            yield return new object[] { "(1 | 2 | 3).exclude(2 | 4) = 1 | 3", true, false };
+            yield return new object[] { "(1.combine(2.combine(2.combine(3)))).exclude(2) = (1 | 3)", true, false }; //  Duplicate items will not be eliminated by this function
             yield return new object[] { "(1 | 2 | 3).exclude(2 | 3) = 1", true, false };
             yield return new object[] { "(1 | 2 | 3).exclude(3 | 2) = 1", true, false };
         }
@@ -239,6 +240,7 @@ namespace HL7.FhirPath.Tests
             // function iif(criterion: expression, true-result: collection [, otherwise-result: collection]) : collection
 
             yield return new object[] { "iif({}, true, false)", false, false };
+            yield return new object[] { "iif({}, true).empty()", true, false };
             yield return new object[] { "iif(1 | 2 | 3, true, false)", false, true };
             yield return new object[] { "iif(false, true).empty()", true, false };
             yield return new object[] { "iif({ }, true, false)", false, false };
