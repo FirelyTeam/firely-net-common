@@ -29,10 +29,10 @@ namespace Hl7.FhirPath.Expressions
 
             t.Add("allTrue", (IEnumerable<ITypedElement> f) => f.All(e => e.Value as bool? == true));
             t.Add("combine", (IEnumerable<ITypedElement> l, IEnumerable<ITypedElement> r) => l.Concat(r));
-            t.Add("binary.|", (object f, IEnumerable<ITypedElement> l, IEnumerable<ITypedElement> r) => l.DistinctUnion(r));
+            t.Add("binary.|", (object _, IEnumerable<ITypedElement> l, IEnumerable<ITypedElement> r) => l.DistinctUnion(r));
             t.Add("union", (IEnumerable<ITypedElement> l, IEnumerable<ITypedElement> r) => l.DistinctUnion(r));
-            t.Add("binary.contains", (object f, IEnumerable<ITypedElement> a, ITypedElement b) => a.Contains(b));
-            t.Add("binary.in", (object f, ITypedElement a, IEnumerable<ITypedElement> b) => b.Contains(a));
+            t.Add("binary.contains", (object _, IEnumerable<ITypedElement> a, ITypedElement b) => a.Contains(b));
+            t.Add("binary.in", (object _, ITypedElement a, IEnumerable<ITypedElement> b) => b.Contains(a));
             t.Add("distinct", (IEnumerable<ITypedElement> f) => f.Distinct());
             t.Add("isDistinct", (IEnumerable<ITypedElement> f) => f.IsDistinct());
             t.Add("subsetOf", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => f.SubsetOf(a));
@@ -40,11 +40,11 @@ namespace Hl7.FhirPath.Expressions
             t.Add("intersect", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => f.Intersect(a));
             t.Add("exclude", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => f.Exclude(a));
 
-            t.Add("today", (object f) => PartialDate.Today());
-            t.Add("now", (object f) => PartialDateTime.Now());
-            t.Add("timeOfDay", (object f) => PartialTime.Now());
+            t.Add("today", (object _) => PartialDate.Today());
+            t.Add("now", (object _) => PartialDateTime.Now());
+            t.Add("timeOfDay", (object _) => PartialTime.Now());
 
-            t.Add("binary.&", (object f, string a, string b) => (a ?? "") + (b ?? ""));
+            t.Add("binary.&", (object _, string a, string b) => (a ?? "") + (b ?? ""));
 
             t.Add("iif", (IEnumerable<ITypedElement> f, bool? condition, IEnumerable<ITypedElement> result) => f.IIf(condition, result));
             t.Add("iif", (IEnumerable<ITypedElement> f, bool? condition, IEnumerable<ITypedElement> result, IEnumerable<ITypedElement> otherwise) => f.IIf(condition, result, otherwise));
@@ -61,11 +61,14 @@ namespace Hl7.FhirPath.Expressions
             t.Add("binary.~", (object f, IEnumerable<ITypedElement> a, IEnumerable<ITypedElement> b) => a.IsEquivalentTo(b), doNullProp: false);
             t.Add("binary.!~", (object f, IEnumerable<ITypedElement> a, IEnumerable<ITypedElement> b) => !a.IsEquivalentTo(b), doNullProp: false);
 
+            t.Add("unary.-", (object f, int a) => -a, doNullProp: true);
             t.Add("unary.-", (object f, long a) => -a, doNullProp: true);
             t.Add("unary.-", (object f, decimal a) => -a, doNullProp: true);
+            t.Add("unary.+", (object f, int a) => a, doNullProp: true);
             t.Add("unary.+", (object f, long a) => a, doNullProp: true);
             t.Add("unary.+", (object f, decimal a) => a, doNullProp: true);
 
+            t.Add("binary.*", (object f, int a, int b) => a * b, doNullProp: true);
             t.Add("binary.*", (object f, long a, long b) => a * b, doNullProp: true);
             t.Add("binary.*", (object f, decimal a, decimal b) => a * b, doNullProp: true);
             t.Add("binary.*", (object f, Quantity a, Quantity b) => a * b, doNullProp: true);
@@ -73,18 +76,22 @@ namespace Hl7.FhirPath.Expressions
             t.Add("binary./", (object f, decimal a, decimal b) => a / b, doNullProp: true);
             t.Add("binary./", (object f, Quantity a, Quantity b) => a / b, doNullProp: true);
 
+            t.Add("binary.+", (object f, int a, int b) => a + b, doNullProp: true);
             t.Add("binary.+", (object f, long a, long b) => a + b, doNullProp: true);
             t.Add("binary.+", (object f, decimal a, decimal b) => a + b, doNullProp: true);
             t.Add("binary.+", (object f, string a, string b) => a + b, doNullProp: true);
             t.Add("binary.+", (object f, Quantity a, Quantity b) => a + b, doNullProp: true);
 
+            t.Add("binary.-", (object f, int a, int b) => a - b, doNullProp: true);
             t.Add("binary.-", (object f, long a, long b) => a - b, doNullProp: true);
             t.Add("binary.-", (object f, decimal a, decimal b) => a - b, doNullProp: true);
             t.Add("binary.-", (object f, Quantity a, Quantity b) => a - b, doNullProp: true);
 
+            t.Add("binary.div", (object f, int a, int b) => a / b, doNullProp: true);
             t.Add("binary.div", (object f, long a, long b) => a / b, doNullProp: true);
             t.Add("binary.div", (object f, decimal a, decimal b) => (long)Math.Truncate(a / b), doNullProp: true);
 
+            t.Add("binary.mod", (object f, int a, int b) => a % b, doNullProp: true);
             t.Add("binary.mod", (object f, long a, long b) => a % b, doNullProp: true);
             t.Add("binary.mod", (object f, decimal a, decimal b) => a % b, doNullProp: true);
 
@@ -121,8 +128,8 @@ namespace Hl7.FhirPath.Expressions
             t.Add("upper", (string f) => f.ToUpper(), doNullProp: true);
             t.Add("lower", (string f) => f.ToLower(), doNullProp: true);
             t.Add("toChars", (string f) => f.ToChars(), doNullProp: true);
-            t.Add("substring", (string f, long a) => f.FpSubstring((int)a), doNullProp: true);
-            t.Add("substring", (string f, long a, long b) => f.FpSubstring((int)a, (int)b), doNullProp: true);
+            t.Add("substring", (string f, long a) => f.FpSubstring(a), doNullProp: true);
+            t.Add("substring", (string f, long a, long b) => f.FpSubstring(a, b), doNullProp: true);
             t.Add("startsWith", (string f, string fragment) => f.StartsWith(fragment), doNullProp: true);
             t.Add("endsWith", (string f, string fragment) => f.EndsWith(fragment), doNullProp: true);
             t.Add("matches", (string f, string regex) => Regex.IsMatch(f, regex), doNullProp: true);

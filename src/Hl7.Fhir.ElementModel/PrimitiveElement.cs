@@ -45,7 +45,7 @@ namespace Hl7.Fhir.ElementModel
             if(!TypeSpecifier.PrimitiveTypes.Contains(systemType))
                 throw new ArgumentException("The supplied value cannot be represented with a System primitive.", nameof(value));
            
-            Value = Any.ConvertToSystemValue(value);
+            Value = Any.ConvertToTypedElementValue(value);
             InstanceType = useFullTypeName ? systemType.FullName : systemType.Name;
             Name = name ?? "@primitivevalue@";
         }

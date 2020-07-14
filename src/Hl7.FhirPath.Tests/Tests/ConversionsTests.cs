@@ -41,8 +41,8 @@ namespace Hl7.FhirPath.Tests
         [TestMethod]
         public void ConvertToInteger()
         {
-            var inputs = ElementNode.CreateList(1L, "2", -4L, "-5", "+4", true, false);
-            var vals = new[] { 1L, 2L, -4L, -5L, 4L, 1L, 0L };
+            var inputs = ElementNode.CreateList(1, "2", -4, "-5", "+4", true, false);
+            var vals = new[] { 1, 2, -4, -5, 4, 1, 0 };
 
             inputs.Zip(vals, (i, v) => (i, v))
                 .ToList()

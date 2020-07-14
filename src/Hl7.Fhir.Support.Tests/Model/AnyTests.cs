@@ -64,6 +64,8 @@ namespace Hl7.FhirPath.Tests
 
             foreach (var (value, to, success, expected) in tests())
             {
+               // var anyExpected = Any.ConvertToAny(expected);
+
                 Assert.AreEqual(success, Any.TryParse(value, to, out var parsed), $"While parsing {value} for type {to}");
 
                 if (success)

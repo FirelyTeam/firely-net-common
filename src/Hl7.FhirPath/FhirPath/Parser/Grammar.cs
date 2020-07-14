@@ -47,14 +47,14 @@ namespace Hl7.FhirPath.Parser
         //  | quantity
         //  ;
         public static readonly Parser<ConstantExpression> Literal =
-            Lexer.String.Select(v => new ConstantExpression(new P.String(v), TypeSpecifier.String))
+            Lexer.String.Select(v => new ConstantExpression(v, TypeSpecifier.String))
                 .Or(Lexer.DateTime.Select(v => new ConstantExpression(v, TypeSpecifier.DateTime)))
                 .Or(Lexer.Date.Select(v => new ConstantExpression(v, TypeSpecifier.Date)))
                 .Or(Lexer.Time.Select(v => new ConstantExpression(v, TypeSpecifier.Time)))
-                .XOr(Lexer.Bool.Select(v => new ConstantExpression(new P.Boolean(v), TypeSpecifier.Boolean)))
+                .XOr(Lexer.Bool.Select(v => new ConstantExpression(v, TypeSpecifier.Boolean)))
                 .Or(Quantity.Select(v => new ConstantExpression(v, TypeSpecifier.Quantity)))
-                .Or(Lexer.DecimalNumber.Select(v => new ConstantExpression(new P.Decimal(v), TypeSpecifier.Decimal)))
-                .Or(Lexer.IntegerNumber.Select(v => new ConstantExpression(new P.Integer(v), TypeSpecifier.Integer)));
+                .Or(Lexer.DecimalNumber.Select(v => new ConstantExpression(v, TypeSpecifier.Decimal)))
+                .Or(Lexer.IntegerNumber.Select(v => new ConstantExpression(v, TypeSpecifier.Integer)));
 
 
         //term

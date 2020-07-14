@@ -22,7 +22,8 @@ namespace Hl7.FhirPath.Tests
             Assert.AreEqual(new Quantity(75.5m, "kg"), Quantity.Parse("75.5 'kg'"));
             Assert.AreEqual(new Quantity(75.5m, "kg"), Quantity.Parse("75.5'kg'"));
             Assert.AreEqual(new Quantity(75m, "kg"), Quantity.Parse("75 'kg'"));
-            Assert.AreEqual(new Quantity(40d, "wk"), Quantity.Parse("40 weeks"));
+            Assert.AreEqual(new Quantity(40d, "wk"), Quantity.Parse("40 'wk'"));
+            Assert.AreEqual(new Quantity(40d, "{week}"), Quantity.Parse("40 weeks"));
             Assert.AreEqual(new Quantity(40.0m, "1"), Quantity.Parse("40.0"));
             Assert.AreEqual(new Quantity(1d, "1"), Quantity.Parse("1 '1'"));
             Assert.AreEqual(new Quantity(1m, "m/s"), Quantity.Parse("1 'm/s'"));
@@ -91,8 +92,7 @@ namespace Hl7.FhirPath.Tests
             ExceptionAssert.Throws<NotSupportedException>(() => a < b);
             ExceptionAssert.Throws<NotSupportedException>(() => a == b);
             ExceptionAssert.Throws<NotSupportedException>(() => a >= b);
-
-            Assert.IsFalse(a.Equals(b));
+            ExceptionAssert.Throws<NotSupportedException>(() => a.Equals(b));
         }
     }
 }

@@ -83,6 +83,8 @@ namespace HL7.FhirPath.Tests.Tests
                 (4m, 4.1m, false),
                 (5m, 4m, false),
                 (4m, null, null),
+                (1.2m/1.8m, 0.66666667m, true),
+                (1.2m/1.8m, 0.6666667m, false),
 
                 ("left", "left", true),
                 ("left", "right", false),
@@ -130,6 +132,12 @@ namespace HL7.FhirPath.Tests.Tests
                 (PartialTime.Parse("13:45:02+00:00"), PartialTime.Parse("13:46+01:00"), false),
                 (PartialTime.Parse("13:45:02+00:00"), null, null),
 
+                (PartialDateTime.Parse("2012-04-15T15:00:00Z"), PartialDateTime.Parse("2012-04-17"), false),  // clearly false, whatever the timezone
+                (PartialDateTime.Parse("2012-04-15T15:00:00Z"), PartialDateTime.Parse("2012-04-15T10:00:00"), null),
+                (PartialDateTime.Parse("2012-04-15T15:00:00"), PartialDateTime.Parse("2012-04-15T10:00:00Z"), null),
+                (PartialDateTime.Parse("2012-04-15T15:00:00"), PartialDateTime.Parse("2012-04-15T10:00:00"), false),
+                (PartialDateTime.Parse("2012-04-15T15:00:00"), PartialDateTime.Parse("2012-04-15T15:00:00"), true),
+
                 (Quantity.Parse("24.0 'kg'"), Quantity.Parse("24.0 'kg'"), true),
                 (Quantity.Parse("24 'kg'"), Quantity.Parse("24.0 'kg'"), true),
                 (Quantity.Parse("24 'kg'"), Quantity.Parse("24.0 'kg'"), true),
@@ -170,6 +178,7 @@ namespace HL7.FhirPath.Tests.Tests
                 (4m, 4.1m, true),
                 (5m, 4m, false),
                 (4m, null, false),
+                (1.2m/1.8m, 0.66666667m, true),
 
                 ("left", "left", true),
                 ("left", "right", false),
@@ -202,6 +211,12 @@ namespace HL7.FhirPath.Tests.Tests
                 (PartialDateTime.Parse("2015-01-02T13:40:50+00:10"), PartialDateTime.Parse("2015-01-02T13:41+00:10"), false),
                 (PartialDateTime.Parse("2015-01-02T13:40:50+00:10"), PartialDateTime.Parse("2015-01-02"), false),
                 (PartialDateTime.Parse("2010-06-02"), null, false),
+
+                (PartialDateTime.Parse("2012-04-15T15:00:00Z"), PartialDateTime.Parse("2012-04-17"), false),  // clearly false, whatever the timezone
+                (PartialDateTime.Parse("2012-04-15T15:00:00Z"), PartialDateTime.Parse("2012-04-15T10:00:00"), false),
+                (PartialDateTime.Parse("2012-04-15T15:00:00"), PartialDateTime.Parse("2012-04-15T10:00:00Z"), false),
+                (PartialDateTime.Parse("2012-04-15T15:00:00"), PartialDateTime.Parse("2012-04-15T10:00:00"), false),
+                (PartialDateTime.Parse("2012-04-15T15:00:00"), PartialDateTime.Parse("2012-04-15T15:00:00"), true),
 
                 (PartialTime.Parse("12:00:00"), PartialTime.Parse("12:00:00"), true),
                 (PartialTime.Parse("12:00:00"), PartialTime.Parse("12:00:00.00"), true),
@@ -246,8 +261,8 @@ namespace HL7.FhirPath.Tests.Tests
 
         private static void doEqEquivTest(object a, object b, bool? s, string op)
         {
-            Assert.IsTrue(Any.TryConvertToSystemValue(a, out var aAny));
-            if (!Any.TryConvertToSystemValue(b, out Any bAny)) bAny = null;
+            Assert.IsTrue(Any.TryConvertToAny(a, out var aAny));
+            if (!Any.TryConvertToAny(b, out Any bAny)) bAny = null;
 
             var result = aAny is ICqlEquatable ce ?
                 (op == nameof(ICqlEquatable.IsEqualTo) ? ce.IsEqualTo(bAny) : ce.IsEquivalentTo(bAny))
@@ -281,6 +296,9 @@ namespace HL7.FhirPath.Tests.Tests
                 (401m, 4E2m, 1),
                 (4m, 4.1m, -1),
                 (5m, 4m, 1),
+                (3.141592651m,3.14159265m,0),
+                (3.141592651m,3.14159264m,1),
+
                 (4m, null, null),
 
                 ("left", "left", 0),
@@ -307,10 +325,20 @@ namespace HL7.FhirPath.Tests.Tests
                 (PartialTime.Parse("13:00:00Z"), PartialTime.Parse("12:00:00Z"),1),
                 (PartialTime.Parse("13:00:00Z"), PartialTime.Parse("18:00:00+02:00"), -1),
                 (PartialTime.Parse("12:34:00Z"), PartialTime.Parse("12:33:55+00:00"), 1),
-                (PartialTime.Parse("13:00:00Z"), PartialTime.Parse("13:00:00"), 0),
                 (PartialTime.Parse("13:00Z"), PartialTime.Parse("14Z"), -1),
                 (PartialTime.Parse("13:01:00Z"), PartialTime.Parse("13:00Z"), 1),
+                (PartialTime.Parse("13:00:00Z"), PartialTime.Parse("13:00:01Z"), -1),
+                (PartialTime.Parse("13:00:00Z"), PartialTime.Parse("13:00:01"), null),
+                (PartialTime.Parse("13:00:00"), PartialTime.Parse("13:00:01Z"), null),
+                (PartialTime.Parse("13:00:00"), PartialTime.Parse("13:00:00"), 0),
                 (PartialTime.Parse("13:01:00Z"), null, null),
+
+                (PartialDateTime.Parse("2010-12-05T13:00:00+08:00"), PartialDateTime.Parse("2010-11-01"),1),
+                (PartialDateTime.Parse("2010-12-05T13:00:00"), PartialDateTime.Parse("2010-12-05"),null),
+                (PartialDateTime.Parse("2010-12-05T13:00:00"), PartialDateTime.Parse("2010-12-05Z"),null),
+                (PartialDateTime.Parse("2010-12-05T13:00:00Z"), PartialDateTime.Parse("2010-12-05Z"),null),
+                (PartialDateTime.Parse("2010-12-05T13:00:00"), PartialDateTime.Parse("2010-11-01T13:00:01"),1),
+                (PartialDateTime.Parse("2010-12-05T13:00:00Z"), PartialDateTime.Parse("2010-12-05T13:00:01"),null),
 
                 (Quantity.Parse("24.0 'kg'"), Quantity.Parse("24.0 'kg'"), 0),
                 (Quantity.Parse("25 'kg'"), Quantity.Parse("24.0 'kg'"), 1),
@@ -338,8 +366,8 @@ namespace HL7.FhirPath.Tests.Tests
 
         private static void doOrderingTest(object a, object b, int? s)
         {
-            Assert.IsTrue(Any.TryConvertToSystemValue(a, out var aAny));
-            if (!Any.TryConvertToSystemValue(b, out Any bAny)) bAny = null;
+            Assert.IsTrue(Any.TryConvertToAny(a, out var aAny));
+            if (!Any.TryConvertToAny(b, out Any bAny)) bAny = null;
 
             var result = aAny is ICqlOrderable ce ? ce.CompareTo(bAny) : -100;
 

@@ -89,10 +89,10 @@ namespace Hl7.Fhir.Model.Primitives
             };
         }
 
-        public static bool operator <(String a, String b) => a.CompareTo(b) == -1;
-        public static bool operator <=(String a, String b) => a.CompareTo(b) != 1;
-        public static bool operator >(String a, String b) => a.CompareTo(b) == 1;
-        public static bool operator >=(String a, String b) => a.CompareTo(b) != -1;
+        public static bool operator <(String a, String b) => a.CompareTo(b) < 0;
+        public static bool operator <=(String a, String b) => a.CompareTo(b) <= 0;
+        public static bool operator >(String a, String b) => a.CompareTo(b) > 0;
+        public static bool operator >=(String a, String b) => a.CompareTo(b) >= 0;
 
         public override int GetHashCode() => Value.GetHashCode();
         public override string ToString() => Value;

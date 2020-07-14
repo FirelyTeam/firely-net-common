@@ -70,9 +70,9 @@ namespace Hl7.Fhir.Model.Primitives
             {
                 DecimalComparison.Strict =>
                     (Scale(this.Value, ignoreTrailingZeroes: false) == Scale(otherD.Value, ignoreTrailingZeroes: false)) &&
-                        Value == otherD.Value,
+                        eq(Value,otherD.Value),
                 DecimalComparison.IgnoreTrailingZeroes =>
-                    Value == otherD.Value,      // default .NET decimal behaviour
+                    eq(Value,otherD.Value),      // default .NET decimal behaviour
                 DecimalComparison.RoundToSmallestScale => scaleEq(Value, otherD.Value),
                 _ => throw new NotImplementedException(),  // cannot happen, just to keep the compiler happy
             };
@@ -85,8 +85,14 @@ namespace Hl7.Fhir.Model.Primitives
                 var roundPrec = Math.Min(Scale(a, true), Scale(b, true));
                 var lr = Math.Round(a, roundPrec);
                 var rr = Math.Round(b, roundPrec);
-                return lr == rr;
+                return eq(lr,rr);
             }
+
+            // From the spec: The Decimal type represents real values in the range (-10^28+1)/108 to (10^28-1)/10^8 with a step size of 10^-8. 
+            // This range is defined based on a survey of decimal-value implementations and is based on the most useful lowest common denominator.
+            // This means we should round comparison to the 8th position after the decimal, everything beyond this is beyond the "step size".
+            static bool eq(decimal a, decimal b) =>
+                Math.Round(a, 8) == Math.Round(b, 8);
         }
 
         public const DecimalComparison CQL_EQUALS_COMPARISON = DecimalComparison.IgnoreTrailingZeroes;
@@ -127,16 +133,16 @@ namespace Hl7.Fhir.Model.Primitives
                 // The comparison rules for decimals are underdocumented - assume normal dotnet
                 // comparison, which disregards trailing zeroes (= equality comparison according
                 // to CQL).
-                Decimal d => decimal.Compare(Value, d.Value),
+                Decimal d => decimal.Compare(Math.Round(Value,8), Math.Round(d.Value,8)),
 
                 _ => throw NotSameTypeComparison(this,obj)
             };
         }
 
-        public static bool operator <(Decimal a, Decimal b) => a.CompareTo(b) == -1;
-        public static bool operator <=(Decimal a, Decimal b) => a.CompareTo(b) != 1;
-        public static bool operator >(Decimal a, Decimal b) => a.CompareTo(b) == 1;
-        public static bool operator >=(Decimal a, Decimal b) => a.CompareTo(b) != -1;
+        public static bool operator <(Decimal a, Decimal b) => a.CompareTo(b) < 0;
+        public static bool operator <=(Decimal a, Decimal b) => a.CompareTo(b) <= 0;
+        public static bool operator >(Decimal a, Decimal b) => a.CompareTo(b) > 0;
+        public static bool operator >=(Decimal a, Decimal b) => a.CompareTo(b) >= 0;
 
 
         public override int GetHashCode() => Value.GetHashCode();
@@ -144,7 +150,6 @@ namespace Hl7.Fhir.Model.Primitives
 
         public static implicit operator decimal(Decimal d) => d.Value;
         public static implicit operator Quantity(Decimal d) => new Quantity(d.Value, "1");
-
         public static explicit operator Decimal(decimal d) => new Decimal(d);
 
         bool? ICqlEquatable.IsEqualTo(Any other) => other is { } ? Equals(other, CQL_EQUALS_COMPARISON) : (bool?)null;

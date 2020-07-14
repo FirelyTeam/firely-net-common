@@ -105,22 +105,22 @@ namespace Hl7.Fhir.Model.Primitives
                 {
                     case "year":
                     case "years":
-                        return "year";
+                        return "{year}";
                     case "month":
                     case "months":
-                        return "month";
+                        return "{month}";
                     case "week":
                     case "weeks":
-                        return "week";
+                        return "{week}";
                     case "day":
                     case "days":
-                        return "day";
+                        return "{day}";
                     case "hour":
                     case "hours":
-                        return "hour";
+                        return "{hour}";
                     case "minute":
                     case "minutes":
-                        return "minute";
+                        return "{minute}";
                     case "second":
                     case "seconds":
                         return "s";
@@ -179,10 +179,10 @@ namespace Hl7.Fhir.Model.Primitives
         public int CompareTo(object obj) => obj is Quantity q ?
             TryCompareTo(q).ValueOrThrow() : throw NotSameTypeComparison(this, obj);
 
-        public static bool operator <(Quantity a, Quantity b) => a.CompareTo(b) == -1;
-        public static bool operator <=(Quantity a, Quantity b) => a.CompareTo(b) != 1;
-        public static bool operator >(Quantity a, Quantity b) => a.CompareTo(b) == 1;
-        public static bool operator >=(Quantity a, Quantity b) => a.CompareTo(b) != -1;
+        public static bool operator <(Quantity a, Quantity b) => a.CompareTo(b) < 0;
+        public static bool operator <=(Quantity a, Quantity b) => a.CompareTo(b) <= 0;
+        public static bool operator >(Quantity a, Quantity b) => a.CompareTo(b) > 0;
+        public static bool operator >=(Quantity a, Quantity b) => a.CompareTo(b) >= 0;
 
         /// <summary>
         /// Compares two quantities according to CQL ordering rules.
@@ -219,12 +219,12 @@ namespace Hl7.Fhir.Model.Primitives
         {
             return unit switch
             {
-                "year" => "a",
-                "month" => "mo",
-                "week" => "wk",
-                "day" => "d",
-                "hour" => "h",
-                "minute" => "min",
+                "{year}" => "a",
+                "{month}" => "mo",
+                "{week}" => "wk",
+                "{day}" => "d",
+                "{hour}" => "h",
+                "{minute}" => "min",
                 _ => unit
             };
         }
@@ -237,7 +237,7 @@ namespace Hl7.Fhir.Model.Primitives
 
         public override int GetHashCode() => (Unit, Value).GetHashCode();
 
-        public override string ToString() => $"{Value.ToString(CultureInfo.InvariantCulture)}" + (Unit != "1" ? $"'{Unit}'" : "");
+        public override string ToString() => $"{Value.ToString(CultureInfo.InvariantCulture)} '{Unit}'";
 
         bool? ICqlEquatable.IsEqualTo(Any other) => 
             other is { } && TryEquals(other, CQL_EQUALS_COMPARISON) is Ok<bool> ok ? ok.Value : (bool?)null;

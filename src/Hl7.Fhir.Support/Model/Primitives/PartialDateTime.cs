@@ -17,7 +17,7 @@ namespace Hl7.Fhir.Model.Primitives
 {
     public class PartialDateTime : Any, IComparable, ICqlEquatable, ICqlOrderable
     {
-        private PartialDateTime(string original, DateTimeOffset parsedValue, PartialPrecision precision, bool hasOffset)
+        internal PartialDateTime(string original, DateTimeOffset parsedValue, PartialPrecision precision, bool hasOffset)
         {
             _original = original;
             _parsedValue = parsedValue;
@@ -170,12 +170,12 @@ namespace Hl7.Fhir.Model.Primitives
             return other switch
             {
                 null => 1,
-                PartialDateTime p => PartialDateTime.CompareDateTimeParts(_parsedValue, Precision, p._parsedValue, p.Precision),
+                PartialDateTime p => PartialDateTime.CompareDateTimeParts(_parsedValue, Precision, HasOffset, p._parsedValue, p.Precision, p.HasOffset),
                 _ => throw NotSameTypeComparison(this, other)
             };
         }
 
-        internal static Result<int> CompareDateTimeParts(DateTimeOffset l, PartialPrecision lPrec, DateTimeOffset r, PartialPrecision rPrec)
+        internal static Result<int> CompareDateTimeParts(DateTimeOffset l, PartialPrecision lPrec, bool lHasOffset, DateTimeOffset r, PartialPrecision rPrec, bool rHasOffset)
         {
             l = l.ToUniversalTime();
             r = r.ToUniversalTime();
@@ -190,6 +190,14 @@ namespace Hl7.Fhir.Model.Primitives
             if (l.Day != r.Day) return Ok(l.Day.CompareTo(r.Day));
 
             if (lPrec < PartialPrecision.Hour ^ rPrec < PartialPrecision.Hour) return error;
+
+            // Before we compare the times, let's first check whether this is possible at all.
+            // Actually, this could still influence the dates too, but I don't think people would expect that to
+            // be significant.  You'd like now() > Patient.birthday to work, even if one has a timezone,
+            // and the other is just a date in the past.
+            if ((lHasOffset && !rHasOffset) || (!lHasOffset && rHasOffset))
+                return new Fail<int>(new InvalidOperationException($"One of the operands {l} and {r} has a timezone, but not the other."));
+
             if (l.Hour != r.Hour) return Ok(l.Hour.CompareTo(r.Hour));
 
             if (lPrec < PartialPrecision.Minute ^ rPrec < PartialPrecision.Minute) return error;
@@ -215,10 +223,11 @@ namespace Hl7.Fhir.Model.Primitives
             return Ok(0);
         }
 
-        public static bool operator <(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) == -1;
-        public static bool operator <=(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) != 1;
-        public static bool operator >(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) == 1;
-        public static bool operator >=(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) != -1;
+        public static bool operator <(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) < 0;
+        public static bool operator <=(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) <= 0;
+        public static bool operator >(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) > 0;
+        public static bool operator >=(PartialDateTime a, PartialDateTime b) => a.CompareTo(b) >= 0;
+
 
         public override int GetHashCode() => _original.GetHashCode();
         public override string ToString() => _original;

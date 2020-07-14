@@ -44,6 +44,9 @@ namespace Hl7.Fhir.Model.Primitives
             return Parse(representation);
         }
 
+        public PartialDateTime ToPartialDateTime() => new PartialDateTime(_original, _parsedValue, Precision, HasOffset);
+
+
         public static PartialDate Today(bool includeOffset = false) => FromDateTimeOffset(DateTimeOffset.Now, includeOffset: includeOffset);
 
         /// <summary>
@@ -172,20 +175,21 @@ namespace Hl7.Fhir.Model.Primitives
             return other switch
             {
                 null => 1,
-                PartialDate p => PartialDateTime.CompareDateTimeParts(_parsedValue, Precision, p._parsedValue, p.Precision),
+                PartialDate p => PartialDateTime.CompareDateTimeParts(_parsedValue, Precision, HasOffset, p._parsedValue, p.Precision, p.HasOffset),
                 _ => throw NotSameTypeComparison(this, other)
             };
         }
 
-        public static bool operator <(PartialDate a, PartialDate b) => a.CompareTo(b) == -1;
-        public static bool operator <=(PartialDate a, PartialDate b) => a.CompareTo(b) != 1;
-        public static bool operator >(PartialDate a, PartialDate b) => a.CompareTo(b) == 1;
-        public static bool operator >=(PartialDate a, PartialDate b) => a.CompareTo(b) != -1;
+        public static bool operator <(PartialDate a, PartialDate b) => a.CompareTo(b) < 0;
+        public static bool operator <=(PartialDate a, PartialDate b) => a.CompareTo(b) <= 0;
+        public static bool operator >(PartialDate a, PartialDate b) => a.CompareTo(b) > 0;
+        public static bool operator >=(PartialDate a, PartialDate b) => a.CompareTo(b) >= 0;
+
 
         public override int GetHashCode() => _original.GetHashCode();
         public override string ToString() => _original;
 
-        public static implicit operator PartialDateTime(PartialDate pd) => throw new NotImplementedException();
+        public static implicit operator PartialDateTime(PartialDate pd) => pd.ToPartialDateTime();
         public static explicit operator PartialDate(DateTimeOffset dto) => FromDateTimeOffset(dto);
 
         bool? ICqlEquatable.IsEqualTo(Any other) => other is { } && TryEquals(other) is Ok<bool> ok ? ok.Value : (bool?)null;

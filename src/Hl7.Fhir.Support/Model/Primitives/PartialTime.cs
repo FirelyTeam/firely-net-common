@@ -175,15 +175,16 @@ namespace Hl7.Fhir.Model.Primitives
             return other switch
             {
                 null => 1,
-                PartialTime p => PartialDateTime.CompareDateTimeParts(_parsedValue, Precision, p._parsedValue, p.Precision),
+                PartialTime p => PartialDateTime.CompareDateTimeParts(_parsedValue, Precision, HasOffset, p._parsedValue, p.Precision, p.HasOffset),
                 _ => throw NotSameTypeComparison(this, other)
             };
         }
 
-        public static bool operator <(PartialTime a, PartialTime b) => a.CompareTo(b) == -1;
-        public static bool operator <=(PartialTime a, PartialTime b) => a.CompareTo(b) != 1;
-        public static bool operator >(PartialTime a, PartialTime b) => a.CompareTo(b) == 1;
-        public static bool operator >=(PartialTime a, PartialTime b) => a.CompareTo(b) != -1;
+        public static bool operator <(PartialTime a, PartialTime b) => a.CompareTo(b) < 0;
+        public static bool operator <=(PartialTime a, PartialTime b) => a.CompareTo(b) <= 0;
+        public static bool operator >(PartialTime a, PartialTime b) => a.CompareTo(b) > 0;
+        public static bool operator >=(PartialTime a, PartialTime b) => a.CompareTo(b) >= 0;
+
 
         public override int GetHashCode() => _original.GetHashCode();
         public override string ToString() => _original;

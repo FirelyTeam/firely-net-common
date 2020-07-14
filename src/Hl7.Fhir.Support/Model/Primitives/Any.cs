@@ -25,13 +25,13 @@ namespace Hl7.Fhir.Model.Primitives
 
             static Any upcastOne(Any value, Any other)
             {
-                if (value is Integer && other is Long) return (Long)value;
-                if (value is Integer && other is Decimal) return (Decimal)value;
-                if (value is Integer && other is Quantity) return (Quantity)value;
-                if (value is Long && other is Decimal) return (Decimal)value;
-                if (value is Long && other is Quantity) return (Quantity)value;
-                if (value is Decimal && other is Quantity) return (Quantity)value;
-                if (value is PartialDate && other is PartialDateTime) return (PartialDateTime)value;
+                if (value is Integer && other is Long) return (Long)(Integer)value;
+                if (value is Integer && other is Decimal) return (Decimal)(Integer)value;
+                if (value is Integer && other is Quantity) return (Quantity)(Integer)value;
+                if (value is Long && other is Decimal) return (Decimal)(Long)value;
+                if (value is Long && other is Quantity) return (Quantity)(Long)value;
+                if (value is Decimal && other is Quantity) return (Quantity)(Decimal)value;
+                if (value is PartialDate && other is PartialDateTime) return (PartialDateTime)(PartialDate)value;
 
                 // nothing to upcast, return value;
                 return value;
@@ -84,17 +84,17 @@ namespace Hl7.Fhir.Model.Primitives
             (bool success, object? p) parse()
             {
                 if (primitiveType == typeof(Boolean))
-                    return (Boolean.TryParse(value, out var p), p);
+                    return (Boolean.TryParse(value, out var p), p?.Value);
                 else if (primitiveType == typeof(Code))
                     return (Code.TryParse(value, out var p), p);
                 else if (primitiveType == typeof(Concept))
                     return (success: Concept.TryParse(value, out var p), p);
                 else if (primitiveType == typeof(Decimal))
-                    return (success: Decimal.TryParse(value, out var p), p);
+                    return (success: Decimal.TryParse(value, out var p), p?.Value);
                 else if (primitiveType == typeof(Integer))
-                    return (success: Integer.TryParse(value, out var p), p);
+                    return (success: Integer.TryParse(value, out var p), p?.Value);
                 else if (primitiveType == typeof(Long))
-                    return (success: Long.TryParse(value, out var p), p);
+                    return (success: Long.TryParse(value, out var p), p?.Value);
                 else if (primitiveType == typeof(PartialDate))
                     return (success: PartialDate.TryParse(value, out var p), p);
                 else if (primitiveType == typeof(PartialDateTime))
@@ -106,7 +106,7 @@ namespace Hl7.Fhir.Model.Primitives
                 else if (primitiveType == typeof(Quantity))
                     return (success: Quantity.TryParse(value, out var p), p);
                 else if (primitiveType == typeof(String))
-                    return (success: String.TryParse(value, out var p), p);
+                    return (success: String.TryParse(value, out var p), p?.Value);
                 else
                     return (false, null);
             }
@@ -124,26 +124,10 @@ namespace Hl7.Fhir.Model.Primitives
             }
         }
 
-
-        public static string ToRepresentation() => throw new NotImplementedException();
-
         /// <summary>
-        /// Converts a primitive .NET instance to a System-based instance.
+        /// Try to convert a .NET instance to a Cql/FhirPath Any-based type.
         /// </summary>
-        public static Any? ConvertToSystemValue(object value)
-        {
-            if (value == null) return null;
-
-            if (TryConvertToSystemValue(value, out var result))
-                return result;
-            else
-                throw new NotSupportedException($"There is no known System type corresponding to the .NET type {value.GetType().Name} of this instance (with value '{value}').");
-        }
-
-        /// <summary>
-        /// Try to converts a .NET instance to a System-based instance.
-        /// </summary>
-        public static bool TryConvertToSystemValue(object value, out Any? primitiveValue)
+        public static bool TryConvertToAny(object value, out Any? primitiveValue)
         {
             primitiveValue = conv();
             return primitiveValue != null;
@@ -175,6 +159,77 @@ namespace Hl7.Fhir.Model.Primitives
                     return null;
             }
         }
+
+        /// <summary>
+        /// Converts a .NET instance to a Cql/FhirPath Any-based type.
+        /// </summary>
+        public static Any? ConvertToAny(object value)
+        {
+            if (value == null) return null;
+
+            if (TryConvertToAny(value, out var result))
+                return result;
+            else
+                throw new NotSupportedException($"There is no known Cql/FhirPath type corresponding to the .NET type {value.GetType().Name} of this instance (with value '{value}').");
+        }
+
+
+        /// <summary>
+        /// Converts a .NET primitive to the expected primitive/partial to use in the
+        /// value property of ITypedElement.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="primitiveValue"></param>
+        /// <returns></returns>
+        public static bool TryConvertToTypedElementValue(object value, out object? primitiveValue)
+        {
+            primitiveValue = conv();
+            return primitiveValue != null;
+
+            object? conv()
+            {
+                // NOTE: Keep Any.TryConvertToSystemValue, TypeSpecifier.TryGetNativeType and TypeSpecifier.ForNativeType in sync
+                if (value is Any a)
+                    return a;
+                else if (value is bool b)
+                    return b;
+                else if (value is string s)
+                    return s;
+                else if (value is char c)
+                    return new string(c, 1);
+                else if (value is int || value is short || value is ushort || value is uint)
+                    return Convert.ToInt32(value);
+                else if (value is long || value is ulong)
+                    return Convert.ToInt64(value);
+                else if (value is DateTimeOffset dto)
+                    return PartialDateTime.FromDateTimeOffset(dto);
+                else if (value is float || value is double || value is decimal)
+                    return Convert.ToDecimal(value);
+                else if (value is Enum en)
+                    return en.GetLiteral();
+                else if (value is Uri u)
+                    return u.OriginalString;
+                else
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// Converts a .NET primitive to the expected primitive/partial to use in the
+        /// value property of ITypedElement.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static object? ConvertToTypedElementValue(object value)
+        {
+            if (value == null) return null;
+
+            if (TryConvertToTypedElementValue(value, out var result))
+                return result;
+            else
+                throw new NotSupportedException($"There is no known System type corresponding to the .NET type {value.GetType().Name} of this instance (with value '{value}').");
+        }
+
 
         // some utility methods shared by the subclasses
 

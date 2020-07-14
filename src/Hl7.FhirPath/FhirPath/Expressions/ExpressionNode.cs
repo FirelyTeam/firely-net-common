@@ -47,9 +47,11 @@ namespace Hl7.FhirPath.Expressions
 
     public class ConstantExpression : Expression
     {
-        public ConstantExpression(P.Any value, TypeSpecifier type, ISourcePositionInfo location = null) : base(type, location)
+        public ConstantExpression(object value, TypeSpecifier type, ISourcePositionInfo location = null) : base(type, location)
         {
             if (value == null) Error.ArgumentNull("value");
+            if (value is P.Any && (value is P.Boolean || value is P.Decimal || value is P.Integer || value is P.Long || value is P.String))
+                throw new ArgumentException("Internal error: not yet ready to handle Any-based primitives in FhirPath.");
 
             Value = value;
         }
@@ -58,7 +60,7 @@ namespace Hl7.FhirPath.Expressions
         {
             if (value == null) Error.ArgumentNull("value");
 
-            if (P.Any.TryConvertToSystemValue(value, out var systemValue))
+            if (P.Any.TryConvertToTypedElementValue(value, out var systemValue))
             {
                 Value = systemValue;
                 ExpressionType = TypeSpecifier.ForNativeType(value.GetType());
@@ -67,7 +69,7 @@ namespace Hl7.FhirPath.Expressions
                 throw Error.InvalidOperation("Internal logic error: encountered unmappable Value of type " + Value.GetType().Name);
         }
 
-        public P.Any Value { get; private set; }
+        public object Value { get; private set; }
 
         public override T Accept<T>(ExpressionVisitor<T> visitor, SymbolTable scope)
         {
@@ -137,7 +139,7 @@ namespace Hl7.FhirPath.Expressions
     public class ChildExpression : FunctionCallExpression
     {
         public ChildExpression(Expression focus, string name) : base(focus, OP_PREFIX + "children", TypeSpecifier.Any, 
-                new ConstantExpression(new P.String(name), TypeSpecifier.String))
+                new ConstantExpression(name, TypeSpecifier.String))
         {
         }
 
@@ -148,8 +150,9 @@ namespace Hl7.FhirPath.Expressions
                 // We know, because of the constructor, that there will be one argument, which is a P.String,
                 // that contains the name of the child.
                 var arg1 = (ConstantExpression)Arguments.First();
-                var arg1Value = arg1.Value as P.String;
-                return arg1Value.Value;
+                //var arg1Value = arg1.Value as P.String;
+                var arg1Value = arg1.Value as string;
+                return arg1Value;
             }
         }
     }

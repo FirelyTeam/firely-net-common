@@ -69,7 +69,7 @@ namespace Hl7.FhirPath.Functions
                 r = Typecasts.ParseQuantity(right);
 
             // Compare primitives (or extended primitives)
-            if (l != null && r != null && Any.TryConvertToSystemValue(l, out var lAny) && Any.TryConvertToSystemValue(r, out var rAny))
+            if (l != null && r != null && Any.TryConvertToAny(l, out var lAny) && Any.TryConvertToAny(r, out var rAny))
             {
                 return IsEqualTo(lAny, rAny);
             }
@@ -139,7 +139,7 @@ namespace Hl7.FhirPath.Functions
                 r = Typecasts.ParseQuantity(right);
 
             // Compare primitives (or extended primitives)
-            if (l != null && r != null && Any.TryConvertToSystemValue(l, out var lAny) && Any.TryConvertToSystemValue(r, out var rAny))
+            if (l != null && r != null && Any.TryConvertToAny(l, out var lAny) && Any.TryConvertToAny(r, out var rAny))
             {
                 return IsEquivalentTo(lAny, rAny);
             }
@@ -209,11 +209,11 @@ namespace Hl7.FhirPath.Functions
 
                 return op switch
                 {
-                    "<" => compareResult == -1,
-                    "<=" => compareResult != 1,
+                    "<" => compareResult < 0,
+                    "<=" => compareResult <= 0,
                     "=" => compareResult == 0,
-                    ">" => compareResult == 1,
-                    ">=" => compareResult != -1,
+                    ">" => compareResult > 0,
+                    ">=" => compareResult >= 0,
                     _ => throw new ArgumentException($"Unknown comparison op '{op}'", nameof(op))
                 };
             }

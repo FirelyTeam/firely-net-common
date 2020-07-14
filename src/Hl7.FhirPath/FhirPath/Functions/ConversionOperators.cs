@@ -28,6 +28,9 @@ namespace Hl7.FhirPath.Functions
             {
                 bool b => b,
                 string s => convertString(s),
+                int i => i == 1
+                        ? true :
+                            i == 0 ? false : (bool?)null,
                 long l => l == 1 
                         ? true :
                             l == 0 ? false : (bool?)null,
@@ -74,24 +77,24 @@ namespace Hl7.FhirPath.Functions
         /// </summary>
         /// <param name="focus"></param>
         /// <returns></returns>
-        public static long? ToInteger(this ITypedElement focus)
+        public static int? ToInteger(this ITypedElement focus)
         {
             var val = focus?.Value;
             if (val == null) return null;
 
             return val switch
             {
-                long l => l,
+                int i => i,
                 string s => convertString(s),
-                bool b => b ? 1L : 0L,
+                bool b => b ? 1 : 0,
                 _ => null,
             };
 
-            static long? convertString(string si)
+            static int? convertString(string si)
             {
                 try
                 {
-                    return XmlConvert.ToInt64(si);
+                    return XmlConvert.ToInt32(si);
                 }
                 catch
                 {
@@ -254,6 +257,7 @@ namespace Hl7.FhirPath.Functions
             return val switch
             {
                 Quantity q => q,
+                int i => new Quantity((decimal)i),
                 long l => new Quantity((decimal)l),
                 decimal d => new Quantity(d),
                 string s => convertString(s),
@@ -285,6 +289,7 @@ namespace Hl7.FhirPath.Functions
             return val switch
             {
                 string s => s,
+                int i => XmlConvert.ToString(i),
                 long l => XmlConvert.ToString(l),
                 decimal d => XmlConvert.ToString(d),
                 PartialDate pd => pd.ToString(),

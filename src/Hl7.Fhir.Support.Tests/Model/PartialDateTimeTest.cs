@@ -126,6 +126,16 @@ namespace Hl7.FhirPath.Tests
             Assert.AreEqual(56, pt.Seconds);
             Assert.AreEqual(567, pt.Millis);
             Assert.AreEqual(plusOne, pt.Offset);
-        }         
+        }  
+        
+        [TestMethod]
+        public void CanCastDateToDateTime()
+        {
+            var pdt = PartialDate.Parse("2018-04").ToPartialDateTime();
+            Assert.AreEqual(PartialPrecision.Month, pdt.Precision);
+            Assert.AreEqual(2018, pdt.Years);
+            Assert.AreEqual(4, pdt.Months);
+            Assert.AreEqual("2018-04", pdt.ToString());
+        }
     }
 }
