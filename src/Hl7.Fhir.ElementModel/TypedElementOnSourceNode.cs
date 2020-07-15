@@ -180,7 +180,7 @@ namespace Hl7.Fhir.ElementModel
                 {
                     var summary = Provider.Provide(InstanceType);
                     var valueType = summary?.GetElements().FirstOrDefault(e => e.ElementName.Equals("value"))?.Type.FirstOrDefault()?.GetTypeName();
-                    if (!P.Any.TryGetByName(valueType, out ts))
+                    if (!P.Any.TryGetSystemTypeByName(valueType, out ts))
                         throw new InvalidOperationException($"Cannot figure out what the primitive type is for the value of logical type '{InstanceType}'.");
                 }
 

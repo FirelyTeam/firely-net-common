@@ -6,14 +6,13 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using Hl7.Fhir.Language;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using TS = Hl7.Fhir.Language.TypeSpecifier;
+using P = Hl7.Fhir.Model.Primitives;
 
 namespace Hl7.Fhir.ElementModel
 {
@@ -34,6 +33,46 @@ namespace Hl7.Fhir.ElementModel
                 Model.Primitives.Quantity q => PrimitiveElement.ForQuantity(q),
                 _ => new PrimitiveElement(value, useFullTypeName:true)
             };
+        }
+
+        /// <summary>
+        /// Converts a .NET primitive to the expected primitive/partial to use in the
+        /// value property of ITypedElement.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="primitiveValue"></param>
+        /// <returns></returns>
+        public static bool TryConvertToElementValue(object value, out object primitiveValue)
+        {
+            primitiveValue = conv();
+            return primitiveValue != null;
+
+            object conv()
+            {
+                // NOTE: Keep Any.TryConvertToSystemValue, TypeSpecifier.TryGetNativeType and TypeSpecifier.ForNativeType in sync
+                if (value is P.Any a)
+                    return a;
+                else if (value is bool b)
+                    return b;
+                else if (value is string s)
+                    return s;
+                else if (value is char c)
+                    return new string(c, 1);
+                else if (value is int || value is short || value is ushort || value is uint)
+                    return Convert.ToInt32(value);
+                else if (value is long || value is ulong)
+                    return Convert.ToInt64(value);
+                else if (value is DateTimeOffset dto)
+                    return P.PartialDateTime.FromDateTimeOffset(dto);
+                else if (value is float || value is double || value is decimal)
+                    return Convert.ToDecimal(value);
+                else if (value is Enum en)
+                    return en.GetLiteral();
+                else if (value is Uri u)
+                    return u.OriginalString;
+                else
+                    return null;
+            }
         }
 
         /// <summary>

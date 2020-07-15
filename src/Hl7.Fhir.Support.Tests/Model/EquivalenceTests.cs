@@ -261,8 +261,8 @@ namespace HL7.FhirPath.Tests.Tests
 
         private static void doEqEquivTest(object a, object b, bool? s, string op)
         {
-            Assert.IsTrue(Any.TryConvertToAny(a, out var aAny));
-            if (!Any.TryConvertToAny(b, out Any bAny)) bAny = null;
+            Assert.IsTrue(Any.TryConvert(a, out var aAny));
+            if (!Any.TryConvert(b, out Any bAny)) bAny = null;
 
             var result = aAny is ICqlEquatable ce ?
                 (op == nameof(ICqlEquatable.IsEqualTo) ? ce.IsEqualTo(bAny) : ce.IsEquivalentTo(bAny))
@@ -366,8 +366,8 @@ namespace HL7.FhirPath.Tests.Tests
 
         private static void doOrderingTest(object a, object b, int? s)
         {
-            Assert.IsTrue(Any.TryConvertToAny(a, out var aAny));
-            if (!Any.TryConvertToAny(b, out Any bAny)) bAny = null;
+            Assert.IsTrue(Any.TryConvert(a, out var aAny));
+            if (!Any.TryConvert(b, out Any bAny)) bAny = null;
 
             var result = aAny is ICqlOrderable ce ? ce.CompareTo(bAny) : -100;
 

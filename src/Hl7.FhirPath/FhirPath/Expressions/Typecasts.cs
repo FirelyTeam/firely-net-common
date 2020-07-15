@@ -78,7 +78,7 @@ namespace Hl7.FhirPath.Expressions
             if (typeof(P.Any).IsAssignableFrom(to) && !fromElemList)
             {
                 if (f is ITypedElement te && te.InstanceType == "Quantity") return o => ParseQuantity((ITypedElement)o);
-                return o => P.Any.ConvertToAny(o);
+                return o => P.Any.Convert(o);
             }
 
             return null;

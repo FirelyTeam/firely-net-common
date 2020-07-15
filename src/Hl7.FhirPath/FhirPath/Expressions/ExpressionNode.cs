@@ -13,6 +13,7 @@ using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Hl7.Fhir.ElementModel;
 
 namespace Hl7.FhirPath.Expressions
 {
@@ -60,7 +61,7 @@ namespace Hl7.FhirPath.Expressions
         {
             if (value == null) Error.ArgumentNull("value");
 
-            if (P.Any.TryConvertToTypedElementValue(value, out var systemValue))
+            if (ElementNode.TryConvertToElementValue(value, out var systemValue))
             {
                 Value = systemValue;
                 ExpressionType = TypeSpecifier.ForNativeType(value.GetType());

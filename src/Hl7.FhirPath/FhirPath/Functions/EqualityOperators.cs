@@ -70,7 +70,7 @@ namespace Hl7.FhirPath.Functions
                 r = Typecasts.ParseQuantity(right);
 
             // Compare primitives (or extended primitives)
-            if (l != null && r != null && Any.TryConvertToAny(l, out var lAny) && Any.TryConvertToAny(r, out var rAny))
+            if (l != null && r != null && Any.TryConvert(l, out var lAny) && Any.TryConvert(r, out var rAny))
             {
                 return IsEqualTo(lAny, rAny);
             }
@@ -161,7 +161,7 @@ namespace Hl7.FhirPath.Functions
                 r = Typecasts.ParseQuantity(right);
 
             // Compare primitives (or extended primitives)
-            if (l != null && r != null && Any.TryConvertToAny(l, out var lAny) && Any.TryConvertToAny(r, out var rAny))
+            if (l != null && r != null && Any.TryConvert(l, out var lAny) && Any.TryConvert(r, out var rAny))
             {
                 return IsEquivalentTo(lAny, rAny);
             }

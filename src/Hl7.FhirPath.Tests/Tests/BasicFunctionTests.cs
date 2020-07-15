@@ -275,6 +275,17 @@ namespace Hl7.FhirPath.Tests
             Assert.IsNotNull(result);
             CollectionAssert.AreEqual(new[] { "ONE", "TWO", "THREE" }, result.Select(r => r.Value.ToString()).ToArray());
         }
+
+        [TestMethod]
+        public void TestDivZero()
+        {
+            Assert.IsNull(scalar("1 / 0"));
+            Assert.IsNull(scalar("1.0 / 0"));
+            Assert.IsNull(scalar("1 mod 0"));
+            Assert.IsNull(scalar("1 mod 0.0"));
+            Assert.IsNull(scalar("1 div 0"));
+            Assert.IsNull(scalar("1.0 div 0"));
+        }
     }
         
 }

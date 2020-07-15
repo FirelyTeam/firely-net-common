@@ -11,13 +11,19 @@
 using Hl7.Fhir.Support.Utility;
 using Hl7.Fhir.Utility;
 using System;
-using P = Hl7.Fhir.Model.Primitives;
 
 namespace Hl7.Fhir.Model.Primitives
 {
     public abstract class Any
     {      
-        public static bool TryGetByName(string name, out Type? result)
+        /// <summary>
+        /// Returns the concrete subclass of Any that is used to represent the
+        /// type given in parmameter <paramref name="name"/>.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        public static bool TryGetSystemTypeByName(string name, out Type? result)
         {
             result = get();
             return result != null;
@@ -106,7 +112,7 @@ namespace Hl7.Fhir.Model.Primitives
         /// <summary>
         /// Try to convert a .NET instance to a Cql/FhirPath Any-based type.
         /// </summary>
-        public static bool TryConvertToAny(object value, out Any? primitiveValue)
+        public static bool TryConvert(object value, out Any? primitiveValue)
         {
             primitiveValue = conv();
             return primitiveValue != null;
@@ -123,13 +129,13 @@ namespace Hl7.Fhir.Model.Primitives
                 else if (value is char c)
                     return new String(new string(c, 1));
                 else if (value is int || value is short || value is ushort || value is uint)
-                    return new Integer(Convert.ToInt32(value));
+                    return new Integer(System.Convert.ToInt32(value));
                 else if (value is long || value is ulong)
-                    return new Long(Convert.ToInt64(value));
+                    return new Long(System.Convert.ToInt64(value));
                 else if (value is DateTimeOffset dto)
                     return PartialDateTime.FromDateTimeOffset(dto);
                 else if (value is float || value is double || value is decimal)
-                    return new Decimal(Convert.ToDecimal(value));
+                    return new Decimal(System.Convert.ToDecimal(value));
                 else if (value is Enum en)
                     return new String(en.GetLiteral());
                 else if (value is Uri u)
@@ -142,73 +148,15 @@ namespace Hl7.Fhir.Model.Primitives
         /// <summary>
         /// Converts a .NET instance to a Cql/FhirPath Any-based type.
         /// </summary>
-        public static Any? ConvertToAny(object value)
+        public static Any? Convert(object value)
         {
             if (value == null) return null;
 
-            if (TryConvertToAny(value, out var result))
+            if (TryConvert(value, out var result))
                 return result;
             else
                 throw new NotSupportedException($"There is no known Cql/FhirPath type corresponding to the .NET type {value.GetType().Name} of this instance (with value '{value}').");
         }
-
-
-        /// <summary>
-        /// Converts a .NET primitive to the expected primitive/partial to use in the
-        /// value property of ITypedElement.
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="primitiveValue"></param>
-        /// <returns></returns>
-        public static bool TryConvertToTypedElementValue(object value, out object? primitiveValue)
-        {
-            primitiveValue = conv();
-            return primitiveValue != null;
-
-            object? conv()
-            {
-                // NOTE: Keep Any.TryConvertToSystemValue, TypeSpecifier.TryGetNativeType and TypeSpecifier.ForNativeType in sync
-                if (value is Any a)
-                    return a;
-                else if (value is bool b)
-                    return b;
-                else if (value is string s)
-                    return s;
-                else if (value is char c)
-                    return new string(c, 1);
-                else if (value is int || value is short || value is ushort || value is uint)
-                    return Convert.ToInt32(value);
-                else if (value is long || value is ulong)
-                    return Convert.ToInt64(value);
-                else if (value is DateTimeOffset dto)
-                    return PartialDateTime.FromDateTimeOffset(dto);
-                else if (value is float || value is double || value is decimal)
-                    return Convert.ToDecimal(value);
-                else if (value is Enum en)
-                    return en.GetLiteral();
-                else if (value is Uri u)
-                    return u.OriginalString;
-                else
-                    return null;
-            }
-        }
-
-        /// <summary>
-        /// Converts a .NET primitive to the expected primitive/partial to use in the
-        /// value property of ITypedElement.
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public static object? ConvertToTypedElementValue(object value)
-        {
-            if (value == null) return null;
-
-            if (TryConvertToTypedElementValue(value, out var result))
-                return result;
-            else
-                throw new NotSupportedException($"There is no known System type corresponding to the .NET type {value.GetType().Name} of this instance (with value '{value}').");
-        }
-
 
         // some utility methods shared by the subclasses
 
