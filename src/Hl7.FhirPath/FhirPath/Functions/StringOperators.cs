@@ -6,28 +6,23 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+using Hl7.Fhir.ElementModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Hl7.Fhir.ElementModel;
 
 namespace Hl7.FhirPath.Functions
 {
     internal static class StringOperators
     {
-        public static string FpSubstring(this string me, long start)
+        public static string FpSubstring(this string me, long start, long? length)
         {
-            return me.FpSubstring(start, me.Length);
-        }
+            var l = length ?? me.Length;
 
-        public static string FpSubstring(this string me, long start, long length)
-        {
             if (start < 0 || start >= me.Length) return null;
-            length = Math.Min(length, me.Length - start);
+            l = Math.Min(l, me.Length - start);
 
-            return me.Substring((int)start, (int)length);
+            return me.Substring((int)start, (int)l);
         }
 
         public static ITypedElement FpIndexOf(this string me, string fragment)
@@ -42,8 +37,8 @@ namespace Hl7.FhirPath.Functions
         {
             if (find == String.Empty)
             {
-                // weird, but as specified:  "abc".replace("","x") = "xaxbxc"
-                return replace + String.Join(replace, me.ToCharArray());
+                // weird, but as specified:  "abc".replace("","x") = "xaxbxcx"
+                return replace + String.Join(replace, me.ToCharArray()) + replace;
             }
             else
                 return me.Replace(find, replace);

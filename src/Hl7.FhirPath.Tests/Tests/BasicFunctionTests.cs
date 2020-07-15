@@ -12,7 +12,6 @@
 using Hl7.Fhir.ElementModel;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using P = Hl7.Fhir.Model.Primitives;
 
@@ -20,14 +19,7 @@ namespace Hl7.FhirPath.Tests
 {
     [TestClass]
     public class BasicFunctionsTest
-    {     
-        [TestMethod]
-        public void IsDistinctWorksOnEmptyCollections()
-        {
-            isB("{}.isDistinct()", true);
-            isB("(2).isDistinct()", true);
-        }
-
+    {
         private static void isB(string expr, object value = null)
         {
             ITypedElement dummy = ElementNode.ForPrimitive(value ?? true);
@@ -38,16 +30,6 @@ namespace Hl7.FhirPath.Tests
         {
             ITypedElement dummy = ElementNode.ForPrimitive(true);
             return dummy.Scalar(expr);
-        }
-
-        [TestMethod]
-        public void TestExist()
-        {
-            isB(@"{}.empty()");
-            isB(@"1.empty().not()");
-            isB(@"1.exists()");
-            isB(@"({}.substring(0)).empty()");
-            isB(@"('hello'.substring({})).empty()");
         }
 
         [TestMethod]
@@ -189,13 +171,13 @@ namespace Hl7.FhirPath.Tests
             isB("substring(2,6) = 'nald'", "Donald");
             isB("substring(2,4) = 'nald'", "Donald");
 
-            isB("substring(2,length()-3) = 'nal'","Donald");
+            isB("substring(2,length()-3) = 'nal'", "Donald");
 
             isB("substring(-1,8).empty()", "Donald");
             isB("substring(999,1).empty()", "Donald");
             isB("''.substring(0,1).empty()");
             isB("{}.substring(0,10).empty()");
-            isB("{}.substring(0,10).empty()");         
+            isB("{}.substring(0,10).empty()");
         }
 
         [TestMethod]
@@ -287,5 +269,5 @@ namespace Hl7.FhirPath.Tests
             Assert.IsNull(scalar("1.0 div 0"));
         }
     }
-        
+
 }

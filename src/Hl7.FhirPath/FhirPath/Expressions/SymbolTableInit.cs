@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * Copyright (c) 2015, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
@@ -8,6 +8,8 @@
 
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Model.Primitives;
+using Hl7.Fhir.Utility;
+using Hl7.FhirPath.FhirPath.Functions;
 using Hl7.FhirPath.Functions;
 using System;
 using System.Collections.Generic;
@@ -23,11 +25,15 @@ namespace Hl7.FhirPath.Expressions
             // Functions that operate on the focus, without null propagation
             t.Add("empty", (IEnumerable<object> f) => !f.Any());
             t.Add("exists", (IEnumerable<object> f) => f.Any());
+
             t.Add("count", (IEnumerable<object> f) => f.Count());
             t.Add("trace", (IEnumerable<ITypedElement> f, string name, EvaluationContext ctx)
                     => f.Trace(name, ctx));
 
             t.Add("allTrue", (IEnumerable<ITypedElement> f) => f.All(e => e.Value as bool? == true));
+            t.Add("anyTrue", (IEnumerable<ITypedElement> f) => f.Any(e => e.Value as bool? == true));
+            t.Add("allFalse", (IEnumerable<ITypedElement> f) => f.All(e => e.Value as bool? == false));
+            t.Add("anyFalse", (IEnumerable<ITypedElement> f) => f.Any(e => e.Value as bool? == false));
             t.Add("combine", (IEnumerable<ITypedElement> l, IEnumerable<ITypedElement> r) => l.Concat(r));
             t.Add("binary.|", (object _, IEnumerable<ITypedElement> l, IEnumerable<ITypedElement> r) => l.DistinctUnion(r));
             t.Add("union", (IEnumerable<ITypedElement> l, IEnumerable<ITypedElement> r) => l.DistinctUnion(r));
@@ -46,8 +52,8 @@ namespace Hl7.FhirPath.Expressions
 
             t.Add("binary.&", (object _, string a, string b) => (a ?? "") + (b ?? ""));
 
-            t.Add("iif", (IEnumerable<ITypedElement> f, bool? condition, IEnumerable<ITypedElement> result) => f.IIf(condition, result));
-            t.Add("iif", (IEnumerable<ITypedElement> f, bool? condition, IEnumerable<ITypedElement> result, IEnumerable<ITypedElement> otherwise) => f.IIf(condition, result, otherwise));
+            t.Add(new CallSignature("iif", typeof(IEnumerable<ITypedElement>), typeof(object), typeof(bool?), typeof(Invokee), typeof(Invokee)), runIif);
+            t.Add(new CallSignature("iif", typeof(IEnumerable<ITypedElement>), typeof(object), typeof(bool?), typeof(Invokee)), runIif);
 
             // Functions that use normal null propagation and work with the focus (buy may ignore it)
             t.Add("not", (IEnumerable<ITypedElement> f) => f.Not(), doNullProp: true);
@@ -64,9 +70,11 @@ namespace Hl7.FhirPath.Expressions
             t.Add("unary.-", (object f, int a) => -a, doNullProp: true);
             t.Add("unary.-", (object f, long a) => -a, doNullProp: true);
             t.Add("unary.-", (object f, decimal a) => -a, doNullProp: true);
+            t.Add("unary.-", (object f, Quantity a) => new Quantity(-a.Value, a.Unit), doNullProp: true);
             t.Add("unary.+", (object f, int a) => a, doNullProp: true);
             t.Add("unary.+", (object f, long a) => a, doNullProp: true);
             t.Add("unary.+", (object f, decimal a) => a, doNullProp: true);
+            t.Add("unary.+", (object f, Quantity a) => a, doNullProp: true);
 
             t.Add("binary.*", (object f, int a, int b) => a * b, doNullProp: true);
             t.Add("binary.*", (object f, long a, long b) => a * b, doNullProp: true);
@@ -95,7 +103,7 @@ namespace Hl7.FhirPath.Expressions
             t.Add("binary.mod", (object f, long a, long b) => b != 0 ? a % b : (long?)null, doNullProp: true);
             t.Add("binary.mod", (object f, decimal a, decimal b) => b != 0 ? a % b : (decimal?)null, doNullProp: true);
 
-            t.Add("binary.>", (object f, Any a, Any b) => EqualityOperators.Compare(a,b,">"), doNullProp: true);
+            t.Add("binary.>", (object f, Any a, Any b) => EqualityOperators.Compare(a, b, ">"), doNullProp: true);
             t.Add("binary.<", (object f, Any a, Any b) => EqualityOperators.Compare(a, b, "<"), doNullProp: true);
             t.Add("binary.<=", (object f, Any a, Any b) => EqualityOperators.Compare(a, b, "<="), doNullProp: true);
             t.Add("binary.>=", (object f, Any a, Any b) => EqualityOperators.Compare(a, b, ">="), doNullProp: true);
@@ -128,8 +136,10 @@ namespace Hl7.FhirPath.Expressions
             t.Add("upper", (string f) => f.ToUpper(), doNullProp: true);
             t.Add("lower", (string f) => f.ToLower(), doNullProp: true);
             t.Add("toChars", (string f) => f.ToChars(), doNullProp: true);
-            t.Add("substring", (string f, long a) => f.FpSubstring(a), doNullProp: true);
-            t.Add("substring", (string f, long a, long b) => f.FpSubstring(a, b), doNullProp: true);
+            t.Add("substring", (string f, int a) => f.FpSubstring(a, null), doNullProp: true);
+            //special case: only focus should be Null propagated:
+            t.Add(new CallSignature("substring", typeof(string), typeof(string), typeof(int), typeof(int?)),
+                InvokeeFactory.WrapWithPropNullForFocus((string f, int a, int? b) => f.FpSubstring(a, b)));
             t.Add("startsWith", (string f, string fragment) => f.StartsWith(fragment), doNullProp: true);
             t.Add("endsWith", (string f, string fragment) => f.EndsWith(fragment), doNullProp: true);
             t.Add("matches", (string f, string regex) => Regex.IsMatch(f, regex), doNullProp: true);
@@ -139,6 +149,20 @@ namespace Hl7.FhirPath.Expressions
             t.Add("replace", (string f, string regex, string subst) => f.FpReplace(regex, subst), doNullProp: true);
             t.Add("length", (string f) => f.Length, doNullProp: true);
             t.Add("split", (string f, string seperator) => f.FpSplit(seperator), doNullProp: true);
+
+            // Math functions
+            t.Add("abs", (decimal f) => Math.Abs(f), doNullProp: true);
+            t.Add("abs", (Quantity f) => new Quantity(Math.Abs(f.Value), f.Unit), doNullProp: true);
+            t.Add("ceiling", (decimal f) => Math.Ceiling(f), doNullProp: true);
+            t.Add("exp", (decimal f) => Math.Exp((double)f), doNullProp: true);
+            t.Add("floor", (decimal f) => Math.Floor(f), doNullProp: true);
+            t.Add("ln", (decimal f) => Math.Log((double)f), doNullProp: true);
+            t.Add("log", (decimal f, decimal @base) => Math.Log((double)f, (double)@base), doNullProp: true);
+            t.Add("power", (decimal f, decimal exponent) => f.Power(exponent), doNullProp: true);
+            t.Add("round", (decimal f, long precision) => Math.Round(f, (int)precision), doNullProp: true);
+            t.Add("round", (decimal f) => Math.Round(f), doNullProp: true);
+            t.Add("sqrt", (decimal f) => f.Sqrt(), doNullProp: true);
+            t.Add("truncate", (decimal f) => Math.Truncate((double)f), doNullProp: true);
 
             // The next two functions existed pre-normative, so we have kept them.
             t.Add("is", (ITypedElement f, string name) => f.Is(name), doNullProp: true);
@@ -164,6 +188,7 @@ namespace Hl7.FhirPath.Expressions
             t.Add(new CallSignature("select", typeof(IEnumerable<ITypedElement>), typeof(object), typeof(Invokee)), runSelect);
             t.Add(new CallSignature("all", typeof(bool), typeof(object), typeof(Invokee)), runAll);
             t.Add(new CallSignature("any", typeof(bool), typeof(object), typeof(Invokee)), runAny);
+            t.Add(new CallSignature("exists", typeof(bool), typeof(object), typeof(Invokee)), runAny);
             t.Add(new CallSignature("repeat", typeof(IEnumerable<ITypedElement>), typeof(object), typeof(Invokee)), runRepeat);
             t.Add(new CallSignature("trace", typeof(IEnumerable<ITypedElement>), typeof(string), typeof(object), typeof(Invokee)), Trace);
 
@@ -199,6 +224,24 @@ namespace Hl7.FhirPath.Expressions
             ctx?.EvaluationContext?.Tracer?.Invoke(name, selectResults);
 
             return focus;
+        }
+
+        private static IEnumerable<ITypedElement> runIif(Closure ctx, IEnumerable<Invokee> arguments)
+        {
+            // iif(criterion: expression, true-result: collection [, otherwise-result: collection]) : collection
+            // note: short-circuit behavior is expected in this function
+            var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
+
+            var expression = arguments.Skip(1).First()(ctx, InvokeeFactory.EmptyArgs);
+            var trueResult = arguments.Skip(2).First();
+            var otherResult = arguments.Skip(3).FirstOrDefault();
+
+            if (expression.Count() > 1)
+                throw Error.InvalidOperation($"Result of {nameof(expression)} is not of type boolean");
+
+            return (expression.BooleanEval() ?? false)
+                ? trueResult(ctx, InvokeeFactory.EmptyArgs)
+                : otherResult == null ? ElementNode.EmptyList : otherResult(ctx, InvokeeFactory.EmptyArgs);
         }
 
         private static IEnumerable<ITypedElement> runWhere(Closure ctx, IEnumerable<Invokee> arguments)
@@ -259,7 +302,6 @@ namespace Hl7.FhirPath.Expressions
 
                 fullResult.AddRange(newNodes);
             }
-
             return fullResult;
         }
 
