@@ -31,7 +31,9 @@ namespace Hl7.FhirPath.Functions
 
 
         public static bool Not(this IEnumerable<ITypedElement> focus)
-            => focus.Count() > 1 ? throw Error.InvalidOperation($"Operator {nameof(Not)} is not applicable for collections") : !focus.BooleanEval().Value;
+            => focus.Count() > 1
+            ? throw Error.InvalidOperation($"Operator {nameof(Not)} is not applicable for collections with more than one item.")
+            : !focus.BooleanEval().Value;
 
         public static IEnumerable<ITypedElement> DistinctUnion(this IEnumerable<ITypedElement> a, IEnumerable<ITypedElement> b)
             => a.Union(b, new EqualityOperators.ValueProviderEqualityComparer());

@@ -6,14 +6,14 @@ namespace Hl7.FhirPath.FhirPath.Functions
     {
         public static decimal? Sqrt(this decimal focus)
         {
-            var result = Math.Sqrt(Convert.ToDouble(focus));
-            return double.IsNaN(result) ? (decimal?)null : Convert.ToDecimal(result);
+            var result = Math.Sqrt((double)focus);
+            return double.IsNaN(result) ? (decimal?)null : (decimal)result;
         }
 
         public static decimal? Power(this decimal focus, decimal exponent)
         {
-            var result = Math.Pow(Convert.ToDouble(focus), Convert.ToDouble(exponent));
-            return double.IsNaN(result) ? (decimal?)null : Convert.ToDecimal(result);
+            var result = Math.Pow((double)focus, (double)exponent);
+            return double.IsNaN(result) ? (decimal?)null : (decimal)result;
         }
     }
 }

@@ -154,15 +154,15 @@ namespace Hl7.FhirPath.Expressions
             t.Add("abs", (decimal f) => Math.Abs(f), doNullProp: true);
             t.Add("abs", (Quantity f) => new Quantity(Math.Abs(f.Value), f.Unit), doNullProp: true);
             t.Add("ceiling", (decimal f) => Math.Ceiling(f), doNullProp: true);
-            t.Add("exp", (decimal f) => Math.Exp(Convert.ToDouble(f)), doNullProp: true);
+            t.Add("exp", (decimal f) => Math.Exp((double)f), doNullProp: true);
             t.Add("floor", (decimal f) => Math.Floor(f), doNullProp: true);
-            t.Add("ln", (decimal f) => Math.Log(Convert.ToDouble(f)), doNullProp: true);
-            t.Add("log", (decimal f, decimal @base) => Math.Log(Convert.ToDouble(f), Convert.ToDouble(@base)), doNullProp: true);
+            t.Add("ln", (decimal f) => Math.Log((double)f), doNullProp: true);
+            t.Add("log", (decimal f, decimal @base) => Math.Log((double)f, (double)@base), doNullProp: true);
             t.Add("power", (decimal f, decimal exponent) => f.Power(exponent), doNullProp: true);
-            t.Add("round", (decimal f, long precision) => Math.Round(f, Convert.ToInt32(precision)), doNullProp: true);
+            t.Add("round", (decimal f, long precision) => Math.Round(f, (int)precision), doNullProp: true);
             t.Add("round", (decimal f) => Math.Round(f), doNullProp: true);
             t.Add("sqrt", (decimal f) => f.Sqrt(), doNullProp: true);
-            t.Add("truncate", (decimal f) => Math.Truncate(Convert.ToDouble(f)), doNullProp: true);
+            t.Add("truncate", (decimal f) => Math.Truncate((double)f), doNullProp: true);
 
             // The next two functions existed pre-normative, so we have kept them.
             t.Add("is", (ITypedElement f, string name) => f.Is(name), doNullProp: true);
