@@ -103,7 +103,7 @@ namespace Hl7.FhirPath.Expressions
             t.Add("binary.mod", (object f, long a, long b) => a % b, doNullProp: true);
             t.Add("binary.mod", (object f, decimal a, decimal b) => a % b, doNullProp: true);
 
-            t.Add("binary.>", (object f, Any a, Any b) => EqualityOperators.Compare(a,b,">"), doNullProp: true);
+            t.Add("binary.>", (object f, Any a, Any b) => EqualityOperators.Compare(a, b, ">"), doNullProp: true);
             t.Add("binary.<", (object f, Any a, Any b) => EqualityOperators.Compare(a, b, "<"), doNullProp: true);
             t.Add("binary.<=", (object f, Any a, Any b) => EqualityOperators.Compare(a, b, "<="), doNullProp: true);
             t.Add("binary.>=", (object f, Any a, Any b) => EqualityOperators.Compare(a, b, ">="), doNullProp: true);
@@ -136,10 +136,10 @@ namespace Hl7.FhirPath.Expressions
             t.Add("upper", (string f) => f.ToUpper(), doNullProp: true);
             t.Add("lower", (string f) => f.ToLower(), doNullProp: true);
             t.Add("toChars", (string f) => f.ToChars(), doNullProp: true);
-            t.Add("substring", (string f, long a) => f.FpSubstring((int)a, null), doNullProp: true);
+            t.Add("substring", (string f, int a) => f.FpSubstring(a, null), doNullProp: true);
             //special case: only focus should be Null propagated:
-            t.Add(new CallSignature("substring", typeof(string), typeof(string), typeof(long), typeof(long?)),
-                InvokeeFactory.WrapWithPropNullForFocus((string f, long a, long? b) => f.FpSubstring((int)a, (int?)b)));
+            t.Add(new CallSignature("substring", typeof(string), typeof(string), typeof(int), typeof(int?)),
+                InvokeeFactory.WrapWithPropNullForFocus((string f, int a, int? b) => f.FpSubstring(a, b)));
             t.Add("startsWith", (string f, string fragment) => f.StartsWith(fragment), doNullProp: true);
             t.Add("endsWith", (string f, string fragment) => f.EndsWith(fragment), doNullProp: true);
             t.Add("matches", (string f, string regex) => Regex.IsMatch(f, regex), doNullProp: true);

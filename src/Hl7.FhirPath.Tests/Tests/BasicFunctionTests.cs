@@ -12,7 +12,6 @@
 using Hl7.Fhir.ElementModel;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using P = Hl7.Fhir.Model.Primitives;
 
@@ -20,8 +19,18 @@ namespace Hl7.FhirPath.Tests
 {
     [TestClass]
     public class BasicFunctionsTest
-    {     
-       
+    {
+        private static void isB(string expr, object value = null)
+        {
+            ITypedElement dummy = ElementNode.ForPrimitive(value ?? true);
+            Assert.IsTrue(dummy.IsBoolean(expr, true));
+        }
+
+        private static object scalar(string expr)
+        {
+            ITypedElement dummy = ElementNode.ForPrimitive(true);
+            return dummy.Scalar(expr);
+        }
 
         [TestMethod]
         public void TestDynaBinding()
@@ -162,13 +171,13 @@ namespace Hl7.FhirPath.Tests
             isB("substring(2,6) = 'nald'", "Donald");
             isB("substring(2,4) = 'nald'", "Donald");
 
-            isB("substring(2,length()-3) = 'nal'","Donald");
+            isB("substring(2,length()-3) = 'nal'", "Donald");
 
             isB("substring(-1,8).empty()", "Donald");
             isB("substring(999,1).empty()", "Donald");
             isB("''.substring(0,1).empty()");
             isB("{}.substring(0,10).empty()");
-            isB("{}.substring(0,10).empty()");         
+            isB("{}.substring(0,10).empty()");
         }
 
         [TestMethod]
@@ -249,5 +258,5 @@ namespace Hl7.FhirPath.Tests
             CollectionAssert.AreEqual(new[] { "ONE", "TWO", "THREE" }, result.Select(r => r.Value.ToString()).ToArray());
         }
     }
-        
+
 }

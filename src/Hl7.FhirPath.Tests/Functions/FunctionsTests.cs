@@ -125,10 +125,10 @@ namespace HL7.FhirPath.Tests
             yield return new object[] { "{}.ofType(String).empty()", true, false };
             yield return new object[] { "('a').ofType(String).count() = 1", true, false };
             yield return new object[] { "('a').ofType('String').count() = 1", false, true }; // should throw an exception
-            yield return new object[] { "(1 | 2).ofType(`Integer64`).count() = 2", true, false };
-            yield return new object[] { "(1 | 2).ofType(System.`Integer64`).count() = 2", true, false };
-            yield return new object[] { "(1 | 2).ofType(System.Integer64).count() = 2", true, false };
-            yield return new object[] { "(1 | 2).ofType(Integer64).count() = 2", true, false };
+            yield return new object[] { "(1 | 2).ofType(`Integer`).count() = 2", true, false };
+            yield return new object[] { "(1 | 2).ofType(System.`Integer`).count() = 2", true, false };
+            yield return new object[] { "(1 | 2).ofType(System.Integer).count() = 2", true, false };
+            yield return new object[] { "(1 | 2).ofType(Integer).count() = 2", true, false };
         }
 
         public static IEnumerable<object[]> SubsettingFunctionTestcases()
