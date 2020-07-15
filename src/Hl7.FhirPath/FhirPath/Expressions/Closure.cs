@@ -9,8 +9,6 @@
 
 using Hl7.Fhir.ElementModel;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace Hl7.FhirPath.Expressions
 {
@@ -29,7 +27,7 @@ namespace Hl7.FhirPath.Expressions
             var input = new[] { root };
             newContext.SetThis(input);
             newContext.SetThat(input);
-            newContext.SetIndex(ElementNode.CreateList(IndexFromLocation(root)));
+            newContext.SetIndex(ElementNode.CreateList(0));
             newContext.SetOriginalContext(input);
             if (ctx.Container != null) newContext.SetResource(new[] { ctx.Container });
             if (ctx.RootContainer != null) newContext.SetRootResource(new[] { ctx.RootContainer });
@@ -61,8 +59,7 @@ namespace Hl7.FhirPath.Expressions
         public virtual IEnumerable<ITypedElement> ResolveValue(string name)
         {
             // First, try to directly get "normal" values
-            IEnumerable<ITypedElement> result = null;
-            _namedValues.TryGetValue(name, out result);
+            _namedValues.TryGetValue(name, out IEnumerable<ITypedElement> result);
 
             if (result != null) return result;
 
@@ -74,26 +71,6 @@ namespace Hl7.FhirPath.Expressions
             }
 
             return null;
-        }
-
-#if NETSTANDARD1_1
-        private static Regex _indexPattern = new Regex("\\[(?<index>\\d+)]$");
-#else
-        private static Regex _indexPattern = new Regex("\\[(?<index>\\d+)]$", RegexOptions.Compiled);
-#endif
-        internal static IEnumerable<ITypedElement> IndexFromLocation(ITypedElement context)
-        {
-            if (context is null)
-                return Enumerable.Empty<ITypedElement>();
-
-            if (!context.Definition?.IsCollection ?? false) // If the element is non-repeating, there is no need to evaluate the regex
-                return new[] { ElementNode.ForPrimitive(0) };
-
-            var index = _indexPattern.Match(context.Location).Groups["index"]?.Value;
-            if(string.IsNullOrEmpty(index))
-                return new[] { ElementNode.ForPrimitive(0) };
-
-            return new[] { ElementNode.ForPrimitive(int.Parse(index)) };
         }
     }
 }
