@@ -22,8 +22,6 @@ namespace Hl7.Fhir.Rest
         public byte[] Body { get; set; }
         public string Location { get; set; }
         public Uri ResponseUri { get; set; } 
-        public object LastResponse { get; set; }
-        public object LastRequest { get; set; }
 
         public EntryResponse()
         {

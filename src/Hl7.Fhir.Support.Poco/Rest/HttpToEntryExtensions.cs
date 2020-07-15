@@ -66,11 +66,13 @@ namespace Hl7.Fhir.Rest
                 return null;
         }
 
-        internal static EntryResponse ToEntryResponse(this HttpWebResponse response, byte[] body, ref EntryResponse result)
+        internal static EntryResponse ToEntryResponse(this HttpWebResponse response, byte[] body)
         {
-            result = result ?? new EntryResponse();
+            var result = new EntryResponse
+            {
+                Status = ((int)response.StatusCode).ToString()
+            };
 
-            result.Status = ((int)response.StatusCode).ToString();
             foreach (var key in response.Headers.AllKeys)
             {
                 result.Headers.Add(key, response.Headers[key]);
