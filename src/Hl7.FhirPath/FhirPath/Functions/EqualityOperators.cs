@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Hl7.FhirPath.Expressions;
 using Hl7.Fhir.Support.Utility;
+using P = Hl7.Fhir.Model.Primitives;
 
 namespace Hl7.FhirPath.Functions
 {
@@ -99,11 +100,32 @@ namespace Hl7.FhirPath.Functions
             // When that fails, the CompareTo function on each type will itself
             // report an error if they cannot handle that.
             // TODO: in the end the engine/compiler will handle this and report an overload resolution fail
-            Any.TryCoerce(ref left, ref right);
+            tryCoerce(ref left, ref right);
 
             return left is ICqlEquatable cqle ? cqle.IsEqualTo(right) : null;
         }
 
+
+        private static bool tryCoerce(ref Any left, ref Any right)
+        {
+            left = upcastOne(left, right);
+            right = upcastOne(right, left);
+
+            return left.GetType() == right.GetType();
+
+            static Any upcastOne(Any value, Any other) =>
+                value switch
+                {
+                    P.Integer _ when other is P.Long => (P.Long)(P.Integer)value,
+                    P.Integer _ when other is P.Decimal => (P.Decimal)(P.Integer)value,
+                    P.Integer _ when other is P.Quantity => (P.Quantity)(P.Integer)value,
+                    P.Long _ when other is P.Decimal => (P.Decimal)(P.Long)value,
+                    P.Long _ when other is P.Quantity => (P.Quantity)(P.Long)value,
+                    P.Decimal _ when other is P.Quantity => (P.Quantity)(P.Decimal)value,
+                    P.PartialDate _ when other is P.PartialDateTime => (P.PartialDateTime)(P.PartialDate)value,
+                    _ => value
+                };
+        }
 
         public static bool IsEquivalentTo(this IEnumerable<ITypedElement> left, IEnumerable<ITypedElement> right, bool compareNames = false)
         {
@@ -157,7 +179,7 @@ namespace Hl7.FhirPath.Functions
                 return false;
             }
 
-            bool namesAreEquivalent(ITypedElement le, ITypedElement ri)
+            static bool namesAreEquivalent(ITypedElement le, ITypedElement ri)
             {
                 if (le.Name == "id" && ri.Name == "id") return true;      // IN FHIR: don't compare 'id' elements for equivalence
                 if (le.Name != ri.Name) return false;
@@ -175,9 +197,9 @@ namespace Hl7.FhirPath.Functions
             // When that fails, the CompareTo function on each type will itself
             // report an error if they cannot handle that.
             // TODO: in the end the engine/compiler will handle this and report an overload resolution fail
-            Any.TryCoerce(ref left, ref right);
+            tryCoerce(ref left, ref right);
 
-            return left is ICqlEquatable cqle ? cqle.IsEquivalentTo(right) : false;
+            return left is ICqlEquatable cqle && cqle.IsEquivalentTo(right);
         }
 
 
@@ -194,7 +216,7 @@ namespace Hl7.FhirPath.Functions
             // When that fails, the CompareTo function on each type will itself
             // report an error if they cannot handle that.
             // TODO: in the end the engine/compiler will handle this and report an overload resolution fail
-            Any.TryCoerce(ref left, ref right);
+            tryCoerce(ref left, ref right);
 
             if (left is ICqlOrderable orderable) return interpret(orderable.CompareTo(right));
 
@@ -238,9 +260,9 @@ namespace Hl7.FhirPath.Functions
             {
                 var result = element.Value != null ? element.Value.GetHashCode() : 0;
 
-                if (element is ITypedElement)
+                if (element is ITypedElement element1)
                 {
-                    var childnames = string.Concat(((ITypedElement)element).Children().Select(c => c.Name));
+                    var childnames = string.Concat(element1.Children().Select(c => c.Name));
                     if (!string.IsNullOrEmpty(childnames))
                         result ^= childnames.GetHashCode();
                 }

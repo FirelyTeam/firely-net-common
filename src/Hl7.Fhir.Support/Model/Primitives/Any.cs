@@ -11,33 +11,12 @@
 using Hl7.Fhir.Support.Utility;
 using Hl7.Fhir.Utility;
 using System;
+using P = Hl7.Fhir.Model.Primitives;
 
 namespace Hl7.Fhir.Model.Primitives
 {
     public abstract class Any
-    {
-        public static bool TryCoerce(ref Any left, ref Any right)
-        {
-            left = upcastOne(left, right);
-            right = upcastOne(right, left);
-
-            return left.GetType() == right.GetType();
-
-            static Any upcastOne(Any value, Any other)
-            {
-                if (value is Integer && other is Long) return (Long)(Integer)value;
-                if (value is Integer && other is Decimal) return (Decimal)(Integer)value;
-                if (value is Integer && other is Quantity) return (Quantity)(Integer)value;
-                if (value is Long && other is Decimal) return (Decimal)(Long)value;
-                if (value is Long && other is Quantity) return (Quantity)(Long)value;
-                if (value is Decimal && other is Quantity) return (Quantity)(Decimal)value;
-                if (value is PartialDate && other is PartialDateTime) return (PartialDateTime)(PartialDate)value;
-
-                // nothing to upcast, return value;
-                return value;
-            }
-        }
-
+    {      
         public static bool TryGetByName(string name, out Type? result)
         {
             result = get();

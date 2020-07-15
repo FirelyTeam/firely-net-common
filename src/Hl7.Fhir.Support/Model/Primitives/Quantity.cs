@@ -211,7 +211,7 @@ namespace Hl7.Fhir.Model.Primitives
                 throw Error.NotSupported("Comparing quantities with different units is not yet supported");
             }
 
-            return decimal.Compare(Value, otherQ.Value);   // aligns with Decimal
+            return decimal.Compare(Math.Round(Value,8), Math.Round(otherQ.Value,8));   // aligns with Decimal
         }
 
 
