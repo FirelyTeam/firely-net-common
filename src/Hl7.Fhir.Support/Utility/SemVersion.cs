@@ -8,7 +8,7 @@ using System.Security.Permissions;
 #endif
 using System.Text.RegularExpressions;
 
-namespace Hl7.Fhir.Support.Utility
+namespace Hl7.Fhir.Utility
 {
     /// <summary>
     /// A semantic version implementation.

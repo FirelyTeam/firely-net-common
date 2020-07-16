@@ -28,7 +28,6 @@
 
 */
 
-using Hl7.Fhir.Support.Utility;
 using Hl7.Fhir.Validation;
 using System;
 

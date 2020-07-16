@@ -3,7 +3,7 @@ using System;
 using System.Linq;
 using Hl7.Fhir.Utility;
 
-namespace Hl7.Fhir.Support.Utility.Tests
+namespace Hl7.Fhir.Utility.Tests
 {
     [TestClass]
     public class DebugDisplayTests

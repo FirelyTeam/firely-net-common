@@ -6,7 +6,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using Hl7.Fhir.Support.Utility;
+using Hl7.Fhir.Utility;
 using System;
 using System.ComponentModel.DataAnnotations;
 
