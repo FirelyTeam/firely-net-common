@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * Copyright (c) 2015, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
@@ -6,14 +6,14 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Language;
 using Hl7.Fhir.Language.Debugging;
-using Hl7.Fhir.Model.Primitives;
-using Hl7.Fhir.Support.Model;
+using P = Hl7.Fhir.ElementModel.Types;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Hl7.Fhir.ElementModel;
 
 namespace Hl7.FhirPath.Expressions
 {
@@ -22,25 +22,25 @@ namespace Hl7.FhirPath.Expressions
         internal const string OP_PREFIX = "builtin.";
         internal static readonly int OP_PREFIX_LEN = OP_PREFIX.Length;
 
-        protected Expression(TypeInfo type)
+        protected Expression(TypeSpecifier type)
         {
             ExpressionType = type;
         }
 
-        protected Expression(TypeInfo type, ISourcePositionInfo location) : this(type)
+        protected Expression(TypeSpecifier type, ISourcePositionInfo location) : this(type)
         {
-            Location = location;           
+            Location = location;
         }
 
         public ISourcePositionInfo Location { get; }
 
-        public TypeInfo ExpressionType { get; protected set; }
+        public TypeSpecifier ExpressionType { get; protected set; }
 
         public abstract T Accept<T>(ExpressionVisitor<T> visitor, SymbolTable scope);
 
         public override bool Equals(object obj) => Equals(obj as Expression);
-        public bool Equals(Expression other) => other != null && this.GetType() == other?.GetType() && EqualityComparer<TypeInfo>.Default.Equals(ExpressionType, other.ExpressionType);
-        public override int GetHashCode() => -28965461 + EqualityComparer<TypeInfo>.Default.GetHashCode(ExpressionType);
+        public bool Equals(Expression other) => other != null && EqualityComparer<TypeSpecifier>.Default.Equals(ExpressionType, other.ExpressionType);
+        public override int GetHashCode() => -28965461 + EqualityComparer<TypeSpecifier>.Default.GetHashCode(ExpressionType);
         public static bool operator ==(Expression left, Expression right) => EqualityComparer<Expression>.Default.Equals(left, right);
         public static bool operator !=(Expression left, Expression right) => !(left == right);
     }
@@ -48,31 +48,24 @@ namespace Hl7.FhirPath.Expressions
 
     public class ConstantExpression : Expression
     {
-        public ConstantExpression(object value, TypeInfo type, ISourcePositionInfo location = null) : base(type, location)
+        public ConstantExpression(object value, TypeSpecifier type, ISourcePositionInfo location = null) : base(type, location)
         {
             if (value == null) Error.ArgumentNull("value");
+            if (value is P.Any && (value is P.Boolean || value is P.Decimal || value is P.Integer || value is P.Long || value is P.String))
+                throw new ArgumentException("Internal error: not yet ready to handle Any-based primitives in FhirPath.");
 
             Value = value;
         }
 
-        public ConstantExpression(object value, ISourcePositionInfo location = null) : base(TypeInfo.Any, location)
+        public ConstantExpression(object value, ISourcePositionInfo location = null) : base(TypeSpecifier.Any, location)
         {
             if (value == null) Error.ArgumentNull("value");
 
-            Value = Primitives.ConvertToPrimitiveValue(value);
-
-            if (Value is bool)
-                ExpressionType = TypeInfo.Boolean;
-            else if (Value is string)
-                ExpressionType = TypeInfo.String;
-            else if (Value is Int64)
-                ExpressionType = TypeInfo.Integer;
-            else if (Value is Decimal)
-                ExpressionType = TypeInfo.Decimal;
-            else if (Value is PartialDateTime)
-                ExpressionType = TypeInfo.DateTime;
-            else if (Value is PartialTime)
-                ExpressionType = TypeInfo.Time;
+            if (ElementNode.TryConvertToElementValue(value, out var systemValue))
+            {
+                Value = systemValue;
+                ExpressionType = TypeSpecifier.ForNativeType(value.GetType());
+            }
             else
                 throw Error.InvalidOperation("Internal logic error: encountered unmappable Value of type " + Value.GetType().Name);
         }
@@ -86,9 +79,9 @@ namespace Hl7.FhirPath.Expressions
 
         public override bool Equals(object obj)
         {
-            if (base.Equals(obj) && obj is ConstantExpression)
+            if (base.Equals(obj) && obj is ConstantExpression ce)
             {
-                var c = (ConstantExpression)obj;
+                var c = ce;
                 return Object.Equals(c.Value, Value);
             }
             else
@@ -103,16 +96,16 @@ namespace Hl7.FhirPath.Expressions
 
     public class FunctionCallExpression : Expression
     {
-        public FunctionCallExpression(Expression focus, string name, TypeInfo type, params Expression[] arguments) : this(focus, name, type, (IEnumerable<Expression>) arguments)
+        public FunctionCallExpression(Expression focus, string name, TypeSpecifier type, params Expression[] arguments) : this(focus, name, type, (IEnumerable<Expression>)arguments)
         {
         }
 
-        public FunctionCallExpression(Expression focus, string name, TypeInfo type, IEnumerable<Expression> arguments, ISourcePositionInfo location = null) : base(type, location)
+        public FunctionCallExpression(Expression focus, string name, TypeSpecifier type, IEnumerable<Expression> arguments, ISourcePositionInfo location = null) : base(type, location)
         {
-            if (String.IsNullOrEmpty(name)) throw Error.ArgumentNull("name");
+            if (string.IsNullOrEmpty(name)) throw Error.ArgumentNull("name");
             Focus = focus;
             FunctionName = name;
-            Arguments = arguments ?? throw Error.ArgumentNull("arguments");
+            Arguments = arguments != null ? arguments.ToArray() : throw Error.ArgumentNull("arguments");
         }
 
         public Expression Focus { get; private set; }
@@ -127,9 +120,9 @@ namespace Hl7.FhirPath.Expressions
 
         public override bool Equals(object obj)
         {
-            if (base.Equals(obj) && obj is FunctionCallExpression)
+            if (base.Equals(obj) && obj is FunctionCallExpression fce)
             {
-                var f = (FunctionCallExpression)obj;
+                var f = fce;
 
                 return f.FunctionName == FunctionName && Arguments.SequenceEqual(f.Arguments);
             }
@@ -146,20 +139,29 @@ namespace Hl7.FhirPath.Expressions
 
     public class ChildExpression : FunctionCallExpression
     {
-        public ChildExpression(Expression focus, string name) : base(focus, OP_PREFIX+"children", TypeInfo.Any, new ConstantExpression(name, TypeInfo.String))
+        public ChildExpression(Expression focus, string name) : base(focus, OP_PREFIX + "children", TypeSpecifier.Any, 
+                new ConstantExpression(name, TypeSpecifier.String))
         {
         }
 
         public string ChildName
         {
-            get { return (string)((ConstantExpression)Arguments.First()).Value; }
+            get
+            {
+                // We know, because of the constructor, that there will be one argument, which is a P.String,
+                // that contains the name of the child.
+                var arg1 = (ConstantExpression)Arguments.First();
+                //var arg1Value = arg1.Value as P.String;
+                var arg1Value = arg1.Value as string;
+                return arg1Value;
+            }
         }
     }
 
 
     public class IndexerExpression : FunctionCallExpression
     {
-        public IndexerExpression(Expression collection, Expression index) : base(collection, OP_PREFIX+"item", TypeInfo.Any, index)
+        public IndexerExpression(Expression collection, Expression index) : base(collection, OP_PREFIX + "item", TypeSpecifier.Any, index)
         {
         }
 
@@ -178,11 +180,11 @@ namespace Hl7.FhirPath.Expressions
         internal static readonly int BIN_PREFIX_LEN = BIN_PREFIX.Length;
 
 
-        public BinaryExpression(char op, Expression left, Expression right) : this(new String(op,1), left, right)
+        public BinaryExpression(char op, Expression left, Expression right) : this(new string(op, 1), left, right)
         {
         }
 
-        public BinaryExpression(string op, Expression left, Expression right) : base(AxisExpression.That, BIN_PREFIX + op, TypeInfo.Any, left, right)
+        public BinaryExpression(string op, Expression left, Expression right) : base(AxisExpression.That, BIN_PREFIX + op, TypeSpecifier.Any, left, right)
         {
         }
         public string Op
@@ -216,11 +218,11 @@ namespace Hl7.FhirPath.Expressions
         internal const string URY_PREFIX = "unary.";
         internal static readonly int URY_PREFIX_LEN = URY_PREFIX.Length;
 
-        public UnaryExpression(char op, Expression operand) : this(new String(op,1), operand)
+        public UnaryExpression(char op, Expression operand) : this(new string(op, 1), operand)
         {
         }
 
-        public UnaryExpression(string op, Expression operand) : base(AxisExpression.That, URY_PREFIX + op, TypeInfo.Any, operand)
+        public UnaryExpression(string op, Expression operand) : base(AxisExpression.That, URY_PREFIX + op, TypeSpecifier.Any, operand)
         {
         }
         public string Op
@@ -275,12 +277,12 @@ namespace Hl7.FhirPath.Expressions
 
     public class NewNodeListInitExpression : Expression
     {
-        public NewNodeListInitExpression(IEnumerable<Expression> contents) : base(TypeInfo.Any)
+        public NewNodeListInitExpression(IEnumerable<Expression> contents) : base(TypeSpecifier.Any)
         {
             Contents = contents ?? throw Error.ArgumentNull("contents");
         }
 
-        public IEnumerable<Expression> Contents { get; private set;  }
+        public IEnumerable<Expression> Contents { get; private set; }
 
         public override T Accept<T>(ExpressionVisitor<T> visitor, SymbolTable scope)
         {
@@ -288,9 +290,9 @@ namespace Hl7.FhirPath.Expressions
         }
         public override bool Equals(object obj)
         {
-            if (base.Equals(obj) && obj is NewNodeListInitExpression)
+            if (base.Equals(obj) && obj is NewNodeListInitExpression ne)
             {
-                var f = (NewNodeListInitExpression)obj;
+                var f = ne;
 
                 return f.Contents.SequenceEqual(Contents);
             }
@@ -308,7 +310,7 @@ namespace Hl7.FhirPath.Expressions
 
     public class VariableRefExpression : Expression
     {
-        public VariableRefExpression(string name, ISourcePositionInfo location = null) : base(TypeInfo.Any, location)
+        public VariableRefExpression(string name, ISourcePositionInfo location = null) : base(TypeSpecifier.Any, location)
         {
             Name = name ?? throw Error.ArgumentNull("name");
         }
@@ -321,9 +323,9 @@ namespace Hl7.FhirPath.Expressions
         }
         public override bool Equals(object obj)
         {
-            if (base.Equals(obj) && obj is VariableRefExpression)
+            if (base.Equals(obj) && obj is VariableRefExpression expression)
             {
-                var f = (VariableRefExpression)obj;
+                var f = expression;
 
                 return f.Name == Name;
             }
@@ -339,7 +341,7 @@ namespace Hl7.FhirPath.Expressions
 
     public class AxisExpression : VariableRefExpression
     {
-        public AxisExpression(string axisName) : base(OP_PREFIX+axisName)
+        public AxisExpression(string axisName) : base(OP_PREFIX + axisName)
         {
             if (axisName == null) throw Error.ArgumentNull("axisName");
         }

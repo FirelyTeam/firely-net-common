@@ -15,7 +15,7 @@ using System.Linq;
 
 namespace Hl7.Fhir.ElementModel.Adapters
 {
-    internal class TypedElementToSourceNodeAdapter : ISourceNode, IAnnotated, IExceptionSource
+    internal class TypedElementToSourceNodeAdapter : ISourceNode, IAnnotated, IExceptionSource, IResourceTypeSupplier
     {
         public readonly ITypedElement Current;
 
@@ -64,7 +64,7 @@ namespace Hl7.Fhir.ElementModel.Adapters
 
         IEnumerable<object> IAnnotated.Annotations(Type type)
         {
-            return type == typeof(TypedElementToSourceNodeAdapter) || type == typeof(ISourceNode)
+            return type == typeof(TypedElementToSourceNodeAdapter) || type == typeof(ISourceNode) || type == typeof(IResourceTypeSupplier)
                 ? (new[] { this })
                 : Current.Annotations(type);
         }

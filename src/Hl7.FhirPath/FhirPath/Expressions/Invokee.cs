@@ -6,13 +6,11 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+using Hl7.Fhir.ElementModel;
 using Hl7.FhirPath.Functions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Utility;
-using System.Reflection;
 
 namespace Hl7.FhirPath.Expressions
 {
@@ -23,22 +21,26 @@ namespace Hl7.FhirPath.Expressions
         public static readonly IEnumerable<Invokee> EmptyArgs = Enumerable.Empty<Invokee>();
 
 
-        public static IEnumerable<ITypedElement> GetThis(Closure context, IEnumerable<Invokee> args)
+        public static IEnumerable<ITypedElement> GetThis(Closure context, IEnumerable<Invokee> _)
         {
             return context.GetThis();
         }
 
-        public static IEnumerable<ITypedElement> GetContext(Closure context, IEnumerable<Invokee> arguments)
+        public static IEnumerable<ITypedElement> GetContext(Closure context, IEnumerable<Invokee> _)
         {
             return context.GetOriginalContext();
         }
 
-        public static IEnumerable<ITypedElement> GetResource(Closure context, IEnumerable<Invokee> arguments)
+        public static IEnumerable<ITypedElement> GetResource(Closure context, IEnumerable<Invokee> _)
         {
             return context.GetResource();
         }
+        public static IEnumerable<ITypedElement> GetRootResource(Closure context, IEnumerable<Invokee> arguments)
+        {
+            return context.GetRootResource();
+        }
 
-        public static IEnumerable<ITypedElement> GetThat(Closure context, IEnumerable<Invokee> args)
+        public static IEnumerable<ITypedElement> GetThat(Closure context, IEnumerable<Invokee> _)
         {
             return context.GetThat();
         }
@@ -68,6 +70,18 @@ namespace Hl7.FhirPath.Expressions
                     A lastPar = (A)(object)ctx.EvaluationContext;
                     return Typecasts.CastTo<IEnumerable<ITypedElement>>(func(lastPar));
                 }
+            };
+        }
+
+        internal static Invokee WrapWithPropNullForFocus<A, B, C, R>(Func<A, B, C, R> func)
+        {
+            return (ctx, args) =>
+            {
+                // propagate only null for focus
+                var focus = args.First()(ctx, InvokeeFactory.EmptyArgs);
+                if (!focus.Any()) return ElementNode.EmptyList;
+
+                return Wrap(func, false)(ctx, args);
             };
         }
 
@@ -187,9 +201,20 @@ namespace Hl7.FhirPath.Expressions
                 }
                 catch (Exception e)
                 {
-                    throw new InvalidOperationException("Invocation of '{0}' failed: {1}".FormatWith(functionName, e.Message));
+                    throw new InvalidOperationException(
+                        $"Invocation of {formatFunctionName(functionName)} failed: {e.Message}");
                 }
             };
+
+            string formatFunctionName(string name)
+            {
+                if (name.StartsWith(BinaryExpression.BIN_PREFIX))
+                    return $"operator '{name.Substring(BinaryExpression.BIN_PREFIX_LEN)}'";
+                else if (name.StartsWith(UnaryExpression.URY_PREFIX))
+                    return $"operator '{name.Substring(UnaryExpression.URY_PREFIX_LEN)}'";
+                else
+                    return $"function '{name}'";
+            }
         }
 
     }

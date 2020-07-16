@@ -6,6 +6,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using System;
 using System.Collections.Generic;
@@ -17,7 +18,7 @@ using System.Text.RegularExpressions;
 namespace Hl7.Fhir.Validation
 {
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-    public class InvokeIValidatableObjectAttribute : ValidationAttribute
+    public class InvokeIValidatableObjectAttribute : VersionedValidationAttribute
     {
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {

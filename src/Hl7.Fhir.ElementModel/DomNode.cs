@@ -20,7 +20,7 @@ namespace Hl7.Fhir.ElementModel
         protected List<T> ChildList = new List<T>();
 
         internal IEnumerable<T> ChildrenInternal(string name = null) =>
-            name == null ? ChildList : ChildList.Where(c => c.Name == name);
+            name == null ? ChildList : ChildList.Where(c => c.Name.MatchesPrefix(name));
 
         public T Parent { get; protected set; }
 
@@ -28,20 +28,22 @@ namespace Hl7.Fhir.ElementModel
 
         public T this[int index] => ChildList[index];
 
-        private readonly Lazy<List<object>> _annotations = new Lazy<List<object>>(() => new List<object>());
-        protected List<object> AnnotationsInternal { get { return _annotations.Value; } }
+        #region << Annotations >>
+        private readonly Lazy<AnnotationList> _annotations = new Lazy<AnnotationList>(() => new AnnotationList());
+        protected AnnotationList AnnotationsInternal { get { return _annotations.Value; } }
 
         protected bool HasAnnotations =>
-            _annotations.IsValueCreated == true && _annotations.Value.Any();
+            _annotations.IsValueCreated == true && _annotations.Value.IsEmpty == false;
 
         public void AddAnnotation(object annotation)
         {
-            AnnotationsInternal.Add(annotation);
+            AnnotationsInternal.AddAnnotation(annotation);
         }
 
         public void RemoveAnnotations(Type type)
         {
-            AnnotationsInternal.RemoveOfType(type);
+            AnnotationsInternal.RemoveAnnotations(type);
         }
+        #endregion
     }
 }

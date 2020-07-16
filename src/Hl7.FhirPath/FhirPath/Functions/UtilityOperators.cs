@@ -11,9 +11,7 @@ namespace Hl7.FhirPath.Functions
         public static IEnumerable<ITypedElement> Extension(this IEnumerable<ITypedElement> focus, string url)
         {
             return focus.Navigate("extension")
-                .Where(es => es.Navigate("url")
-                .Single()
-                .IsEqualTo(ElementNode.ForPrimitive(url)));
+                .Where(es => es.Children("url").SingleOrDefault().Value as string == url);
         }
 
         public static IEnumerable<ITypedElement> Trace(this IEnumerable<ITypedElement> focus, string name, EvaluationContext ctx)

@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Hl7.FhirPath;
 using Hl7.FhirPath.Sprache;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Hl7.FhirPath.Tests
 {
@@ -14,14 +13,14 @@ namespace Hl7.FhirPath.Tests
         {
             SucceedsWith(parser, input, t =>
             {
-                Assert.Single(t);
-                Assert.Equal(expectedResult, t.Single());
+                Assert.AreEqual(1,t.Count());
+                Assert.AreEqual(expectedResult, t.Single());
             });
         }
 
         public static void SucceedsWithMany<T>(Parser<IEnumerable<T>> parser, string input, IEnumerable<T> expectedResult)
         {
-            SucceedsWith(parser, input, t => Assert.True(t.SequenceEqual(expectedResult)));
+            SucceedsWith(parser, input, t => Assert.IsTrue(t.SequenceEqual(expectedResult)));
         }
 
         public static void SucceedsWithAll(Parser<IEnumerable<char>> parser, string input)
@@ -50,7 +49,7 @@ namespace Hl7.FhirPath.Tests
 
         public static void FailsAt<T>(Parser<T> parser, string input, int position)
         {
-            FailsWith(parser, input, f => Assert.Equal(position, f.Remainder.Position));
+            FailsWith(parser, input, f => Assert.AreEqual(position, f.Remainder.Position));
         }
 
         public static void FailsWith<T>(Parser<T> parser, string input, Action<IResult<T>> resultAssertion)
@@ -74,12 +73,12 @@ namespace Hl7.FhirPath.Tests
 
         public static void SucceedsMatch<T>(Parser<T> parser, string input)
         {
-            SucceedsWith<T>(parser, input, result => Assert.Equal(input, (IEnumerable<char>)result));
+            SucceedsWith<T>(parser, input, result => Assert.AreEqual(input, (IEnumerable<char>)result));
         }
 
         public static void SucceedsMatch<T>(Parser<T> parser, string input, T match)
         {
-            SucceedsWith<T>(parser, input, result => Assert.Equal(match, result));
+            SucceedsWith<T>(parser, input, result => Assert.AreEqual(match, result));
         }
 
         public static void FailsMatch<T>(Parser<T> parser, string input)
@@ -89,7 +88,7 @@ namespace Hl7.FhirPath.Tests
 
         public static void FailsMatch<T>(Parser<T> parser, string input, T match)
         {
-            SucceedsWith<T>(parser, input, result => Assert.NotEqual(match, result));
+            SucceedsWith<T>(parser, input, result => Assert.AreNotEqual(match, result));
         }
     }
 

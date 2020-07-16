@@ -7,13 +7,12 @@
  */
 
 using Hl7.Fhir.Specification;
-using Hl7.Fhir.Support.Model;
 using Hl7.Fhir.Utility;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.ElementModel
 {
@@ -24,15 +23,79 @@ namespace Hl7.Fhir.ElementModel
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static ITypedElement ForPrimitive(object value) => new PrimitiveElement(value);
+        // HACK: For now, allow a Quantity (which is NOT a primitive) in the .Value property
+        // of ITypedElement. This is a temporary situation to make a quick & dirty upgrade of
+        // FP to Normative (with Quantity support) possible.
+        public static ITypedElement ForPrimitive(object value)
+        {
+            return value switch
+            {
+                P.Quantity q => PrimitiveElement.ForQuantity(q),
+                _ => new PrimitiveElement(value, useFullTypeName:true)
+            };
+        }
+
+        /// <summary>
+        /// Converts a .NET primitive to the expected object value to use in the
+        /// value property of ITypedElement.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="primitiveValue"></param>
+        /// <returns></returns>
+        public static bool TryConvertToElementValue(object value, out object primitiveValue)
+        {
+            primitiveValue = conv();
+            return primitiveValue != null;
+
+            object conv()
+            {
+                // NOTE: Keep Any.TryConvertToSystemValue, TypeSpecifier.TryGetNativeType and TypeSpecifier.ForNativeType in sync
+                switch (value)
+                {
+                    case P.Any a:
+                        return a;
+                    case bool b:
+                        return b;
+                    case string s:
+                        return s;
+                    case char c:
+                        return new string(c, 1);
+                    case int _:
+                    case short _:
+                    case ushort _:
+                    case uint _:
+                        return Convert.ToInt32(value);
+                    case long _:
+                    case ulong _:
+                        return Convert.ToInt64(value);
+                    case DateTimeOffset dto:
+                        return P.DateTime.FromDateTimeOffset(dto);
+                    case float _:
+                    case double _:
+                    case decimal _:
+                        return Convert.ToDecimal(value);
+                    case Enum en:
+                        return en.GetLiteral();
+                    case Uri u:
+                        return u.OriginalString;
+                    default:
+                        return null;
+                }
+            }
+        }
 
         /// <summary>
         /// Create a fixed length set of values (but also support variable number of parameter values)
         /// </summary>
         /// <param name="values"></param>
         /// <returns></returns>
-        public static IEnumerable<ITypedElement> CreateList(params object[] values) => values != null
-                ? values.Select(value => value == null ? null : value is ITypedElement ? (ITypedElement)value : ForPrimitive(value))
+        public static IEnumerable<ITypedElement> CreateList(params object[] values) => 
+            values != null
+                ? values.Select(value => value == null 
+                    ? null 
+                    : value is ITypedElement element
+                        ? element 
+                        : ForPrimitive(value))
                 : EmptyList;
 
         /// <summary>
@@ -42,7 +105,7 @@ namespace Hl7.Fhir.ElementModel
         /// <param name="values"></param>
         /// <returns></returns>
         public static IEnumerable<ITypedElement> CreateList(IEnumerable<object> values) => values != null
-                ? values.Select(value => value == null ? null : value is ITypedElement ? (ITypedElement)value : ForPrimitive(value))
+                ? values.Select(value => value == null ? null : value is ITypedElement element ? element : ForPrimitive(value))
                 : EmptyList;
 
         public static readonly IEnumerable<ITypedElement> EmptyList = Enumerable.Empty<ITypedElement>();
@@ -130,11 +193,16 @@ namespace Hl7.Fhir.ElementModel
             {
                 if (child.Definition.IsResource || child.Definition.Type.Length > 1)
                 {
-                    // We are in a situation where we are on an polymorphic element, but the caller did not specify
-                    // the instance type.  We can try to auto-set it by deriving it from the instance's type, if it is a primitive
-                    if (child.Value != null && Primitives.TryGetPrimitiveTypeName(child.Value.GetType(), out string instanceType))
-                        child.InstanceType = instanceType;
-                    else
+                    // [EK20190822] This functionality has been removed since it heavily depends on knowledge about
+                    // FHIR types, it would automatically try to derive a *FHIR* type from the given child.Value,
+                    // however, this would not work correctly if the model used is something else than FHIR, 
+                    // so this cannot be expected to work correctly in general, and I have chosen to remove
+                    // this.
+                    //// We are in a situation where we are on an polymorphic element, but the caller did not specify
+                    //// the instance type.  We can try to auto-set it by deriving it from the instance's type, if it is a primitive
+                    //if (child.Value != null && IsSupportedValue(child.Value))
+                    //    child.InstanceType = TypeSpecifier.ForNativeType(child.Value.GetType()).Name;
+                    //else
                         throw Error.Argument("The ElementNode given should have its InstanceType property set, since the element is a choice or resource.");
                 }
                 else
@@ -145,6 +213,7 @@ namespace Hl7.Fhir.ElementModel
                 ChildList.Add(child);
             else
                 ChildList.Insert(position.Value, child);
+
         }
 
         public static ElementNode Root(IStructureDefinitionSummaryProvider provider, string type, string name=null, object value=null)

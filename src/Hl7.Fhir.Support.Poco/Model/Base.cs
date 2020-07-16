@@ -27,25 +27,23 @@
   
 */
 
-
-
-using Hl7.Fhir.Validation;
+using Hl7.Fhir.Introspection;
+using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using Hl7.Fhir.Introspection;
 using System.Runtime.Serialization;
-using Hl7.Fhir.Utility;
 
 namespace Hl7.Fhir.Model
 {
 #if !NETSTANDARD1_1
     [Serializable]
 #endif
-    [InvokeIValidatableObject]
-    [System.Runtime.Serialization.DataContract]
-    public abstract class Base : Hl7.Fhir.Validation.IValidatableObject, IDeepCopyable, IDeepComparable, IAnnotated, IAnnotatable
+    [FhirType("Base")]
+    [DataContract]
+    public abstract class Base : Validation.IValidatableObject, IDeepCopyable, IDeepComparable, IAnnotated, IAnnotatable, INotifyPropertyChanged
     {
         public abstract bool IsExactly(IDeepComparable other);
         public abstract bool Matches(IDeepComparable pattern);
@@ -63,7 +61,6 @@ namespace Hl7.Fhir.Model
                 // if (UserData != null) dest.UserData = new Dictionary<string, object>(UserData);
                 if (_annotations.IsValueCreated)
                 {
-                    dest.annotations.Clear();
                     dest.annotations.AddRange(annotations);
                 }
 
@@ -71,7 +68,7 @@ namespace Hl7.Fhir.Model
                 if (UserData != null) dest.UserData = new Dictionary<string, object>(UserData);
 #pragma warning restore 618
 
-               // if (FhirComments != null) dest.FhirComments = new List<string>(FhirComments);
+                // if (FhirComments != null) dest.FhirComments = new List<string>(FhirComments);
                 return dest;
             }
             else
@@ -85,10 +82,9 @@ namespace Hl7.Fhir.Model
             return Enumerable.Empty<ValidationResult>();
         }
 
-#region << Annotations and UserData >>
+        #region << Annotations and UserData >>
         private Dictionary<string, object> _userData = new Dictionary<string, object>();
 
-        [NotMapped]
         [Obsolete("Use the typed interface provided by IAnnotatable instead")]
         public Dictionary<string, object> UserData
         {
@@ -96,8 +92,8 @@ namespace Hl7.Fhir.Model
             private set { _userData = value; }
         }
 
-        private Lazy<List<object>> _annotations = new Lazy<List<object>>(() => new List<object>());
-        private List<object> annotations { get { return _annotations.Value; } }
+        private readonly Lazy<AnnotationList> _annotations = new Lazy<AnnotationList>(() => new AnnotationList());
+        private AnnotationList annotations { get { return _annotations.Value; } }
 
         public IEnumerable<object> Annotations(Type type)
         {
@@ -106,22 +102,32 @@ namespace Hl7.Fhir.Model
 
         public void AddAnnotation(object annotation)
         {
-            annotations.Add(annotation);
+            annotations.AddAnnotation(annotation);
         }
 
         public void RemoveAnnotations(Type type)
         {
-            annotations.RemoveOfType(type);
+            annotations.RemoveAnnotations(type);
         }
+        #endregion
 
-#endregion
 
-        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+        #region INotifyPropertyChanged
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
         protected void OnPropertyChanged(String property)
         {
-            PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(property));
+            // No need to create event arguments w/o subscribers
+            //PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
+            var handler = PropertyChanged;
+            if (!(handler is null))
+            {
+                handler.Invoke(this, new PropertyChangedEventArgs(property));
+            }
         }
 
+        #endregion
 
         public abstract string TypeName { get; }
 
@@ -132,7 +138,6 @@ namespace Hl7.Fhir.Model
         /// First returns child nodes inherited from any base class(es), recursively.
         /// Finally returns child nodes defined by the current class.
         /// </summary>
-        [NotMapped]
         public virtual IEnumerable<Base> Children { get { return Enumerable.Empty<Base>(); } }
 
         /// <summary>
@@ -143,7 +148,6 @@ namespace Hl7.Fhir.Model
         /// First returns child nodes inherited from any base class(es), recursively.
         /// Finally returns child nodes defined by the current class.
         /// </summary>
-        [NotMapped]
         public virtual IEnumerable<ElementValue> NamedChildren => Enumerable.Empty<ElementValue>();
     }
 }

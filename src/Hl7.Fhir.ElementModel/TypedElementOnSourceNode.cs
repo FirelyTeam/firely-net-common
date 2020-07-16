@@ -6,9 +6,8 @@
  * available at https://github.com/FirelyTeam/fhir-net-api/blob/master/LICENSE
  */
 
-using Hl7.Fhir.Serialization;
+using P = Hl7.Fhir.ElementModel.Types;
 using Hl7.Fhir.Specification;
-using Hl7.Fhir.Support.Model;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
@@ -18,6 +17,9 @@ namespace Hl7.Fhir.ElementModel
 {
     internal class TypedElementOnSourceNode : ITypedElement, IAnnotated, IExceptionSource, IShortPathGenerator
     {
+        private const string XHTML_INSTANCETYPE = "xhtml";
+        private const string XHTML_DIV_TAG_NAME = "div";
+
         public TypedElementOnSourceNode(ISourceNode source, string type, IStructureDefinitionSummaryProvider provider, TypedElementSettings settings = null)
         {
             if (source == null) throw Error.ArgumentNull(nameof(source));
@@ -29,17 +31,17 @@ namespace Hl7.Fhir.ElementModel
                 ies.ExceptionHandler = (o, a) => ExceptionHandler.NotifyOrThrow(o, a);
 
             ShortPath = source.Name;
-            Source = source;
+            _source = source;
             (InstanceType, Definition) = buildRootPosition(type);
         }
 
         private (string instanceType, IElementDefinitionSummary definition) buildRootPosition(string type)
         {
-            var rootType = type ?? Source.GetResourceTypeIndicator();
+            var rootType = type ?? _source.GetResourceTypeIndicator();
             if (rootType == null)
             {
                 if (_settings.ErrorMode == TypedElementSettings.TypeErrorMode.Report)
-                    throw Error.Format(nameof(type), $"Cannot determine the type of the root element at '{Source.Location}', " +
+                    throw Error.Format(nameof(type), $"Cannot determine the type of the root element at '{_source.Location}', " +
                         $"please supply a type argument.");
                 else
                     return (rootType, null);
@@ -58,14 +60,14 @@ namespace Hl7.Fhir.ElementModel
             if (elementType.IsAbstract)
                 throw Error.Argument(nameof(elementType), $"The type of a node must be a concrete type, '{elementType.TypeName}' is abstract.");
 
-            var rootTypeDefinition = ElementDefinitionSummary.ForRoot(elementType, Source.Name);
+            var rootTypeDefinition = ElementDefinitionSummary.ForRoot(elementType, _source.Name);
             return (rootType, rootTypeDefinition);
         }
 
 
         private TypedElementOnSourceNode(TypedElementOnSourceNode parent, ISourceNode source, IElementDefinitionSummary definition, string instanceType, string prettyPath)
         {
-            Source = source;
+            _source = source;
             ShortPath = prettyPath;
             Provider = parent.Provider;
             ExceptionHandler = parent.ExceptionHandler;
@@ -92,7 +94,7 @@ namespace Hl7.Fhir.ElementModel
 
         public string InstanceType { get; private set; }
 
-        private readonly ISourceNode Source;
+        private readonly ISourceNode _source;
 
         public readonly IStructureDefinitionSummaryProvider Provider;
 
@@ -100,13 +102,64 @@ namespace Hl7.Fhir.ElementModel
 
         public IElementDefinitionSummary Definition { get; private set; }
 
-        public string Name => Definition?.ElementName ?? Source.Name;
+        public string Name => Definition?.ElementName ?? _source.Name;
+
+        // [EK, 20190822] This is a temporary fix - it brings information in the ElementModel about which
+        // FHIR primitive type uses which system type, so a mapping from FHIR.* -> System.*
+        // This knowledge is probably needed elsewhere too, and conversely, ElementMode should
+        // not be so tightly bound to FHIR here.  If we are going to support V2 or other models,
+        // we'd need the same mapping for V2.* -> System.*, so this should actually be pluggable.
+        // Maybe get this from the IStructureDefinitionSummaryProvider?  That machine knows what
+        // model it is dealing with, so should have knowledge of these mappings.
+        // The same holds true for our documentation in the header of ITypedElement, this shows
+        // only these mappings, but it should not be bound to a single model.
+        //
+        // In fact one could derive this dynamically from the structure definition, by looking
+        // at the type of the "value" element (e.g. String.value). Although this differs in 
+        // R3 and R4, these value (and url and id elements by the way) will indicate which type
+        // of system types there are, implicitly specifying the mapping between primitive
+        // FHIR types and system types.
+        private static Type tryMapFhirPrimitiveTypeToSystemType(string fhirType)
+        {
+            switch (fhirType)
+            {
+                case "boolean":
+                    return typeof(P.Boolean);
+                case "integer":
+                case "unsignedInt":
+                case "positiveInt":
+                    return typeof(P.Integer);
+                case "time":
+                    return typeof(P.Time);
+                case "date":
+                    return typeof(P.Date);
+                case "instant":
+                case "dateTime":
+                    return typeof(P.DateTime);
+                case "decimal":
+                    return typeof(P.Decimal);
+                case "string":
+                case "code":
+                case "id":
+                case "uri":
+                case "oid":
+                case "uuid":
+                case "canonical":
+                case "url":
+                case "markdown":
+                case "base64Binary":
+                case "xhtml":
+                    return typeof(P.String);
+                default:
+                    return null;
+            }
+        }
 
         public object Value
         {
             get
             {
-                string sourceText = Source.Text;
+                string sourceText = _source.Text;
 
                 if (sourceText == null) return null;
 
@@ -114,21 +167,29 @@ namespace Hl7.Fhir.ElementModel
                 // for current node), all we can do is return the underlying string value
                 if (InstanceType == null) return sourceText;
 
-                if (!Primitives.IsPrimitive(InstanceType))
+                var ts = tryMapFhirPrimitiveTypeToSystemType(InstanceType);
+                if (ts == null)
                 {
-                    raiseTypeError($"Since type {InstanceType} is not a primitive, it cannot have a value", Source, location: Source.Location);
+                    raiseTypeError($"Since type {InstanceType} is not a primitive, it cannot have a value", _source, location: _source.Location);
                     return null;
+                }
+
+                // Type might still be a custom "primitive" type for logical models
+                if (Uri.IsWellFormedUriString(InstanceType, UriKind.Absolute))
+                {
+                    var summary = Provider.Provide(InstanceType);
+                    var valueType = summary?.GetElements().FirstOrDefault(e => e.ElementName.Equals("value"))?.Type.FirstOrDefault()?.GetTypeName();
+                    if (!P.Any.TryGetSystemTypeByName(valueType, out ts))
+                        throw new InvalidOperationException($"Cannot figure out what the primitive type is for the value of logical type '{InstanceType}'.");
                 }
 
                 // Finally, we have a (potentially) unparsed string + type info
                 // parse this primitive into the desired type
-                try
+                if (P.Any.TryParse(sourceText, ts, out var val))
+                    return val;
+                else
                 {
-                    return PrimitiveTypeConverter.FromSerializedValue(sourceText, InstanceType);
-                }
-                catch (FormatException fe)
-                {
-                    raiseTypeError($"Literal '{sourceText}' cannot be interpreted as a {InstanceType}: '{fe.Message}'.", Source, location: Source.Location);
+                    raiseTypeError($"Literal '{sourceText}' cannot be parsed as a {InstanceType}.", _source, location: _source.Location);
                     return sourceText;
                 }
             }
@@ -153,17 +214,35 @@ namespace Hl7.Fhir.ElementModel
             {
                 var suffix = current.Name.Substring(info.ElementName.Length);
 
-                if (String.IsNullOrEmpty(suffix))
+                if (string.IsNullOrEmpty(suffix))
                 {
                     raiseTypeError($"Choice element '{current.Name}' is not suffixed with a type.", current, location: current.Location);
                     instanceType = null;
                 }
                 else
                 {
-                    instanceType = info.Type.OfType<IStructureDefinitionReference>().Select(t => t.ReferredType).FirstOrDefault(t => String.Compare(t, suffix, StringComparison.OrdinalIgnoreCase) == 0);
+                    instanceType = info.Type
+                        .OfType<IStructureDefinitionReference>()
+                        .Select(t => t.ReferredType)
+                        .FirstOrDefault(t => string.Compare(t, suffix, System.StringComparison.OrdinalIgnoreCase) == 0);
 
-                    if (String.IsNullOrEmpty(instanceType))
+                    if (string.IsNullOrEmpty(instanceType))
                         raiseTypeError($"Choice element '{current.Name}' is suffixed with unexpected type '{suffix}'", current, location: current.Location);
+                }
+            }
+            else if (info.Representation == XmlRepresentation.TypeAttr) // May be used by models other then FHIR, e.g. CCDA represented by a StructureDefinition
+            {
+                if (info.Type.Count() == 1)
+                {
+                    instanceType = info.Type.Single().GetTypeName();
+                }
+                else
+                {
+                    var typeName = current.Children("type").FirstOrDefault()?.Text;
+                    if (typeName != null)
+                        instanceType = info.Type.Where(type => typeFromLogicalModelCanonical(type).Equals(typeName)).FirstOrDefault()?.GetTypeName();
+                    else
+                        instanceType = info.DefaultTypeName;
                 }
             }
             else
@@ -173,6 +252,13 @@ namespace Hl7.Fhir.ElementModel
             }
 
             return instanceType;
+        }
+
+        private string typeFromLogicalModelCanonical(ITypeSerializationInfo info)
+        {
+            var type = info.GetTypeName();
+            var pos = type.LastIndexOf('/'); // Match the "raw" type name from the complete type name of the logical model type (absolute url) 
+            return pos > -1 ? type.Substring(pos + 1) : type;
         }
 
         private bool tryGetBySuffixedName(Dictionary<string, IElementDefinitionSummary> dis, string name, out IElementDefinitionSummary info)
@@ -237,12 +323,35 @@ namespace Hl7.Fhir.ElementModel
                 var prettyPath =
                  hit && !info.IsCollection ? $"{ShortPath}.{info.ElementName}" : $"{ShortPath}.{scan.Name}[{_nameIndex}]";
 
+                // Special condition for ccda.
+                // If we encounter a xhtml node in a ccda document we will flatten all childnodes
+                // and use their content to build up the xml.
+                // The xml will be put in this node and children will be ignored.
+                if (instanceType == XHTML_INSTANCETYPE && info.Representation == XmlRepresentation.CdaText)
+                {
+#pragma warning disable CS0618 // Type or member is obsolete
+                    var xmls = scan.Children().Select(c => c.Annotation<ICdaInfoSupplier>()?.XHtmlText);
+#pragma warning restore CS0618 // Type or member is obsolete
+
+                    var source = SourceNode.Valued(scan.Name, string.Join(string.Empty, xmls));
+                    yield return new TypedElementOnSourceNode(this, source, info, instanceType, prettyPath);
+                    continue;
+                }
+
                 yield return new TypedElementOnSourceNode(this, scan, info, instanceType, prettyPath);
             }
         }
 
         public IEnumerable<ITypedElement> Children(string name = null)
         {
+            // If we have an xhtml typed node and there is not a div tag around the content
+            // then we will not enumerate through the children of this node, since there will be no types
+            // matching the html tags.
+            if (this.InstanceType == XHTML_INSTANCETYPE && Name != XHTML_DIV_TAG_NAME)
+            {
+                return Enumerable.Empty<ITypedElement>();
+            }
+
             var childElementDefs = this.ChildDefinitions(Provider).ToDictionary(c => c.ElementName);
 
             if (Definition != null && !childElementDefs.Any())
@@ -250,7 +359,7 @@ namespace Hl7.Fhir.ElementModel
                 // No type information available for the type representing the children....
 
                 if (InstanceType != null && _settings.ErrorMode == TypedElementSettings.TypeErrorMode.Report)
-                    raiseTypeError($"Encountered unknown type '{InstanceType}'", Source, location: Source.Location);
+                    raiseTypeError($"Encountered unknown type '{InstanceType}'", _source, location: _source.Location);
 
                 // Don't go on with the (untyped) children, unless explicitly told to do so
                 if (_settings.ErrorMode != TypedElementSettings.TypeErrorMode.Passthrough)
@@ -258,16 +367,16 @@ namespace Hl7.Fhir.ElementModel
                 else
                     // Ok, pass through the untyped members, but since there is no type information, 
                     // don't bother to run the additional rules
-                    return enumerateElements(childElementDefs, Source, name);
+                    return enumerateElements(childElementDefs, _source, name);
             }
             else
-                return runAdditionalRules(enumerateElements(childElementDefs, Source, name));
+                return runAdditionalRules(enumerateElements(childElementDefs, _source, name));
         }
 
         private IEnumerable<ITypedElement> runAdditionalRules(IEnumerable<ITypedElement> children)
         {
-#pragma warning disable 612,618
-            var additionalRules = Source.Annotations(typeof(AdditionalStructuralRule));
+#pragma warning disable 612, 618
+            var additionalRules = _source.Annotations(typeof(AdditionalStructuralRule));
             var stateBag = new Dictionary<AdditionalStructuralRule, object>();
             foreach (var child in children)
             {
@@ -280,25 +389,28 @@ namespace Hl7.Fhir.ElementModel
 
                 yield return child;
             }
-#pragma warning restore 612,618
+#pragma warning restore 612, 618
         }
 
-        public string Location => Source.Location;
+        public string Location => _source.Location;
 
         public string ShortPath { get; private set; }
 
         public override string ToString() =>
-            $"{(InstanceType != null ? ($"[{InstanceType}] ") : "")}{Source.ToString()}";
+            $"{(InstanceType != null ? ($"[{InstanceType}] ") : "")}{_source}";
 
         public IEnumerable<object> Annotations(Type type)
         {
+#pragma warning disable IDE0046 // Convert to conditional expression
             if (type == typeof(TypedElementOnSourceNode) || type == typeof(ITypedElement) || type == typeof(IShortPathGenerator))
+#pragma warning restore IDE0046 // Convert to conditional expression
                 return new[] { this };
             else
-                return Source.Annotations(type);
+                return _source.Annotations(type);
         }
     }
 
     [Obsolete("This class is used for internal purposes and is subject to change without notice. Don't use.")]
     public delegate object AdditionalStructuralRule(ITypedElement node, IExceptionSource ies, object state);
 }
+

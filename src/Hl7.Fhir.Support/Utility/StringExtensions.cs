@@ -148,5 +148,11 @@ namespace Hl7.Fhir.Utility
                 (prefixMatch && text.StartsWith(prefix.TrimEnd('*')));     // prefix scan (choice types)
 
         }
+
+        public static string EnsureEndsWith(this string original, string toEndWith)
+        {
+            original = original ?? string.Empty;
+            return original + (original.EndsWith(toEndWith) ? string.Empty : toEndWith);
+        }
     }
 }

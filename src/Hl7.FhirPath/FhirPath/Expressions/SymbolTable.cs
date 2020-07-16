@@ -104,16 +104,6 @@ namespace Hl7.FhirPath.Expressions
             return result;
         }
 
-
-        internal Invokee Get(string name, IEnumerable<Type> argumentTypes)
-        {
-            TableEntry entry = _entries.SingleOrDefault(e => e.Signature.Matches(name, argumentTypes));
-
-            if (entry == null && Parent != null) return Parent.Get(name, argumentTypes);
-
-            return entry != null ? entry.Body : null;
-        }
-
         internal Invokee DynamicGet(string name, IEnumerable<object> args)
         {
             TableEntry entry = _entries.FirstOrDefault(e => e.Signature.DynamicMatches(name, args));
@@ -126,12 +116,7 @@ namespace Hl7.FhirPath.Expressions
 
 
     public static class SymbolTableExtensions
-    {
-        internal static Invokee Get(this SymbolTable table, CallSignature signature)
-        {
-            return table.Get(signature.Name, signature.ArgumentTypes);
-        }
-
+    {    
         public static void Add<R>(this SymbolTable table, string name, Func<R> func)
         {
             table.Add(new CallSignature(name, typeof(R)), InvokeeFactory.Wrap(func));
