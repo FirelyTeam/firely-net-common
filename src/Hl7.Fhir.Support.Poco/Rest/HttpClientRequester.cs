@@ -8,8 +8,6 @@
 
 using Hl7.Fhir.Utility;
 using System;
-using System.IO.Compression;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
@@ -34,9 +32,6 @@ namespace Hl7.Fhir.Rest
 
 
         public EntryResponse LastResult { get; private set; }
-        public HttpStatusCode? LastStatusCode => LastResponse?.StatusCode;
-        public HttpResponseMessage LastResponse { get; private set; }
-        public HttpRequestMessage LastRequest { get; private set; }
 
         public EntryResponse Execute(EntryRequest interaction)
         {
@@ -48,41 +43,30 @@ namespace Hl7.Fhir.Rest
             if (interaction == null) throw Error.ArgumentNull(nameof(interaction));
             bool compressRequestBody = Settings.CompressRequestBody;
 
-            using (var requestMessage = interaction.ToHttpRequestMessage(BaseUrl,Settings))
-            {            
+            using var requestMessage = interaction.ToHttpRequestMessage(BaseUrl, Settings);
+            if (Settings.PreferCompressedResponses)
+            {
+                requestMessage.Headers.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
+                requestMessage.Headers.AcceptEncoding.Add(new StringWithQualityHeaderValue("deflate"));
+            }
 
-                if (Settings.PreferCompressedResponses)
-                {
-                    requestMessage.Headers.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
-                    requestMessage.Headers.AcceptEncoding.Add(new StringWithQualityHeaderValue("deflate"));
-                }
+            byte[] outgoingBody = null;
+            if (requestMessage.Method == HttpMethod.Post || requestMessage.Method == HttpMethod.Put)
+            {
+                outgoingBody = await requestMessage.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+            }
 
-                LastRequest = requestMessage;
+            using var response = await Client.SendAsync(requestMessage).ConfigureAwait(false);
+            try
+            {
+                var body = await response.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
 
-                byte[] outgoingBody = null;
-                if (requestMessage.Method == HttpMethod.Post || requestMessage.Method == HttpMethod.Put)
-                {
-                    outgoingBody = await requestMessage.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
-                }
-
-                using (var response = await Client.SendAsync(requestMessage).ConfigureAwait(false))
-                {
-                    try
-                    {
-                        var body = await response.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
-
-                        LastResponse = response;
-
-                        LastResult = response.ToEntryResponse(body);
-                        return LastResult;
-
-
-                    }
-                    catch (AggregateException ae)
-                    {
-                        throw ae.GetBaseException();
-                    }
-                }
+                LastResult = response.ToEntryResponse(body);
+                return LastResult;
+            }
+            catch (AggregateException ae)
+            {
+                throw ae.GetBaseException();
             }
         }
 

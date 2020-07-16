@@ -50,11 +50,6 @@ namespace Hl7.Fhir.Rest
                 request.Headers["Accept-Encoding"] = "gzip, deflate";
             }
 
-            var result = new EntryResponse
-            {
-                LastRequest = request
-            };
-
             BeforeRequest?.Invoke(request, interaction.RequestBodyContent);
 
             // Write the body to the output
@@ -68,12 +63,10 @@ namespace Hl7.Fhir.Rest
                 {
                     //Read body before we call the hook, so the hook cannot read the body before we do
                     var inBody = readBody(webResponse);
-
-                    result.LastResponse = webResponse;
                     AfterResponse?.Invoke(webResponse, inBody);
+                    
+                    return webResponse.ToEntryResponse(inBody);
 
-                    webResponse.ToEntryResponse(inBody, ref result);
-                    return result;
                 }
                 catch (AggregateException ae)
                 {
