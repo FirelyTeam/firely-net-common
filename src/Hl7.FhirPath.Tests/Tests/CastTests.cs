@@ -25,7 +25,7 @@ namespace Hl7.FhirPath.Tests
         static readonly IEnumerable<ITypedElement> collection = ElementNode.CreateList(4, 5, complex);
         static readonly IEnumerable<ITypedElement> singleV = ElementNode.CreateList(4L);
         static readonly IEnumerable<ITypedElement> singleC = ElementNode.CreateList(complex);
-        static readonly IEnumerable<ITypedElement> emptyColl = ElementNode.EMPTYLIST;
+        static readonly IEnumerable<ITypedElement> emptyColl = ElementNode.EmptyList;
 
         [TestMethod]
         public void TestUnbox()
@@ -48,7 +48,7 @@ namespace Hl7.FhirPath.Tests
         public void CastFromNull()
         {
             checkCast<object>(null, null);
-            checkCast<IEnumerable<ITypedElement>>(null, ElementNode.EMPTYLIST);
+            checkCast<IEnumerable<ITypedElement>>(null, ElementNode.EmptyList);
             checkCast<ITypedElement>(null, null);
             //Assert.IsFalse(Typecasts.CanCastTo(null, typeof(bool)));
             checkCast<bool?>(null, null);
