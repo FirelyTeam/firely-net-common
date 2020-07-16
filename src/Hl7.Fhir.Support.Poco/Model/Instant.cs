@@ -32,7 +32,6 @@ using Hl7.Fhir.Introspection;
 using System.Runtime.Serialization;
 using Hl7.Fhir.Specification;
 using System.Text.RegularExpressions;
-using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Model
 {
@@ -92,10 +91,6 @@ namespace Hl7.Fhir.Model
         public static Instant Now()
         {
             return new Instant(DateTimeOffset.Now);
-        }
-
-        public P.DateTime ToPartialDateTime() => 
-            Value != null ? P.DateTime.FromDateTimeOffset(Value.Value) : null;
-
+        }     
     }
 }

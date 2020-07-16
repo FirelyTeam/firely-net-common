@@ -35,7 +35,6 @@ using Hl7.Fhir.Specification;
 using System;
 using Hl7.Fhir.Serialization;
 using System.Text.RegularExpressions;
-using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Model
 {
@@ -90,17 +89,17 @@ namespace Hl7.Fhir.Model
 
 
         public FhirDateTime(int year, int month, int day)
-            : this(String.Format(System.Globalization.CultureInfo.InvariantCulture, FMT_YEARMONTHDAY, year, month, day))
+            : this(string.Format(System.Globalization.CultureInfo.InvariantCulture, FMT_YEARMONTHDAY, year, month, day))
         {
         }
 
         public FhirDateTime(int year, int month)
-            : this(String.Format(System.Globalization.CultureInfo.InvariantCulture, FMT_YEARMONTH, year, month))
+            : this(string.Format(System.Globalization.CultureInfo.InvariantCulture, FMT_YEARMONTH, year, month))
         {
         }
 
         public FhirDateTime(int year)
-            : this(String.Format(System.Globalization.CultureInfo.InvariantCulture, FMT_YEAR, year))
+            : this(string.Format(System.Globalization.CultureInfo.InvariantCulture, FMT_YEAR, year))
         {
         }
 
@@ -154,9 +153,6 @@ namespace Hl7.Fhir.Model
         [Obsolete("Use ToDateTimeOffset(TimeSpan zone) instead")]
         public DateTime? ToDateTime() 
             => Value == null ? null : (DateTime?)PrimitiveTypeConverter.ConvertTo<DateTime>(Value);
-
-        public P.DateTime ToPartialDateTime() 
-            => Value != null ? P.DateTime.Parse(Value) : null;
     }
 
 }

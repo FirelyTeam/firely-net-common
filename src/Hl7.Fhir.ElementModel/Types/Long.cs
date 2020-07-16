@@ -68,7 +68,7 @@ namespace Hl7.Fhir.ElementModel.Types
 
         public static implicit operator long(Long i) => i.Value;
         public static implicit operator Decimal(Long i) => new Decimal(i.Value);
-        public static implicit operator Quantity(Long i) => new Quantity((decimal)i.Value, "1");
+        public static implicit operator Quantity(Long i) => new Quantity((decimal)i.Value, Quantity.UCUM_UNIT);
 
         public static explicit operator Long(long i) => new Long(i);
 

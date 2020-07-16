@@ -33,7 +33,6 @@ using System.Runtime.Serialization;
 using Hl7.Fhir.Specification;
 using System;
 using System.Text.RegularExpressions;
-using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Model
 {
@@ -73,8 +72,5 @@ namespace Hl7.Fhir.Model
 
         public static bool IsValidValue(string value) 
             => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
-
-        public P.Time ToTime() 
-            => Value != null ? P.Time.Parse(Value) : null;
     }
 }

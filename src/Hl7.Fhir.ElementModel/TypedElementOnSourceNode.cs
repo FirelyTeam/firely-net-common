@@ -105,7 +105,7 @@ namespace Hl7.Fhir.ElementModel
         public string Name => Definition?.ElementName ?? _source.Name;
 
         // [EK, 20190822] This is a temporary fix - it brings information in the ElementModel about which
-        // FHIR type uses which system primitive type, so a mapping from FHIR.* -> System.*
+        // FHIR primitive type uses which system type, so a mapping from FHIR.* -> System.*
         // This knowledge is probably needed elsewhere too, and conversely, ElementMode should
         // not be so tightly bound to FHIR here.  If we are going to support V2 or other models,
         // we'd need the same mapping for V2.* -> System.*, so this should actually be pluggable.

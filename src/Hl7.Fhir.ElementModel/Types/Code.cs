@@ -30,9 +30,10 @@ namespace Hl7.Fhir.ElementModel.Types
         public static Code Parse(string value) => throw new NotImplementedException();
         public static bool TryParse(string representation, out Code? value) => throw new NotImplementedException();
 
-        public override int GetHashCode() => (System, Value, Display).GetHashCode();
+        public override int GetHashCode() => (System, Value, Display, Version).GetHashCode();
         public override string ToString() => $"{Value}@{System} " + Display ?? "";
-        public override bool Equals(object obj) => obj is Code c && System == c.System && Value == c.Value && Display == c.Display;
+        public override bool Equals(object obj) => obj is Code c 
+            && System == c.System && Value == c.Value && Display == c.Display && Version == c.Version;
         public static bool operator ==(Code left, Code right) => left.Equals(right);
         public static bool operator !=(Code left, Code right) => !left.Equals(right);
 

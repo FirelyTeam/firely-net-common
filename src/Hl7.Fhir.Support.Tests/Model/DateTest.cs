@@ -5,7 +5,7 @@ using P = Hl7.Fhir.ElementModel.Types;
 namespace Hl7.FhirPath.Tests
 {
     [TestClass]
-    public class PartialDateTest
+    public class DateTest
     {
         [TestMethod]
         public void DateConstructor()

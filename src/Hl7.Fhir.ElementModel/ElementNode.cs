@@ -50,28 +50,37 @@ namespace Hl7.Fhir.ElementModel
             object conv()
             {
                 // NOTE: Keep Any.TryConvertToSystemValue, TypeSpecifier.TryGetNativeType and TypeSpecifier.ForNativeType in sync
-                if (value is P.Any a)
-                    return a;
-                else if (value is bool b)
-                    return b;
-                else if (value is string s)
-                    return s;
-                else if (value is char c)
-                    return new string(c, 1);
-                else if (value is int || value is short || value is ushort || value is uint)
-                    return Convert.ToInt32(value);
-                else if (value is long || value is ulong)
-                    return Convert.ToInt64(value);
-                else if (value is DateTimeOffset dto)
-                    return P.DateTime.FromDateTimeOffset(dto);
-                else if (value is float || value is double || value is decimal)
-                    return Convert.ToDecimal(value);
-                else if (value is Enum en)
-                    return en.GetLiteral();
-                else if (value is Uri u)
-                    return u.OriginalString;
-                else
-                    return null;
+                switch (value)
+                {
+                    case P.Any a:
+                        return a;
+                    case bool b:
+                        return b;
+                    case string s:
+                        return s;
+                    case char c:
+                        return new string(c, 1);
+                    case int _:
+                    case short _:
+                    case ushort _:
+                    case uint _:
+                        return Convert.ToInt32(value);
+                    case long _:
+                    case ulong _:
+                        return Convert.ToInt64(value);
+                    case DateTimeOffset dto:
+                        return P.DateTime.FromDateTimeOffset(dto);
+                    case float _:
+                    case double _:
+                    case decimal _:
+                        return Convert.ToDecimal(value);
+                    case Enum en:
+                        return en.GetLiteral();
+                    case Uri u:
+                        return u.OriginalString;
+                    default:
+                        return null;
+                }
             }
         }
 

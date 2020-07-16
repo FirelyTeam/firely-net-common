@@ -44,7 +44,7 @@ namespace Hl7.Fhir.ElementModel.Types
             return Parse(representation);
         }
 
-        public DateTime ToPartialDateTime() => new DateTime(_original, _parsedValue, Precision, HasOffset);
+        public DateTime ToDateTime() => new DateTime(_original, _parsedValue, Precision, HasOffset);
 
 
         public static Date Today(bool includeOffset = false) => FromDateTimeOffset(DateTimeOffset.Now, includeOffset: includeOffset);
@@ -192,7 +192,7 @@ namespace Hl7.Fhir.ElementModel.Types
         public override int GetHashCode() => _original.GetHashCode();
         public override string ToString() => _original;
 
-        public static implicit operator DateTime(Date pd) => pd.ToPartialDateTime();
+        public static implicit operator DateTime(Date pd) => pd.ToDateTime();
         public static explicit operator Date(DateTimeOffset dto) => FromDateTimeOffset(dto);
 
         bool? ICqlEquatable.IsEqualTo(Any other) => other is { } && TryEquals(other) is Ok<bool> ok ? ok.Value : (bool?)null;
