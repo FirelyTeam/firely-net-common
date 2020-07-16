@@ -11,6 +11,8 @@
 
 using Hl7.Fhir.ElementModel;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
+using Hl7.FhirPath.Functions;
 using System;
 using System.Linq;
 using P = Hl7.Fhir.ElementModel.Types;
@@ -267,6 +269,32 @@ namespace Hl7.FhirPath.Tests
             Assert.IsNull(scalar("1 mod 0.0"));
             Assert.IsNull(scalar("1 div 0"));
             Assert.IsNull(scalar("1.0 div 0"));
+        }
+
+        [TestMethod]
+        public void TestStringJoin()
+        {
+            var dummy = ElementNode.CreateList("This ", "is ", "one ", "sentence", ".");
+            var result = dummy.FpJoin(string.Empty);
+            Assert.IsNotNull(result);
+            Assert.AreEqual("This is one sentence.", result);
+
+            dummy = ElementNode.CreateList();
+            result = dummy.FpJoin(string.Empty);
+            Assert.AreEqual(string.Empty, result);
+
+            dummy = ElementNode.CreateList("This", "is", "a", "separated", "sentence.");
+            result = dummy.FpJoin(";");
+            Assert.IsNotNull(result);
+            Assert.AreEqual("This;is;a;separated;sentence.", result);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void TestStringJoinError()
+        {
+            var dummy = ElementNode.CreateList("This", "is", "sentence", "with", 1, "number.");
+            dummy.FpJoin(string.Empty);
         }
     }
 

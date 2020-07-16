@@ -149,6 +149,7 @@ namespace Hl7.FhirPath.Expressions
             t.Add("replace", (string f, string regex, string subst) => f.FpReplace(regex, subst), doNullProp: true);
             t.Add("length", (string f) => f.Length, doNullProp: true);
             t.Add("split", (string f, string seperator) => f.FpSplit(seperator), doNullProp: true);
+            t.Add("join", (IEnumerable<ITypedElement> f, string separator) => f.FpJoin(separator), doNullProp: true);
 
             // Math functions
             t.Add("abs", (decimal f) => Math.Abs(f), doNullProp: true);
