@@ -94,17 +94,17 @@ namespace Hl7.FhirPath.Tests
         [TestMethod]
         public void ConvertToDateTime()
         {
-            var now = P.PartialDateTime.Parse("2019-01-11T15:47:00+01:00");
+            var now = P.DateTime.Parse("2019-01-11T15:47:00+01:00");
             var inputs = ElementNode.CreateList(new DateTimeOffset(2019, 1, 11, 15, 47, 00, new TimeSpan(1, 0, 0)),
                                 "2019-01", "2019-01-11T15:47:00+01:00");
-            var vals = new[] { now, P.PartialDateTime.Parse("2019-01"), now };
+            var vals = new[] { now, P.DateTime.Parse("2019-01"), now };
 
             inputs.Zip(vals, (i, v) => (i, v))
                 .ToList()
                 .ForEach(c => Assert.AreEqual(c.i.ToDateTime(), c.v));
             inputs.ToList().ForEach(c => Assert.IsTrue(c.ConvertsToDateTime()));
 
-            var wrong = ElementNode.CreateList("hi", 2.6m, false, P.PartialTime.Parse("16:05:49")).ToList();
+            var wrong = ElementNode.CreateList("hi", 2.6m, false, P.Time.Parse("16:05:49")).ToList();
             wrong.ForEach(c => Assert.IsNull(c.ToDateTime()));
             wrong.ForEach(c => Assert.IsFalse(c.ConvertsToDateTime()));
         }
@@ -113,9 +113,9 @@ namespace Hl7.FhirPath.Tests
         [TestMethod]
         public void ConvertToTime()
         {
-            var now = P.PartialTime.Parse("15:47:00+01:00");
+            var now = P.Time.Parse("15:47:00+01:00");
             var inputs = ElementNode.CreateList(now, "12:05:45");
-            var vals = new[] { now, P.PartialTime.Parse("12:05:45") };
+            var vals = new[] { now, P.Time.Parse("12:05:45") };
 
             inputs.Zip(vals, (i, v) => (i, v))
                 .ToList()
@@ -131,8 +131,8 @@ namespace Hl7.FhirPath.Tests
         [TestMethod]
         public void ConvertToString()
         {
-            var inputs = ElementNode.CreateList("hoi", 4L, 3.4m, true, false, P.PartialTime.Parse("15:47:00+01:00"),
-                P.PartialDateTime.Parse("2019-01-11T15:47:00+01:00"));
+            var inputs = ElementNode.CreateList("hoi", 4L, 3.4m, true, false, P.Time.Parse("15:47:00+01:00"),
+                P.DateTime.Parse("2019-01-11T15:47:00+01:00"));
             var vals = new[] { "hoi", "4", "3.4", "true", "false", "15:47:00+01:00", "2019-01-11T15:47:00+01:00" };
 
             inputs.Zip(vals, (i, v) => (i, v))
@@ -144,14 +144,14 @@ namespace Hl7.FhirPath.Tests
         [TestMethod]
         public void CheckTypeDetermination()
         {
-            var values = ElementNode.CreateList(1, true, "hi", 4.0m, 4.0f, P.PartialDateTime.Now());
+            var values = ElementNode.CreateList(1, true, "hi", 4.0m, 4.0f, P.DateTime.Now());
 
             Test.IsInstanceOfType(values.Item(0).Single().Value, typeof(Int64));
             Test.IsInstanceOfType(values.Item(1).Single().Value, typeof(bool));
             Test.IsInstanceOfType(values.Item(2).Single().Value, typeof(string));
             Test.IsInstanceOfType(values.Item(3).Single().Value, typeof(decimal));
             Test.IsInstanceOfType(values.Item(4).Single().Value, typeof(decimal));
-            Test.IsInstanceOfType(values.Item(5).Single().Value, typeof(P.PartialDateTime));
+            Test.IsInstanceOfType(values.Item(5).Single().Value, typeof(P.DateTime));
         }
 
 

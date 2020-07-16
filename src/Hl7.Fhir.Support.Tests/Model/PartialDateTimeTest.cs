@@ -47,7 +47,7 @@ namespace Hl7.FhirPath.Tests
             void accept(string testValue, int? y = default, int? mo = default, int? d = default,
                 int? h = default, int? m = default, int? s = default, int? ms = default, TimeSpan? o = default)
             {
-                Assert.IsTrue(P.PartialDateTime.TryParse(testValue, out P.PartialDateTime parsed), "TryParse");
+                Assert.IsTrue(P.DateTime.TryParse(testValue, out P.DateTime parsed), "TryParse");
                 Assert.AreEqual(y, parsed.Years, "years");
                 Assert.AreEqual(mo, parsed.Months, "months");
                 Assert.AreEqual(d, parsed.Days, "days");
@@ -61,7 +61,7 @@ namespace Hl7.FhirPath.Tests
 
             void reject(string testValue)
             {
-                Assert.IsFalse(P.PartialDateTime.TryParse(testValue, out _));
+                Assert.IsFalse(P.DateTime.TryParse(testValue, out _));
             }
         }
 
@@ -72,7 +72,7 @@ namespace Hl7.FhirPath.Tests
             var plusOne = new TimeSpan(1, 0, 0);
             var plusTwo = new TimeSpan(2, 0, 0);
 
-            var pt = P.PartialDateTime.Parse("2019-07-23T13:45:56");
+            var pt = P.DateTime.Parse("2019-07-23T13:45:56");
             var dto = pt.ToDateTimeOffset(plusOne);
             Assert.AreEqual(2019, dto.Year);
             Assert.AreEqual(7, dto.Month);
@@ -82,7 +82,7 @@ namespace Hl7.FhirPath.Tests
             Assert.AreEqual(56, dto.Second);
             Assert.AreEqual(plusOne, dto.Offset);
 
-            pt = P.PartialDateTime.Parse("2019-07-23T13:45:56.456+02:00");
+            pt = P.DateTime.Parse("2019-07-23T13:45:56.456+02:00");
             dto = pt.ToDateTimeOffset(plusOne);
             Assert.AreEqual(13, dto.Hour);
             Assert.AreEqual(45, dto.Minute);
@@ -90,7 +90,7 @@ namespace Hl7.FhirPath.Tests
             Assert.AreEqual(456, dto.Millisecond);
             Assert.AreEqual(plusTwo, dto.Offset);
 
-            pt = P.PartialDateTime.Parse("2019-07-23T13+02:00");
+            pt = P.DateTime.Parse("2019-07-23T13+02:00");
             dto = pt.ToDateTimeOffset(plusOne);
             Assert.AreEqual(13, dto.Hour);
             Assert.AreEqual(0, dto.Minute);
@@ -101,7 +101,7 @@ namespace Hl7.FhirPath.Tests
         [TestMethod]
         public void GetToday()
         {
-            var today = P.PartialDateTime.Today();
+            var today = P.DateTime.Today();
             var today2 = DateTimeOffset.Now;   // just don't run this unit test a split second before midnight
 
             Assert.AreEqual(today2.Year, today.Years);
@@ -116,7 +116,7 @@ namespace Hl7.FhirPath.Tests
             var plusOne = new TimeSpan(1, 0, 0);
 
             var dto = new DateTimeOffset(2019, 7, 23, 13, 45, 56, 567, plusOne);
-            var pt = P.PartialDateTime.FromDateTimeOffset(dto);
+            var pt = P.DateTime.FromDateTimeOffset(dto);
 
             Assert.AreEqual(2019, pt.Years);
             Assert.AreEqual(7, pt.Months);
@@ -131,7 +131,7 @@ namespace Hl7.FhirPath.Tests
         [TestMethod]
         public void CanCastDateToDateTime()
         {
-            var pdt = P.PartialDate.Parse("2018-04").ToPartialDateTime();
+            var pdt = P.Date.Parse("2018-04").ToPartialDateTime();
             Assert.AreEqual(P.DateTimePrecision.Month, pdt.Precision);
             Assert.AreEqual(2018, pdt.Years);
             Assert.AreEqual(4, pdt.Months);

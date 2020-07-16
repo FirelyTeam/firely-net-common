@@ -38,10 +38,10 @@ namespace Hl7.Fhir.ElementModel.Types
                     "Decimal" => typeof(Decimal),
                     "Integer" => typeof(Integer),
                     "Long" => typeof(Long),
-                    "Date" => typeof(PartialDate),
-                    "DateTime" => typeof(PartialDateTime),
+                    "Date" => typeof(Date),
+                    "DateTime" => typeof(DateTime),
                     "Ratio" => typeof(Ratio),
-                    "Time" => typeof(PartialTime),
+                    "Time" => typeof(Time),
                     "Quantity" => typeof(Quantity),
                     "String" => typeof(String),
                     "Void" => typeof(void),
@@ -80,12 +80,12 @@ namespace Hl7.Fhir.ElementModel.Types
                     return (Integer.TryParse(value, out var p), p?.Value);
                 else if (primitiveType == typeof(Long))
                     return (Long.TryParse(value, out var p), p?.Value);
-                else if (primitiveType == typeof(PartialDate))
-                    return (PartialDate.TryParse(value, out var p), p);
-                else if (primitiveType == typeof(PartialDateTime))
-                    return (PartialDateTime.TryParse(value, out var p), p);
-                else if (primitiveType == typeof(PartialTime))
-                    return (PartialTime.TryParse(value, out var p), p);
+                else if (primitiveType == typeof(Date))
+                    return (Date.TryParse(value, out var p), p);
+                else if (primitiveType == typeof(DateTime))
+                    return (DateTime.TryParse(value, out var p), p);
+                else if (primitiveType == typeof(Time))
+                    return (Time.TryParse(value, out var p), p);
                 else if (primitiveType == typeof(Ratio))
                     return (Ratio.TryParse(value, out var p), p);
                 else if (primitiveType == typeof(Quantity))
@@ -133,7 +133,7 @@ namespace Hl7.Fhir.ElementModel.Types
                 else if (value is long || value is ulong)
                     return new Long(System.Convert.ToInt64(value));
                 else if (value is DateTimeOffset dto)
-                    return PartialDateTime.FromDateTimeOffset(dto);
+                    return DateTime.FromDateTimeOffset(dto);
                 else if (value is float || value is double || value is decimal)
                     return new Decimal(System.Convert.ToDecimal(value));
                 else if (value is Enum en)

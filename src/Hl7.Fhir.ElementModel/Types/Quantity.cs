@@ -172,7 +172,7 @@ namespace Hl7.Fhir.ElementModel.Types
         public static bool operator !=(Quantity a, Quantity b) => !Equals(a, b);
 
         /// <summary>
-        /// Compare two partial datetimes based on CQL equivalence rules
+        /// Compare two datetimes based on CQL equivalence rules
         /// </summary>
         /// <remarks>See <see cref="TryCompareTo(Any)"/> for more details.</remarks>
         public int CompareTo(object obj) => obj is Quantity q ?

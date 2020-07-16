@@ -36,7 +36,7 @@ namespace Hl7.Fhir.ElementModel
         }
 
         /// <summary>
-        /// Converts a .NET primitive to the expected primitive/partial to use in the
+        /// Converts a .NET primitive to the expected object value to use in the
         /// value property of ITypedElement.
         /// </summary>
         /// <param name="value"></param>
@@ -63,7 +63,7 @@ namespace Hl7.Fhir.ElementModel
                 else if (value is long || value is ulong)
                     return Convert.ToInt64(value);
                 else if (value is DateTimeOffset dto)
-                    return P.PartialDateTime.FromDateTimeOffset(dto);
+                    return P.DateTime.FromDateTimeOffset(dto);
                 else if (value is float || value is double || value is decimal)
                     return Convert.ToDecimal(value);
                 else if (value is Enum en)

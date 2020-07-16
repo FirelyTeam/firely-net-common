@@ -8,16 +8,15 @@
 
 #nullable enable
 
-using Hl7.Fhir.Support.Utility;
 using Hl7.Fhir.Utility;
 using System;
 using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.ElementModel.Types
 {
-    public class PartialDate : Any, IComparable, ICqlEquatable, ICqlOrderable
+    public class Date : Any, IComparable, ICqlEquatable, ICqlOrderable
     {
-        private PartialDate(string original, DateTimeOffset parsedValue, DateTimePrecision precision, bool hasOffset)
+        private Date(string original, DateTimeOffset parsedValue, DateTimePrecision precision, bool hasOffset)
         {
             _original = original;
             _parsedValue = parsedValue;
@@ -25,12 +24,12 @@ namespace Hl7.Fhir.ElementModel.Types
             HasOffset = hasOffset;
         }
 
-        public static PartialDate Parse(string representation) =>
-            TryParse(representation, out var result) ? result : throw new FormatException($"String '{representation}' was not recognized as a valid partial date.");
+        public static Date Parse(string representation) =>
+            TryParse(representation, out var result) ? result : throw new FormatException($"String '{representation}' was not recognized as a valid date.");
 
-        public static bool TryParse(string representation, out PartialDate value) => tryParse(representation, out value);
+        public static bool TryParse(string representation, out Date value) => tryParse(representation, out value);
 
-        public static PartialDate FromDateTimeOffset(DateTimeOffset dto, DateTimePrecision prec = DateTimePrecision.Day,
+        public static Date FromDateTimeOffset(DateTimeOffset dto, DateTimePrecision prec = DateTimePrecision.Day,
         bool includeOffset = false)
         {
             string formatString = prec switch
@@ -45,10 +44,10 @@ namespace Hl7.Fhir.ElementModel.Types
             return Parse(representation);
         }
 
-        public PartialDateTime ToPartialDateTime() => new PartialDateTime(_original, _parsedValue, Precision, HasOffset);
+        public DateTime ToPartialDateTime() => new DateTime(_original, _parsedValue, Precision, HasOffset);
 
 
-        public static PartialDate Today(bool includeOffset = false) => FromDateTimeOffset(DateTimeOffset.Now, includeOffset: includeOffset);
+        public static Date Today(bool includeOffset = false) => FromDateTimeOffset(DateTimeOffset.Now, includeOffset: includeOffset);
 
         /// <summary>
         /// The precision of the date available. 
@@ -73,7 +72,7 @@ namespace Hl7.Fhir.ElementModel.Types
         public bool HasOffset { get; private set; }
 
         private static readonly string DATEFORMAT =
-            $"(?<year>[0-9]{{4}}) ((?<month>-[0-9][0-9]) ((?<day>-[0-9][0-9]) )?)? {PartialTime.OFFSETFORMAT}?";
+            $"(?<year>[0-9]{{4}}) ((?<month>-[0-9][0-9]) ((?<day>-[0-9][0-9]) )?)? {Time.OFFSETFORMAT}?";
         public static readonly Regex PARTIALDATEREGEX = new Regex("^" + DATEFORMAT + "$",
 #if NETSTANDARD1_1
                 RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture);
@@ -81,41 +80,41 @@ namespace Hl7.Fhir.ElementModel.Types
                 RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
 #endif
         /// <summary>
-        /// Converts the partial date to a full DateTimeOffset instance.
+        /// Converts the date to a full DateTimeOffset instance.
         /// </summary>
         /// <param name="hours"></param>
         /// <param name="minutes"></param>
         /// <param name="seconds"></param>
-        /// <param name="defaultOffset">Offset used when the partial datetime does not specify one.</param>
+        /// <param name="defaultOffset">Offset used when the datetime does not specify one.</param>
         /// <returns></returns>
         public DateTimeOffset ToDateTimeOffset(int hours, int minutes, int seconds, TimeSpan defaultOffset) =>
             ToDateTimeOffset(hours, minutes, seconds, 0, defaultOffset);
 
         /// <summary>
-        /// Converts the partial date to a full DateTimeOffset instance.
+        /// Converts the date to a full DateTimeOffset instance.
         /// </summary>
         /// <param name="hours"></param>
         /// <param name="minutes"></param>
         /// <param name="seconds"></param>
         /// <param name="milliseconds"></param>
-        /// <param name="defaultOffset">Offset used when the partial datetime does not specify one.</param>
+        /// <param name="defaultOffset">Offset used when the datetime does not specify one.</param>
         /// <returns></returns>
         public DateTimeOffset ToDateTimeOffset(int hours, int minutes, int seconds, int milliseconds, TimeSpan defaultOffset) =>
                 new DateTimeOffset(_parsedValue.Year, _parsedValue.Month, _parsedValue.Day, hours, minutes, seconds, milliseconds,
                         HasOffset ? _parsedValue.Offset : defaultOffset);
 
         /// <summary>
-        /// Converts the partial date to a full DateTimeOffset instance.
+        /// Converts the date to a full DateTimeOffset instance.
         /// </summary>
         /// <returns></returns>
-        private static bool tryParse(string representation, out PartialDate value)
+        private static bool tryParse(string representation, out Date value)
         {
             if (representation is null) throw new ArgumentNullException(nameof(representation));
 
             var matches = PARTIALDATEREGEX.Match(representation);
             if (!matches.Success)
             {
-                value = new PartialDate(representation, default, default, default);
+                value = new Date(representation, default, default, default);
                 return false;
             }
 
@@ -136,32 +135,32 @@ namespace Hl7.Fhir.ElementModel.Types
                 (offset.Success ? offset.Value : "Z");
 
             var success = DateTimeOffset.TryParse(parseableDT, out var parsedValue);
-            value = new PartialDate(representation, parsedValue, prec, offset.Success);
+            value = new Date(representation, parsedValue, prec, offset.Success);
             return success;
         }
 
         /// <summary>
-        /// Determines if two partial dates are equal according to CQL equality rules.
+        /// Determines if two dates are equal according to CQL equality rules.
         /// </summary>
-        /// <returns>returns true if the values are both PartialDates, have the same precision and each date component is exactly the same. 
+        /// <returns>returns true if the values are both dates, have the same precision and each date component is exactly the same. 
         /// Dates with timezones are normalized to zulu before comparison is done.</returns>
         /// <remarks>See <see cref="TryCompareTo(Any)"/> for more details.</remarks>
         public override bool Equals(object obj) => obj is Any other && TryEquals(other).ValueOrDefault(false);
 
-        public Result<bool> TryEquals(Any other) => other is PartialDate ? TryCompareTo(other).Select(i => i == 0) : false;
+        public Result<bool> TryEquals(Any other) => other is Date ? TryCompareTo(other).Select(i => i == 0) : false;
 
-        public static bool operator ==(PartialDate a, PartialDate b) => Equals(a, b);
-        public static bool operator !=(PartialDate a, PartialDate b) => !Equals(a, b);
+        public static bool operator ==(Date a, Date b) => Equals(a, b);
+        public static bool operator !=(Date a, Date b) => !Equals(a, b);
 
         /// <summary>
-        /// Compare two partial dates according to CQL equality rules
+        /// Compare two dates according to CQL equality rules
         /// </summary>
         /// <remarks>See <see cref="TryCompareTo(Any)"/> for more details.</remarks>
-        public int CompareTo(object obj) => obj is PartialDate p ?
+        public int CompareTo(object obj) => obj is Date p ?
             TryCompareTo(p).ValueOrThrow() : throw NotSameTypeComparison(this, obj);
 
         /// <summary>
-        /// Compares two (partial)dates according to CQL ordering rules.
+        /// Compares two dates according to CQL ordering rules.
         /// </summary> 
         /// <param name="other"></param>
         /// <returns>An <see cref="Ok{T}"/> with an integer value representing the reseult of the comparison: 0 if this and other are equal, 
@@ -179,22 +178,22 @@ namespace Hl7.Fhir.ElementModel.Types
             return other switch
             {
                 null => 1,
-                PartialDate p => PartialDateTime.CompareDateTimeParts(_parsedValue, Precision, HasOffset, p._parsedValue, p.Precision, p.HasOffset),
+                Date p => DateTime.CompareDateTimeParts(_parsedValue, Precision, HasOffset, p._parsedValue, p.Precision, p.HasOffset),
                 _ => throw NotSameTypeComparison(this, other)
             };
         }
 
-        public static bool operator <(PartialDate a, PartialDate b) => a.CompareTo(b) < 0;
-        public static bool operator <=(PartialDate a, PartialDate b) => a.CompareTo(b) <= 0;
-        public static bool operator >(PartialDate a, PartialDate b) => a.CompareTo(b) > 0;
-        public static bool operator >=(PartialDate a, PartialDate b) => a.CompareTo(b) >= 0;
+        public static bool operator <(Date a, Date b) => a.CompareTo(b) < 0;
+        public static bool operator <=(Date a, Date b) => a.CompareTo(b) <= 0;
+        public static bool operator >(Date a, Date b) => a.CompareTo(b) > 0;
+        public static bool operator >=(Date a, Date b) => a.CompareTo(b) >= 0;
 
 
         public override int GetHashCode() => _original.GetHashCode();
         public override string ToString() => _original;
 
-        public static implicit operator PartialDateTime(PartialDate pd) => pd.ToPartialDateTime();
-        public static explicit operator PartialDate(DateTimeOffset dto) => FromDateTimeOffset(dto);
+        public static implicit operator DateTime(Date pd) => pd.ToPartialDateTime();
+        public static explicit operator Date(DateTimeOffset dto) => FromDateTimeOffset(dto);
 
         bool? ICqlEquatable.IsEqualTo(Any other) => other is { } && TryEquals(other) is Ok<bool> ok ? ok.Value : (bool?)null;
 

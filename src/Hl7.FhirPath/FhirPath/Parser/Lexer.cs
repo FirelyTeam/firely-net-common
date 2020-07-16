@@ -95,8 +95,8 @@ namespace Hl7.FhirPath.Parser
                 )?",
                 RegexOptions.IgnorePatternWhitespace);
 
-        public static readonly Parser<P.PartialDate> Date =
-            Parse.Regex(DateRegEx).Select(s => P.PartialDate.Parse(s.Substring(1)));
+        public static readonly Parser<P.Date> Date =
+            Parse.Regex(DateRegEx).Select(s => P.Date.Parse(s.Substring(1)));
 
         // DATETIME
         //      : '@'  ....
@@ -120,15 +120,15 @@ namespace Hl7.FhirPath.Parser
                 ) (Z|((\+|-)[0-9][0-9]:[0-9][0-9]))?",
                 RegexOptions.IgnorePatternWhitespace);
 
-        public static readonly Parser<P.PartialDateTime> DateTime =
-            Parse.Regex(DateTimeRegEx).Select(s => P.PartialDateTime.Parse(CleanupDateTimeLiteral(s)));
+        public static readonly Parser<P.DateTime> DateTime =
+            Parse.Regex(DateTimeRegEx).Select(s => P.DateTime.Parse(CleanupDateTimeLiteral(s)));
 
         internal static string CleanupDateTimeLiteral(string repr)
         {
             var result = repr.Substring(1);  // remove @
 
             // not acceptable for our partialDateTime as 'T' without an actual time.
-            // dates without time but with a timezone are fine for our PartialDateTime, but should come immediately
+            // dates without time but with a timezone are fine for our DateTime, but should come immediately
             // after the date: when a 'T' is encountered, a time is required.
             // Here, the T literal is only there to distinguish date and dateTime, and so part of
             // the FP literal and syntax, not the parseable value (just like '@').
@@ -149,8 +149,8 @@ namespace Hl7.FhirPath.Parser
         // NB: No timezone (as specified in FHIR and FhirPath, CQL incorrectly states that it allows a timezone)
         public static readonly Regex TimeRegEx = new Regex("@T" + TIMEFORMAT, RegexOptions.IgnorePatternWhitespace);
 
-        public static readonly Parser<P.PartialTime> Time =
-            Parse.Regex(TimeRegEx).Select(s => P.PartialTime.Parse(s.Substring(2)));
+        public static readonly Parser<P.Time> Time =
+            Parse.Regex(TimeRegEx).Select(s => P.Time.Parse(s.Substring(2)));
 
         // NUMBER
         //   : [0-9]+('.' [0-9]+)?

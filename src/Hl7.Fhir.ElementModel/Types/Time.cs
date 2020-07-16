@@ -15,9 +15,9 @@ using static Hl7.Fhir.Utility.Result;
 
 namespace Hl7.Fhir.ElementModel.Types
 {
-    public class PartialTime : Any, IComparable, ICqlEquatable, ICqlOrderable
+    public class Time : Any, IComparable, ICqlEquatable, ICqlOrderable
     {
-        private PartialTime(string original, DateTimeOffset parsedValue, DateTimePrecision precision, bool hasOffset)
+        private Time(string original, DateTimeOffset parsedValue, DateTimePrecision precision, bool hasOffset)
         {
             _original = original;
             _parsedValue = parsedValue;
@@ -25,12 +25,12 @@ namespace Hl7.Fhir.ElementModel.Types
             HasOffset = hasOffset;
         }
 
-        public static PartialTime Parse(string representation) =>
-            TryParse(representation, out var result) ? result : throw new FormatException($"String '{representation}' was not recognized as a valid partial time.");
+        public static Time Parse(string representation) =>
+            TryParse(representation, out var result) ? result : throw new FormatException($"String '{representation}' was not recognized as a valid time.");
 
-        public static bool TryParse(string representation, out PartialTime value) => tryParse(representation, out value);
+        public static bool TryParse(string representation, out Time value) => tryParse(representation, out value);
 
-        public static PartialTime FromDateTimeOffset(DateTimeOffset dto, DateTimePrecision prec = DateTimePrecision.Fraction,
+        public static Time FromDateTimeOffset(DateTimeOffset dto, DateTimePrecision prec = DateTimePrecision.Fraction,
         bool includeOffset = false)
         {
             string formatString = prec switch
@@ -47,7 +47,7 @@ namespace Hl7.Fhir.ElementModel.Types
             return Parse(representation);
         }
 
-        public static PartialTime Now(bool includeOffset = false) => FromDateTimeOffset(DateTimeOffset.Now, includeOffset: includeOffset);
+        public static Time Now(bool includeOffset = false) => FromDateTimeOffset(DateTimeOffset.Now, includeOffset: includeOffset);
 
         public int? Hours => Precision >= DateTimePrecision.Hour ? _parsedValue.Hour : (int?)null;
         public int? Minutes => Precision >= DateTimePrecision.Minute ? _parsedValue.Minute : (int?)null;
@@ -91,12 +91,12 @@ namespace Hl7.Fhir.ElementModel.Types
 #endif
 
         /// <summary>
-        /// Converts the partial time to a full DateTimeOffset instance.
+        /// Converts the time to a full DateTimeOffset instance.
         /// </summary>
         /// <param name="year">Year used to turn a time into a date</param>
         /// <param name="month">Month used to turn a time into a date</param>
         /// <param name="day">Day used to turn a time into a date</param>
-        /// <param name="defaultOffset">Offset used when the partial time does not specify one.</param>
+        /// <param name="defaultOffset">Offset used when the time does not specify one.</param>
         /// <returns></returns>
         public DateTimeOffset ToDateTimeOffset(int year, int month, int day, TimeSpan defaultOffset) =>
             new DateTimeOffset(year, month, day, _parsedValue.Hour,
@@ -104,14 +104,14 @@ namespace Hl7.Fhir.ElementModel.Types
                     HasOffset ? _parsedValue.Offset : defaultOffset);
 
 
-        private static bool tryParse(string representation, out PartialTime value)
+        private static bool tryParse(string representation, out Time value)
         {
             if (representation is null) throw new ArgumentNullException(nameof(representation));
 
             var matches = PARTIALTIMEREGEX.Match(representation);
             if (!matches.Success)
             {
-                value = new PartialTime(representation, default, default, default);
+                value = new Time(representation, default, default, default);
                 return false;
             }
 
@@ -135,32 +135,32 @@ namespace Hl7.Fhir.ElementModel.Types
                     (offset.Success ? offset.Value : "Z");
 
             var success = DateTimeOffset.TryParse(parseableDT, out var parsedValue);
-            value = new PartialTime(representation, parsedValue, prec, offset.Success);
+            value = new Time(representation, parsedValue, prec, offset.Success);
             return success;
         }
 
         /// <summary>
-        /// Compare two partial times based on CQL equality rules
+        /// Compare two times based on CQL equality rules
         /// </summary>
         /// <returns>returns true if the values have the same precision, and each date component is exactly the same. Datetimes with timezones are normalized
         /// to zulu before comparison is done. Throws an <see cref="ArgumentException"/> if the arguments differ in precision.</returns>
         /// <remarks>See <see cref="TryCompareTo(Any)"/> for more details.</remarks>
         public override bool Equals(object obj) => obj is Any other && TryEquals(other).ValueOrDefault(false);
 
-        public Result<bool> TryEquals(Any other) => other is PartialTime ? TryCompareTo(other).Select(i => i == 0) : false;
+        public Result<bool> TryEquals(Any other) => other is Time ? TryCompareTo(other).Select(i => i == 0) : false;
 
-        public static bool operator ==(PartialTime a, PartialTime b) => Equals(a, b);
-        public static bool operator !=(PartialTime a, PartialTime b) => !Equals(a, b);
+        public static bool operator ==(Time a, Time b) => Equals(a, b);
+        public static bool operator !=(Time a, Time b) => !Equals(a, b);
 
         /// <summary>
-        /// Compare two partial times based on CQL equality rules
+        /// Compare two times based on CQL equality rules
         /// </summary>
         /// <remarks>See <see cref="TryCompareTo(Any)"/> for more details.</remarks>
-        public int CompareTo(object obj) => obj is PartialTime p ?
+        public int CompareTo(object obj) => obj is Time p ?
             TryCompareTo(p).ValueOrThrow() : throw NotSameTypeComparison(this, obj);
 
         /// <summary>
-        /// Compares two (partial)times according to CQL ordering rules.
+        /// Compares two times according to CQL ordering rules.
         /// </summary> 
         /// <param name="other"></param>
         /// <returns>An <see cref="Utility.Ok{T}"/> with an integer value representing the reseult of the comparison: 0 if this and other are equal, 
@@ -178,21 +178,21 @@ namespace Hl7.Fhir.ElementModel.Types
             return other switch
             {
                 null => 1,
-                PartialTime p => PartialDateTime.CompareDateTimeParts(_parsedValue, Precision, HasOffset, p._parsedValue, p.Precision, p.HasOffset),
+                Time p => DateTime.CompareDateTimeParts(_parsedValue, Precision, HasOffset, p._parsedValue, p.Precision, p.HasOffset),
                 _ => throw NotSameTypeComparison(this, other)
             };
         }
 
-        public static bool operator <(PartialTime a, PartialTime b) => a.CompareTo(b) < 0;
-        public static bool operator <=(PartialTime a, PartialTime b) => a.CompareTo(b) <= 0;
-        public static bool operator >(PartialTime a, PartialTime b) => a.CompareTo(b) > 0;
-        public static bool operator >=(PartialTime a, PartialTime b) => a.CompareTo(b) >= 0;
+        public static bool operator <(Time a, Time b) => a.CompareTo(b) < 0;
+        public static bool operator <=(Time a, Time b) => a.CompareTo(b) <= 0;
+        public static bool operator >(Time a, Time b) => a.CompareTo(b) > 0;
+        public static bool operator >=(Time a, Time b) => a.CompareTo(b) >= 0;
 
 
         public override int GetHashCode() => _original.GetHashCode();
         public override string ToString() => _original;
 
-        public static explicit operator PartialTime(DateTimeOffset dto) => FromDateTimeOffset(dto);
+        public static explicit operator Time(DateTimeOffset dto) => FromDateTimeOffset(dto);
 
         bool? ICqlEquatable.IsEqualTo(Any other) => other is { } && TryEquals(other) is Ok<bool> ok ? ok.Value : (bool?)null;
 

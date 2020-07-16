@@ -105,7 +105,7 @@ namespace Hl7.Fhir.ElementModel
         public string Name => Definition?.ElementName ?? Source.Name;
 
         // [EK, 20190822] This is a temporary fix - it brings information in the ElementModel about which
-        // FHIR type uses which "universal" primitive type, so a mapping from FHIR.* -> System.*
+        // FHIR type uses which system primitive type, so a mapping from FHIR.* -> System.*
         // This knowledge is probably needed elsewhere too, and conversely, ElementMode should
         // not be so tightly bound to FHIR here.  If we are going to support V2 or other models,
         // we'd need the same mapping for V2.* -> System.*, so this should actually be pluggable.
@@ -117,8 +117,8 @@ namespace Hl7.Fhir.ElementModel
         // In fact one could derive this dynamically from the structure definition, by looking
         // at the type of the "value" element (e.g. String.value). Although this differs in 
         // R3 and R4, these value (and url and id elements by the way) will indicate which type
-        // of "universal" primitive there are, implicitly specifying the mapping between primitive
-        // FHIR types and primitive System types.
+        // of system types there are, implicitly specifying the mapping between primitive
+        // FHIR types and system types.
         private static Type tryMapFhirPrimitiveTypeToSystemType(string fhirType)
         {
             switch (fhirType)
@@ -130,12 +130,12 @@ namespace Hl7.Fhir.ElementModel
                 case "positiveInt":
                     return typeof(P.Integer);
                 case "time":
-                    return typeof(P.PartialTime);
+                    return typeof(P.Time);
                 case "date":
-                    return typeof(P.PartialDate);
+                    return typeof(P.Date);
                 case "instant":
                 case "dateTime":
-                    return typeof(P.PartialDateTime);
+                    return typeof(P.DateTime);
                 case "decimal":
                     return typeof(P.Decimal);
                 case "string":

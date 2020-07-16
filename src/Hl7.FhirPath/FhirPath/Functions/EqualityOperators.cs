@@ -120,7 +120,7 @@ namespace Hl7.FhirPath.Functions
                     P.Long _ when other is P.Decimal => (P.Decimal)(P.Long)value,
                     P.Long _ when other is P.Quantity => (P.Quantity)(P.Long)value,
                     P.Decimal _ when other is P.Quantity => (P.Quantity)(P.Decimal)value,
-                    P.PartialDate _ when other is P.PartialDateTime => (P.PartialDateTime)(P.PartialDate)value,
+                    P.Date _ when other is P.DateTime => (P.DateTime)(P.Date)value,
                     _ => value
                 };
         }

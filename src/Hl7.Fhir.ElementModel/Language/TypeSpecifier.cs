@@ -118,11 +118,11 @@ namespace Hl7.Fhir.Language
                 return Integer;
             else if (t<long>() || t<ulong>())
                 return Long;
-            else if (t<P.PartialTime>())
+            else if (t<P.Time>())
                 return Time;
-            else if (t<P.PartialDate>())
+            else if (t<P.Date>())
                 return Date;
-            else if (t<P.PartialDateTime>() || t<DateTimeOffset>())
+            else if (t<P.DateTime>() || t<DateTimeOffset>())
                 return DateTime;
             else if (t<float>() || t<double>() || t<decimal>())
                 return Decimal;

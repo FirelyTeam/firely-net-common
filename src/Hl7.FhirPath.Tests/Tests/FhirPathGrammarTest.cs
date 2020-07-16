@@ -28,11 +28,11 @@ namespace Hl7.FhirPath.Tests
             var m = new ConstantExpression(3);
             AssertParser.SucceedsMatch(parser, "3", m);
             AssertParser.SucceedsMatch(parser, "3.14", new ConstantExpression(3.14m));
-            AssertParser.SucceedsMatch(parser, "@2013-12", new ConstantExpression(P.PartialDate.Parse("2013-12")));
-            AssertParser.SucceedsMatch(parser, "@2013-12T", new ConstantExpression(P.PartialDateTime.Parse("2013-12")));
-            AssertParser.SucceedsMatch(parser, "@T12:23:34", new ConstantExpression(P.PartialTime.Parse("12:23:34")));
+            AssertParser.SucceedsMatch(parser, "@2013-12", new ConstantExpression(P.Date.Parse("2013-12")));
+            AssertParser.SucceedsMatch(parser, "@2013-12T", new ConstantExpression(P.DateTime.Parse("2013-12")));
+            AssertParser.SucceedsMatch(parser, "@T12:23:34", new ConstantExpression(P.Time.Parse("12:23:34")));
             AssertParser.SucceedsMatch(parser, "true", new ConstantExpression(true));
-            AssertParser.SucceedsMatch(parser, "@2014-12-13T12:00:00+02:00", new ConstantExpression(P.PartialDateTime.Parse("2014-12-13T12:00:00+02:00")));
+            AssertParser.SucceedsMatch(parser, "@2014-12-13T12:00:00+02:00", new ConstantExpression(P.DateTime.Parse("2014-12-13T12:00:00+02:00")));
 
             AssertParser.FailsMatch(parser, "%constant");
             AssertParser.FailsMatch(parser, "`quotedstring`");
@@ -76,13 +76,13 @@ namespace Hl7.FhirPath.Tests
             AssertParser.SucceedsMatch(parser, "doSomething('hi', 3.14)", new FunctionCallExpression(AxisExpression.This, "doSomething", TypeSpecifier.Any,
                         new ConstantExpression("hi"), new ConstantExpression(3.14m)));
             AssertParser.SucceedsMatch(parser, "%external", new VariableRefExpression("external"));
-            AssertParser.SucceedsMatch(parser, "@2013-12", new ConstantExpression(P.PartialDate.Parse("2013-12")));
-            AssertParser.SucceedsMatch(parser, "@2013-12T", new ConstantExpression(P.PartialDateTime.Parse("2013-12")));
+            AssertParser.SucceedsMatch(parser, "@2013-12", new ConstantExpression(P.Date.Parse("2013-12")));
+            AssertParser.SucceedsMatch(parser, "@2013-12T", new ConstantExpression(P.DateTime.Parse("2013-12")));
             AssertParser.SucceedsMatch(parser, "3", new ConstantExpression(3));
             AssertParser.SucceedsMatch(parser, "true", new ConstantExpression(true));
             AssertParser.SucceedsMatch(parser, "(3)", new ConstantExpression(3));
             AssertParser.SucceedsMatch(parser, "{}", NewNodeListInitExpression.Empty);
-            AssertParser.SucceedsMatch(parser, "@2014-12-13T12:00:00+02:00", new ConstantExpression(P.PartialDateTime.Parse("2014-12-13T12:00:00+02:00")));
+            AssertParser.SucceedsMatch(parser, "@2014-12-13T12:00:00+02:00", new ConstantExpression(P.DateTime.Parse("2014-12-13T12:00:00+02:00")));
             AssertParser.SucceedsMatch(parser, "78 'kg'", new ConstantExpression(new P.Quantity(78m, "kg")));
             AssertParser.SucceedsMatch(parser, "10.1 'mg'", new ConstantExpression(new P.Quantity(10.1m, "mg")));
         }

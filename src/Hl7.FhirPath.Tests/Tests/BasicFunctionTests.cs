@@ -184,23 +184,23 @@ namespace Hl7.FhirPath.Tests
         public void TestExpressionTodayFunction()
         {
             // Check that date comes in
-            Assert.AreEqual(P.PartialDate.Today(), scalar("today()"));
+            Assert.AreEqual(P.Date.Today(), scalar("today()"));
 
             // Check greater than
-            isB("today() < @" + P.PartialDate.FromDateTimeOffset(DateTimeOffset.UtcNow.AddDays(1), includeOffset: false));
+            isB("today() < @" + P.Date.FromDateTimeOffset(DateTimeOffset.UtcNow.AddDays(1), includeOffset: false));
 
             // Check less than
-            isB("today() > @" + P.PartialDate.FromDateTimeOffset(DateTimeOffset.UtcNow.AddDays(-1), includeOffset: false));
+            isB("today() > @" + P.Date.FromDateTimeOffset(DateTimeOffset.UtcNow.AddDays(-1), includeOffset: false));
 
             // Check ==
-            isB("today() = @" + P.PartialDate.Today());
+            isB("today() = @" + P.Date.Today());
 
             // This unit-test will fail if you are working between midnight
             // and start-of-day in GMT:
             // e.g. 2018-08-10T01:00T+02:00 > 2018-08-10 will fail, which is then
             // test on the next line
-            //isB("now() > @" + PartialDateTime.Today());
-            isB("now() >= @" + P.PartialDateTime.Now());
+            //isB("now() > @" + DateTime.Today());
+            isB("now() >= @" + P.DateTime.Now());
         }
 
         [TestMethod]

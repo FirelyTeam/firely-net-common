@@ -57,7 +57,7 @@ namespace Hl7.Fhir.Support.Tests.Language
         public void TestForNativeType()
         {
             Assert.AreEqual(TypeSpecifier.Boolean,TypeSpecifier.ForNativeType(typeof(bool)));
-            Assert.AreEqual(TypeSpecifier.DateTime, TypeSpecifier.ForNativeType(typeof(P.PartialDateTime)));
+            Assert.AreEqual(TypeSpecifier.DateTime, TypeSpecifier.ForNativeType(typeof(P.DateTime)));
             Assert.AreEqual(TypeSpecifier.Concept, TypeSpecifier.ForNativeType(typeof(P.Concept)));
             Assert.AreEqual(TypeSpecifier.Any, TypeSpecifier.ForNativeType(typeof(object)));
             Assert.AreEqual(TypeSpecifier.GetByName("DotNet", "System.Guid"), TypeSpecifier.ForNativeType(typeof(Guid)));

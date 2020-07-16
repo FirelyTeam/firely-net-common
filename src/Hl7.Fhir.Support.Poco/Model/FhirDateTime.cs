@@ -155,8 +155,8 @@ namespace Hl7.Fhir.Model
         public DateTime? ToDateTime() 
             => Value == null ? null : (DateTime?)PrimitiveTypeConverter.ConvertTo<DateTime>(Value);
 
-        public P.PartialDateTime ToPartialDateTime() 
-            => Value != null ? P.PartialDateTime.Parse(Value) : null;
+        public P.DateTime ToPartialDateTime() 
+            => Value != null ? P.DateTime.Parse(Value) : null;
     }
 
 }

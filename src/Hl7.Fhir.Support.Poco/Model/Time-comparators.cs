@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return P.PartialTime.Parse(a.Value) > P.PartialTime.Parse(b.Value);
+            return P.Time.Parse(a.Value) > P.Time.Parse(b.Value);
         }
 
         public static bool operator >=(Time a, Time b)
@@ -58,7 +58,7 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return P.PartialTime.Parse(a.Value) >= P.PartialTime.Parse(b.Value);
+            return P.Time.Parse(a.Value) >= P.Time.Parse(b.Value);
         }
 
         public static bool operator <(Time a, Time b)
@@ -69,7 +69,7 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return P.PartialTime.Parse(a.Value) < P.PartialTime.Parse(b.Value);
+            return P.Time.Parse(a.Value) < P.Time.Parse(b.Value);
         }
 
         public static bool operator <=(Time a, Time b)
@@ -80,7 +80,7 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return P.PartialTime.Parse(a.Value) <= P.PartialTime.Parse(b.Value);
+            return P.Time.Parse(a.Value) <= P.Time.Parse(b.Value);
         }
 
         /// <summary>
@@ -110,8 +110,8 @@ namespace Hl7.Fhir.Model
 
                 if (this.Value == otherValue) return true; // Default reference/string comparison works in most cases
 
-                var left = P.PartialTime.Parse(Value);
-                var right = P.PartialTime.Parse(otherValue);
+                var left = P.Time.Parse(Value);
+                var right = P.Time.Parse(otherValue);
 
                 return left == right;
             }

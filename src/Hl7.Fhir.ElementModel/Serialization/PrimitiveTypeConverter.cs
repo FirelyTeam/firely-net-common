@@ -71,9 +71,9 @@ namespace Hl7.Fhir.Serialization
                 byte[] barr => System.Convert.ToBase64String(barr),
                 DateTimeOffset dto => XmlConvert.ToString(dto, FMT_FULL),
                 Uri uri => uri.ToString(),
-                P.PartialDateTime pdt => pdt.ToString(),
-                P.PartialTime pt => pt.ToString(),
-                P.PartialDate pd => pd.ToString(),
+                P.DateTime pdt => pdt.ToString(),
+                P.Time pt => pt.ToString(),
+                P.Date pd => pd.ToString(),
                 Enum en => en.GetLiteral(),
                 BigInteger bi => bi.ToString(),
                 P.Quantity q => q.ToString(),
@@ -124,12 +124,12 @@ namespace Hl7.Fhir.Serialization
                 return convertToDatetimeOffset(value);
             if (typeof(System.Uri) == to)
                 return new Uri(value, UriKind.RelativeOrAbsolute);
-            if (typeof(P.PartialDateTime) == to)
-                return P.PartialDateTime.Parse(value);
-            if (typeof(P.PartialDate) == to)
-                return P.PartialDate.Parse(value);
-            if (typeof(P.PartialTime) == to)
-                return P.PartialTime.Parse(value);
+            if (typeof(P.DateTime) == to)
+                return P.DateTime.Parse(value);
+            if (typeof(P.Date) == to)
+                return P.Date.Parse(value);
+            if (typeof(P.Time) == to)
+                return P.Time.Parse(value);
             if (typeof(P.Quantity) == to)
                 return P.Quantity.Parse(value);
             if (typeof(BigInteger) == to)
@@ -151,7 +151,7 @@ namespace Hl7.Fhir.Serialization
         {
             // May not be just a time spec (without a date ). Look for values like Thh:mm or hh:mm
             if (value.IndexOf(":") == 2 || value.IndexOf(":") == 3)
-                throw Error.Format("Partial date(time) cannot contain just a time");
+                throw Error.Format("A date(time) cannot contain just a time");
 
             if (!value.Contains("T") && value.Length <= 10)
             {
@@ -190,9 +190,9 @@ namespace Hl7.Fhir.Serialization
                 type == typeof(string) ||
                 type == typeof(DateTimeOffset) ||
                 type == typeof(Uri) ||
-                type == typeof(P.PartialDateTime) ||
-                type == typeof(P.PartialDate) ||
-                type == typeof(P.PartialTime) ||
+                type == typeof(P.DateTime) ||
+                type == typeof(P.Date) ||
+                type == typeof(P.Time) ||
                 type == typeof(BigInteger);
         }
     }

@@ -29,14 +29,14 @@ namespace Hl7.FhirPath.Tests
                 yield return ("fal", typeof(P.Boolean), false, default);
                 yield return ("0", typeof(P.Boolean), false, default);
 
-                yield return ("2018-01", typeof(P.PartialDate), true, P.PartialDate.Parse("2018-01"));
-                yield return ("hallo", typeof(P.PartialDate), false, default);
+                yield return ("2018-01", typeof(P.Date), true, P.Date.Parse("2018-01"));
+                yield return ("hallo", typeof(P.Date), false, default);
 
-                yield return ("2018-01-04T12:00:00Z", typeof(P.PartialDateTime), true, P.PartialDateTime.Parse("2018-01-04T12:00:00Z"));
-                yield return ("hallo", typeof(P.PartialDateTime), false, default);
+                yield return ("2018-01-04T12:00:00Z", typeof(P.DateTime), true, P.DateTime.Parse("2018-01-04T12:00:00Z"));
+                yield return ("hallo", typeof(P.DateTime), false, default);
 
-                yield return ("12:00:00Z", typeof(P.PartialTime), true, P.PartialTime.Parse("12:00:00Z"));
-                yield return ("hallo", typeof(P.PartialTime), false, default);
+                yield return ("12:00:00Z", typeof(P.Time), true, P.Time.Parse("12:00:00Z"));
+                yield return ("hallo", typeof(P.Time), false, default);
 
                 yield return ("hallo", typeof(P.String), true, "hallo");
 
@@ -59,7 +59,7 @@ namespace Hl7.FhirPath.Tests
                 yield return ("+34", typeof(P.Decimal), false, default);
                 yield return ("34.", typeof(P.Decimal), false, default);
 
-                yield return ("hallo", typeof(P.PartialDateTime), false, default);
+                yield return ("hallo", typeof(P.DateTime), false, default);
             };
 
             foreach (var (value, to, success, expected) in tests())

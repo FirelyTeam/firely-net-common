@@ -95,7 +95,7 @@ namespace Hl7.FhirPath.Tests
             reject("@20150103T12:34:34+02:30");
             reject("@-2015-01");
 
-            void accept(string s) => AssertParser.SucceedsMatch(parser, s, P.PartialDateTime.Parse(Lexer.CleanupDateTimeLiteral(s)));
+            void accept(string s) => AssertParser.SucceedsMatch(parser, s, P.DateTime.Parse(Lexer.CleanupDateTimeLiteral(s)));
             void reject(string s) => AssertParser.FailsMatch(parser, s);
         }
 
@@ -118,7 +118,7 @@ namespace Hl7.FhirPath.Tests
             reject("@12:34:34+02:30");
             reject("@T12:34:34+48:30");
 
-            void accept(string s) => AssertParser.SucceedsMatch(parser, s, P.PartialTime.Parse(s.Substring(2)));
+            void accept(string s) => AssertParser.SucceedsMatch(parser, s, P.Time.Parse(s.Substring(2)));
             void reject(string s) => AssertParser.FailsMatch(parser, s);
         }
 
@@ -137,7 +137,7 @@ namespace Hl7.FhirPath.Tests
             reject("@2018-04-05T10:00:00");
             reject("@2018-04-05T10:00:00Z");
 
-            void accept(string s) => AssertParser.SucceedsMatch(parser, s, P.PartialDate.Parse(s.Substring(1)));
+            void accept(string s) => AssertParser.SucceedsMatch(parser, s, P.Date.Parse(s.Substring(1)));
             void reject(string s) => AssertParser.FailsMatch(parser, s);
         }
 

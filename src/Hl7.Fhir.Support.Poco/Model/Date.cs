@@ -109,11 +109,11 @@ namespace Hl7.Fhir.Model
         public DateTimeOffset? ToDateTimeOffset() =>
             Value == null ? null : (DateTimeOffset?)PrimitiveTypeConverter.ConvertTo<DateTimeOffset>(Value);
 
-        public P.PartialDate ToPartialDate() =>
-            Value != null ? P.PartialDate.Parse(Value) : null;
+        public P.Date ToPartialDate() =>
+            Value != null ? P.Date.Parse(Value) : null;
 
-        public P.PartialDateTime ToPartialDateTime() =>
-            Value != null ? P.PartialDateTime.Parse(Value) : null;
+        public P.DateTime ToPartialDateTime() =>
+            Value != null ? P.DateTime.Parse(Value) : null;
     }
 
 }

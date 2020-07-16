@@ -44,7 +44,7 @@ namespace Hl7.FhirPath.Tests
 
             void accept(string testValue, int? h, int? m, int? s, int? ms, TimeSpan? o )
             {
-                Assert.IsTrue(P.PartialTime.TryParse(testValue, out P.PartialTime parsed), "TryParse");
+                Assert.IsTrue(P.Time.TryParse(testValue, out P.Time parsed), "TryParse");
                 Assert.AreEqual(h, parsed.Hours, "hours");
                 Assert.AreEqual(m, parsed.Minutes, "minutes");
                 Assert.AreEqual(s, parsed.Seconds, "seconds");
@@ -55,7 +55,7 @@ namespace Hl7.FhirPath.Tests
 
             void reject(string testValue)
             {
-                Assert.IsFalse(P.PartialTime.TryParse(testValue, out _));
+                Assert.IsFalse(P.Time.TryParse(testValue, out _));
             }
         }
 
@@ -65,7 +65,7 @@ namespace Hl7.FhirPath.Tests
             var plusOne = new TimeSpan(1, 0, 0);
             var plusTwo = new TimeSpan(2, 0, 0);
 
-            var pt = P.PartialTime.Parse("13:45:56");
+            var pt = P.Time.Parse("13:45:56");
             var dto = pt.ToDateTimeOffset(2019, 7, 23, plusOne);
             Assert.AreEqual(2019, dto.Year);
             Assert.AreEqual(7, dto.Month);
@@ -75,7 +75,7 @@ namespace Hl7.FhirPath.Tests
             Assert.AreEqual(56, dto.Second);
             Assert.AreEqual(plusOne, dto.Offset);
 
-            pt = P.PartialTime.Parse("13:45:56.456+02:00");
+            pt = P.Time.Parse("13:45:56.456+02:00");
             dto = pt.ToDateTimeOffset(2019, 7, 23, plusOne);
             Assert.AreEqual(13, dto.Hour);
             Assert.AreEqual(45, dto.Minute);
@@ -83,7 +83,7 @@ namespace Hl7.FhirPath.Tests
             Assert.AreEqual(456, dto.Millisecond);
             Assert.AreEqual(plusTwo, dto.Offset);
 
-            pt = P.PartialTime.Parse("13+02:00");
+            pt = P.Time.Parse("13+02:00");
             dto = pt.ToDateTimeOffset(2019, 7, 23, plusOne);
             Assert.AreEqual(13, dto.Hour);
             Assert.AreEqual(0, dto.Minute);
@@ -95,7 +95,7 @@ namespace Hl7.FhirPath.Tests
         [TestMethod]
         public void GetNow()
         {
-            var now = P.PartialTime.Now();
+            var now = P.Time.Now();
             var now2 = DateTimeOffset.Now;
 
             Assert.AreEqual(now2.Hour, now.Hours);
@@ -104,7 +104,7 @@ namespace Hl7.FhirPath.Tests
             Assert.AreEqual(P.DateTimePrecision.Fraction, now.Precision);
             Assert.IsFalse(now.HasOffset);
 
-            now = P.PartialTime.Now(includeOffset: true);
+            now = P.Time.Now(includeOffset: true);
             Assert.IsTrue(now.HasOffset);
         }
 
@@ -114,21 +114,21 @@ namespace Hl7.FhirPath.Tests
             var plusOne = new TimeSpan(1, 0, 0);
 
             var dto = new DateTimeOffset(2019, 7, 23, 13, 45, 56, 567, plusOne);
-            var pt = P.PartialTime.FromDateTimeOffset(dto);
+            var pt = P.Time.FromDateTimeOffset(dto);
             Assert.AreEqual(13, pt.Hours);
             Assert.AreEqual(45, pt.Minutes);
             Assert.AreEqual(56, pt.Seconds);
             Assert.AreEqual(567, pt.Millis);
             Assert.IsNull(pt.Offset);
 
-            pt = P.PartialTime.FromDateTimeOffset(dto, includeOffset: true);
+            pt = P.Time.FromDateTimeOffset(dto, includeOffset: true);
             Assert.AreEqual(13, pt.Hours);
             Assert.AreEqual(45, pt.Minutes);
             Assert.AreEqual(56, pt.Seconds);
             Assert.AreEqual(567, pt.Millis);
             Assert.AreEqual(plusOne, pt.Offset);
 
-            pt = P.PartialTime.FromDateTimeOffset(dto, prec: P.DateTimePrecision.Hour, includeOffset: true);
+            pt = P.Time.FromDateTimeOffset(dto, prec: P.DateTimePrecision.Hour, includeOffset: true);
             Assert.AreEqual(13, pt.Hours);
             Assert.IsNull(pt.Minutes);
             Assert.AreEqual(P.DateTimePrecision.Hour, pt.Precision);

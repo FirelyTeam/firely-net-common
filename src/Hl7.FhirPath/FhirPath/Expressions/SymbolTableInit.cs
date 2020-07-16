@@ -46,9 +46,9 @@ namespace Hl7.FhirPath.Expressions
             t.Add("intersect", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => f.Intersect(a));
             t.Add("exclude", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => f.Exclude(a));
 
-            t.Add("today", (object _) => P.PartialDate.Today());
-            t.Add("now", (object _) => P.PartialDateTime.Now());
-            t.Add("timeOfDay", (object _) => P.PartialTime.Now());
+            t.Add("today", (object _) => P.Date.Today());
+            t.Add("now", (object _) => P.DateTime.Now());
+            t.Add("timeOfDay", (object _) => P.Time.Now());
 
             t.Add("binary.&", (object _, string a, string b) => (a ?? "") + (b ?? ""));
 
