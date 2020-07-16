@@ -11,9 +11,9 @@
 using System;
 using System.Globalization;
 
-namespace Hl7.Fhir.Model.Primitives
+namespace Hl7.Fhir.ElementModel.Types
 {
-    public class String: Any, IComparable, ICqlEquatable, ICqlOrderable
+    public class String : Any, IComparable, ICqlEquatable, ICqlOrderable
     {
         public String() : this(string.Empty) { }
 
@@ -35,8 +35,8 @@ namespace Hl7.Fhir.Model.Primitives
         }
 
         public override bool Equals(object obj) => obj is Any other && Equals(other, CQL_EQUALS_COMPARISON);
-        public static bool operator ==(String a, String b) => Equals(a,b);
-        public static bool operator !=(String a, String b) => !Equals(a,b);
+        public static bool operator ==(String a, String b) => Equals(a, b);
+        public static bool operator !=(String a, String b) => !Equals(a, b);
 
         /// <summary>
         /// Compares two strings according to CQL equivalence rules.
@@ -54,7 +54,7 @@ namespace Hl7.Fhir.Model.Primitives
 #if !NETSTANDARD1_1
             var compareOptions = CompareOptions.None;
             if (comparisonType.HasFlag(StringComparison.IgnoreCase)) compareOptions |= CompareOptions.IgnoreCase;
-            if(comparisonType.HasFlag(StringComparison.IgnoreDiacritics)) compareOptions |= CompareOptions.IgnoreNonSpace;
+            if (comparisonType.HasFlag(StringComparison.IgnoreDiacritics)) compareOptions |= CompareOptions.IgnoreNonSpace;
 
             return string.Compare(l, r, CultureInfo.InvariantCulture, compareOptions) == 0;
 #else
@@ -72,7 +72,7 @@ namespace Hl7.Fhir.Model.Primitives
             for (var ix = 0; ix < dataAsChars.Length; ix++)
             {
                 if (char.IsWhiteSpace(dataAsChars[ix]))
-                    dataAsChars[ix] = ' ';               
+                    dataAsChars[ix] = ' ';
             }
 
             return new string(dataAsChars);

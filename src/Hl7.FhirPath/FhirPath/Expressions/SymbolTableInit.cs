@@ -7,7 +7,7 @@
  */
 
 using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Model.Primitives;
+using P=Hl7.Fhir.ElementModel.Types;
 using Hl7.Fhir.Utility;
 using Hl7.FhirPath.FhirPath.Functions;
 using Hl7.FhirPath.Functions;
@@ -46,9 +46,9 @@ namespace Hl7.FhirPath.Expressions
             t.Add("intersect", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => f.Intersect(a));
             t.Add("exclude", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => f.Exclude(a));
 
-            t.Add("today", (object _) => PartialDate.Today());
-            t.Add("now", (object _) => PartialDateTime.Now());
-            t.Add("timeOfDay", (object _) => PartialTime.Now());
+            t.Add("today", (object _) => P.PartialDate.Today());
+            t.Add("now", (object _) => P.PartialDateTime.Now());
+            t.Add("timeOfDay", (object _) => P.PartialTime.Now());
 
             t.Add("binary.&", (object _, string a, string b) => (a ?? "") + (b ?? ""));
 
@@ -70,30 +70,30 @@ namespace Hl7.FhirPath.Expressions
             t.Add("unary.-", (object f, int a) => -a, doNullProp: true);
             t.Add("unary.-", (object f, long a) => -a, doNullProp: true);
             t.Add("unary.-", (object f, decimal a) => -a, doNullProp: true);
-            t.Add("unary.-", (object f, Quantity a) => new Quantity(-a.Value, a.Unit), doNullProp: true);
+            t.Add("unary.-", (object f, P.Quantity a) => new P.Quantity(-a.Value, a.Unit), doNullProp: true);
             t.Add("unary.+", (object f, int a) => a, doNullProp: true);
             t.Add("unary.+", (object f, long a) => a, doNullProp: true);
             t.Add("unary.+", (object f, decimal a) => a, doNullProp: true);
-            t.Add("unary.+", (object f, Quantity a) => a, doNullProp: true);
+            t.Add("unary.+", (object f, P.Quantity a) => a, doNullProp: true);
 
             t.Add("binary.*", (object f, int a, int b) => a * b, doNullProp: true);
             t.Add("binary.*", (object f, long a, long b) => a * b, doNullProp: true);
             t.Add("binary.*", (object f, decimal a, decimal b) => a * b, doNullProp: true);
-            t.Add("binary.*", (object f, Quantity a, Quantity b) => a * b, doNullProp: true);
+            t.Add("binary.*", (object f, P.Quantity a, P.Quantity b) => a * b, doNullProp: true);
 
             t.Add("binary./", (object f, decimal a, decimal b) => b != 0 ? a / b : (decimal?)null, doNullProp: true);
-            t.Add("binary./", (object f, Quantity a, Quantity b) => a / b, doNullProp: true);
+            t.Add("binary./", (object f, P.Quantity a, P.Quantity b) => a / b, doNullProp: true);
 
             t.Add("binary.+", (object f, int a, int b) => a + b, doNullProp: true);
             t.Add("binary.+", (object f, long a, long b) => a + b, doNullProp: true);
             t.Add("binary.+", (object f, decimal a, decimal b) => a + b, doNullProp: true);
             t.Add("binary.+", (object f, string a, string b) => a + b, doNullProp: true);
-            t.Add("binary.+", (object f, Quantity a, Quantity b) => a + b, doNullProp: true);
+            t.Add("binary.+", (object f, P.Quantity a, P.Quantity b) => a + b, doNullProp: true);
 
             t.Add("binary.-", (object f, int a, int b) => a - b, doNullProp: true);
             t.Add("binary.-", (object f, long a, long b) => a - b, doNullProp: true);
             t.Add("binary.-", (object f, decimal a, decimal b) => a - b, doNullProp: true);
-            t.Add("binary.-", (object f, Quantity a, Quantity b) => a - b, doNullProp: true);
+            t.Add("binary.-", (object f, P.Quantity a, P.Quantity b) => a - b, doNullProp: true);
 
             t.Add("binary.div", (object f, int a, int b) => b != 0 ? a / b : (int?)null, doNullProp: true);
             t.Add("binary.div", (object f, long a, long b) => b != 0 ? a / b : (long?)null, doNullProp: true);
@@ -103,10 +103,10 @@ namespace Hl7.FhirPath.Expressions
             t.Add("binary.mod", (object f, long a, long b) => b != 0 ? a % b : (long?)null, doNullProp: true);
             t.Add("binary.mod", (object f, decimal a, decimal b) => b != 0 ? a % b : (decimal?)null, doNullProp: true);
 
-            t.Add("binary.>", (object f, Any a, Any b) => EqualityOperators.Compare(a, b, ">"), doNullProp: true);
-            t.Add("binary.<", (object f, Any a, Any b) => EqualityOperators.Compare(a, b, "<"), doNullProp: true);
-            t.Add("binary.<=", (object f, Any a, Any b) => EqualityOperators.Compare(a, b, "<="), doNullProp: true);
-            t.Add("binary.>=", (object f, Any a, Any b) => EqualityOperators.Compare(a, b, ">="), doNullProp: true);
+            t.Add("binary.>", (object f, P.Any a, P.Any b) => EqualityOperators.Compare(a, b, ">"), doNullProp: true);
+            t.Add("binary.<", (object f, P.Any a, P.Any b) => EqualityOperators.Compare(a, b, "<"), doNullProp: true);
+            t.Add("binary.<=", (object f, P.Any a, P.Any b) => EqualityOperators.Compare(a, b, "<="), doNullProp: true);
+            t.Add("binary.>=", (object f, P.Any a, P.Any b) => EqualityOperators.Compare(a, b, ">="), doNullProp: true);
 
             t.Add("single", (IEnumerable<ITypedElement> f) => f.Single(), doNullProp: true);
             t.Add("skip", (IEnumerable<ITypedElement> f, long a) => f.Skip((int)a), doNullProp: true);
@@ -152,7 +152,7 @@ namespace Hl7.FhirPath.Expressions
 
             // Math functions
             t.Add("abs", (decimal f) => Math.Abs(f), doNullProp: true);
-            t.Add("abs", (Quantity f) => new Quantity(Math.Abs(f.Value), f.Unit), doNullProp: true);
+            t.Add("abs", (P.Quantity f) => new P.Quantity(Math.Abs(f.Value), f.Unit), doNullProp: true);
             t.Add("ceiling", (decimal f) => Math.Ceiling(f), doNullProp: true);
             t.Add("exp", (decimal f) => Math.Exp((double)f), doNullProp: true);
             t.Add("floor", (decimal f) => Math.Floor(f), doNullProp: true);

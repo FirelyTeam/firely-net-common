@@ -6,7 +6,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-namespace Hl7.Fhir.Support.Utility
+namespace Hl7.Fhir.Utility
 {
     public struct Unit
     {

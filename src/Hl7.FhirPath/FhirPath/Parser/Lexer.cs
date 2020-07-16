@@ -6,13 +6,13 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using Hl7.Fhir.Model.Primitives;
 using Hl7.FhirPath.Sprache;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.FhirPath.Parser
 {
@@ -95,8 +95,8 @@ namespace Hl7.FhirPath.Parser
                 )?",
                 RegexOptions.IgnorePatternWhitespace);
 
-        public static readonly Parser<PartialDate> Date =
-            Parse.Regex(DateRegEx).Select(s => PartialDate.Parse(s.Substring(1)));
+        public static readonly Parser<P.PartialDate> Date =
+            Parse.Regex(DateRegEx).Select(s => P.PartialDate.Parse(s.Substring(1)));
 
         // DATETIME
         //      : '@'  ....
@@ -120,8 +120,8 @@ namespace Hl7.FhirPath.Parser
                 ) (Z|((\+|-)[0-9][0-9]:[0-9][0-9]))?",
                 RegexOptions.IgnorePatternWhitespace);
 
-        public static readonly Parser<PartialDateTime> DateTime =
-            Parse.Regex(DateTimeRegEx).Select(s => PartialDateTime.Parse(CleanupDateTimeLiteral(s)));
+        public static readonly Parser<P.PartialDateTime> DateTime =
+            Parse.Regex(DateTimeRegEx).Select(s => P.PartialDateTime.Parse(CleanupDateTimeLiteral(s)));
 
         internal static string CleanupDateTimeLiteral(string repr)
         {
@@ -149,8 +149,8 @@ namespace Hl7.FhirPath.Parser
         // NB: No timezone (as specified in FHIR and FhirPath, CQL incorrectly states that it allows a timezone)
         public static readonly Regex TimeRegEx = new Regex("@T" + TIMEFORMAT, RegexOptions.IgnorePatternWhitespace);
 
-        public static readonly Parser<PartialTime> Time =
-            Parse.Regex(TimeRegEx).Select(s => PartialTime.Parse(s.Substring(2)));
+        public static readonly Parser<P.PartialTime> Time =
+            Parse.Regex(TimeRegEx).Select(s => P.PartialTime.Parse(s.Substring(2)));
 
         // NUMBER
         //   : [0-9]+('.' [0-9]+)?
@@ -162,11 +162,11 @@ namespace Hl7.FhirPath.Parser
                    from num in Parse.Number
                    from dot in Parse.Char('.')
                    from fraction in Parse.Number
-                   select (decimal)Fhir.Model.Primitives.Decimal.Parse(num + dot + fraction);
+                   select (decimal)P.Decimal.Parse(num + dot + fraction);
 
         // BOOL: 'true' | 'false';
         public static readonly Parser<bool> Bool =
-            Parse.String("true").XOr(Parse.String("false")).Text().Select(s => (bool)Fhir.Model.Primitives.Boolean.Parse(s));
+            Parse.String("true").XOr(Parse.String("false")).Text().Select(s => (bool)P.Boolean.Parse(s));
 
         //qualifiedIdentifier
         //   : identifier ('.' identifier)*
@@ -180,7 +180,7 @@ namespace Hl7.FhirPath.Parser
             select name;
 
         public static readonly Parser<string> Quantity =
-           Parse.Regex(Fhir.Model.Primitives.Quantity.QUANTITYREGEX);
+           Parse.Regex(P.Quantity.QUANTITYREGEX);
     }
 
 

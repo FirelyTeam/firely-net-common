@@ -10,11 +10,11 @@
 
 using System;
 
-namespace Hl7.Fhir.Model.Primitives
+namespace Hl7.Fhir.ElementModel.Types
 {
     public class Code : Any
     {
-        public Code(string? system, string code, string? display=null, string? version=null)
+        public Code(string? system, string code, string? display = null, string? version = null)
         {
             System = system;
             Value = code ?? throw new ArgumentNullException(nameof(code));

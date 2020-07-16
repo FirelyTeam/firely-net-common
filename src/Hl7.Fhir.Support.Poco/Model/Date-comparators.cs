@@ -29,6 +29,7 @@
 */
 
 using System;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Model
 {
@@ -43,7 +44,7 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return Primitives.PartialDateTime.Parse(a.Value) > Primitives.PartialDateTime.Parse(b.Value);
+            return P.PartialDateTime.Parse(a.Value) > P.PartialDateTime.Parse(b.Value);
         }
 
         public static bool operator >=(Date a, Date b)
@@ -54,7 +55,7 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return Primitives.PartialDateTime.Parse(a.Value) >= Primitives.PartialDateTime.Parse(b.Value);
+            return P.PartialDateTime.Parse(a.Value) >= P.PartialDateTime.Parse(b.Value);
         }
 
         public static bool operator <(Date a, Date b)
@@ -65,7 +66,7 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return Primitives.PartialDateTime.Parse(a.Value) < Primitives.PartialDateTime.Parse(b.Value);
+            return P.PartialDateTime.Parse(a.Value) < P.PartialDateTime.Parse(b.Value);
         }
 
         public static bool operator <=(Date a, Date b)
@@ -76,7 +77,7 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return Primitives.PartialDateTime.Parse(a.Value) <= Primitives.PartialDateTime.Parse(b.Value);
+            return P.PartialDateTime.Parse(a.Value) <= P.PartialDateTime.Parse(b.Value);
         }
 
         /// <summary>
@@ -106,8 +107,8 @@ namespace Hl7.Fhir.Model
 
                 if (this.Value == otherValue) return true; // Default reference/string comparison works in most cases
 
-                var left = Primitives.PartialDateTime.Parse(Value);
-                var right = Primitives.PartialDateTime.Parse(otherValue);
+                var left = P.PartialDateTime.Parse(Value);
+                var right = P.PartialDateTime.Parse(otherValue);
 
                 return left == right;
             }

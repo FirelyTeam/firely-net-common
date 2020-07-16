@@ -9,14 +9,12 @@
 #nullable enable
 
 using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Model.Primitives;
 using Hl7.FhirPath;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Hl7.FhirPath.Expressions;
-using Hl7.Fhir.Support.Utility;
-using P = Hl7.Fhir.Model.Primitives;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.FhirPath.Functions
 {
@@ -70,7 +68,7 @@ namespace Hl7.FhirPath.Functions
                 r = Typecasts.ParseQuantity(right);
 
             // Compare primitives (or extended primitives)
-            if (l != null && r != null && Any.TryConvert(l, out var lAny) && Any.TryConvert(r, out var rAny))
+            if (l != null && r != null && P.Any.TryConvert(l, out var lAny) && P.Any.TryConvert(r, out var rAny))
             {
                 return IsEqualTo(lAny, rAny);
             }
@@ -89,7 +87,7 @@ namespace Hl7.FhirPath.Functions
             }
         }
 
-        public static bool? IsEqualTo(Any? left, Any? right)
+        public static bool? IsEqualTo(P.Any? left, P.Any? right)
         {
             // If one or both of the arguments is an empty collection, a comparison operator will return an empty collection.
             // (though we might handle this more generally with the null-propagating functionality of the compiler
@@ -102,18 +100,18 @@ namespace Hl7.FhirPath.Functions
             // TODO: in the end the engine/compiler will handle this and report an overload resolution fail
             tryCoerce(ref left, ref right);
 
-            return left is ICqlEquatable cqle ? cqle.IsEqualTo(right) : null;
+            return left is P.ICqlEquatable cqle ? cqle.IsEqualTo(right) : null;
         }
 
 
-        private static bool tryCoerce(ref Any left, ref Any right)
+        private static bool tryCoerce(ref P.Any left, ref P.Any right)
         {
             left = upcastOne(left, right);
             right = upcastOne(right, left);
 
             return left.GetType() == right.GetType();
 
-            static Any upcastOne(Any value, Any other) =>
+            static P.Any upcastOne(P.Any value, P.Any other) =>
                 value switch
                 {
                     P.Integer _ when other is P.Long => (P.Long)(P.Integer)value,
@@ -161,7 +159,7 @@ namespace Hl7.FhirPath.Functions
                 r = Typecasts.ParseQuantity(right);
 
             // Compare primitives (or extended primitives)
-            if (l != null && r != null && Any.TryConvert(l, out var lAny) && Any.TryConvert(r, out var rAny))
+            if (l != null && r != null && P.Any.TryConvert(l, out var lAny) && P.Any.TryConvert(r, out var rAny))
             {
                 return IsEquivalentTo(lAny, rAny);
             }
@@ -188,7 +186,7 @@ namespace Hl7.FhirPath.Functions
             }
         }
 
-        public static bool IsEquivalentTo(Any? left, Any? right)
+        public static bool IsEquivalentTo(P.Any? left, P.Any? right)
         {
             if (left == null && right == null) return true;
             if (left == null || right == null) return false;
@@ -199,13 +197,13 @@ namespace Hl7.FhirPath.Functions
             // TODO: in the end the engine/compiler will handle this and report an overload resolution fail
             tryCoerce(ref left, ref right);
 
-            return left is ICqlEquatable cqle && cqle.IsEquivalentTo(right);
+            return left is P.ICqlEquatable cqle && cqle.IsEquivalentTo(right);
         }
 
 
 
 
-        public static bool? Compare(Any left, Any right, string op)
+        public static bool? Compare(P.Any left, P.Any right, string op)
         {
             // If one or both of the arguments is an empty collection, a comparison operator will return an empty collection.
             // (though we might handle this more generally with the null-propagating functionality of the compiler
@@ -218,7 +216,7 @@ namespace Hl7.FhirPath.Functions
             // TODO: in the end the engine/compiler will handle this and report an overload resolution fail
             tryCoerce(ref left, ref right);
 
-            if (left is ICqlOrderable orderable) return interpret(orderable.CompareTo(right));
+            if (left is P.ICqlOrderable orderable) return interpret(orderable.CompareTo(right));
 
             // Now, only the non-comparables are left (coding, concept, boolean).
             // TODO: We should be able to retrieve the cql name of the type, not the

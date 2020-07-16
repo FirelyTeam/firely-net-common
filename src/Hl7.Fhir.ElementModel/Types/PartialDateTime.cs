@@ -8,16 +8,16 @@
 
 #nullable enable
 
-using Hl7.Fhir.Support.Utility;
+using Hl7.Fhir.Utility;
 using System;
 using System.Text.RegularExpressions;
-using static Hl7.Fhir.Support.Utility.Result;
+using static Hl7.Fhir.Utility.Result;
 
-namespace Hl7.Fhir.Model.Primitives
+namespace Hl7.Fhir.ElementModel.Types
 {
     public class PartialDateTime : Any, IComparable, ICqlEquatable, ICqlOrderable
     {
-        internal PartialDateTime(string original, DateTimeOffset parsedValue, PartialPrecision precision, bool hasOffset)
+        internal PartialDateTime(string original, DateTimeOffset parsedValue, DateTimePrecision precision, bool hasOffset)
         {
             _original = original;
             _parsedValue = parsedValue;
@@ -43,13 +43,13 @@ namespace Hl7.Fhir.Model.Primitives
 
         public static PartialDateTime Today() => PartialDateTime.Parse(DateTimeOffset.Now.ToString("yyyy-MM-ddK"));
 
-        public int? Years => Precision >= PartialPrecision.Year ? _parsedValue.Year : (int?)null;
-        public int? Months => Precision >= PartialPrecision.Month ? _parsedValue.Month : (int?)null;
-        public int? Days => Precision >= PartialPrecision.Day ? _parsedValue.Day : (int?)null;
-        public int? Hours => Precision >= PartialPrecision.Hour ? _parsedValue.Hour : (int?)null;
-        public int? Minutes => Precision >= PartialPrecision.Minute ? _parsedValue.Minute : (int?)null;
-        public int? Seconds => Precision >= PartialPrecision.Second ? _parsedValue.Second : (int?)null;
-        public int? Millis => Precision >= PartialPrecision.Fraction ? _parsedValue.Millisecond : (int?)null;
+        public int? Years => Precision >= DateTimePrecision.Year ? _parsedValue.Year : (int?)null;
+        public int? Months => Precision >= DateTimePrecision.Month ? _parsedValue.Month : (int?)null;
+        public int? Days => Precision >= DateTimePrecision.Day ? _parsedValue.Day : (int?)null;
+        public int? Hours => Precision >= DateTimePrecision.Hour ? _parsedValue.Hour : (int?)null;
+        public int? Minutes => Precision >= DateTimePrecision.Minute ? _parsedValue.Minute : (int?)null;
+        public int? Seconds => Precision >= DateTimePrecision.Second ? _parsedValue.Second : (int?)null;
+        public int? Millis => Precision >= DateTimePrecision.Fraction ? _parsedValue.Millisecond : (int?)null;
 
         /// <summary>
         /// The span of time ahead/behind UTC
@@ -62,7 +62,7 @@ namespace Hl7.Fhir.Model.Primitives
         /// <summary>
         /// The precision of the date and time available. 
         /// </summary>
-        public PartialPrecision Precision { get; private set; }
+        public DateTimePrecision Precision { get; private set; }
 
         /// <summary>
         /// Whether the time specifies an offset to UTC
@@ -112,13 +112,13 @@ namespace Hl7.Fhir.Model.Primitives
             var offset = matches.Groups["offset"];
 
             var prec =
-                    fracg.Success ? PartialPrecision.Fraction :
-                    secg.Success ? PartialPrecision.Second :
-                    ming.Success ? PartialPrecision.Minute :
-                    hrg.Success ? PartialPrecision.Hour :
-                    dayg.Success ? PartialPrecision.Day :
-                    mong.Success ? PartialPrecision.Month :
-                    PartialPrecision.Year;
+                    fracg.Success ? DateTimePrecision.Fraction :
+                    secg.Success ? DateTimePrecision.Second :
+                    ming.Success ? DateTimePrecision.Minute :
+                    hrg.Success ? DateTimePrecision.Hour :
+                    dayg.Success ? DateTimePrecision.Day :
+                    mong.Success ? DateTimePrecision.Month :
+                    DateTimePrecision.Year;
 
             var parseableDT = yrg.Value +
                   (mong.Success ? mong.Value : "-01") +
@@ -159,9 +159,9 @@ namespace Hl7.Fhir.Model.Primitives
         /// Compares two (partial)datetimes according to CQL ordering rules.
         /// </summary> 
         /// <param name="other"></param>
-        /// <returns>An <see cref="Support.Utility.Ok{T}"/> with an integer value representing the reseult of the comparison: 0 if this and other are equal, 
+        /// <returns>An <see cref="Utility.Ok{T}"/> with an integer value representing the reseult of the comparison: 0 if this and other are equal, 
         /// -1 if this is smaller than other and +1 if this is bigger than other, or the other is null. If the values are incomparable
-        /// this function returns a <see cref="Support.Utility.Fail{T}"/> with the reason why the comparison between the two values was impossible.
+        /// this function returns a <see cref="Utility.Fail{T}"/> with the reason why the comparison between the two values was impossible.
         /// </returns>
         /// <remarks>The comparison is performed by considering each precision in order, beginning with years. 
         /// If the values are the same, comparison proceeds to the next precision; 
@@ -179,7 +179,7 @@ namespace Hl7.Fhir.Model.Primitives
             };
         }
 
-        internal static Result<int> CompareDateTimeParts(DateTimeOffset l, PartialPrecision lPrec, bool lHasOffset, DateTimeOffset r, PartialPrecision rPrec, bool rHasOffset)
+        internal static Result<int> CompareDateTimeParts(DateTimeOffset l, DateTimePrecision lPrec, bool lHasOffset, DateTimeOffset r, DateTimePrecision rPrec, bool rHasOffset)
         {
             l = l.ToUniversalTime();
             r = r.ToUniversalTime();
@@ -187,13 +187,13 @@ namespace Hl7.Fhir.Model.Primitives
 
             if (l.Year != r.Year) return Ok(l.Year.CompareTo(r.Year));
 
-            if (lPrec < PartialPrecision.Month ^ rPrec < PartialPrecision.Month) return error;
+            if (lPrec < DateTimePrecision.Month ^ rPrec < DateTimePrecision.Month) return error;
             if (l.Month != r.Month) return Ok(l.Month.CompareTo(r.Month));
 
-            if (lPrec < PartialPrecision.Day ^ rPrec < PartialPrecision.Day) return error;
+            if (lPrec < DateTimePrecision.Day ^ rPrec < DateTimePrecision.Day) return error;
             if (l.Day != r.Day) return Ok(l.Day.CompareTo(r.Day));
 
-            if (lPrec < PartialPrecision.Hour ^ rPrec < PartialPrecision.Hour) return error;
+            if (lPrec < DateTimePrecision.Hour ^ rPrec < DateTimePrecision.Hour) return error;
 
             // Before we compare the times, let's first check whether this is possible at all.
             // Actually, this could still influence the dates too, but I don't think people would expect that to
@@ -204,10 +204,10 @@ namespace Hl7.Fhir.Model.Primitives
 
             if (l.Hour != r.Hour) return Ok(l.Hour.CompareTo(r.Hour));
 
-            if (lPrec < PartialPrecision.Minute ^ rPrec < PartialPrecision.Minute) return error;
+            if (lPrec < DateTimePrecision.Minute ^ rPrec < DateTimePrecision.Minute) return error;
             if (l.Minute != r.Minute) return Ok(l.Minute.CompareTo(r.Minute));
 
-            if (lPrec < PartialPrecision.Second ^ rPrec < PartialPrecision.Second) return error;
+            if (lPrec < DateTimePrecision.Second ^ rPrec < DateTimePrecision.Second) return error;
 
             // Note that DateTimeOffset rounds fractional
             // parts to millis (i.e. 12:00:00.12345 would be rounded to 12:00:00.123),

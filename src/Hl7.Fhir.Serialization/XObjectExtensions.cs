@@ -1,7 +1,6 @@
-﻿using System.Xml.Linq;
-using System.Xml;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Collections.Generic;
+using System.Xml.Linq;
 
 namespace Hl7.Fhir.Utility
 {
@@ -102,7 +101,7 @@ namespace Hl7.Fhir.Utility
         {
             var scan = node.PreviousNode;
 
-            while(scan != null)
+            while (scan != null)
             {
                 yield return scan;
                 scan = scan.PreviousNode;

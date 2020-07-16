@@ -58,7 +58,7 @@ namespace Hl7.Fhir.Specification
                 representation: XmlRepresentation.XmlElement,
                 defaultType: null,
                 type: new[] { rootType }, order: 0, nonDefaultNS: null, inSummary: true, isRequired: false);
-     
+
         public string ElementName { get; private set; }
 
         public bool IsCollection { get; private set; }

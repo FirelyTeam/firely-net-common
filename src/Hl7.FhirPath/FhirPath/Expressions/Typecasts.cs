@@ -6,12 +6,11 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 using Hl7.Fhir.ElementModel;
-using P=Hl7.Fhir.Model.Primitives;
+using P=Hl7.Fhir.ElementModel.Types;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 
 namespace Hl7.FhirPath.Expressions
 {
@@ -50,7 +49,7 @@ namespace Hl7.FhirPath.Expressions
             if (value == null) return null;
 
             var unit = qe.Children("code").SingleOrDefault()?.Value as string;
-            return new Fhir.Model.Primitives.Quantity(value.Value, unit);
+            return new P.Quantity(value.Value, unit);
         }
 
         private static Cast getImplicitCast(object f, Type to)
@@ -61,7 +60,7 @@ namespace Hl7.FhirPath.Expressions
             if (from.CanBeTreatedAsType(to)) return id;
 
             bool fromElemList = from.CanBeTreatedAsType(typeof(IEnumerable<ITypedElement>));
-            if (to == typeof(Fhir.Model.Primitives.Quantity) && from.CanBeTreatedAsType(typeof(ITypedElement))) return tryQuantity;
+            if (to == typeof(P.Quantity) && from.CanBeTreatedAsType(typeof(ITypedElement))) return tryQuantity;
             if (to == typeof(ITypedElement) && (!fromElemList)) return any2primitiveTypedElement;
             if (to == typeof(IEnumerable<ITypedElement>)) return any2List;
 

@@ -1,11 +1,8 @@
-﻿using Hl7.Fhir.Model.Primitives;
-using Hl7.Fhir.Support.Utility;
-using Hl7.FhirPath.Functions;
+﻿using Hl7.FhirPath.Functions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using P = Hl7.Fhir.Model.Primitives;
+using Hl7.Fhir.ElementModel.Types;
 
 namespace HL7.FhirPath.Tests.Tests
 {
@@ -25,7 +22,7 @@ namespace HL7.FhirPath.Tests.Tests
             test(10000m, 0);
             test(10000.123m, 3);
 
-            static void test(decimal d, int p) => Assert.AreEqual(p, P.Decimal.Scale(d, ignoreTrailingZeroes: true));
+            static void test(decimal d, int p) => Assert.AreEqual(p, Decimal.Scale(d, ignoreTrailingZeroes: true));
         }
 
 
@@ -49,13 +46,13 @@ namespace HL7.FhirPath.Tests.Tests
         public void TestEqualityIncompatibleTypes()
         {
             Assert.IsFalse((bool)EqualityOperators.IsEqualTo(new Quantity(4.0, "kg"), new Code("http://nu.nl", "R")));
-            Assert.IsFalse((bool)EqualityOperators.IsEqualTo(new P.Integer(0), new P.String("hi!")));
+            Assert.IsFalse((bool)EqualityOperators.IsEqualTo(new Integer(0), new String("hi!")));
 
             Assert.IsFalse(EqualityOperators.IsEquivalentTo(new Quantity(4.0, "kg"), new Code("http://nu.nl", "R")));
-            Assert.IsFalse(EqualityOperators.IsEquivalentTo(new P.Integer(0), new P.String("hi!")));
+            Assert.IsFalse(EqualityOperators.IsEquivalentTo(new Integer(0), new String("hi!")));
 
-            Assert.ThrowsException<ArgumentException>( () => EqualityOperators.Compare(new Quantity(4.0, "kg"), new Code("http://nu.nl", "R"), "="));
-            Assert.ThrowsException<ArgumentException>( () => EqualityOperators.Compare(new P.Integer(0), new P.String("hi!"), ">="));
+            Assert.ThrowsException<System.ArgumentException>( () => EqualityOperators.Compare(new Quantity(4.0, "kg"), new Code("http://nu.nl", "R"), "="));
+            Assert.ThrowsException<System.ArgumentException>( () => EqualityOperators.Compare(new Integer(0), new String("hi!"), ">="));
         }
 
         internal static IEnumerable<object[]> equalityTestcases() =>

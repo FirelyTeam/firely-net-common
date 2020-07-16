@@ -8,16 +8,16 @@
 
 #nullable enable
 
-using Hl7.Fhir.Support.Utility;
+using Hl7.Fhir.Utility;
 using System;
 using System.Text.RegularExpressions;
-using static Hl7.Fhir.Support.Utility.Result;
+using static Hl7.Fhir.Utility.Result;
 
-namespace Hl7.Fhir.Model.Primitives
+namespace Hl7.Fhir.ElementModel.Types
 {
     public class PartialTime : Any, IComparable, ICqlEquatable, ICqlOrderable
     {
-        private PartialTime(string original, DateTimeOffset parsedValue, PartialPrecision precision, bool hasOffset)
+        private PartialTime(string original, DateTimeOffset parsedValue, DateTimePrecision precision, bool hasOffset)
         {
             _original = original;
             _parsedValue = parsedValue;
@@ -30,14 +30,14 @@ namespace Hl7.Fhir.Model.Primitives
 
         public static bool TryParse(string representation, out PartialTime value) => tryParse(representation, out value);
 
-        public static PartialTime FromDateTimeOffset(DateTimeOffset dto, PartialPrecision prec = PartialPrecision.Fraction,
+        public static PartialTime FromDateTimeOffset(DateTimeOffset dto, DateTimePrecision prec = DateTimePrecision.Fraction,
         bool includeOffset = false)
         {
             string formatString = prec switch
             {
-                PartialPrecision.Hour => "HH",
-                PartialPrecision.Minute => "HH:mm",
-                PartialPrecision.Second => "HH:mm:ss",
+                DateTimePrecision.Hour => "HH",
+                DateTimePrecision.Minute => "HH:mm",
+                DateTimePrecision.Second => "HH:mm:ss",
                 _ => "HH:mm:ss.FFFFFFF",
             };
 
@@ -49,10 +49,10 @@ namespace Hl7.Fhir.Model.Primitives
 
         public static PartialTime Now(bool includeOffset = false) => FromDateTimeOffset(DateTimeOffset.Now, includeOffset: includeOffset);
 
-        public int? Hours => Precision >= PartialPrecision.Hour ? _parsedValue.Hour : (int?)null;
-        public int? Minutes => Precision >= PartialPrecision.Minute ? _parsedValue.Minute : (int?)null;
-        public int? Seconds => Precision >= PartialPrecision.Second ? _parsedValue.Second : (int?)null;
-        public int? Millis => Precision >= PartialPrecision.Fraction ? _parsedValue.Millisecond : (int?)null;
+        public int? Hours => Precision >= DateTimePrecision.Hour ? _parsedValue.Hour : (int?)null;
+        public int? Minutes => Precision >= DateTimePrecision.Minute ? _parsedValue.Minute : (int?)null;
+        public int? Seconds => Precision >= DateTimePrecision.Second ? _parsedValue.Second : (int?)null;
+        public int? Millis => Precision >= DateTimePrecision.Fraction ? _parsedValue.Millisecond : (int?)null;
 
         /// <summary>
         /// The span of time ahead/behind UTC
@@ -65,7 +65,7 @@ namespace Hl7.Fhir.Model.Primitives
         /// <summary>
         /// The precision of the time available. 
         /// </summary>
-        public PartialPrecision Precision { get; private set; }
+        public DateTimePrecision Precision { get; private set; }
 
         /// <summary>
         /// Whether the time specifies an offset to UTC
@@ -122,10 +122,10 @@ namespace Hl7.Fhir.Model.Primitives
             var offset = matches.Groups["offset"];
 
             var prec =
-                        fracg.Success ? PartialPrecision.Fraction :
-                        secg.Success ? PartialPrecision.Second :
-                        ming.Success ? PartialPrecision.Minute :
-                        PartialPrecision.Hour;
+                        fracg.Success ? DateTimePrecision.Fraction :
+                        secg.Success ? DateTimePrecision.Second :
+                        ming.Success ? DateTimePrecision.Minute :
+                        DateTimePrecision.Hour;
 
             var parseableDT = $"2016-01-01T" +
                     (hrg.Success ? hrg.Value : "00") +
@@ -158,14 +158,14 @@ namespace Hl7.Fhir.Model.Primitives
         /// <remarks>See <see cref="TryCompareTo(Any)"/> for more details.</remarks>
         public int CompareTo(object obj) => obj is PartialTime p ?
             TryCompareTo(p).ValueOrThrow() : throw NotSameTypeComparison(this, obj);
-      
+
         /// <summary>
         /// Compares two (partial)times according to CQL ordering rules.
         /// </summary> 
         /// <param name="other"></param>
-        /// <returns>An <see cref="Support.Utility.Ok{T}"/> with an integer value representing the reseult of the comparison: 0 if this and other are equal, 
+        /// <returns>An <see cref="Utility.Ok{T}"/> with an integer value representing the reseult of the comparison: 0 if this and other are equal, 
         /// -1 if this is smaller than other and +1 if this is bigger than other, or the other is null. If the values are incomparable
-        /// this function returns a <see cref="Support.Utility.Fail{T}"/> with the reason why the comparison between the two values was impossible.
+        /// this function returns a <see cref="Utility.Fail{T}"/> with the reason why the comparison between the two values was impossible.
         /// </returns>
         /// <remarks>The comparison is performed by considering each precision in order, beginning with hours. 
         /// If the values are the same, comparison proceeds to the next precision; 

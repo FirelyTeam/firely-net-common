@@ -10,7 +10,7 @@
 
 using System;
 
-namespace Hl7.Fhir.Model.Primitives
+namespace Hl7.Fhir.ElementModel.Types
 {
     public class Ratio : Any
     {
@@ -31,7 +31,7 @@ namespace Hl7.Fhir.Model.Primitives
         public override int GetHashCode() => (Numerator, Denominator).GetHashCode();
         public override string ToString() => Numerator.ToString() + " : " + Denominator.ToString();
         public static bool operator ==(Ratio left, Ratio right) => left.Equals(right);
-        public static bool operator !=(Ratio left, Ratio right) => !Equals(left,right);
+        public static bool operator !=(Ratio left, Ratio right) => !Equals(left, right);
 
         // Does not support equality, equivalence and ordering in the CQL sense, so no explicit implementations of these interfaces
     }

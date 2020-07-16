@@ -8,7 +8,7 @@
 
 using Hl7.Fhir.Language;
 using Hl7.Fhir.Language.Debugging;
-using P = Hl7.Fhir.Model.Primitives;
+using P = Hl7.Fhir.ElementModel.Types;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;

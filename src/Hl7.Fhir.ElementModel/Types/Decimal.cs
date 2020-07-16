@@ -12,7 +12,7 @@ using System;
 using System.Globalization;
 using System.Linq;
 
-namespace Hl7.Fhir.Model.Primitives
+namespace Hl7.Fhir.ElementModel.Types
 {
     public class Decimal : Any, IComparable, ICqlEquatable, ICqlOrderable
     {
@@ -62,7 +62,7 @@ namespace Hl7.Fhir.Model.Primitives
         /// <summary>
         /// Determines equality of two decimals using the specified type of decimal comparsion.
         /// </summary>
-        public bool Equals(Any other, DecimalComparison comparisonType) 
+        public bool Equals(Any other, DecimalComparison comparisonType)
         {
             if (!(other is Decimal otherD)) return false;
 
@@ -70,9 +70,9 @@ namespace Hl7.Fhir.Model.Primitives
             {
                 DecimalComparison.Strict =>
                     (Scale(this.Value, ignoreTrailingZeroes: false) == Scale(otherD.Value, ignoreTrailingZeroes: false)) &&
-                        eq(Value,otherD.Value),
+                        eq(Value, otherD.Value),
                 DecimalComparison.IgnoreTrailingZeroes =>
-                    eq(Value,otherD.Value),      // default .NET decimal behaviour
+                    eq(Value, otherD.Value),      // default .NET decimal behaviour
                 DecimalComparison.RoundToSmallestScale => scaleEq(Value, otherD.Value),
                 _ => throw new NotImplementedException(),  // cannot happen, just to keep the compiler happy
             };
@@ -85,7 +85,7 @@ namespace Hl7.Fhir.Model.Primitives
                 var roundPrec = Math.Min(Scale(a, true), Scale(b, true));
                 var lr = Math.Round(a, roundPrec);
                 var rr = Math.Round(b, roundPrec);
-                return eq(lr,rr);
+                return eq(lr, rr);
             }
 
             // From the spec: The Decimal type represents real values in the range (-10^28+1)/108 to (10^28-1)/10^8 with a step size of 10^-8. 
@@ -128,14 +128,14 @@ namespace Hl7.Fhir.Model.Primitives
             return obj switch
             {
                 // as defined by the .NET framework guidelines
-                null => 1,      
+                null => 1,
 
                 // The comparison rules for decimals are underdocumented - assume normal dotnet
                 // comparison, which disregards trailing zeroes (= equality comparison according
                 // to CQL).
-                Decimal d => decimal.Compare(Math.Round(Value,8), Math.Round(d.Value,8)),
+                Decimal d => decimal.Compare(Math.Round(Value, 8), Math.Round(d.Value, 8)),
 
-                _ => throw NotSameTypeComparison(this,obj)
+                _ => throw NotSameTypeComparison(this, obj)
             };
         }
 

@@ -6,8 +6,7 @@
  * available at https://github.com/FirelyTeam/fhir-net-api/blob/master/LICENSE
  */
 
-using Hl7.Fhir.Language;
-using P=Hl7.Fhir.Model.Primitives;
+using P = Hl7.Fhir.ElementModel.Types;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using System;

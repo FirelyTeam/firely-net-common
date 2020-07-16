@@ -7,9 +7,9 @@
  */
 
 using System;
-using static Hl7.Fhir.Support.Utility.Result;
+using static Hl7.Fhir.Utility.Result;
 
-namespace Hl7.Fhir.Support.Utility
+namespace Hl7.Fhir.Utility
 {
 
     public abstract class Result<T>

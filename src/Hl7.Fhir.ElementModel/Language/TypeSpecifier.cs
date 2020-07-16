@@ -1,7 +1,7 @@
-using Hl7.Fhir.Model.Primitives;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Language
 {
@@ -118,23 +118,23 @@ namespace Hl7.Fhir.Language
                 return Integer;
             else if (t<long>() || t<ulong>())
                 return Long;
-            else if (t<PartialTime>())
+            else if (t<P.PartialTime>())
                 return Time;
-            else if (t<PartialDate>())
+            else if (t<P.PartialDate>())
                 return Date;
-            else if (t<PartialDateTime>() || t<DateTimeOffset>())
+            else if (t<P.PartialDateTime>() || t<DateTimeOffset>())
                 return DateTime;
             else if (t<float>() || t<double>() || t<decimal>())
                 return Decimal;
             else if (t<string>() || t<char>() || t<Uri>())
                 return String;
-            else if (t<Quantity>())
+            else if (t<P.Quantity>())
                 return Quantity;
-            else if (t<Ratio>())
+            else if (t<P.Ratio>())
                 return Ratio;
-            else if (t<Code>() || dotNetType.CanBeTreatedAsType(typeof(Enum)))
+            else if (t<P.Code>() || dotNetType.CanBeTreatedAsType(typeof(Enum)))
                 return Code;
-            else if (t<Concept>())
+            else if (t<P.Concept>())
                 return Concept;
 #pragma warning disable IDE0046 // Convert to conditional expression
             else if (t<object>())
@@ -157,7 +157,7 @@ namespace Hl7.Fhir.Language
             //    return GetByName(DOTNET_NAMESPACE + "." + ns, n);
             //}
         }
-   
+
         public override bool Equals(object obj) => Equals(obj as TypeSpecifier);
         public bool Equals(TypeSpecifier other) => other != null && Name == other.Name && Namespace == other.Namespace;
 

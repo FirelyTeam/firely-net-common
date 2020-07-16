@@ -12,7 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using P = Hl7.Fhir.Model.Primitives;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.ElementModel
 {
@@ -30,7 +30,7 @@ namespace Hl7.Fhir.ElementModel
         {
             return value switch
             {
-                Model.Primitives.Quantity q => PrimitiveElement.ForQuantity(q),
+                P.Quantity q => PrimitiveElement.ForQuantity(q),
                 _ => new PrimitiveElement(value, useFullTypeName:true)
             };
         }

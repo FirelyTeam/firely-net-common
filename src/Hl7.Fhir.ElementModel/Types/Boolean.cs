@@ -10,7 +10,7 @@
 
 using System;
 
-namespace Hl7.Fhir.Model.Primitives
+namespace Hl7.Fhir.ElementModel.Types
 {
     public class Boolean : Any, ICqlEquatable
     {
@@ -19,7 +19,7 @@ namespace Hl7.Fhir.Model.Primitives
 
         public Boolean() : this(default) { }
         public Boolean(bool value) => Value = value;
-      
+
         public bool Value { get; }
 
         public static Boolean Parse(string value) =>
@@ -42,7 +42,7 @@ namespace Hl7.Fhir.Model.Primitives
             else
             {
                 value = default;
-                return false;               
+                return false;
             }
         }
 
@@ -50,8 +50,8 @@ namespace Hl7.Fhir.Model.Primitives
         public override string ToString() => Value.ToString();
         public override bool Equals(object obj) => obj is Boolean b && Value == b.Value;
 
-        public static bool operator ==(Boolean a, Boolean b) => Equals(a,b);
-        public static bool operator !=(Boolean a, Boolean b) => !Equals(a,b);
+        public static bool operator ==(Boolean a, Boolean b) => Equals(a, b);
+        public static bool operator !=(Boolean a, Boolean b) => !Equals(a, b);
 
         public static implicit operator bool(Boolean b) => b.Value;
 

@@ -11,9 +11,9 @@
 using System;
 using System.Xml;
 
-namespace Hl7.Fhir.Model.Primitives
+namespace Hl7.Fhir.ElementModel.Types
 {
-    public class Integer: Any, IComparable, ICqlEquatable, ICqlOrderable
+    public class Integer : Any, IComparable, ICqlEquatable, ICqlOrderable
     {
         public Integer() : this(default) { }
 
@@ -55,7 +55,7 @@ namespace Hl7.Fhir.Model.Primitives
             {
                 null => 1,
                 Integer i => Value.CompareTo(i.Value),
-                _ => throw NotSameTypeComparison(this,obj)
+                _ => throw NotSameTypeComparison(this, obj)
             };
         }
 
@@ -71,7 +71,7 @@ namespace Hl7.Fhir.Model.Primitives
         public static implicit operator int(Integer i) => i.Value;
         public static implicit operator Long(Integer i) => new Long(i.Value);
         public static implicit operator Decimal(Integer i) => new Decimal(i.Value);
-        public static implicit operator Quantity(Integer i) => new Quantity((decimal)i.Value,"1");
+        public static implicit operator Quantity(Integer i) => new Quantity((decimal)i.Value, "1");
 
         public static explicit operator Integer(int i) => new Integer(i);
 

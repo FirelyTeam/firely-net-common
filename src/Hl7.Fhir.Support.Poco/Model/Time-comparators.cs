@@ -31,6 +31,7 @@
 
 
 using System;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Model
 {
@@ -46,7 +47,7 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return Primitives.PartialTime.Parse(a.Value) > Primitives.PartialTime.Parse(b.Value);
+            return P.PartialTime.Parse(a.Value) > P.PartialTime.Parse(b.Value);
         }
 
         public static bool operator >=(Time a, Time b)
@@ -57,7 +58,7 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return Primitives.PartialTime.Parse(a.Value) >= Primitives.PartialTime.Parse(b.Value);
+            return P.PartialTime.Parse(a.Value) >= P.PartialTime.Parse(b.Value);
         }
 
         public static bool operator <(Time a, Time b)
@@ -68,7 +69,7 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return Primitives.PartialTime.Parse(a.Value) < Primitives.PartialTime.Parse(b.Value);
+            return P.PartialTime.Parse(a.Value) < P.PartialTime.Parse(b.Value);
         }
 
         public static bool operator <=(Time a, Time b)
@@ -79,7 +80,7 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return Primitives.PartialTime.Parse(a.Value) <= Primitives.PartialTime.Parse(b.Value);
+            return P.PartialTime.Parse(a.Value) <= P.PartialTime.Parse(b.Value);
         }
 
         /// <summary>
@@ -109,8 +110,8 @@ namespace Hl7.Fhir.Model
 
                 if (this.Value == otherValue) return true; // Default reference/string comparison works in most cases
 
-                var left = Primitives.PartialTime.Parse(Value);
-                var right = Primitives.PartialTime.Parse(otherValue);
+                var left = P.PartialTime.Parse(Value);
+                var right = P.PartialTime.Parse(otherValue);
 
                 return left == right;
             }

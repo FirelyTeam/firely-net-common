@@ -11,9 +11,9 @@
 using System;
 using System.Xml;
 
-namespace Hl7.Fhir.Model.Primitives
+namespace Hl7.Fhir.ElementModel.Types
 {
-    public class Long: Any, IComparable, ICqlEquatable, ICqlOrderable
+    public class Long : Any, IComparable, ICqlEquatable, ICqlOrderable
     {
         public Long() : this(default) { }
 

@@ -13,7 +13,7 @@ using Hl7.Fhir.ElementModel;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Linq;
-using P = Hl7.Fhir.Model.Primitives;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.FhirPath.Tests
 {

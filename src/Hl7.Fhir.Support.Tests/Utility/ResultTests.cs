@@ -1,8 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using static Hl7.Fhir.Support.Utility.Result;
+using static Hl7.Fhir.Utility.Result;
 
-namespace Hl7.Fhir.Support.Utility.Tests
+namespace Hl7.Fhir.Utility.Tests
 {
     [TestClass]
     public class ResultTests

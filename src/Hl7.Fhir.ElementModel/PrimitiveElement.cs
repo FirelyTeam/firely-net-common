@@ -9,13 +9,12 @@
 #nullable enable
 
 using Hl7.Fhir.Language;
-using Hl7.Fhir.Model.Primitives;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Specification;
-using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.ElementModel
 {
@@ -24,7 +23,7 @@ namespace Hl7.Fhir.ElementModel
         // [20190827 EK] Hack, allow a Quantity as a "primitive" value in ITypedElement.Value for now, so
         // we can at least continue to integrate the changes from the dead branch into 2.0
         // We need to have Quantity implement ITypedElement itself.
-        internal static PrimitiveElement ForQuantity(Quantity value)
+        internal static PrimitiveElement ForQuantity(P.Quantity value)
         {
             if (value is null) throw new ArgumentNullException(nameof(value));
 

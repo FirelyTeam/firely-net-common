@@ -6,13 +6,13 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using System;
-using System.Xml;
 using Hl7.Fhir.Utility;
-using System.Numerics;
+using System;
 using System.Globalization;
 using System.Linq;
-using Hl7.Fhir.Model.Primitives;
+using System.Numerics;
+using System.Xml;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Serialization
 {
@@ -71,12 +71,12 @@ namespace Hl7.Fhir.Serialization
                 byte[] barr => System.Convert.ToBase64String(barr),
                 DateTimeOffset dto => XmlConvert.ToString(dto, FMT_FULL),
                 Uri uri => uri.ToString(),
-                PartialDateTime pdt => pdt.ToString(),
-                PartialTime pt => pt.ToString(),
-                PartialDate pd => pd.ToString(),
+                P.PartialDateTime pdt => pdt.ToString(),
+                P.PartialTime pt => pt.ToString(),
+                P.PartialDate pd => pd.ToString(),
                 Enum en => en.GetLiteral(),
                 BigInteger bi => bi.ToString(),
-                Quantity q => q.ToString(),
+                P.Quantity q => q.ToString(),
                 _ => throw Error.NotSupported($"Cannot convert '{value.GetType().Name}' value '{value}' to string"),
             };
         }
@@ -124,14 +124,14 @@ namespace Hl7.Fhir.Serialization
                 return convertToDatetimeOffset(value);
             if (typeof(System.Uri) == to)
                 return new Uri(value, UriKind.RelativeOrAbsolute);
-            if (typeof(PartialDateTime) == to)
-                return PartialDateTime.Parse(value);
-            if (typeof(PartialDate) == to)
-                return PartialDate.Parse(value);
-            if (typeof(PartialTime) == to)
-                return PartialTime.Parse(value);
-            if (typeof(Quantity) == to)
-                return Quantity.Parse(value);
+            if (typeof(P.PartialDateTime) == to)
+                return P.PartialDateTime.Parse(value);
+            if (typeof(P.PartialDate) == to)
+                return P.PartialDate.Parse(value);
+            if (typeof(P.PartialTime) == to)
+                return P.PartialTime.Parse(value);
+            if (typeof(P.Quantity) == to)
+                return P.Quantity.Parse(value);
             if (typeof(BigInteger) == to)
                 return BigInteger.Parse(value);
 
@@ -185,14 +185,14 @@ namespace Hl7.Fhir.Serialization
 #endif
 
             // And some specific complex native types
-            return 
+            return
                 type == typeof(byte[]) ||
                 type == typeof(string) ||
                 type == typeof(DateTimeOffset) ||
                 type == typeof(Uri) ||
-                type == typeof(PartialDateTime) ||
-                type == typeof(PartialDate) ||
-                type == typeof(PartialTime) ||
+                type == typeof(P.PartialDateTime) ||
+                type == typeof(P.PartialDate) ||
+                type == typeof(P.PartialTime) ||
                 type == typeof(BigInteger);
         }
     }

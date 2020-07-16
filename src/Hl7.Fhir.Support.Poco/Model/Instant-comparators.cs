@@ -29,6 +29,7 @@
 */
 
 using System;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Model
 {
@@ -42,7 +43,7 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return Primitives.PartialDateTime.FromDateTimeOffset(a.Value.Value) > Primitives.PartialDateTime.FromDateTimeOffset(b.Value.Value);
+            return P.PartialDateTime.FromDateTimeOffset(a.Value.Value) > P.PartialDateTime.FromDateTimeOffset(b.Value.Value);
         }
 
         public static bool operator >=(Instant a, Instant b)
@@ -53,7 +54,7 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return Primitives.PartialDateTime.FromDateTimeOffset(a.Value.Value) >= Primitives.PartialDateTime.FromDateTimeOffset(b.Value.Value);
+            return P.PartialDateTime.FromDateTimeOffset(a.Value.Value) >= P.PartialDateTime.FromDateTimeOffset(b.Value.Value);
         }
 
         public static bool operator <(Instant a, Instant b)
@@ -64,7 +65,7 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return Primitives.PartialDateTime.FromDateTimeOffset(a.Value.Value) < Primitives.PartialDateTime.FromDateTimeOffset(b.Value.Value);
+            return P.PartialDateTime.FromDateTimeOffset(a.Value.Value) < P.PartialDateTime.FromDateTimeOffset(b.Value.Value);
         }
 
         public static bool operator <=(Instant a, Instant b)
@@ -75,7 +76,7 @@ namespace Hl7.Fhir.Model
             if (aValue == null) return bValue == null;
             if (bValue == null) return false;
 
-            return Primitives.PartialDateTime.FromDateTimeOffset(a.Value.Value) <= Primitives.PartialDateTime.FromDateTimeOffset(b.Value.Value);
+            return P.PartialDateTime.FromDateTimeOffset(a.Value.Value) <= P.PartialDateTime.FromDateTimeOffset(b.Value.Value);
         }
 
         /// <summary>
@@ -105,8 +106,8 @@ namespace Hl7.Fhir.Model
 
                 if (this.Value == otherValue) return true; // Default reference/string comparison works in most cases
 
-                var left = Primitives.PartialDateTime.FromDateTimeOffset(Value.Value);
-                var right = Primitives.PartialDateTime.FromDateTimeOffset(otherValue.Value);
+                var left = P.PartialDateTime.FromDateTimeOffset(Value.Value);
+                var right = P.PartialDateTime.FromDateTimeOffset(otherValue.Value);
 
                 return left == right;
             }

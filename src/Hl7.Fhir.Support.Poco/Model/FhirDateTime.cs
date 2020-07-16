@@ -35,6 +35,7 @@ using Hl7.Fhir.Specification;
 using System;
 using Hl7.Fhir.Serialization;
 using System.Text.RegularExpressions;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Model
 {
@@ -154,8 +155,8 @@ namespace Hl7.Fhir.Model
         public DateTime? ToDateTime() 
             => Value == null ? null : (DateTime?)PrimitiveTypeConverter.ConvertTo<DateTime>(Value);
 
-        public Primitives.PartialDateTime ToPartialDateTime() 
-            => Value != null ? Primitives.PartialDateTime.Parse(Value) : null;
+        public P.PartialDateTime ToPartialDateTime() 
+            => Value != null ? P.PartialDateTime.Parse(Value) : null;
     }
 
 }

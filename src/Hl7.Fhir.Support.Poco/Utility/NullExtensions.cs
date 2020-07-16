@@ -6,12 +6,11 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using System;
+using Hl7.Fhir.Model;
 using System.Collections;
 using System.Linq;
-using Hl7.Fhir.Model;
 
-namespace Hl7.Fhir.Support
+namespace Hl7.Fhir.Utility
 {
     public static class NullExtensions
     {

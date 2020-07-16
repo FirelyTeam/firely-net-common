@@ -9,14 +9,15 @@
 #nullable enable
 
 using Hl7.Fhir.Support.Utility;
+using Hl7.Fhir.Utility;
 using System;
 using System.Text.RegularExpressions;
 
-namespace Hl7.Fhir.Model.Primitives
+namespace Hl7.Fhir.ElementModel.Types
 {
     public class PartialDate : Any, IComparable, ICqlEquatable, ICqlOrderable
     {
-        private PartialDate(string original, DateTimeOffset parsedValue, PartialPrecision precision, bool hasOffset)
+        private PartialDate(string original, DateTimeOffset parsedValue, DateTimePrecision precision, bool hasOffset)
         {
             _original = original;
             _parsedValue = parsedValue;
@@ -29,13 +30,13 @@ namespace Hl7.Fhir.Model.Primitives
 
         public static bool TryParse(string representation, out PartialDate value) => tryParse(representation, out value);
 
-        public static PartialDate FromDateTimeOffset(DateTimeOffset dto, PartialPrecision prec = PartialPrecision.Day,
+        public static PartialDate FromDateTimeOffset(DateTimeOffset dto, DateTimePrecision prec = DateTimePrecision.Day,
         bool includeOffset = false)
         {
             string formatString = prec switch
             {
-                PartialPrecision.Year => "yyyy",
-                PartialPrecision.Month => "yyyy-MM",
+                DateTimePrecision.Year => "yyyy",
+                DateTimePrecision.Month => "yyyy-MM",
                 _ => "yyyy-MM-dd",
             };
             if (includeOffset) formatString += "K";
@@ -52,11 +53,11 @@ namespace Hl7.Fhir.Model.Primitives
         /// <summary>
         /// The precision of the date available. 
         /// </summary>
-        public PartialPrecision Precision { get; private set; }
+        public DateTimePrecision Precision { get; private set; }
 
-        public int? Years => Precision >= PartialPrecision.Year ? _parsedValue.Year : (int?)null;
-        public int? Months => Precision >= PartialPrecision.Month ? _parsedValue.Month : (int?)null;
-        public int? Days => Precision >= PartialPrecision.Day ? _parsedValue.Day : (int?)null;
+        public int? Years => Precision >= DateTimePrecision.Year ? _parsedValue.Year : (int?)null;
+        public int? Months => Precision >= DateTimePrecision.Month ? _parsedValue.Month : (int?)null;
+        public int? Days => Precision >= DateTimePrecision.Day ? _parsedValue.Day : (int?)null;
 
         /// <summary>
         /// The span of time ahead/behind UTC
@@ -124,9 +125,9 @@ namespace Hl7.Fhir.Model.Primitives
             var offset = matches.Groups["offset"];
 
             var prec =
-                d.Success ? PartialPrecision.Day :
-                m.Success ? PartialPrecision.Month :
-                PartialPrecision.Year;
+                d.Success ? DateTimePrecision.Day :
+                m.Success ? DateTimePrecision.Month :
+                DateTimePrecision.Year;
 
             var parseableDT = y.Value +
                 (m.Success ? m.Value : "-01") +
@@ -163,9 +164,9 @@ namespace Hl7.Fhir.Model.Primitives
         /// Compares two (partial)dates according to CQL ordering rules.
         /// </summary> 
         /// <param name="other"></param>
-        /// <returns>An <see cref="Support.Utility.Ok{T}"/> with an integer value representing the reseult of the comparison: 0 if this and other are equal, 
+        /// <returns>An <see cref="Ok{T}"/> with an integer value representing the reseult of the comparison: 0 if this and other are equal, 
         /// -1 if this is smaller than other and +1 if this is bigger than other, or the other is null. If the values are incomparable
-        /// this function returns a <see cref="Support.Utility.Fail{T}"/> with the reason why the comparison between the two values was impossible.
+        /// this function returns a <see cref="Fail{T}"/> with the reason why the comparison between the two values was impossible.
         /// </returns>
         /// <remarks>The comparison is performed by considering each precision in order, beginning with years. 
         /// If the values are the same, comparison proceeds to the next precision; 

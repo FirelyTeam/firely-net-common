@@ -9,7 +9,6 @@
 
 using Hl7.Fhir.Utility;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Hl7.Fhir.Specification
 {

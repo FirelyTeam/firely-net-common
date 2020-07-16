@@ -6,9 +6,9 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-namespace Hl7.Fhir.Model.Primitives
+namespace Hl7.Fhir.ElementModel.Types
 {
-    public enum PartialPrecision
+    public enum DateTimePrecision
     {
         Year,
         Month,

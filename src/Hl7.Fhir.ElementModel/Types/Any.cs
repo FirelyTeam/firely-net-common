@@ -12,10 +12,10 @@ using Hl7.Fhir.Support.Utility;
 using Hl7.Fhir.Utility;
 using System;
 
-namespace Hl7.Fhir.Model.Primitives
+namespace Hl7.Fhir.ElementModel.Types
 {
     public abstract class Any
-    {      
+    {
         /// <summary>
         /// Returns the concrete subclass of Any that is used to represent the
         /// type given in parmameter <paramref name="name"/>.
@@ -73,25 +73,25 @@ namespace Hl7.Fhir.Model.Primitives
                 else if (primitiveType == typeof(Code))
                     return (Code.TryParse(value, out var p), p);
                 else if (primitiveType == typeof(Concept))
-                    return (success: Concept.TryParse(value, out var p), p);
+                    return (Concept.TryParse(value, out var p), p);
                 else if (primitiveType == typeof(Decimal))
-                    return (success: Decimal.TryParse(value, out var p), p?.Value);
+                    return (Decimal.TryParse(value, out var p), p?.Value);
                 else if (primitiveType == typeof(Integer))
-                    return (success: Integer.TryParse(value, out var p), p?.Value);
+                    return (Integer.TryParse(value, out var p), p?.Value);
                 else if (primitiveType == typeof(Long))
-                    return (success: Long.TryParse(value, out var p), p?.Value);
+                    return (Long.TryParse(value, out var p), p?.Value);
                 else if (primitiveType == typeof(PartialDate))
-                    return (success: PartialDate.TryParse(value, out var p), p);
+                    return (PartialDate.TryParse(value, out var p), p);
                 else if (primitiveType == typeof(PartialDateTime))
-                    return (success: PartialDateTime.TryParse(value, out var p), p);
+                    return (PartialDateTime.TryParse(value, out var p), p);
                 else if (primitiveType == typeof(PartialTime))
-                    return (success: PartialTime.TryParse(value, out var p), p);
+                    return (PartialTime.TryParse(value, out var p), p);
                 else if (primitiveType == typeof(Ratio))
-                    return (success: Ratio.TryParse(value, out var p), p);
+                    return (Ratio.TryParse(value, out var p), p);
                 else if (primitiveType == typeof(Quantity))
-                    return (success: Quantity.TryParse(value, out var p), p);
+                    return (Quantity.TryParse(value, out var p), p);
                 else if (primitiveType == typeof(String))
-                    return (success: String.TryParse(value, out var p), p?.Value);
+                    return (String.TryParse(value, out var p), p?.Value);
                 else
                     return (false, null);
             }
@@ -160,12 +160,12 @@ namespace Hl7.Fhir.Model.Primitives
 
         // some utility methods shared by the subclasses
 
-        protected static ArgumentException NotSameTypeComparison(object me, object them) => 
+        protected static ArgumentException NotSameTypeComparison(object me, object them) =>
             new ArgumentException($"Cannot compare {me} (of type {me.GetType()}) to {them} (of type {them.GetType()}), because the types differ.");
 
         protected static readonly ArgumentNullException ArgNullException = new ArgumentNullException();
 
-        protected static Result<T> propagateNull<T>(object obj, Func<T> a) => obj is null ? 
+        protected static Result<T> propagateNull<T>(object obj, Func<T> a) => obj is null ?
             (Result<T>)new Fail<T>(ArgNullException) : new Ok<T>(a());
     }
 
@@ -174,10 +174,10 @@ namespace Hl7.Fhir.Model.Primitives
     {
         bool? IsEqualTo(Any other);
         bool IsEquivalentTo(Any other);
-    } 
+    }
 
     public interface ICqlOrderable
-    { 
+    {
         int? CompareTo(Any other);
     }
 }

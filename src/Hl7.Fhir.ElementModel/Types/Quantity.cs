@@ -8,14 +8,13 @@
 
 #nullable enable
 
-using Hl7.Fhir.Support.Utility;
 using Hl7.Fhir.Utility;
 using System;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using static Hl7.Fhir.Support.Utility.Result;
+using static Hl7.Fhir.Utility.Result;
 
-namespace Hl7.Fhir.Model.Primitives
+namespace Hl7.Fhir.ElementModel.Types
 {
     public class Quantity : Any, IComparable, ICqlEquatable, ICqlOrderable
     {
@@ -145,7 +144,7 @@ namespace Hl7.Fhir.Model.Primitives
         /// <remarks>See <see cref="TryCompareTo(Any)"/> for more details.</remarks>
         public override bool Equals(object obj) => obj is Any other && Equals(other, CQL_EQUALS_COMPARISON);
 
-        public bool Equals(Any other, QuantityComparison comparisonType) => 
+        public bool Equals(Any other, QuantityComparison comparisonType) =>
             other is Quantity q && TryEquals(q, comparisonType).ValueOrDefault(false);
 
         /// <summary>
@@ -211,7 +210,7 @@ namespace Hl7.Fhir.Model.Primitives
                 throw Error.NotSupported("Comparing quantities with different units is not yet supported");
             }
 
-            return decimal.Compare(Math.Round(Value,8), Math.Round(otherQ.Value,8));   // aligns with Decimal
+            return decimal.Compare(Math.Round(Value, 8), Math.Round(otherQ.Value, 8));   // aligns with Decimal
         }
 
 
@@ -239,7 +238,7 @@ namespace Hl7.Fhir.Model.Primitives
 
         public override string ToString() => $"{Value.ToString(CultureInfo.InvariantCulture)} '{Unit}'";
 
-        bool? ICqlEquatable.IsEqualTo(Any other) => 
+        bool? ICqlEquatable.IsEqualTo(Any other) =>
             other is { } && TryEquals(other, CQL_EQUALS_COMPARISON) is Ok<bool> ok ? ok.Value : (bool?)null;
 
         // Note that, in contrast to equals, this will return false if operators cannot be compared (as described by the spec)

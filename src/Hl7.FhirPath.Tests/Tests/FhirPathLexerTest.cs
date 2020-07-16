@@ -6,10 +6,10 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using Hl7.Fhir.Model.Primitives;
 using Hl7.FhirPath.Parser;
 using Hl7.FhirPath.Sprache;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.FhirPath.Tests
 {
@@ -95,7 +95,7 @@ namespace Hl7.FhirPath.Tests
             reject("@20150103T12:34:34+02:30");
             reject("@-2015-01");
 
-            void accept(string s) => AssertParser.SucceedsMatch(parser, s, PartialDateTime.Parse(Lexer.CleanupDateTimeLiteral(s)));
+            void accept(string s) => AssertParser.SucceedsMatch(parser, s, P.PartialDateTime.Parse(Lexer.CleanupDateTimeLiteral(s)));
             void reject(string s) => AssertParser.FailsMatch(parser, s);
         }
 
@@ -118,7 +118,7 @@ namespace Hl7.FhirPath.Tests
             reject("@12:34:34+02:30");
             reject("@T12:34:34+48:30");
 
-            void accept(string s) => AssertParser.SucceedsMatch(parser, s, PartialTime.Parse(s.Substring(2)));
+            void accept(string s) => AssertParser.SucceedsMatch(parser, s, P.PartialTime.Parse(s.Substring(2)));
             void reject(string s) => AssertParser.FailsMatch(parser, s);
         }
 
@@ -137,7 +137,7 @@ namespace Hl7.FhirPath.Tests
             reject("@2018-04-05T10:00:00");
             reject("@2018-04-05T10:00:00Z");
 
-            void accept(string s) => AssertParser.SucceedsMatch(parser, s, PartialDate.Parse(s.Substring(1)));
+            void accept(string s) => AssertParser.SucceedsMatch(parser, s, P.PartialDate.Parse(s.Substring(1)));
             void reject(string s) => AssertParser.FailsMatch(parser, s);
         }
 
