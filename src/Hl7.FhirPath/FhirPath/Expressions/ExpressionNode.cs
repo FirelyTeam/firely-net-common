@@ -79,9 +79,9 @@ namespace Hl7.FhirPath.Expressions
 
         public override bool Equals(object obj)
         {
-            if (base.Equals(obj) && obj is ConstantExpression)
+            if (base.Equals(obj) && obj is ConstantExpression ce)
             {
-                var c = (ConstantExpression)obj;
+                var c = ce;
                 return Object.Equals(c.Value, Value);
             }
             else
@@ -120,9 +120,9 @@ namespace Hl7.FhirPath.Expressions
 
         public override bool Equals(object obj)
         {
-            if (base.Equals(obj) && obj is FunctionCallExpression)
+            if (base.Equals(obj) && obj is FunctionCallExpression fce)
             {
-                var f = (FunctionCallExpression)obj;
+                var f = fce;
 
                 return f.FunctionName == FunctionName && Arguments.SequenceEqual(f.Arguments);
             }
@@ -290,9 +290,9 @@ namespace Hl7.FhirPath.Expressions
         }
         public override bool Equals(object obj)
         {
-            if (base.Equals(obj) && obj is NewNodeListInitExpression)
+            if (base.Equals(obj) && obj is NewNodeListInitExpression ne)
             {
-                var f = (NewNodeListInitExpression)obj;
+                var f = ne;
 
                 return f.Contents.SequenceEqual(Contents);
             }
@@ -323,9 +323,9 @@ namespace Hl7.FhirPath.Expressions
         }
         public override bool Equals(object obj)
         {
-            if (base.Equals(obj) && obj is VariableRefExpression)
+            if (base.Equals(obj) && obj is VariableRefExpression expression)
             {
-                var f = (VariableRefExpression)obj;
+                var f = expression;
 
                 return f.Name == Name;
             }

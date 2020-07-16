@@ -44,7 +44,7 @@ namespace Hl7.FhirPath.Tests
             reject("T12:04:45Z");
             reject("12:04:45Z");
 
-            void accept(string testValue, int? y = default, int? mo = default, int? d = default,
+            static void accept(string testValue, int? y = default, int? mo = default, int? d = default,
                 int? h = default, int? m = default, int? s = default, int? ms = default, TimeSpan? o = default)
             {
                 Assert.IsTrue(P.DateTime.TryParse(testValue, out P.DateTime parsed), "TryParse");
@@ -59,7 +59,7 @@ namespace Hl7.FhirPath.Tests
                 Assert.AreEqual(testValue, parsed.ToString(), "ToString");
             }
 
-            void reject(string testValue)
+            static void reject(string testValue)
             {
                 Assert.IsFalse(P.DateTime.TryParse(testValue, out _));
             }

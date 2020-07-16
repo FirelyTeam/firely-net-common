@@ -14,6 +14,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using P = Hl7.Fhir.ElementModel.Types;
 
+#pragma warning disable IDE1006 // Naming Styles
+
 namespace Hl7.FhirPath.Parser
 {
     internal partial class Lexer
@@ -63,7 +65,9 @@ namespace Hl7.FhirPath.Parser
         //   : '"' (ESC | .)+? '"'
         //   | '`' (ESC | .)+? '`'
         //   ;
+
         public static readonly Parser<string> DelimitedIdentifier =
+
             DelimitedContents('"')
             .XOr(DelimitedContents('`'));
 
@@ -191,18 +195,16 @@ namespace Hl7.FhirPath.Parser
             return c.Select(chr => new string(Unescape(chr.Single()), 1));
         }
 
-        public static char Unescape(char c)
-        {
+        public static char Unescape(char c) =>
             // return the escaped character after a '\'
-            switch (c)
+            c switch
             {
-                case 'f': return '\f';
-                case 'n': return '\n';
-                case 'r': return '\r';
-                case 't': return '\t';
-                default: return c;
-            }
-        }
+                'f' => '\f',
+                'n' => '\n',
+                'r' => '\r',
+                't' => '\t',
+                _ => c,
+            };
 
         public static Parser<string> Unescape(this Parser<string> c)
         {
@@ -216,3 +218,5 @@ namespace Hl7.FhirPath.Parser
 
     }
 }
+
+#pragma warning restore IDE1006 // Naming Styles

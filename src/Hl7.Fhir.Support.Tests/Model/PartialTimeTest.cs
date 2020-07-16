@@ -42,7 +42,7 @@ namespace Hl7.FhirPath.Tests
             reject("92:34:44");
             reject("12:34:AM");
 
-            void accept(string testValue, int? h, int? m, int? s, int? ms, TimeSpan? o )
+            static void accept(string testValue, int? h, int? m, int? s, int? ms, TimeSpan? o )
             {
                 Assert.IsTrue(P.Time.TryParse(testValue, out P.Time parsed), "TryParse");
                 Assert.AreEqual(h, parsed.Hours, "hours");
@@ -53,7 +53,7 @@ namespace Hl7.FhirPath.Tests
                 Assert.AreEqual(testValue, parsed.ToString(), "ToString");
             }
 
-            void reject(string testValue)
+            static void reject(string testValue)
             {
                 Assert.IsFalse(P.Time.TryParse(testValue, out _));
             }

@@ -102,7 +102,7 @@ namespace Hl7.FhirPath.Tests
         }
 
 
-        private static readonly Expression patientName = new ChildExpression(new ChildExpression(AxisExpression.This, "Patient"), "name");
+        private static readonly Expression PATIENTNAME = new ChildExpression(new ChildExpression(AxisExpression.This, "Patient"), "name");
 
         [TestMethod]
         public void FhirPath_Gramm_Quantity()
@@ -129,7 +129,7 @@ namespace Hl7.FhirPath.Tests
             var parser = Grammar.InvocationExpression.End();
 
             AssertParser.SucceedsMatch(parser, "Patient.name.doSomething(true)",
-                    new FunctionCallExpression(patientName, "doSomething", TypeSpecifier.Any, new ConstantExpression(true)));
+                    new FunctionCallExpression(PATIENTNAME, "doSomething", TypeSpecifier.Any, new ConstantExpression(true)));
 
             AssertParser.FailsMatch(parser, "Patient.");
             //AssertParser.FailsMatch(parser, "Patient. name");     //oops
@@ -142,9 +142,9 @@ namespace Hl7.FhirPath.Tests
         {
             var parser = Grammar.InvocationExpression.End();
 
-            AssertParser.SucceedsMatch(parser, "Patient.name", patientName);
+            AssertParser.SucceedsMatch(parser, "Patient.name", PATIENTNAME);
             AssertParser.SucceedsMatch(parser, "Patient.name [4 ]",
-                    new IndexerExpression(patientName, new ConstantExpression(4)));
+                    new IndexerExpression(PATIENTNAME, new ConstantExpression(4)));
             AssertParser.SucceedsMatch(parser, "$this[4].name",
                 new ChildExpression(
                     new IndexerExpression(AxisExpression.This, new ConstantExpression(4)),
@@ -166,8 +166,8 @@ namespace Hl7.FhirPath.Tests
             AssertParser.SucceedsMatch(parser, "4", new ConstantExpression(4));
             AssertParser.SucceedsMatch(parser, "-4", new UnaryExpression('-', new ConstantExpression(4)));
 
-            AssertParser.SucceedsMatch(parser, "-Patient.name", new UnaryExpression('-', patientName));
-            AssertParser.SucceedsMatch(parser, "+Patient.name", new UnaryExpression('+', patientName));
+            AssertParser.SucceedsMatch(parser, "-Patient.name", new UnaryExpression('-', PATIENTNAME));
+            AssertParser.SucceedsMatch(parser, "+Patient.name", new UnaryExpression('+', PATIENTNAME));
         }
 
 
@@ -176,8 +176,8 @@ namespace Hl7.FhirPath.Tests
         {
             var parser = Grammar.MulExpression.End();
 
-            AssertParser.SucceedsMatch(parser, "Patient.name", patientName);
-            AssertParser.SucceedsMatch(parser, "4* Patient.name", new BinaryExpression('*', new ConstantExpression(4), patientName));
+            AssertParser.SucceedsMatch(parser, "Patient.name", PATIENTNAME);
+            AssertParser.SucceedsMatch(parser, "4* Patient.name", new BinaryExpression('*', new ConstantExpression(4), PATIENTNAME));
             AssertParser.SucceedsMatch(parser, "5 div 6", constOp("div", 5, 6));
 
             AssertParser.FailsMatch(parser, "4*");
@@ -242,17 +242,6 @@ namespace Hl7.FhirPath.Tests
 
             AssertParser.FailsMatch(parser, "true implies false and 4 != 5 and 4 <> 6 and ('h' ~ 'H' or 'a' !~ 'b')");
         }
-
-        private void SucceedsConstantValueMatch(Parser<ConstantExpression> parser, string expr, object value, TypeInfo expected)
-        {
-            AssertParser.SucceedsWith(parser, expr,
-                    v =>
-                        {
-                            Assert.Equals(v.Value, value);
-                            Assert.Equals(v.ExpressionType, expected);
-                        });
-        }
-
 
         [TestMethod]
         public void FhirPath_Expression_Equals()
