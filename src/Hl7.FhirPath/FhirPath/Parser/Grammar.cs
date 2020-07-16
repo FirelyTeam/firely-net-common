@@ -5,32 +5,32 @@
  * This file is licensed under the BSD 3-Clause license
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Hl7.Fhir.Language;
 using Hl7.FhirPath;
 using Hl7.FhirPath.Expressions;
 using Hl7.FhirPath.Sprache;
+using P = Hl7.Fhir.ElementModel.Types;
+using System;
+using System.Linq;
 
 namespace Hl7.FhirPath.Parser
 {
     internal class Grammar
     {
-        public static readonly Parser<Fhir.Model.Primitives.Quantity> Quantity = quantityParser;
-        private static IResult<Fhir.Model.Primitives.Quantity> quantityParser(IInput i)
+        public static readonly Parser<P.Quantity> Quantity = quantityParser;
+        private static IResult<P.Quantity> quantityParser(IInput i)
         {
             var current = i;
             var result = Lexer.Quantity.Token()(i);
 
             if (result.WasSuccessful)
             {
-                var success = Fhir.Model.Primitives.Quantity.TryParse(result.Value, out var quantity);
+                var success = P.Quantity.TryParse(result.Value, out var quantity);
                 if (success)
                     return Result.Success(quantity, result.Remainder);
             }
 
-            return Result.Failure<Fhir.Model.Primitives.Quantity>(i, $"Quantity is invalid",
+            return Result.Failure<P.Quantity>(i, $"Quantity is invalid",
                 new[] { "a quantity" });
 
         }
@@ -53,7 +53,7 @@ namespace Hl7.FhirPath.Parser
                 .XOr(Lexer.Bool.Select(v => new ConstantExpression(v, TypeSpecifier.Boolean)))
                 .Or(Quantity.Select(v => new ConstantExpression(v, TypeSpecifier.Quantity)))
                 .Or(Lexer.DecimalNumber.Select(v => new ConstantExpression(v, TypeSpecifier.Decimal)))
-                .Or(Lexer.IntegerNumber.Select(v => new ConstantExpression(v, TypeSpecifier.Integer64)));
+                .Or(Lexer.IntegerNumber.Select(v => new ConstantExpression(v, TypeSpecifier.Integer)));
 
 
         //term
@@ -87,7 +87,7 @@ namespace Hl7.FhirPath.Parser
         public static Parser<Expression> FunctionParameter(string name) =>
             // Make exception for is() and as() FUNCTIONS (operators are handled elsewhere), since they don't
             // take a normal parameter, but an identifier (which is not normally a FhirPath type)
-            name != "is" && name != "as" ? Grammar.Expression : TypeSpec.Select(s => new ConstantExpression(s));
+            name != "is" && name != "as" && name != "ofType" ? Grammar.Expression : TypeSpec.Select(s => new ConstantExpression(s));
 
 
         public static Parser<Expression> FunctionInvocation(Expression focus)

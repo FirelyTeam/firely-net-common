@@ -46,10 +46,10 @@ namespace Hl7.Fhir.ElementModel
         /// <remarks>
         /// FHIR primitives are mapped to underlying C# types as follows:
         ///
-        /// instant         Hl7.Fhir.Model.Primitive.PartialDateTime
-        /// time            Hl7.Fhir.Model.Primitive.PartialTime
-        /// date            Hl7.Fhir.Model.Primitive.PartialDate
-        /// dateTime        Hl7.Fhir.Model.Primitive.PartialDateTime
+        /// instant         Hl7.Fhir.ElementModel.Types.DateTime
+        /// time            Hl7.Fhir.ElementModel.Types.Time
+        /// date            Hl7.Fhir.ElementModel.Types.Date
+        /// dateTime        Hl7.Fhir.ElementModel.Types.DateTime
         /// decimal         decimal
         /// boolean         bool
         /// integer         long

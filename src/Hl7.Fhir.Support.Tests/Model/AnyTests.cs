@@ -6,10 +6,9 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using Hl7.Fhir.Language;
-using Hl7.Fhir.Model.Primitives;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.FhirPath.Tests
 {
@@ -19,53 +18,55 @@ namespace Hl7.FhirPath.Tests
         [TestMethod]
         public void AnyParse()
         {
-            IEnumerable<(string value, TypeSpecifier to, bool success, object expected)> tests()
+            static IEnumerable<(string value, System.Type to, bool success, object expected)> tests()
             {
-                yield return ("true", TypeSpecifier.Boolean, true, true);
-                yield return ("True", TypeSpecifier.Boolean, false, default);
-                yield return ("tru", TypeSpecifier.Boolean, false, default);
-                yield return ("1", TypeSpecifier.Boolean, false, default);
-                yield return ("false", TypeSpecifier.Boolean, true, false);
-                yield return ("False", TypeSpecifier.Boolean, false, default);
-                yield return ("fal", TypeSpecifier.Boolean, false, default);
-                yield return ("0", TypeSpecifier.Boolean, false, default);
+                yield return ("true", typeof(P.Boolean), true, true);
+                yield return ("True", typeof(P.Boolean), false, default);
+                yield return ("tru", typeof(P.Boolean), false, default);
+                yield return ("1", typeof(P.Boolean), false, default);
+                yield return ("false", typeof(P.Boolean), true, false);
+                yield return ("False", typeof(P.Boolean), false, default);
+                yield return ("fal", typeof(P.Boolean), false, default);
+                yield return ("0", typeof(P.Boolean), false, default);
 
-                yield return ("2018-01", TypeSpecifier.Date, true, PartialDate.Parse("2018-01"));
-                yield return ("hallo", TypeSpecifier.Date, false, default);
+                yield return ("2018-01", typeof(P.Date), true, P.Date.Parse("2018-01"));
+                yield return ("hallo", typeof(P.Date), false, default);
 
-                yield return ("2018-01-04T12:00:00Z", TypeSpecifier.DateTime, true, PartialDateTime.Parse("2018-01-04T12:00:00Z"));
-                yield return ("hallo", TypeSpecifier.DateTime, false, default);
+                yield return ("2018-01-04T12:00:00Z", typeof(P.DateTime), true, P.DateTime.Parse("2018-01-04T12:00:00Z"));
+                yield return ("hallo", typeof(P.DateTime), false, default);
 
-                yield return ("12:00:00Z", TypeSpecifier.Time, true, PartialTime.Parse("12:00:00Z"));
-                yield return ("hallo", TypeSpecifier.Time, false, default);
+                yield return ("12:00:00Z", typeof(P.Time), true, P.Time.Parse("12:00:00Z"));
+                yield return ("hallo", typeof(P.Time), false, default);
 
-                yield return ("hallo", TypeSpecifier.String, true, "hallo");
+                yield return ("hallo", typeof(P.String), true, "hallo");
 
-                yield return ("34", TypeSpecifier.Integer, true, 34);
-                yield return ("-34", TypeSpecifier.Integer, true, -34);
-                yield return ("+34", TypeSpecifier.Integer, true, 34);
-                yield return ("34.5", TypeSpecifier.Integer, false, default);
+                yield return ("34", typeof(P.Integer), true, 34);
+                yield return ("-34", typeof(P.Integer), true, -34);
+                yield return ("+34", typeof(P.Integer), true, 34);
+                yield return ("34.5", typeof(P.Integer), false, default);
 
-                yield return ("64", TypeSpecifier.Integer64, true, 64L);
-                yield return ("-64", TypeSpecifier.Integer64, true, -64L);
-                yield return ("+64", TypeSpecifier.Integer64, true, 64L);
-                yield return ("64.5", TypeSpecifier.Integer, false, default);
+                yield return ("64", typeof(P.Long), true, 64L);
+                yield return ("-64", typeof(P.Long), true, -64L);
+                yield return ("+64", typeof(P.Long), true, 64L);
+                yield return ("64.5", typeof(P.Integer), false, default);
 
 
-                yield return ("34", TypeSpecifier.Decimal, true, 34m);
-                yield return ("0034", TypeSpecifier.Decimal, true, 34m);
-                yield return ("34.0", TypeSpecifier.Decimal, true, 34.0m);
-                yield return ("-34", TypeSpecifier.Decimal, true, -34m);
-                yield return ("3e+4", TypeSpecifier.Decimal, true, 3e+4m);
-                yield return ("+34", TypeSpecifier.Decimal, false, default);
-                yield return ("34.", TypeSpecifier.Decimal, false, default);
+                yield return ("34", typeof(P.Decimal), true, 34m);
+                yield return ("0034", typeof(P.Decimal), true, 34m);
+                yield return ("34.0", typeof(P.Decimal), true, 34.0m);
+                yield return ("-34", typeof(P.Decimal), true, -34m);
+                yield return ("3e+4", typeof(P.Decimal), true, 3e+4m);
+                yield return ("+34", typeof(P.Decimal), false, default);
+                yield return ("34.", typeof(P.Decimal), false, default);
 
-                yield return ("hallo", TypeSpecifier.DateTime, false, default);
+                yield return ("hallo", typeof(P.DateTime), false, default);
             };
 
             foreach (var (value, to, success, expected) in tests())
             {
-                Assert.AreEqual(success, Any.TryParse(value, to, out var parsed), $"While parsing {value} for type {to}");
+               // var anyExpected = Any.ConvertToAny(expected);
+
+                Assert.AreEqual(success, P.Any.TryParse(value, to, out var parsed), $"While parsing {value} for type {to}");
 
                 if (success)
                     Assert.AreEqual(expected, parsed);

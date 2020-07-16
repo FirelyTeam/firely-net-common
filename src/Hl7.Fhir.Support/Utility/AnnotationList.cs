@@ -12,7 +12,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Hl7.Fhir.Support.Utility
+namespace Hl7.Fhir.Utility
 {
     /// <summary>
     /// This class implements the interfaces IAnnotatable and IAnnotated. It can be used by the classes that also implements these

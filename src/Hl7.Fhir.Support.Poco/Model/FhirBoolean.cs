@@ -31,6 +31,7 @@ using Hl7.Fhir.Introspection;
 using System.Runtime.Serialization;
 using Hl7.Fhir.Specification;
 using System;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Model
 {
@@ -65,7 +66,7 @@ namespace Hl7.Fhir.Model
             set { ObjectValue = value; OnPropertyChanged("Value"); }
         }
 
-        public static bool IsValidValue(string value) => value == "false" || value == "true";
+        public static bool IsValidValue(string value) => value == P.Boolean.FALSE_LITERAL || value == P.Boolean.TRUE_LITERAL;
     }
 
 }

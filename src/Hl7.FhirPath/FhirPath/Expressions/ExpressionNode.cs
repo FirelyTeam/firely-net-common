@@ -8,11 +8,12 @@
 
 using Hl7.Fhir.Language;
 using Hl7.Fhir.Language.Debugging;
-using Hl7.Fhir.Model.Primitives;
+using P = Hl7.Fhir.ElementModel.Types;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Hl7.Fhir.ElementModel;
 
 namespace Hl7.FhirPath.Expressions
 {
@@ -50,6 +51,8 @@ namespace Hl7.FhirPath.Expressions
         public ConstantExpression(object value, TypeSpecifier type, ISourcePositionInfo location = null) : base(type, location)
         {
             if (value == null) Error.ArgumentNull("value");
+            if (value is P.Any && (value is P.Boolean || value is P.Decimal || value is P.Integer || value is P.Long || value is P.String))
+                throw new ArgumentException("Internal error: not yet ready to handle Any-based primitives in FhirPath.");
 
             Value = value;
         }
@@ -58,7 +61,7 @@ namespace Hl7.FhirPath.Expressions
         {
             if (value == null) Error.ArgumentNull("value");
 
-            if (Any.TryConvertToSystemValue(value, out var systemValue))
+            if (ElementNode.TryConvertToElementValue(value, out var systemValue))
             {
                 Value = systemValue;
                 ExpressionType = TypeSpecifier.ForNativeType(value.GetType());
@@ -76,9 +79,9 @@ namespace Hl7.FhirPath.Expressions
 
         public override bool Equals(object obj)
         {
-            if (base.Equals(obj) && obj is ConstantExpression)
+            if (base.Equals(obj) && obj is ConstantExpression ce)
             {
-                var c = (ConstantExpression)obj;
+                var c = ce;
                 return Object.Equals(c.Value, Value);
             }
             else
@@ -117,9 +120,9 @@ namespace Hl7.FhirPath.Expressions
 
         public override bool Equals(object obj)
         {
-            if (base.Equals(obj) && obj is FunctionCallExpression)
+            if (base.Equals(obj) && obj is FunctionCallExpression fce)
             {
-                var f = (FunctionCallExpression)obj;
+                var f = fce;
 
                 return f.FunctionName == FunctionName && Arguments.SequenceEqual(f.Arguments);
             }
@@ -136,13 +139,22 @@ namespace Hl7.FhirPath.Expressions
 
     public class ChildExpression : FunctionCallExpression
     {
-        public ChildExpression(Expression focus, string name) : base(focus, OP_PREFIX + "children", TypeSpecifier.Any, new ConstantExpression(name, TypeSpecifier.String))
+        public ChildExpression(Expression focus, string name) : base(focus, OP_PREFIX + "children", TypeSpecifier.Any, 
+                new ConstantExpression(name, TypeSpecifier.String))
         {
         }
 
         public string ChildName
         {
-            get { return (string)((ConstantExpression)Arguments.First()).Value; }
+            get
+            {
+                // We know, because of the constructor, that there will be one argument, which is a P.String,
+                // that contains the name of the child.
+                var arg1 = (ConstantExpression)Arguments.First();
+                //var arg1Value = arg1.Value as P.String;
+                var arg1Value = arg1.Value as string;
+                return arg1Value;
+            }
         }
     }
 
@@ -278,9 +290,9 @@ namespace Hl7.FhirPath.Expressions
         }
         public override bool Equals(object obj)
         {
-            if (base.Equals(obj) && obj is NewNodeListInitExpression)
+            if (base.Equals(obj) && obj is NewNodeListInitExpression ne)
             {
-                var f = (NewNodeListInitExpression)obj;
+                var f = ne;
 
                 return f.Contents.SequenceEqual(Contents);
             }
@@ -311,9 +323,9 @@ namespace Hl7.FhirPath.Expressions
         }
         public override bool Equals(object obj)
         {
-            if (base.Equals(obj) && obj is VariableRefExpression)
+            if (base.Equals(obj) && obj is VariableRefExpression expression)
             {
-                var f = (VariableRefExpression)obj;
+                var f = expression;
 
                 return f.Name == Name;
             }
