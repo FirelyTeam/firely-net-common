@@ -114,7 +114,7 @@ namespace Hl7.FhirPath.Tests
             AssertParser.SucceedsMatch(parser, "78.0'kg'", new P.Quantity(78m, "kg"));
             AssertParser.SucceedsMatch(parser, "4 months", new P.Quantity(4m, "{month}"));
             AssertParser.SucceedsMatch(parser, "4 'mo'", new P.Quantity(4m, "mo"));
-            AssertParser.SucceedsMatch(parser, "1 '1'", new P.Quantity(1m, "1"));
+            AssertParser.SucceedsMatch(parser, "1 '1'", new P.Quantity(1m, P.Quantity.UCUM_UNIT));
 
             AssertParser.FailsMatch(parser, "78");   // still a integer
             AssertParser.FailsMatch(parser, "78.0");   // still a decimal

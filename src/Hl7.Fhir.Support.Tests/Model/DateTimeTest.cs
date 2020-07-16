@@ -13,7 +13,7 @@ using P = Hl7.Fhir.ElementModel.Types;
 namespace Hl7.FhirPath.Tests
 {
     [TestClass]
-    public class PartialDateTimeTest
+    public class DateTimeTest
     {
         [TestMethod]
         public void DateTimeConstructor()
@@ -131,7 +131,7 @@ namespace Hl7.FhirPath.Tests
         [TestMethod]
         public void CanCastDateToDateTime()
         {
-            var pdt = P.Date.Parse("2018-04").ToPartialDateTime();
+            var pdt = P.Date.Parse("2018-04").ToDateTime();
             Assert.AreEqual(P.DateTimePrecision.Month, pdt.Precision);
             Assert.AreEqual(2018, pdt.Years);
             Assert.AreEqual(4, pdt.Months);

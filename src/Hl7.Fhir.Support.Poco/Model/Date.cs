@@ -35,7 +35,6 @@ using Hl7.Fhir.Specification;
 using System;
 using System.Text.RegularExpressions;
 using Hl7.Fhir.Serialization;
-using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Model
 {
@@ -108,12 +107,6 @@ namespace Hl7.Fhir.Model
 
         public DateTimeOffset? ToDateTimeOffset() =>
             Value == null ? null : (DateTimeOffset?)PrimitiveTypeConverter.ConvertTo<DateTimeOffset>(Value);
-
-        public P.Date ToPartialDate() =>
-            Value != null ? P.Date.Parse(Value) : null;
-
-        public P.DateTime ToPartialDateTime() =>
-            Value != null ? P.DateTime.Parse(Value) : null;
     }
 
 }

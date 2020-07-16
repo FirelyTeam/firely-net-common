@@ -16,6 +16,8 @@ namespace Hl7.Fhir.ElementModel.Types
     {
         public static Boolean True = new Boolean(true);
         public static Boolean False = new Boolean(false);
+        public const string TRUE_LITERAL = "true";
+        public const string FALSE_LITERAL = "false";
 
         public Boolean() : this(default) { }
         public Boolean(bool value) => Value = value;
@@ -29,12 +31,12 @@ namespace Hl7.Fhir.ElementModel.Types
         {
             if (representation is null) throw new ArgumentNullException(nameof(representation));
 
-            if (representation == "true")
+            if (representation == TRUE_LITERAL)
             {
                 value = True;
                 return true;
             }
-            else if (representation == "false")
+            else if (representation == FALSE_LITERAL)
             {
                 value = False;
                 return true;

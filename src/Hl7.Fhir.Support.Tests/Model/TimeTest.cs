@@ -13,7 +13,7 @@ using P = Hl7.Fhir.ElementModel.Types;
 namespace Hl7.FhirPath.Tests
 {
     [TestClass]
-    public class PartialTimeTest
+    public class TimeTest
     {
         [TestMethod]
         public void TimeConstructor()

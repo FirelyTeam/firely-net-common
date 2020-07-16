@@ -119,28 +119,37 @@ namespace Hl7.Fhir.ElementModel.Types
             Any? conv()
             {
                 // NOTE: Keep Any.TryConvertToSystemValue, TypeSpecifier.TryGetNativeType and TypeSpecifier.ForNativeType in sync
-                if (value is Any a)
-                    return a;
-                else if (value is bool b)
-                    return new Boolean(b);
-                else if (value is string s)
-                    return new String(s);
-                else if (value is char c)
-                    return new String(new string(c, 1));
-                else if (value is int || value is short || value is ushort || value is uint)
-                    return new Integer(System.Convert.ToInt32(value));
-                else if (value is long || value is ulong)
-                    return new Long(System.Convert.ToInt64(value));
-                else if (value is DateTimeOffset dto)
-                    return DateTime.FromDateTimeOffset(dto);
-                else if (value is float || value is double || value is decimal)
-                    return new Decimal(System.Convert.ToDecimal(value));
-                else if (value is Enum en)
-                    return new String(en.GetLiteral());
-                else if (value is Uri u)
-                    return new String(u.OriginalString);
-                else
-                    return null;
+                switch (value)
+                {
+                    case Any a:
+                        return a;
+                    case bool b:
+                        return new Boolean(b);
+                    case string s:
+                        return new String(s);
+                    case char c:
+                        return new String(new string(c, 1));
+                    case int _:
+                    case short _:
+                    case ushort _:
+                    case uint _:
+                        return new Integer(System.Convert.ToInt32(value));
+                    case long _:
+                    case ulong _:
+                        return new Long(System.Convert.ToInt64(value));
+                    case DateTimeOffset dto:
+                        return DateTime.FromDateTimeOffset(dto);
+                    case float _:
+                    case double _:
+                    case decimal _:
+                        return new Decimal(System.Convert.ToDecimal(value));
+                    case Enum en:
+                        return new String(en.GetLiteral());
+                    case Uri u:
+                        return new String(u.OriginalString);
+                    default:
+                        return null;
+                }
             }
         }
 

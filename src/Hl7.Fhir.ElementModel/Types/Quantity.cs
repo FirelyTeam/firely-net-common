@@ -86,7 +86,7 @@ namespace Hl7.Fhir.ElementModel.Types
             }
             else
             {
-                quantity = new Quantity(value!, unit: "1");
+                quantity = new Quantity(value!, unit: UCUM_UNIT);
                 return true;
             }
         }
@@ -161,8 +161,8 @@ namespace Hl7.Fhir.ElementModel.Types
 
             if (comparisonType.HasFlag(QuantityComparison.CompareCalendarUnits))
             {
-                l = new Quantity(l.Value, normalizeCalenderUnit(l.Unit) ?? "1");
-                r = new Quantity(r.Value, normalizeCalenderUnit(r.Unit) ?? "1");
+                l = new Quantity(l.Value, normalizeCalenderUnit(l.Unit) ?? UCUM_UNIT);
+                r = new Quantity(r.Value, normalizeCalenderUnit(r.Unit) ?? UCUM_UNIT);
             }
 
             return l.TryCompareTo(r).Select(r => r == 0);

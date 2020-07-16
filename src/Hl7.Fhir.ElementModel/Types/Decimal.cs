@@ -149,7 +149,7 @@ namespace Hl7.Fhir.ElementModel.Types
         public override string ToString() => Value.ToString();
 
         public static implicit operator decimal(Decimal d) => d.Value;
-        public static implicit operator Quantity(Decimal d) => new Quantity(d.Value, "1");
+        public static implicit operator Quantity(Decimal d) => new Quantity(d.Value, Quantity.UCUM_UNIT);
         public static explicit operator Decimal(decimal d) => new Decimal(d);
 
         bool? ICqlEquatable.IsEqualTo(Any other) => other is { } ? Equals(other, CQL_EQUALS_COMPARISON) : (bool?)null;

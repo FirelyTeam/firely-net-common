@@ -29,7 +29,7 @@ namespace Hl7.Fhir.ElementModel.Types
         public override bool Equals(object obj) => obj is Ratio r && Numerator == r.Numerator && Denominator == r.Denominator;
 
         public override int GetHashCode() => (Numerator, Denominator).GetHashCode();
-        public override string ToString() => Numerator.ToString() + " : " + Denominator.ToString();
+        public override string ToString() => $"{Numerator} : {Denominator}";
         public static bool operator ==(Ratio left, Ratio right) => left.Equals(right);
         public static bool operator !=(Ratio left, Ratio right) => !Equals(left, right);
 

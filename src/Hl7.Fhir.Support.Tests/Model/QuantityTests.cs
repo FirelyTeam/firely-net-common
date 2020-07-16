@@ -24,8 +24,8 @@ namespace Hl7.FhirPath.Tests
             Assert.AreEqual(new P.Quantity(75m, "kg"), P.Quantity.Parse("75 'kg'"));
             Assert.AreEqual(new P.Quantity(40d, "wk"), P.Quantity.Parse("40 'wk'"));
             Assert.AreEqual(new P.Quantity(40d, "{week}"), P.Quantity.Parse("40 weeks"));
-            Assert.AreEqual(new P.Quantity(40.0m, "1"), P.Quantity.Parse("40.0"));
-            Assert.AreEqual(new P.Quantity(1d, "1"), P.Quantity.Parse("1 '1'"));
+            Assert.AreEqual(new P.Quantity(40.0m, P.Quantity.UCUM_UNIT), P.Quantity.Parse("40.0"));
+            Assert.AreEqual(new P.Quantity(1d), P.Quantity.Parse("1 '1'"));
             Assert.AreEqual(new P.Quantity(1m, "m/s"), P.Quantity.Parse("1 'm/s'"));
 
             reject("40,5 weeks");
