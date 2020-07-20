@@ -48,9 +48,9 @@ namespace Hl7.FhirPath.Tests
             AssertParser.SucceedsMatch(parser, "doSomething ( 3.14 ) ", new FunctionCallExpression(AxisExpression.That, "doSomething", TypeInfo.Any,
                                 new ConstantExpression(3.14m)));
 
-            AssertParser.SucceedsMatch(parser, "doSomething('hi', 3.14, 3, $this, somethingElse(true))", new FunctionCallExpression(AxisExpression.That, "doSomething", TypeInfo.Any,
+            AssertParser.SucceedsMatch(parser, "doSomething('hi', 3.14, 3, $this, $index, somethingElse(true))", new FunctionCallExpression(AxisExpression.That, "doSomething", TypeInfo.Any,
                         new ConstantExpression("hi"), new ConstantExpression(3.14m), new ConstantExpression(3L),
-                        AxisExpression.This,
+                        AxisExpression.This, AxisExpression.Index,
                         new FunctionCallExpression(AxisExpression.That, "somethingElse", TypeInfo.Any, new ConstantExpression(true))));
 
             AssertParser.SucceedsMatch(parser, "as(Patient)", new FunctionCallExpression(AxisExpression.That, "as", TypeInfo.Any, new ConstantExpression("Patient")));

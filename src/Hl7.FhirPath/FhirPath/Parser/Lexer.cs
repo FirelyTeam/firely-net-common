@@ -140,7 +140,7 @@ namespace Hl7.FhirPath.Parser
             Parse.ChainOperator(Parse.Char('.'), Identifier, (op, a, b) => a + "." + b);
 
         public static readonly Parser<string> Axis =
-            Parse.Char('$').Then(q => Parse.String("this")).Text().Select(v => v);
+            Parse.Char('$').Then(q => Parse.String("this").XOr(Parse.String("index"))).Text().Select(v => v);
     }
 
 
