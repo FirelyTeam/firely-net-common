@@ -67,7 +67,7 @@ namespace Hl7.Fhir.ElementModel
         object Value { get; }
 
         /// <summary>
-        /// An indication of the location of this node within the data represented by the navigator.
+        /// An indication of the location of this node within the data represented by the <c>ITypedElement</c>.
         /// </summary>
         /// <remarks>The format of the location is the dotted name of the property, including indices to make
         /// sure repeated occurences of an element can be distinguished. It needs to be sufficiently precise to aid 

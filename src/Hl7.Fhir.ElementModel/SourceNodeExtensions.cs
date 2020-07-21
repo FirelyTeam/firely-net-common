@@ -97,10 +97,10 @@ namespace Hl7.Fhir.ElementModel
             root.visit(visitor, 0);
         }
 
-        private static void visit(this ISourceNode navigator, Action<int, ISourceNode> visitor, int depth = 0)
+        private static void visit(this ISourceNode node, Action<int, ISourceNode> visitor, int depth = 0)
         {
-            visitor(depth, navigator);
-            foreach (var child in navigator.Children())
+            visitor(depth, node);
+            foreach (var child in node.Children())
             {
                 visit(child, visitor, depth + 1);
             }
@@ -212,22 +212,5 @@ namespace Hl7.Fhir.ElementModel
 "missing type information. Please don't use this overload unless you know what you are doing.")]
         public static ITypedElement ToTypedElement(this ISourceNode node) =>
         new SourceNodeToTypedElementAdapter(node);
-
-#pragma warning disable 612, 618
-        /// <summary>
-        /// Adapts the node to implement the <see cref="IElementNavigator"/> interface.
-        /// </summary>
-        /// <param name="node">The node to be adapted.</param>
-        /// <returns>An implementation of <see cref="IElementNavigator"/> on top of the node passed in.</returns>
-        /// <remarks>Only to be used for backwards compatibility purposes, where an <see cref="IElementNavigator"/> is needed
-        /// but only the newer <c>ISourceNode</c> is available. Note that since there is no type information available
-        /// on <c>ISourceNode</c>, components depending on type information that is supposed to be present on
-        /// <c>IElementNavigator</c> may fail.</remarks>
-        [Obsolete("Turning an untyped SourceNode into a typed ElementNavigator without providing" +
-            "type information (see other overload) will cause side-effects with components in the API that are not " +
-            "prepared to deal with missing type information.")]
-        public static IElementNavigator ToElementNavigator(this ISourceNode node) =>
-            new SourceNodeToElementNavAdapter(node);
-#pragma warning restore 612,618
     }
 }
