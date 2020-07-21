@@ -33,10 +33,6 @@ namespace Hl7.Fhir.Serialization
         public static JsonSerializationDetails GetJsonSerializationDetails(this IAnnotated ann) =>
                 ann.TryGetAnnotation<JsonSerializationDetails>(out var rt) ? rt : null;
 
-        [Obsolete("Use GetJsonSerializationDetails(this ITypedElement input) instead")]
-        public static JsonSerializationDetails GetJsonSerializationDetails(this IElementNavigator navigator) =>
-            navigator is IAnnotated ia ? ia.GetJsonSerializationDetails() : null;
-
         public static JsonSerializationDetails GetJsonSerializationDetails(this ITypedElement node) =>
             node is IAnnotated ia ? ia.GetJsonSerializationDetails() : null;
 

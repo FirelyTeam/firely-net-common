@@ -48,13 +48,6 @@ namespace Hl7.FhirPath
         #region Obsolete members
         [Obsolete("Please use CreateDefault() instead of this member, which may cause raise conditions.")]
         public static readonly EvaluationContext Default = new EvaluationContext();
-
-        [Obsolete("Use EvaluationContext(ITypedElement container) instead. Obsolete since 2018-10-17")]
-        public EvaluationContext(IElementNavigator container)
-        {
-            Resource = container.ToTypedElement();
-        }
-
         #endregion
     }
 }
