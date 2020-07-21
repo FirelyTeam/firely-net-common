@@ -13,18 +13,36 @@ namespace Hl7.FhirPath
             // no defaults yet
         }
 
-        public EvaluationContext(ITypedElement container) : this(container, null) { }
+        /// <summary>
+        /// Create an EvaluationContext with the given value for <c>%resource</c>.
+        /// </summary>
+        /// <param name="resource">The data that will be represented by %resource</param>
+        public EvaluationContext(ITypedElement resource) : this(resource, null) { }
 
-        public EvaluationContext(ITypedElement container, ITypedElement rootContainer)
+        /// <summary>
+        /// Create an EvaluationContext with the given value for <c>%resource</c> and <c>%rootResource</c>.
+        /// </summary>
+        /// <param name="resource">The data that will be represented by <c>%resource</c>.</param>
+        /// <param name="rootResource">The data that will be represented by <c>%rootResource</c>.</param>
+        public EvaluationContext(ITypedElement resource, ITypedElement rootResource)
         {
-            Container = container;
-            RootContainer = rootContainer ?? container;
+            Resource = resource;
+            RootResource = rootResource ?? resource;
         }
 
-        public ITypedElement RootContainer { get; set; }
+        /// <summary>
+        /// The data represented by <c>%rootResource</c>.
+        /// </summary>
+        public ITypedElement RootResource { get; set; }
 
-        public ITypedElement Container { get; set; }
+        /// <summary>
+        /// The data represented by <c>%resource</c>.
+        /// </summary>
+        public ITypedElement Resource { get; set; }
 
+        /// <summary>
+        /// A delegate that handles the output for the <c>trace()</c> function.
+        /// </summary>
         public Action<string, IEnumerable<ITypedElement>> Tracer { get; set; }
 
         #region Obsolete members
