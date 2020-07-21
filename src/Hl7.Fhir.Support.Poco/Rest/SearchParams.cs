@@ -49,8 +49,8 @@ namespace Hl7.Fhir.Rest
     {
         public SearchParams()
         {
-            Include = new List<(string, IncludeModifier?)>();
-            RevInclude = new List<(string, IncludeModifier?)>();
+            Include = new List<(string, IncludeModifier)>();
+            RevInclude = new List<(string, IncludeModifier)>();
             Sort = new List<(string, SortOrder)>();
             Parameters = new List<Tuple<string, string>>();
             Elements = new List<string>();
@@ -125,7 +125,7 @@ namespace Hl7.Fhir.Rest
                 else
                     throw Error.Format($"Invalid include modifier in {name}");                
             }
-            else if (name == SEARCH_PARAM_INCLUDE) addNonEmpty(name, Include, (value, null));
+            else if (name == SEARCH_PARAM_INCLUDE) addNonEmpty(name, Include, (value, IncludeModifier.None));
             else if (name.StartsWith(SEARCH_PARAM_REVINCLUDE + SEARCH_MODIFIERSEPARATOR))
             {
                 if (Enum.TryParse<IncludeModifier>(name.Substring(SEARCH_PARAM_REVINCLUDE.Length + 1), ignoreCase: true, out var modifier))
@@ -133,7 +133,7 @@ namespace Hl7.Fhir.Rest
                 else
                     throw Error.Format($"Invalid revinclude modifier in {name}");
             }
-            else if (name == SEARCH_PARAM_REVINCLUDE) addNonEmpty(name, RevInclude, (value, null));
+            else if (name == SEARCH_PARAM_REVINCLUDE) addNonEmpty(name, RevInclude, (value, IncludeModifier.None));
             else if (name.StartsWith(SEARCH_PARAM_SORT + SEARCH_MODIFIERSEPARATOR))
                 throw Error.Format($"Invalid {SEARCH_PARAM_SORT}: encountered DSTU2 (modifier) based sort, please change to newer format");
             else if (name == SEARCH_PARAM_SORT)
@@ -188,7 +188,7 @@ namespace Hl7.Fhir.Rest
             return newValue;
         }
 
-        private static void addNonEmpty(string paramName, IList<(string path, IncludeModifier? modifier)> values, (string path, IncludeModifier? modifier) value)
+        private static void addNonEmpty(string paramName, IList<(string path, IncludeModifier modifier)> values, (string path, IncludeModifier modifier) value)
         {
             if (String.IsNullOrEmpty(value.path)) throw Error.Format("Invalid {0} value: it cannot be empty".FormatWith(paramName));
             values.Add(value);
@@ -299,14 +299,14 @@ namespace Hl7.Fhir.Rest
         /// </summary>
         [NotMapped]
         [IgnoreDataMemberAttribute]
-        public IList<(string, IncludeModifier?)> Include { get; private set; }
+        public IList<(string, IncludeModifier)> Include { get; private set; }
 
 
         public const string SEARCH_PARAM_REVINCLUDE = "_revinclude";
 
         [NotMapped]
         [IgnoreDataMemberAttribute]
-        public IList<(string, IncludeModifier?)> RevInclude { get; private set; }
+        public IList<(string, IncludeModifier)> RevInclude { get; private set; }
 
 
         public const string SEARCH_PARAM_CONTAINED = "_contained";
@@ -369,10 +369,10 @@ namespace Hl7.Fhir.Rest
                 return new Tuple<string,string>(SEARCH_PARAM_SORT, String.Join(",", values));
             }
 
-            IEnumerable<Tuple<string, string>> createIncludeParams(string paramtype, IList<(string path, IncludeModifier? modifier)> includes)
+            IEnumerable<Tuple<string, string>> createIncludeParams(string paramtype, IList<(string path, IncludeModifier modifier)> includes)
             {
                 return from i in includes
-                       let modifier = i.modifier.HasValue ? SEARCH_MODIFIERSEPARATOR + i.modifier.GetLiteral() : ""
+                       let modifier = (i.modifier != IncludeModifier.None) ? SEARCH_MODIFIERSEPARATOR + i.modifier.GetLiteral() : ""
                        select new Tuple<string, string>(paramtype + modifier, i.path);
               
             }
@@ -400,6 +400,10 @@ namespace Hl7.Fhir.Rest
 
     public enum IncludeModifier
     {
+        /// <summary>
+        /// No modifier on the include/revinclude parameter
+        /// </summary>
+        None,
         /// <summary>
         /// R4 only: Allows the include/revinclude process to iterate
         /// </summary>
