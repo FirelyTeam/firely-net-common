@@ -36,21 +36,11 @@ namespace Hl7.Fhir.Serialization
         public static XDocument ToXDocument(this ITypedElement source, FhirXmlSerializationSettings settings = null) =>
             new FhirXmlBuilder(settings).Build(source);
 
-#pragma warning disable 612, 618
-        public static void WriteTo(this IElementNavigator source, XmlWriter destination, FhirXmlSerializationSettings settings = null) =>
-             source.ToTypedElement().WriteTo(destination, settings);
-#pragma warning restore 612, 618
-
         public static string ToXml(this ISourceNode source, FhirXmlSerializationSettings settings = null)
         => SerializationUtil.WriteXmlToString(writer => source.WriteTo(writer, settings), settings?.Pretty ?? false, settings?.AppendNewLine ?? false);
 
         public static string ToXml(this ITypedElement source, FhirXmlSerializationSettings settings = null)
                 => SerializationUtil.WriteXmlToString(writer => source.WriteTo(writer, settings), settings?.Pretty ?? false, settings?.AppendNewLine ?? false);
-
-#pragma warning disable 612, 618
-        public static string ToXml(this IElementNavigator source, FhirXmlSerializationSettings settings = null)
-        => SerializationUtil.WriteXmlToString(writer => source.WriteTo(writer, settings), settings?.Pretty ?? false, settings?.AppendNewLine ?? false);
-#pragma warning restore 612, 618
 
         public static byte[] ToXmlBytes(this ITypedElement source, FhirXmlSerializationSettings settings = null)
                 => SerializationUtil.WriteXmlToBytes(writer => source.WriteTo(writer, settings));

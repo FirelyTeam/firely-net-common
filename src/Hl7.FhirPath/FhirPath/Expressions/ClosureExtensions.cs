@@ -34,10 +34,33 @@ namespace Hl7.FhirPath.Expressions
             ctx.SetValue("builtin.that", value);
         }
 
+        /// <summary>
+        /// The original node that was passed to the evaluation engine before starting evaluation.
+        /// </summary>
         public static void SetOriginalContext(this Closure ctx, IEnumerable<ITypedElement> value)
         {
             ctx.SetValue("context", value);
         }
+
+        /// <summary>
+        /// The original resource current context is part of. When evaluating a datatype, this would be the
+        /// resource the element is part of. Do not go past a root resource into a bundle, if it is contained
+        /// in a bundle.
+        /// </summary>
+        public static void SetResource(this Closure ctx, IEnumerable<ITypedElement> value)
+        {
+            ctx.SetValue("resource", value);
+        }
+
+        /// <summary>
+        /// When a DomainResource contains another resource, and that contained resource is the focus (%resource) 
+        /// then %rootResource refers to the container resource.
+        /// </summary>
+        public static void SetRootResource(this Closure ctx, IEnumerable<ITypedElement> value)
+        {
+            ctx.SetValue("rootResource", value);
+        }
+
 
         public static IEnumerable<ITypedElement> GetOriginalContext(this Closure ctx)
         {
@@ -49,19 +72,10 @@ namespace Hl7.FhirPath.Expressions
             return ctx.ResolveValue("resource");
         }
 
-        public static void SetResource(this Closure ctx, IEnumerable<ITypedElement> value)
-        {
-            ctx.SetValue("resource", value);
-        }
 
         public static IEnumerable<ITypedElement> GetRootResource(this Closure ctx)
         {
             return ctx.ResolveValue("rootResource");
-        }
-
-        public static void SetRootResource(this Closure ctx, IEnumerable<ITypedElement> value)
-        {
-            ctx.SetValue("rootResource", value);
         }
 
         public static Closure Nest(this Closure ctx, IEnumerable<ITypedElement> input)

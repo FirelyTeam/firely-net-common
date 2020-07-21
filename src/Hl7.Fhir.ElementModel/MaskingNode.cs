@@ -62,7 +62,7 @@ namespace Hl7.Fhir.ElementModel
         {
             if (source == null) throw Error.ArgumentNull(nameof(source));
             if (source.Annotation<ScopedNode>() == null)
-                throw Error.Argument("MaskingNavigator can only be used on a navigator chain that contains a ScopedNavigator", nameof(source));
+                throw Error.Argument("MaskingNode can only be used on a navigator chain that contains a ScopedNode", nameof(source));
 
             Source = source;
             _settings = settings?.Clone() ?? new MaskingNodeSettings();

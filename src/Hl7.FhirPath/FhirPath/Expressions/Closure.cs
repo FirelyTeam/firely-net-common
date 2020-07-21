@@ -28,8 +28,8 @@ namespace Hl7.FhirPath.Expressions
             newContext.SetThis(input);
             newContext.SetThat(input);
             newContext.SetOriginalContext(input);
-            if (ctx.Container != null) newContext.SetResource(new[] { ctx.Container });
-            if (ctx.RootContainer != null) newContext.SetRootResource(new[] { ctx.RootContainer });
+            if (ctx.Resource != null) newContext.SetResource(new[] { ctx.Resource });
+            if (ctx.RootResource != null) newContext.SetRootResource(new[] { ctx.RootResource });
 
             return newContext;
         }

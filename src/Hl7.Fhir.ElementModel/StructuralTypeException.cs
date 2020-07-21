@@ -10,7 +10,7 @@ using System;
 
 namespace Hl7.Fhir.ElementModel
 {
-    public class StructuralTypeException : Exception
+    public class StructuralTypeException : FormatException
     {
         public StructuralTypeException() { }
         public StructuralTypeException(string message) : base(message) { }
