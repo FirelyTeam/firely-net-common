@@ -16,7 +16,7 @@ using static Hl7.Fhir.Utility.Result;
 
 namespace Hl7.Fhir.ElementModel.Types
 {
-    public class Quantity : Any, IComparable, ICqlEquatable, ICqlOrderable
+    public class Quantity : Any, IComparable, ICqlEquatable, ICqlOrderable, ICqlConvertible
     {
         public const string UCUM = "http://unitsofmeasure.org";
         public const string UCUM_UNIT = "1";
@@ -24,10 +24,6 @@ namespace Hl7.Fhir.ElementModel.Types
         public decimal Value { get; }
         public string? Unit { get; }
         public string System => UCUM;
-
-        public Quantity(double value, string unit = UCUM_UNIT) : this((decimal)value, unit)
-        {
-        }
 
         public Quantity(decimal value, string unit = UCUM_UNIT)
         {
@@ -61,7 +57,7 @@ namespace Hl7.Fhir.ElementModel.Types
         {
             if (representation is null) throw new ArgumentNullException(nameof(representation));
 
-            quantity = new Quantity(default(decimal));
+            quantity = new Quantity(default);
 
             var result = QUANTITYREGEX_FOR_PARSE.Match(representation);
             if (!result.Success) return false;
@@ -245,6 +241,23 @@ namespace Hl7.Fhir.ElementModel.Types
         bool ICqlEquatable.IsEquivalentTo(Any other) => other is { } && TryEquals(other, CQL_EQUIVALENCE_COMPARISON).ValueOrDefault(false);
 
         int? ICqlOrderable.CompareTo(Any other) => other is { } && TryCompareTo(other) is Ok<int> ok ? ok.Value : (int?)null;
+
+        public static explicit operator String(Quantity q) => ((ICqlConvertible)q).TryConvertToString().ValueOrThrow();
+
+        Result<String> ICqlConvertible.TryConvertToString() => Ok(new String(ToString()));
+
+        Result<Quantity> ICqlConvertible.TryConvertToQuantity() => Ok(this);
+
+        Result<Code> ICqlConvertible.TryConvertToCode() => CannotCastTo<Code>(this);
+        Result<Boolean> ICqlConvertible.TryConvertToBoolean() => CannotCastTo<Boolean>(this);
+        Result<Date> ICqlConvertible.TryConvertToDate() => CannotCastTo<Date>(this);
+        Result<DateTime> ICqlConvertible.TryConvertToDateTime() => CannotCastTo<DateTime>(this);
+        Result<Decimal> ICqlConvertible.TryConvertToDecimal() => CannotCastTo<Decimal>(this);
+        Result<Integer> ICqlConvertible.TryConvertToInteger() => CannotCastTo<Integer>(this);
+        Result<Long> ICqlConvertible.TryConvertToLong() => CannotCastTo<Long>(this);
+        Result<Ratio> ICqlConvertible.TryConvertToRatio() => CannotCastTo<Ratio>(this);
+        Result<Time> ICqlConvertible.TryConvertToTime() => CannotCastTo<Time>(this);
+        Result<Concept> ICqlConvertible.TryConvertToConcept() => CannotCastTo<Concept>(this);
     }
 
     /// <summary>Specifies the comparison rules for quantities.</summary>

@@ -30,28 +30,28 @@ namespace HL7.FhirPath.Tests.Tests
         public void TestEqualityNullBehaviour()
         {
             Assert.IsNull(EqualityOperators.IsEqualTo(null, null));
-            Assert.IsNull(EqualityOperators.IsEqualTo(new Quantity(4.0, "kg"), null));
-            Assert.IsNull(EqualityOperators.IsEqualTo(null, new Quantity(4.0, "kg")));
+            Assert.IsNull(EqualityOperators.IsEqualTo(new Quantity(4.0m, "kg"), null));
+            Assert.IsNull(EqualityOperators.IsEqualTo(null, new Quantity(4.0m, "kg")));
 
             Assert.IsTrue(EqualityOperators.IsEquivalentTo(null, null));
-            Assert.IsFalse(EqualityOperators.IsEquivalentTo(new Quantity(4.0, "kg"), null));
-            Assert.IsFalse(EqualityOperators.IsEquivalentTo(null, new Quantity(4.0, "kg")));
+            Assert.IsFalse(EqualityOperators.IsEquivalentTo(new Quantity(4.0m, "kg"), null));
+            Assert.IsFalse(EqualityOperators.IsEquivalentTo(null, new Quantity(4.0m, "kg")));
 
             Assert.IsNull(EqualityOperators.Compare(null, null, "<="));
-            Assert.IsNull(EqualityOperators.Compare(new Quantity(4.0, "kg"), null, "<"));
-            Assert.IsNull(EqualityOperators.Compare(null, new Quantity(4.0, "kg"), ">"));
+            Assert.IsNull(EqualityOperators.Compare(new Quantity(4.0m, "kg"), null, "<"));
+            Assert.IsNull(EqualityOperators.Compare(null, new Quantity(4.0m, "kg"), ">"));
         }
 
         [TestMethod]
         public void TestEqualityIncompatibleTypes()
         {
-            Assert.IsFalse((bool)EqualityOperators.IsEqualTo(new Quantity(4.0, "kg"), new Code("http://nu.nl", "R")));
+            Assert.IsFalse((bool)EqualityOperators.IsEqualTo(new Quantity(4.0m, "kg"), new Code("http://nu.nl", "R")));
             Assert.IsFalse((bool)EqualityOperators.IsEqualTo(new Integer(0), new String("hi!")));
 
-            Assert.IsFalse(EqualityOperators.IsEquivalentTo(new Quantity(4.0, "kg"), new Code("http://nu.nl", "R")));
+            Assert.IsFalse(EqualityOperators.IsEquivalentTo(new Quantity(4.0m, "kg"), new Code("http://nu.nl", "R")));
             Assert.IsFalse(EqualityOperators.IsEquivalentTo(new Integer(0), new String("hi!")));
 
-            Assert.ThrowsException<System.ArgumentException>( () => EqualityOperators.Compare(new Quantity(4.0, "kg"), new Code("http://nu.nl", "R"), "="));
+            Assert.ThrowsException<System.ArgumentException>( () => EqualityOperators.Compare(new Quantity(4.0m, "kg"), new Code("http://nu.nl", "R"), "="));
             Assert.ThrowsException<System.ArgumentException>( () => EqualityOperators.Compare(new Integer(0), new String("hi!"), ">="));
         }
 

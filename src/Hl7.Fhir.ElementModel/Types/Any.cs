@@ -173,6 +173,10 @@ namespace Hl7.Fhir.ElementModel.Types
 
         protected static readonly ArgumentNullException ArgNullException = new ArgumentNullException();
 
+        protected static Result<T> CannotCastTo<T>(Any from) =>
+            new Fail<T>(new InvalidCastException($"Cannot cast value '{from}' of type {from.GetType()} to an instance of type {typeof(T)}."));
+
+
         protected static Result<T> propagateNull<T>(object obj, Func<T> a) => obj is null ?
             (Result<T>)new Fail<T>(ArgNullException) : new Ok<T>(a());
     }
@@ -187,5 +191,21 @@ namespace Hl7.Fhir.ElementModel.Types
     public interface ICqlOrderable
     {
         int? CompareTo(Any other);
+    }
+
+    public interface ICqlConvertible
+    {
+        Result<Boolean> TryConvertToBoolean();
+        Result<Code> TryConvertToCode();
+        Result<Concept> TryConvertToConcept();
+        Result<Date> TryConvertToDate();
+        Result<DateTime> TryConvertToDateTime();
+        Result<Decimal> TryConvertToDecimal();
+        Result<Integer> TryConvertToInteger();
+        Result<Long> TryConvertToLong();
+        Result<Quantity> TryConvertToQuantity();
+        Result<Ratio> TryConvertToRatio();
+        Result<String> TryConvertToString();
+        Result<Time> TryConvertToTime();
     }
 }

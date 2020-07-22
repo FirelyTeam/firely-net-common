@@ -76,8 +76,8 @@ namespace Hl7.FhirPath.Tests
             var inputs = ElementNode.CreateList(75L, 75.6m, "30 'wk'", false, true,
                             new P.Quantity(80.0m, "kg"));
             var vals = new[] { new P.Quantity(75m), new P.Quantity(75.6m, P.Quantity.UCUM_UNIT),
-                    new P.Quantity(30m,"wk"), new P.Quantity(0.0),
-                        new P.Quantity(1.0), new P.Quantity(80m, "kg") };
+                    new P.Quantity(30m,"wk"), new P.Quantity(0.0m),
+                        new P.Quantity(1.0m), new P.Quantity(80m, "kg") };
 
             inputs.Zip(vals, (i, v) => (i, v))
                 .ToList()
@@ -137,7 +137,7 @@ namespace Hl7.FhirPath.Tests
 
             inputs.Zip(vals, (i, v) => (i, v))
                 .ToList()
-                .ForEach(c => Assert.AreEqual(c.v, c.i.ToString()));
+                .ForEach(c => Assert.AreEqual(c.v, c.i.ToStringRepresentation()));
             inputs.ToList().ForEach(c => Assert.IsTrue(c.ConvertsToString()));
         }
 

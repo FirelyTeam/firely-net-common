@@ -261,7 +261,7 @@ namespace Hl7.FhirPath.Functions
                 long l => new P.Quantity((decimal)l),
                 decimal d => new P.Quantity(d),
                 string s => convertString(s),
-                bool b => b == true ? new P.Quantity(1.0) : new P.Quantity(0.0),
+                bool b => b == true ? new P.Quantity(1.0m) : new P.Quantity(0.0m),
                 _ => null,
             };
 
