@@ -20,6 +20,8 @@ namespace Hl7.Fhir.Utility
 
         public T ValueOrDefault(T d) => this is Ok<T> ok ? ok.Value : d;
 
+        public T ValueOrDefault() => this is Ok<T> ok ? ok.Value : default;
+
         public T ValueOrElse(Func<Exception, T> f) =>
             this switch
             {
