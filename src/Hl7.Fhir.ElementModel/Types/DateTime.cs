@@ -15,7 +15,7 @@ using static Hl7.Fhir.Utility.Result;
 
 namespace Hl7.Fhir.ElementModel.Types
 {
-    public class DateTime : Any, IComparable, ICqlEquatable, ICqlOrderable
+    public class DateTime : Any, IComparable, ICqlEquatable, ICqlOrderable, ICqlConvertible
     {
         internal DateTime(string original, DateTimeOffset parsedValue, DateTimePrecision precision, bool hasOffset)
         {
@@ -42,6 +42,9 @@ namespace Hl7.Fhir.ElementModel.Types
         public static DateTime Now() => FromDateTimeOffset(DateTimeOffset.Now);
 
         public static DateTime Today() => DateTime.Parse(DateTimeOffset.Now.ToString("yyyy-MM-ddK"));
+
+        public Date TruncateToDate() => Date.FromDateTimeOffset(
+            ToDateTimeOffset(_parsedValue.Offset), Precision, includeOffset: HasOffset);
 
         public int? Years => Precision >= DateTimePrecision.Year ? _parsedValue.Year : (int?)null;
         public int? Months => Precision >= DateTimePrecision.Month ? _parsedValue.Month : (int?)null;
@@ -237,6 +240,8 @@ namespace Hl7.Fhir.ElementModel.Types
         public override string ToString() => _original;
 
         public static explicit operator DateTime(DateTimeOffset dto) => FromDateTimeOffset(dto);
+        public static explicit operator Date(DateTime dt) => ((ICqlConvertible)dt).TryConvertToDate().ValueOrThrow();
+        public static explicit operator String(DateTime dt) => ((ICqlConvertible)dt).TryConvertToString().ValueOrThrow();
 
         bool? ICqlEquatable.IsEqualTo(Any other) => other is { } && TryEquals(other) is Ok<bool> ok ? ok.Value : (bool?)null;
 
@@ -244,6 +249,23 @@ namespace Hl7.Fhir.ElementModel.Types
         bool ICqlEquatable.IsEquivalentTo(Any other) => other is { } pd && TryEquals(pd).ValueOrDefault(false);
 
         int? ICqlOrderable.CompareTo(Any other) => other is { } && TryCompareTo(other) is Ok<int> ok ? ok.Value : (int?)null;
+
+        Result<DateTime> ICqlConvertible.TryConvertToDateTime() => Ok(this);
+
+        Result<String> ICqlConvertible.TryConvertToString() => Ok(new String(ToString()));
+
+
+        Result<Date> ICqlConvertible.TryConvertToDate() => TruncateToDate();
+
+        Result<Boolean> ICqlConvertible.TryConvertToBoolean() => CannotCastTo<Boolean>(this);
+        Result<Decimal> ICqlConvertible.TryConvertToDecimal() => CannotCastTo<Decimal>(this);
+        Result<Integer> ICqlConvertible.TryConvertToInteger() => CannotCastTo<Integer>(this);
+        Result<Long> ICqlConvertible.TryConvertToLong() => CannotCastTo<Long>(this);
+        Result<Quantity> ICqlConvertible.TryConvertToQuantity() => CannotCastTo<Quantity>(this);
+        Result<Ratio> ICqlConvertible.TryConvertToRatio() => CannotCastTo<Ratio>(this);
+        Result<Time> ICqlConvertible.TryConvertToTime() => CannotCastTo<Time>(this);
+        Result<Code> ICqlConvertible.TryConvertToCode() => CannotCastTo<Code>(this);
+        Result<Concept> ICqlConvertible.TryConvertToConcept() => CannotCastTo<Concept>(this);
 
     }
 }
