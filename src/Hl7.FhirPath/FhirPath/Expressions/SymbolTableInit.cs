@@ -249,12 +249,15 @@ namespace Hl7.FhirPath.Expressions
         {
             var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
             var lambda = arguments.Skip(1).First();
+            var index = 0;
 
             foreach (ITypedElement element in focus)
             {
                 var newFocus = ElementNode.CreateList(element);
                 var newContext = ctx.Nest(newFocus);
                 newContext.SetThis(newFocus);
+                newContext.SetIndex(ElementNode.CreateList(index));
+                index++;
 
                 if (lambda(newContext, InvokeeFactory.EmptyArgs).BooleanEval() == true)
                     yield return element;
@@ -265,12 +268,15 @@ namespace Hl7.FhirPath.Expressions
         {
             var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
             var lambda = arguments.Skip(1).First();
+            var index = 0;
 
             foreach (ITypedElement element in focus)
             {
                 var newFocus = ElementNode.CreateList(element);
                 var newContext = ctx.Nest(newFocus);
                 newContext.SetThis(newFocus);
+                newContext.SetIndex(ElementNode.CreateList(index));
+                index++;
 
                 var result = lambda(newContext, InvokeeFactory.EmptyArgs);
                 foreach (var resultElement in result)       // implement SelectMany()
@@ -288,6 +294,7 @@ namespace Hl7.FhirPath.Expressions
 
             while (newNodes.Any())
             {
+                var index = 0;
                 var current = newNodes;
                 newNodes = new List<ITypedElement>();
 
@@ -296,7 +303,8 @@ namespace Hl7.FhirPath.Expressions
                     var newFocus = ElementNode.CreateList(element);
                     var newContext = ctx.Nest(newFocus);
                     newContext.SetThis(newFocus);
-
+                    newContext.SetIndex(ElementNode.CreateList(index));
+                    index++;
 
                     newNodes.AddRange(lambda(newContext, InvokeeFactory.EmptyArgs));
                 }
@@ -310,12 +318,15 @@ namespace Hl7.FhirPath.Expressions
         {
             var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
             var lambda = arguments.Skip(1).First();
+            var index = 0;
 
             foreach (ITypedElement element in focus)
             {
                 var newFocus = ElementNode.CreateList(element);
                 var newContext = ctx.Nest(newFocus);
                 newContext.SetThis(newFocus);
+                newContext.SetIndex(ElementNode.CreateList(index));
+                index++;
 
                 var result = lambda(newContext, InvokeeFactory.EmptyArgs).BooleanEval();
                 if (result == null) return ElementNode.EmptyList;
@@ -329,13 +340,15 @@ namespace Hl7.FhirPath.Expressions
         {
             var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
             var lambda = arguments.Skip(1).First();
+            var index = 0;
 
             foreach (ITypedElement element in focus)
             {
                 var newFocus = ElementNode.CreateList(element);
                 var newContext = ctx.Nest(newFocus);
                 newContext.SetThis(newFocus);
-
+                newContext.SetIndex(ElementNode.CreateList(index));
+                index++;
 
                 var result = lambda(newContext, InvokeeFactory.EmptyArgs).BooleanEval();
 

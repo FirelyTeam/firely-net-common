@@ -11,6 +11,7 @@ using Hl7.FhirPath.Functions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Hl7.FhirPath.Expressions
 {
@@ -43,6 +44,12 @@ namespace Hl7.FhirPath.Expressions
         public static IEnumerable<ITypedElement> GetThat(Closure context, IEnumerable<Invokee> _)
         {
             return context.GetThat();
+        }
+
+        public static IEnumerable<ITypedElement> GetIndex(Closure context, IEnumerable<Invokee> args)
+        {
+
+            return context.GetIndex();
         }
 
 
