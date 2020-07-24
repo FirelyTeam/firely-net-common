@@ -27,6 +27,7 @@ namespace Hl7.FhirPath.Expressions
             var input = new[] { root };
             newContext.SetThis(input);
             newContext.SetThat(input);
+            newContext.SetIndex(ElementNode.CreateList(0));
             newContext.SetOriginalContext(input);
             if (ctx.Resource != null) newContext.SetResource(new[] { ctx.Resource });
             if (ctx.RootResource != null) newContext.SetRootResource(new[] { ctx.RootResource });
@@ -58,8 +59,7 @@ namespace Hl7.FhirPath.Expressions
         public virtual IEnumerable<ITypedElement> ResolveValue(string name)
         {
             // First, try to directly get "normal" values
-            IEnumerable<ITypedElement> result = null;
-            _namedValues.TryGetValue(name, out result);
+            _namedValues.TryGetValue(name, out IEnumerable<ITypedElement> result);
 
             if (result != null) return result;
 
