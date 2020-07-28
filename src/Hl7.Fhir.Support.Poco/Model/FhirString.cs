@@ -27,49 +27,10 @@
   
 */
 
-
-using System;
-using Hl7.Fhir.Introspection;
-using System.Runtime.Serialization;
-using Hl7.Fhir.Specification;
-
 namespace Hl7.Fhir.Model
 {
-    /// <summary>
-    /// Primitive Type string
-    /// </summary>
-#if !NETSTANDARD1_1
-    [Serializable]
-#endif
-    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    [FhirType("string")]
-    [DataContract]    
-    public class FhirString : PrimitiveType, IStringValue
+    public partial class FhirString
     {
-        public override string TypeName { get { return "string"; } }
-        
-        // Must conform to the pattern "[ \r\n\t\S]+"
-        public const string PATTERN = @"[ \r\n\t\S]+";
-
-		public FhirString(string value)
-		{
-			Value = value;
-		}
-
-		public FhirString(): this(null) {}
-
-        /// <summary>
-        /// Primitive value of the element
-        /// </summary>
-        [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
-        [DataMember]
-        public string Value
-        {
-            get { return (string)ObjectValue; }
-            set { ObjectValue = value; OnPropertyChanged("Value"); }
-        }
-
         public static bool IsValidValue(string value) => value.Length <= 1024 * 1024;    // Note that strings SHALL NOT exceed 1MB in size
     }
-
 }

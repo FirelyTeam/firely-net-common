@@ -22,13 +22,7 @@ namespace Hl7.Fhir.Model
         T Value { get; set; }
     }
 
-    /// <summary>Common string Value property interface.</summary>
-    public interface IStringValue : IValue<string> { }
-
     /// <summary>Common generic nullable value property interface.</summary>
     /// <typeparam name="T">The value type.</typeparam>
     public interface INullableValue<T> : IValue<T?> where T : struct { }
-
-    /// <summary>Common nullable integer value property interface.</summary>
-    public interface INullableIntegerValue : INullableValue<int> { }
 }

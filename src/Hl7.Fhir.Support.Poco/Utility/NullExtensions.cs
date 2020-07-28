@@ -30,11 +30,8 @@ namespace Hl7.Fhir.Utility
         {
             if (element == null) { return true; }
 
-            IStringValue ss;
-            PrimitiveType pp;
-            var isEmpty = (ss = element as IStringValue) != null ? string.IsNullOrEmpty(ss.Value)
-                : (pp = element as PrimitiveType) != null ? pp.ObjectValue == null
-                : true;
+            var isEmpty = element is IValue<string> ss ? string.IsNullOrEmpty(ss.Value)
+                : !(element is PrimitiveType pp) || pp.ObjectValue == null;
 
             // Note: Children collection includes extensions
             return isEmpty && !element.Children.Any(c => !c.IsNullOrEmpty());

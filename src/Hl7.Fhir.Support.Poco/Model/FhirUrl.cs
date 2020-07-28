@@ -35,44 +35,12 @@ using Hl7.Fhir.Specification;
 
 namespace Hl7.Fhir.Model
 {
-    /// <summary>
-    /// Primitive Type url
-    /// </summary>
-#if !NETSTANDARD1_1
-    [Serializable]
-#endif
-    [System.Diagnostics.DebuggerDisplay(@"\{{Value,nq}}")] // http://blogs.msdn.com/b/jaredpar/archive/2011/03/18/debuggerdisplay-attribute-best-practices.aspx
-    [FhirType("url")]
-    [DataContract]
-    public partial class FhirUrl : PrimitiveType, IStringValue
+    public partial class FhirUrl
     {
-        public override string TypeName { get { return "url"; } }
-        
-        // Must conform to the pattern "\S*"
-        public const string PATTERN = @"\S*";
-
-		public FhirUrl(string value)
-		{
-			Value = value;
-		}
-
-		public FhirUrl(): this((string)null) {}
-
         public FhirUrl(Uri uri)
         {
             Value = uri.OriginalString;
         }
-
-        /// <summary>
-        /// Primitive value of the element
-        /// </summary>
-        [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
-        [DataMember]
-        public string Value
-        {
-            get { return (string)ObjectValue; }
-            set { ObjectValue = value; OnPropertyChanged("Value"); }
-        }           
     }
     
 }
