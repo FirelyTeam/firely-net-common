@@ -1,8 +1,7 @@
 ﻿using FluentAssertions;
 using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Model.Primitives;
+using Hl7.Fhir.ElementModel.Types;
 using Hl7.Fhir.Validation.Impl;
-using Hl7.Fhir.Validation.Impl.Tests;
 using Hl7.Fhir.Validation.Schema;
 using Hl7.Fhir.Validation.Tests.Support;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -58,7 +57,7 @@ namespace Hl7.Fhir.Validation.Tests.Impl
             // mixed primitive types
             yield return new object[]
             {
-                new Fixed(PartialDate.Parse("2019-09-05")),
+                new Fixed(Date.Parse("2019-09-05")),
                 ElementNode.ForPrimitive(20190905),
                 false, Issue.CONTENT_DOES_NOT_MATCH_FIXED_VALUE, "result must be false [mixed]"
             };

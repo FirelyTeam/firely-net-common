@@ -1,11 +1,11 @@
 using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Model;
-using Hl7.Fhir.Model.Primitives;
+using Hl7.Fhir.ElementModel.Types;
 using Hl7.Fhir.Validation.Schema;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using System;
 using System.Threading.Tasks;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Validation.Impl.Tests
 {
@@ -29,7 +29,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
 
         private void SetupTerminologyServiceResult(Assertions result)
         {
-            _terminologyService.Setup(ts => ts.ValidateCode(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ICoding>(), It.IsAny<IConcept>(), It.IsAny<PartialDateTime?>(), true, It.IsAny<string>())).Returns(Task.FromResult(result));
+            _terminologyService.Setup(ts => ts.ValidateCode(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Code>(), It.IsAny<Concept>(), It.IsAny<P.DateTime>(), true, It.IsAny<string>())).Returns(Task.FromResult(result));
         }
 
         [TestMethod()]
@@ -178,7 +178,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
                null, // system
                null, // version
                null, // display
-               It.Is<ICoding>(cd => cd.Code == "masked" && cd.System == "http://terminology.hl7.org/CodeSystem/data-absent-reason"), // coding
+               It.Is<Code>(cd => cd.Value == "masked" && cd.System == "http://terminology.hl7.org/CodeSystem/data-absent-reason"), // coding
                null, // concept
                null, // date
                true,  // abstracy
@@ -206,7 +206,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
                 null, // version
                 null, // display
                 null, // coding
-                It.IsNotNull<IConcept>(), // concept
+                It.IsNotNull<Concept>(), // concept
                 null, // date
                 true,  // abstracy
                 null // displayLanguage
@@ -229,7 +229,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
                null, // system
                null, // version
                null, // display
-               It.Is<ICoding>(cd => cd.Code == "s"), // coding
+               It.Is<Code>(cd => cd.Value == "s"), // coding
                null, // concept
                null, // date
                true,  // abstracy
@@ -275,7 +275,7 @@ namespace Hl7.Fhir.Validation.Impl.Tests
                null, // system
                null, // version
                null, // display
-               It.Is<ICoding>(cd => cd.Code == "UNKNOWN" && cd.System == "http://terminology.hl7.org/CodeSystem/data-absent-reason"), // coding
+               It.Is<Code>(cd => cd.Value == "UNKNOWN" && cd.System == "http://terminology.hl7.org/CodeSystem/data-absent-reason"), // coding
                null, // concept
                null, // date
                true,  // abstracy

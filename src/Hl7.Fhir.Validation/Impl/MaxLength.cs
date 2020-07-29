@@ -7,7 +7,7 @@
  */
 
 using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Model.Primitives;
+using Hl7.Fhir.ElementModel.Types;
 using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation.Schema;
 using System.Threading.Tasks;
@@ -36,11 +36,11 @@ namespace Hl7.Fhir.Validation.Impl
 
             var result = Assertions.Empty + this;
 
-            if (Any.ConvertToSystemValue(input.Value) is string serializedValue)
+            if (Any.Convert(input.Value) is String serializedValue)
             {
                 result += new Trace($"Maxlength validation with value '{serializedValue}'");
 
-                if (serializedValue.Length > _maxLength)
+                if (serializedValue.Value.Length > _maxLength)
                 {
                     return Task.FromResult(result + ResultAssertion.CreateFailure(new IssueAssertion(Issue.CONTENT_ELEMENT_VALUE_TOO_LONG, input.Location, $"Value '{serializedValue}' is too long (maximum length is {_maxLength}")));
                 }

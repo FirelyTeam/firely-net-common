@@ -19,7 +19,7 @@ namespace Hl7.Fhir.ElementModel.Types
         public Code(string? system, string code, string? display = null, string? version = null)
         {
             System = system;
-            Value = code ?? throw new ArgumentNullException(nameof(code));
+            Value = code; // MV 20200512:  code can be null as well. In old version that was not allowed.
             Display = display;
             Version = version;
         }
@@ -34,7 +34,7 @@ namespace Hl7.Fhir.ElementModel.Types
 
         public override int GetHashCode() => (System, Value, Display, Version).GetHashCode();
         public override string ToString() => $"{Value}@{System} " + Display ?? "";
-        public override bool Equals(object obj) => obj is Code c 
+        public override bool Equals(object obj) => obj is Code c
             && System == c.System && Value == c.Value && Display == c.Display && Version == c.Version;
 
         public static implicit operator Concept(Code c) => ((ICqlConvertible)c).TryConvertToConcept().ValueOrThrow();

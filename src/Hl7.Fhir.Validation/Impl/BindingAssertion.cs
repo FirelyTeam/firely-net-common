@@ -1,5 +1,5 @@
 ﻿using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Model;
+using Hl7.Fhir.ElementModel.Types;
 using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation.Schema;
 using Newtonsoft.Json.Linq;
@@ -121,11 +121,11 @@ namespace Hl7.Fhir.Validation.Impl
                 // Note: parseBindable with translate all bindable types to just code/Coding/Concept,
                 // so that's all we need to expect here.
                 case string co when string.IsNullOrEmpty(co) && Strength == BindingStrength.Required:
-                case ICoding cd when string.IsNullOrEmpty(cd.Code) && Strength == BindingStrength.Required:
-                case IConcept cc when !codeableConceptHasCode(cc) && Strength == BindingStrength.Required:
+                case Code cd when string.IsNullOrEmpty(cd.Value) && Strength == BindingStrength.Required:
+                case Concept cc when !codeableConceptHasCode(cc) && Strength == BindingStrength.Required:
                     result += new IssueAssertion(Issue.TERMINOLOGY_NO_CODE_IN_INSTANCE, source.Location, $"No code found in {source.InstanceType} with a required binding.");
                     break;
-                case IConcept cc when !codeableConceptHasCode(cc) && string.IsNullOrEmpty(cc.Display) &&
+                case Concept cc when !codeableConceptHasCode(cc) && string.IsNullOrEmpty(cc.Display) &&
                                 Strength == BindingStrength.Extensible:
                     result += new IssueAssertion(Issue.TERMINOLOGY_NO_CODE_IN_INSTANCE, source.Location, $"Extensible binding requires code or text.");
                     break;
@@ -136,8 +136,8 @@ namespace Hl7.Fhir.Validation.Impl
             return result + ResultAssertion.Failure;
         }
 
-        private bool codeableConceptHasCode(IConcept cc) =>
-            cc.Codes.Any(cd => !string.IsNullOrEmpty(cd.Code));
+        private bool codeableConceptHasCode(Concept cc) =>
+            cc.Codes.Any(cd => !string.IsNullOrEmpty(cd.Value));
 
         internal async Task<Assertions> ValidateCode(ITypedElement source, object bindable, ValidationContext vc)
         {
@@ -148,10 +148,10 @@ namespace Hl7.Fhir.Validation.Impl
                 case string code:
                     result += await callService(vc.TerminologyService, source.Location, ValueSetUri, code: code, system: null, display: null, abstractAllowed: AbstractAllowed).ConfigureAwait(false);
                     break;
-                case ICoding cd:
+                case Code cd:
                     result += await callService(vc.TerminologyService, source.Location, ValueSetUri, coding: cd, abstractAllowed: AbstractAllowed).ConfigureAwait(false);
                     break;
-                case IConcept cc:
+                case Concept cc:
                     result += await callService(vc.TerminologyService, source.Location, ValueSetUri, cc: cc, abstractAllowed: AbstractAllowed).ConfigureAwait(false);
                     break;
                 default:
@@ -167,7 +167,7 @@ namespace Hl7.Fhir.Validation.Impl
         }
 
         private async Task<Assertions> callService(ITerminologyServiceNEW svc, string location, string canonical, string code = null, string system = null, string display = null,
-                ICoding coding = null, IConcept cc = null, bool? abstractAllowed = null)
+                Code coding = null, Concept cc = null, bool? abstractAllowed = null)
         {
             var result = Assertions.Empty;
             try

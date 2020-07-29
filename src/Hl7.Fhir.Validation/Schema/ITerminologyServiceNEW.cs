@@ -8,8 +8,7 @@
 
 
 
-using Hl7.Fhir.Model;
-using Hl7.Fhir.Model.Primitives;
+using Hl7.Fhir.ElementModel.Types;
 using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Validation.Schema
@@ -18,7 +17,7 @@ namespace Hl7.Fhir.Validation.Schema
     {
         Task<Assertions> ValidateCode(string canonical = null, string context = null, string code = null,
                     string system = null, string version = null, string display = null,
-                    ICoding coding = null, IConcept codeableConcept = null, PartialDateTime? date = null,
+                    Code coding = null, Concept codeableConcept = null, DateTime date = null,
                     bool? @abstract = null, string displayLanguage = null);
     }
 }

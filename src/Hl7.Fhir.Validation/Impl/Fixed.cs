@@ -7,7 +7,6 @@
  */
 
 using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.ElementModel.Functions;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Validation.Schema;
 using Newtonsoft.Json.Linq;
@@ -35,7 +34,7 @@ namespace Hl7.Fhir.Validation.Impl
         {
             var result = Assertions.Empty;
 
-            if (!EqualityOperators.IsEqualTo(_fixed, input))
+            if (EqualityOperators.IsEqualTo(_fixed, input) != true)
             {
                 result += ResultAssertion.CreateFailure(new IssueAssertion(Issue.CONTENT_DOES_NOT_MATCH_FIXED_VALUE, input.Location, $"Value is not exactly equal to fixed value '{_fixed.Value}'"));
 

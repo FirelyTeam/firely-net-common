@@ -1,5 +1,4 @@
 ﻿using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.ElementModel.Functions;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Validation.Schema;
 using Newtonsoft.Json.Linq;

@@ -1,5 +1,4 @@
-﻿using Hl7.Fhir.Model;
-using Hl7.Fhir.Model.Primitives;
+﻿using Hl7.Fhir.ElementModel.Types;
 using Hl7.Fhir.Utility;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,10 +27,10 @@ namespace Hl7.Fhir.ElementModel
                     return null;
             }
 
-            ICoding convertQuantityToCoding(ITypedElement inst)
+            Code convertQuantityToCoding(ITypedElement inst)
             {
                 var q = inst.ParseQuantity();
-                return new Coding(code: q.Unit, system: q.System ?? "http://unitsofmeasure.org");
+                return new Code(code: q.Unit, system: q.System ?? "http://unitsofmeasure.org");
             }
 
             object parseExtension(ITypedElement inst)
@@ -41,13 +40,13 @@ namespace Hl7.Fhir.ElementModel
             }
         }
 
-        public static ICoding ParseCoding(this ITypedElement instance) =>
-            new Coding(
+        public static Code ParseCoding(this ITypedElement instance) =>
+            new Code(
                 instance.Children("system").GetString(),
                 instance.Children("code").GetString(),
                 instance.Children("display").GetString());
 
-        public static IConcept ParseConcept(this ITypedElement instance) =>
+        public static Concept ParseConcept(this ITypedElement instance) =>
             new Concept(
                 instance.Children("coding").Select(coding => coding.ParseCoding()).ToArray(),
                 instance.Children("text").GetString());
