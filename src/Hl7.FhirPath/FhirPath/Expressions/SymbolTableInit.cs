@@ -16,7 +16,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-
 namespace Hl7.FhirPath.Expressions
 {
     public static class SymbolTableInit
