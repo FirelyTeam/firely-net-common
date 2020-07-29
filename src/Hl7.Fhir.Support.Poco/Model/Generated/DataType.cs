@@ -2,10 +2,13 @@
 // Contents of: hl7.fhir.r5.core version: 4.4.0
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
-using System.Text.RegularExpressions;
 using Hl7.Fhir.Introspection;
+using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Specification;
+using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation;
 
 /*
@@ -40,45 +43,72 @@ using Hl7.Fhir.Validation;
 namespace Hl7.Fhir.Model
 {
   /// <summary>
-  /// Primitive Type uuid
-  /// See The Open Group, CDE 1.1 Remote Procedure Call specification, Appendix A.
+  /// Reuseable Types
   /// </summary>
 #if !NETSTANDARD1_1
   [Serializable]
 #endif
-  [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("uuid")]
+  [FhirType("DataType")]
   [DataContract]
-  public partial class Uuid : PrimitiveType, IValue<string>
+  public abstract partial class DataType : Hl7.Fhir.Model.Element
   {
     /// <summary>
     /// FHIR Type Name
     /// </summary>
-    public override string TypeName { get { return "uuid"; } }
+    public override string TypeName { get { return "DataType"; } }
 
-    /// Must conform to the pattern "urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-    public const string PATTERN = @"urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
-
-    public Uuid(string value)
+    public override IDeepCopyable CopyTo(IDeepCopyable other)
     {
-      Value = value;
+      var dest = other as DataType;
+
+      if (dest == null)
+      {
+        throw new ArgumentException("Can only copy to an object of the same type", "other");
+      }
+
+      base.CopyTo(dest);
+      return dest;
     }
 
-    public Uuid(): this((string)null) {}
-
-    /// <summary>
-    /// Primitive value of the element
-    /// </summary>
-    [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
-    [UuidPattern]
-    [DataMember]
-    public string Value
+    public override bool Matches(IDeepComparable other)
     {
-      get { return (string)ObjectValue; }
-      set { ObjectValue = value; OnPropertyChanged("Value"); }
+      var otherT = other as DataType;
+      if(otherT == null) return false;
+
+      if(!base.Matches(otherT)) return false;
+
+      return true;
     }
 
-    public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
+    public override bool IsExactly(IDeepComparable other)
+    {
+      var otherT = other as DataType;
+      if(otherT == null) return false;
+
+      if(!base.IsExactly(otherT)) return false;
+
+      return true;
+    }
+
+    [IgnoreDataMember]
+    public override IEnumerable<Base> Children
+    {
+      get
+      {
+        foreach (var item in base.Children) yield return item;
+      }
+
+    }
+
+    [IgnoreDataMember]
+    public override IEnumerable<ElementValue> NamedChildren
+    {
+      get
+      {
+        foreach (var item in base.NamedChildren) yield return item;
+      }
+
+    }
 
   }
 

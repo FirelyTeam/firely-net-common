@@ -100,7 +100,7 @@ namespace Hl7.Fhir.Introspection
             result = new ClassMapping
             {
                 Name = collectTypeName(typeAttribute, type),
-                IsResource = type.CanBeTreatedAsType(typeof(Resource)),
+                IsResource = typeAttribute.IsResource || type.CanBeTreatedAsType(typeof(Resource)),
                 IsCodeOfT = ReflectionHelper.IsClosedGenericType(type) &&
                                 ReflectionHelper.IsConstructedFromGenericTypeDefinition(type, typeof(Code<>)),
                 NativeType = type,

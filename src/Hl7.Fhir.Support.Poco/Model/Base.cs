@@ -45,8 +45,22 @@ namespace Hl7.Fhir.Model
     [DataContract]
     public abstract class Base : Validation.IValidatableObject, IDeepCopyable, IDeepComparable, IAnnotated, IAnnotatable, INotifyPropertyChanged
     {
-        public abstract bool IsExactly(IDeepComparable other);
-        public abstract bool Matches(IDeepComparable pattern);
+        public virtual bool IsExactly(IDeepComparable other)
+        {
+            var otherT = other as Base;
+            if (otherT == null) return false;
+
+            return true;
+        }
+
+
+        public virtual bool Matches(IDeepComparable other)
+        {
+            var otherT = other as Base;
+            if (otherT == null) return false;
+
+            return true;
+        }
 
         /// <summary>
         /// 
@@ -85,25 +99,16 @@ namespace Hl7.Fhir.Model
         public void RemoveAnnotations(Type type) => annotations.RemoveAnnotations(type);
         #endregion
 
-
         #region INotifyPropertyChanged
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        protected void OnPropertyChanged(String property)
-        {
-            // No need to create event arguments w/o subscribers
-            //PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
-            var handler = PropertyChanged;
-            if (!(handler is null))
-            {
-                handler.Invoke(this, new PropertyChangedEventArgs(property));
-            }
-        }
+        protected void OnPropertyChanged(String property) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
 
         #endregion
 
-        public abstract string TypeName { get; }
+        public virtual string TypeName => "Base";
 
         /// <summary>
         /// Enumerate all child nodes.
