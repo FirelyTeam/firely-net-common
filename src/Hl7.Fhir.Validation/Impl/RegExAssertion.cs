@@ -23,7 +23,7 @@ namespace Hl7.Fhir.Validation.Impl
         public RegExAssertion(string pattern)
         {
             _pattern = pattern ?? throw new ArgumentNullException(nameof(pattern));
-            _regex = new Regex(pattern);
+            _regex = new Regex($"^{pattern}$");
         }
 
         public override string Key => "regex";
