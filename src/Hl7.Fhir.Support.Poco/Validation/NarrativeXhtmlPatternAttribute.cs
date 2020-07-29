@@ -9,7 +9,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using Hl7.Fhir.Model;
-using Hl7.Fhir.Support;
 
 namespace Hl7.Fhir.Validation
 {

@@ -7,12 +7,11 @@
  */
 
 using Hl7.Fhir.Language;
-using Hl7.Fhir.Model.Primitives;
 using Hl7.FhirPath.Expressions;
 using Hl7.FhirPath.Parser;
 using Hl7.FhirPath.Sprache;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Reflection;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.FhirPath.Tests
 {
@@ -25,14 +24,14 @@ namespace Hl7.FhirPath.Tests
             var parser = Grammar.Literal.End();
 
             AssertParser.SucceedsMatch(parser, "'hi there'", new ConstantExpression("hi there"));
-            var m = new ConstantExpression(3L);
+            var m = new ConstantExpression(3);
             AssertParser.SucceedsMatch(parser, "3", m);
             AssertParser.SucceedsMatch(parser, "3.14", new ConstantExpression(3.14m));
-            AssertParser.SucceedsMatch(parser, "@2013-12", new ConstantExpression(PartialDate.Parse("2013-12")));
-            AssertParser.SucceedsMatch(parser, "@2013-12T", new ConstantExpression(PartialDateTime.Parse("2013-12")));
-            AssertParser.SucceedsMatch(parser, "@T12:23:34", new ConstantExpression(PartialTime.Parse("12:23:34")));
+            AssertParser.SucceedsMatch(parser, "@2013-12", new ConstantExpression(P.Date.Parse("2013-12")));
+            AssertParser.SucceedsMatch(parser, "@2013-12T", new ConstantExpression(P.DateTime.Parse("2013-12")));
+            AssertParser.SucceedsMatch(parser, "@T12:23:34", new ConstantExpression(P.Time.Parse("12:23:34")));
             AssertParser.SucceedsMatch(parser, "true", new ConstantExpression(true));
-            AssertParser.SucceedsMatch(parser, "@2014-12-13T12:00:00+02:00", new ConstantExpression(PartialDateTime.Parse("2014-12-13T12:00:00+02:00")));
+            AssertParser.SucceedsMatch(parser, "@2014-12-13T12:00:00+02:00", new ConstantExpression(P.DateTime.Parse("2014-12-13T12:00:00+02:00")));
 
             AssertParser.FailsMatch(parser, "%constant");
             AssertParser.FailsMatch(parser, "`quotedstring`");
@@ -52,9 +51,9 @@ namespace Hl7.FhirPath.Tests
             AssertParser.SucceedsMatch(parser, "doSomething ( 3.14 ) ", new FunctionCallExpression(AxisExpression.That, "doSomething", TypeSpecifier.Any,
                                 new ConstantExpression(3.14m)));
 
-            AssertParser.SucceedsMatch(parser, "doSomething('hi', 3.14, 3, $this, somethingElse(true))", new FunctionCallExpression(AxisExpression.That, "doSomething", TypeSpecifier.Any,
-                        new ConstantExpression("hi"), new ConstantExpression(3.14m), new ConstantExpression(3L),
-                        AxisExpression.This,
+            AssertParser.SucceedsMatch(parser, "doSomething('hi', 3.14, 3, $this, $index, somethingElse(true))", new FunctionCallExpression(AxisExpression.That, "doSomething", TypeSpecifier.Any,
+                        new ConstantExpression("hi"), new ConstantExpression(3.14m), new ConstantExpression(3),
+                        AxisExpression.This, AxisExpression.Index,
                         new FunctionCallExpression(AxisExpression.That, "somethingElse", TypeSpecifier.Any, new ConstantExpression(true))));
 
             AssertParser.SucceedsMatch(parser, "as(Patient)", new FunctionCallExpression(AxisExpression.That, "as", TypeSpecifier.Any, new ConstantExpression("Patient")));
@@ -76,15 +75,15 @@ namespace Hl7.FhirPath.Tests
             AssertParser.SucceedsMatch(parser, "doSomething('hi', 3.14)", new FunctionCallExpression(AxisExpression.This, "doSomething", TypeSpecifier.Any,
                         new ConstantExpression("hi"), new ConstantExpression(3.14m)));
             AssertParser.SucceedsMatch(parser, "%external", new VariableRefExpression("external"));
-            AssertParser.SucceedsMatch(parser, "@2013-12", new ConstantExpression(PartialDate.Parse("2013-12")));
-            AssertParser.SucceedsMatch(parser, "@2013-12T", new ConstantExpression(PartialDateTime.Parse("2013-12")));
-            AssertParser.SucceedsMatch(parser, "3", new ConstantExpression(3L));
+            AssertParser.SucceedsMatch(parser, "@2013-12", new ConstantExpression(P.Date.Parse("2013-12")));
+            AssertParser.SucceedsMatch(parser, "@2013-12T", new ConstantExpression(P.DateTime.Parse("2013-12")));
+            AssertParser.SucceedsMatch(parser, "3", new ConstantExpression(3));
             AssertParser.SucceedsMatch(parser, "true", new ConstantExpression(true));
-            AssertParser.SucceedsMatch(parser, "(3)", new ConstantExpression(3L));
+            AssertParser.SucceedsMatch(parser, "(3)", new ConstantExpression(3));
             AssertParser.SucceedsMatch(parser, "{}", NewNodeListInitExpression.Empty);
-            AssertParser.SucceedsMatch(parser, "@2014-12-13T12:00:00+02:00", new ConstantExpression(PartialDateTime.Parse("2014-12-13T12:00:00+02:00")));
-            AssertParser.SucceedsMatch(parser, "78 'kg'", new ConstantExpression(new Quantity(78m, "kg")));
-            AssertParser.SucceedsMatch(parser, "10.1 'mg'", new ConstantExpression(new Quantity(10.1m, "mg")));
+            AssertParser.SucceedsMatch(parser, "@2014-12-13T12:00:00+02:00", new ConstantExpression(P.DateTime.Parse("2014-12-13T12:00:00+02:00")));
+            AssertParser.SucceedsMatch(parser, "78 'kg'", new ConstantExpression(new P.Quantity(78m, "kg")));
+            AssertParser.SucceedsMatch(parser, "10.1 'mg'", new ConstantExpression(new P.Quantity(10.1m, "mg")));
         }
 
         [TestMethod]
@@ -102,18 +101,19 @@ namespace Hl7.FhirPath.Tests
         }
 
 
-        private static readonly Expression patientName = new ChildExpression(new ChildExpression(AxisExpression.This, "Patient"), "name");
+        private static readonly Expression PATIENTNAME = new ChildExpression(new ChildExpression(AxisExpression.This, "Patient"), "name");
 
         [TestMethod]
         public void FhirPath_Gramm_Quantity()
         {
             var parser = Grammar.Quantity.End();
 
-            AssertParser.SucceedsMatch(parser, "78 'kg'", new Quantity(78m, "kg"));
-            AssertParser.SucceedsMatch(parser, "78.0 'kg'", new Quantity(78m, "kg"));
-            AssertParser.SucceedsMatch(parser, "78.0'kg'", new Quantity(78m, "kg"));
-            AssertParser.SucceedsMatch(parser, "4 months", new Quantity(4m, "mo"));
-            AssertParser.SucceedsMatch(parser, "1 '1'", new Quantity(1m, "1"));
+            AssertParser.SucceedsMatch(parser, "78 'kg'", new P.Quantity(78m, "kg"));
+            AssertParser.SucceedsMatch(parser, "78.0 'kg'", new P.Quantity(78m, "kg"));
+            AssertParser.SucceedsMatch(parser, "78.0'kg'", new P.Quantity(78m, "kg"));
+            AssertParser.SucceedsMatch(parser, "4 months", new P.Quantity(4m, "{month}"));
+            AssertParser.SucceedsMatch(parser, "4 'mo'", new P.Quantity(4m, "mo"));
+            AssertParser.SucceedsMatch(parser, "1 '1'", new P.Quantity(1m, P.Quantity.UCUM_UNIT));
 
             AssertParser.FailsMatch(parser, "78");   // still a integer
             AssertParser.FailsMatch(parser, "78.0");   // still a decimal
@@ -128,7 +128,7 @@ namespace Hl7.FhirPath.Tests
             var parser = Grammar.InvocationExpression.End();
 
             AssertParser.SucceedsMatch(parser, "Patient.name.doSomething(true)",
-                    new FunctionCallExpression(patientName, "doSomething", TypeSpecifier.Any, new ConstantExpression(true)));
+                    new FunctionCallExpression(PATIENTNAME, "doSomething", TypeSpecifier.Any, new ConstantExpression(true)));
 
             AssertParser.FailsMatch(parser, "Patient.");
             //AssertParser.FailsMatch(parser, "Patient. name");     //oops
@@ -141,12 +141,12 @@ namespace Hl7.FhirPath.Tests
         {
             var parser = Grammar.InvocationExpression.End();
 
-            AssertParser.SucceedsMatch(parser, "Patient.name", patientName);
+            AssertParser.SucceedsMatch(parser, "Patient.name", PATIENTNAME);
             AssertParser.SucceedsMatch(parser, "Patient.name [4 ]",
-                    new IndexerExpression(patientName, new ConstantExpression(4L)));
+                    new IndexerExpression(PATIENTNAME, new ConstantExpression(4)));
             AssertParser.SucceedsMatch(parser, "$this[4].name",
                 new ChildExpression(
-                    new IndexerExpression(AxisExpression.This, new ConstantExpression(4L)),
+                    new IndexerExpression(AxisExpression.This, new ConstantExpression(4)),
                     "name"));
 
             AssertParser.FailsMatch(parser, "Patient.name[");
@@ -162,11 +162,11 @@ namespace Hl7.FhirPath.Tests
         {
             var parser = Grammar.PolarityExpression.End();
 
-            AssertParser.SucceedsMatch(parser, "4", new ConstantExpression(4L));
-            AssertParser.SucceedsMatch(parser, "-4", new UnaryExpression('-', new ConstantExpression(4L)));
+            AssertParser.SucceedsMatch(parser, "4", new ConstantExpression(4));
+            AssertParser.SucceedsMatch(parser, "-4", new UnaryExpression('-', new ConstantExpression(4)));
 
-            AssertParser.SucceedsMatch(parser, "-Patient.name", new UnaryExpression('-', patientName));
-            AssertParser.SucceedsMatch(parser, "+Patient.name", new UnaryExpression('+', patientName));
+            AssertParser.SucceedsMatch(parser, "-Patient.name", new UnaryExpression('-', PATIENTNAME));
+            AssertParser.SucceedsMatch(parser, "+Patient.name", new UnaryExpression('+', PATIENTNAME));
         }
 
 
@@ -175,9 +175,9 @@ namespace Hl7.FhirPath.Tests
         {
             var parser = Grammar.MulExpression.End();
 
-            AssertParser.SucceedsMatch(parser, "Patient.name", patientName);
-            AssertParser.SucceedsMatch(parser, "4* Patient.name", new BinaryExpression('*', new ConstantExpression(4L), patientName));
-            AssertParser.SucceedsMatch(parser, "5 div 6", constOp("div", 5L, 6L));
+            AssertParser.SucceedsMatch(parser, "Patient.name", PATIENTNAME);
+            AssertParser.SucceedsMatch(parser, "4* Patient.name", new BinaryExpression('*', new ConstantExpression(4), PATIENTNAME));
+            AssertParser.SucceedsMatch(parser, "5 div 6", constOp("div", 5, 6));
 
             AssertParser.FailsMatch(parser, "4*");
             // AssertParser.FailsMatch(parser, "5div6");    oops
@@ -188,8 +188,8 @@ namespace Hl7.FhirPath.Tests
         {
             var parser = Grammar.AddExpression.End();
 
-            AssertParser.SucceedsMatch(parser, "-4", new UnaryExpression('-', new ConstantExpression(4L)));
-            AssertParser.SucceedsMatch(parser, "4 + 6", constOp("+", 4L, 6L));
+            AssertParser.SucceedsMatch(parser, "-4", new UnaryExpression('-', new ConstantExpression(4)));
+            AssertParser.SucceedsMatch(parser, "4 + 6", constOp("+", 4, 6));
 
             AssertParser.FailsMatch(parser, "4+");
             // AssertParser.FailsMatch(parser, "5div6");    oops
@@ -201,8 +201,8 @@ namespace Hl7.FhirPath.Tests
         {
             var parser = Grammar.TypeExpression.End();
 
-            AssertParser.SucceedsMatch(parser, "4 is integer", new BinaryExpression("is", new ConstantExpression(4L), new ConstantExpression("integer")));
-            AssertParser.SucceedsMatch(parser, "8 as notoddbuteven", new BinaryExpression("as", new ConstantExpression(8L), new ConstantExpression("notoddbuteven")));
+            AssertParser.SucceedsMatch(parser, "4 is integer", new BinaryExpression("is", new ConstantExpression(4), new ConstantExpression("integer")));
+            AssertParser.SucceedsMatch(parser, "8 as notoddbuteven", new BinaryExpression("as", new ConstantExpression(8), new ConstantExpression("notoddbuteven")));
 
             AssertParser.FailsMatch(parser, "4 is 5");
             // AssertParser.FailsMatch(parser, "5div6");    oops
@@ -241,17 +241,6 @@ namespace Hl7.FhirPath.Tests
 
             AssertParser.FailsMatch(parser, "true implies false and 4 != 5 and 4 <> 6 and ('h' ~ 'H' or 'a' !~ 'b')");
         }
-
-        private void SucceedsConstantValueMatch(Parser<ConstantExpression> parser, string expr, object value, TypeInfo expected)
-        {
-            AssertParser.SucceedsWith(parser, expr,
-                    v =>
-                        {
-                            Assert.Equals(v.Value, value);
-                            Assert.Equals(v.ExpressionType, expected);
-                        });
-        }
-
 
         [TestMethod]
         public void FhirPath_Expression_Equals()

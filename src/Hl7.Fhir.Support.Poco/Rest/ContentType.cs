@@ -124,21 +124,6 @@ namespace Hl7.Fhir.Rest
             return JSON_CONTENT_HEADERS.Contains(f) || XML_CONTENT_HEADERS.Contains(f);
         }
 
-
-        /// <summary>
-        /// Checks whether a given content type is valid as a content type for bundles
-        /// </summary>
-        /// <param name="contentType">The content type, as it appears on e.g. a Http Content-Type header</param>
-        /// <returns></returns>
-        [Obsolete("Since DSTU1, there is no difference in mediatype header for bundles anymore. Use IsValidResourceContentType() instead.")]
-        public static bool IsValidBundleContentType(string contentType)
-        {
-            var f = contentType.ToLowerInvariant();
-
-            return (JSON_CONTENT_HEADERS.Contains(f));
-        }
-
-
         /// <summary>
         /// Checks whether a given format parameter is a valid as a content type for resource data
         /// </summary>

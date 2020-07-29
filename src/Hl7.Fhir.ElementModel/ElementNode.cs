@@ -6,14 +6,13 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using Hl7.Fhir.Language;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using TS = Hl7.Fhir.Language.TypeSpecifier;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.ElementModel
 {
@@ -31,9 +30,58 @@ namespace Hl7.Fhir.ElementModel
         {
             return value switch
             {
-                Model.Primitives.Quantity q => PrimitiveElement.ForQuantity(q),
+                P.Quantity q => PrimitiveElement.ForQuantity(q),
                 _ => new PrimitiveElement(value, useFullTypeName:true)
             };
+        }
+
+        /// <summary>
+        /// Converts a .NET primitive to the expected object value to use in the
+        /// value property of ITypedElement.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="primitiveValue"></param>
+        /// <returns></returns>
+        public static bool TryConvertToElementValue(object value, out object primitiveValue)
+        {
+            primitiveValue = conv();
+            return primitiveValue != null;
+
+            object conv()
+            {
+                // NOTE: Keep Any.TryConvertToSystemValue, TypeSpecifier.TryGetNativeType and TypeSpecifier.ForNativeType in sync
+                switch (value)
+                {
+                    case P.Any a:
+                        return a;
+                    case bool b:
+                        return b;
+                    case string s:
+                        return s;
+                    case char c:
+                        return new string(c, 1);
+                    case int _:
+                    case short _:
+                    case ushort _:
+                    case uint _:
+                        return Convert.ToInt32(value);
+                    case long _:
+                    case ulong _:
+                        return Convert.ToInt64(value);
+                    case DateTimeOffset dto:
+                        return P.DateTime.FromDateTimeOffset(dto);
+                    case float _:
+                    case double _:
+                    case decimal _:
+                        return Convert.ToDecimal(value);
+                    case Enum en:
+                        return en.GetLiteral();
+                    case Uri u:
+                        return u.OriginalString;
+                    default:
+                        return null;
+                }
+            }
         }
 
         /// <summary>

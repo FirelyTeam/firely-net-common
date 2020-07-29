@@ -6,7 +6,7 @@ using Hl7.Fhir.Specification.Source;
 using Hl7.Fhir.Model;
 using System.Threading.Tasks;
 
-namespace Hl7.Fhir.Support.Utility.Tests
+namespace Hl7.Fhir.Utility.Tests
 {
     [TestClass]
     public class AsyncSourcesTests

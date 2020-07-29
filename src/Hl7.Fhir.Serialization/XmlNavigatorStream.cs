@@ -33,14 +33,6 @@ namespace Hl7.Fhir.Serialization
 
         /// <summary>Create a new <see cref="XmlNavigatorStream"/> instance for the specified serialized xml resource file.</summary>
         /// <param name="path">The filepath of a serialized xml resource.</param>
-        [Obsolete("Use XmlNavigatorStream.FromPath()")]
-        public XmlNavigatorStream(string path) : this(new FileStream(path, FileMode.Open, FileAccess.Read))
-        {
-            //
-        }
-
-        /// <summary>Create a new <see cref="XmlNavigatorStream"/> instance for the specified serialized xml resource file.</summary>
-        /// <param name="path">The filepath of a serialized xml resource.</param>
         /// <returns>A new <see cref="XmlNavigatorStream"/> instance.</returns>
         public static XmlNavigatorStream FromPath(string path)
             => new XmlNavigatorStream(new FileStream(path, FileMode.Open, FileAccess.Read));

@@ -2,7 +2,7 @@
 using System;
 using System.Linq;
 
-namespace Hl7.Fhir.Support.Utility.Tests
+namespace Hl7.Fhir.Utility.Tests
 {
     [TestClass()]
     public class AnnotationListTests

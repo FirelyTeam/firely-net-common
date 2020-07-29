@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * Copyright (c) 2015, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
@@ -7,7 +7,9 @@
  */
 
 using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Model.Primitives;
+using P=Hl7.Fhir.ElementModel.Types;
+using Hl7.Fhir.Utility;
+using Hl7.FhirPath.FhirPath.Functions;
 using Hl7.FhirPath.Functions;
 using System;
 using System.Collections.Generic;
@@ -24,16 +26,20 @@ namespace Hl7.FhirPath.Expressions
             // Functions that operate on the focus, without null propagation
             t.Add("empty", (IEnumerable<object> f) => !f.Any());
             t.Add("exists", (IEnumerable<object> f) => f.Any());
+
             t.Add("count", (IEnumerable<object> f) => f.Count());
             t.Add("trace", (IEnumerable<ITypedElement> f, string name, EvaluationContext ctx)
                     => f.Trace(name, ctx));
 
             t.Add("allTrue", (IEnumerable<ITypedElement> f) => f.All(e => e.Value as bool? == true));
+            t.Add("anyTrue", (IEnumerable<ITypedElement> f) => f.Any(e => e.Value as bool? == true));
+            t.Add("allFalse", (IEnumerable<ITypedElement> f) => f.All(e => e.Value as bool? == false));
+            t.Add("anyFalse", (IEnumerable<ITypedElement> f) => f.Any(e => e.Value as bool? == false));
             t.Add("combine", (IEnumerable<ITypedElement> l, IEnumerable<ITypedElement> r) => l.Concat(r));
-            t.Add("binary.|", (object f, IEnumerable<ITypedElement> l, IEnumerable<ITypedElement> r) => l.DistinctUnion(r));
+            t.Add("binary.|", (object _, IEnumerable<ITypedElement> l, IEnumerable<ITypedElement> r) => l.DistinctUnion(r));
             t.Add("union", (IEnumerable<ITypedElement> l, IEnumerable<ITypedElement> r) => l.DistinctUnion(r));
-            t.Add("binary.contains", (object f, IEnumerable<ITypedElement> a, ITypedElement b) => a.Contains(b));
-            t.Add("binary.in", (object f, ITypedElement a, IEnumerable<ITypedElement> b) => b.Contains(a));
+            t.Add("binary.contains", (object _, IEnumerable<ITypedElement> a, ITypedElement b) => a.Contains(b));
+            t.Add("binary.in", (object _, ITypedElement a, IEnumerable<ITypedElement> b) => b.Contains(a));
             t.Add("distinct", (IEnumerable<ITypedElement> f) => f.Distinct());
             t.Add("isDistinct", (IEnumerable<ITypedElement> f) => f.IsDistinct());
             t.Add("subsetOf", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => f.SubsetOf(a));
@@ -41,14 +47,14 @@ namespace Hl7.FhirPath.Expressions
             t.Add("intersect", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => f.Intersect(a));
             t.Add("exclude", (IEnumerable<ITypedElement> f, IEnumerable<ITypedElement> a) => f.Exclude(a));
 
-            t.Add("today", (object f) => PartialDate.Today());
-            t.Add("now", (object f) => PartialDateTime.Now());
-            t.Add("timeOfDay", (object f) => PartialTime.Now());
+            t.Add("today", (object _) => P.Date.Today());
+            t.Add("now", (object _) => P.DateTime.Now());
+            t.Add("timeOfDay", (object _) => P.Time.Now());
 
-            t.Add("binary.&", (object f, string a, string b) => (a ?? "") + (b ?? ""));
+            t.Add("binary.&", (object _, string a, string b) => (a ?? "") + (b ?? ""));
 
-            t.Add("iif", (IEnumerable<ITypedElement> f, bool? condition, IEnumerable<ITypedElement> result) => f.IIf(condition, result));
-            t.Add("iif", (IEnumerable<ITypedElement> f, bool? condition, IEnumerable<ITypedElement> result, IEnumerable<ITypedElement> otherwise) => f.IIf(condition, result, otherwise));
+            t.Add(new CallSignature("iif", typeof(IEnumerable<ITypedElement>), typeof(object), typeof(bool?), typeof(Invokee), typeof(Invokee)), runIif);
+            t.Add(new CallSignature("iif", typeof(IEnumerable<ITypedElement>), typeof(object), typeof(bool?), typeof(Invokee)), runIif);
 
             // Functions that use normal null propagation and work with the focus (buy may ignore it)
             t.Add("not", (IEnumerable<ITypedElement> f) => f.Not(), doNullProp: true);
@@ -59,67 +65,49 @@ namespace Hl7.FhirPath.Expressions
 
             t.Add("binary.=", (object f, IEnumerable<ITypedElement> a, IEnumerable<ITypedElement> b) => a.IsEqualTo(b), doNullProp: true);
             t.Add("binary.!=", (object f, IEnumerable<ITypedElement> a, IEnumerable<ITypedElement> b) => !a.IsEqualTo(b), doNullProp: true);
-            t.Add("binary.~", (object f, IEnumerable<ITypedElement> a, IEnumerable<ITypedElement> b) => a.IsEquivalentTo(b), doNullProp: true);
-            t.Add("binary.!~", (object f, IEnumerable<ITypedElement> a, IEnumerable<ITypedElement> b) => !a.IsEquivalentTo(b), doNullProp: true);
+            t.Add("binary.~", (object f, IEnumerable<ITypedElement> a, IEnumerable<ITypedElement> b) => a.IsEquivalentTo(b), doNullProp: false);
+            t.Add("binary.!~", (object f, IEnumerable<ITypedElement> a, IEnumerable<ITypedElement> b) => !a.IsEquivalentTo(b), doNullProp: false);
 
+            t.Add("unary.-", (object f, int a) => -a, doNullProp: true);
             t.Add("unary.-", (object f, long a) => -a, doNullProp: true);
             t.Add("unary.-", (object f, decimal a) => -a, doNullProp: true);
+            t.Add("unary.-", (object f, P.Quantity a) => new P.Quantity(-a.Value, a.Unit), doNullProp: true);
+            t.Add("unary.+", (object f, int a) => a, doNullProp: true);
             t.Add("unary.+", (object f, long a) => a, doNullProp: true);
             t.Add("unary.+", (object f, decimal a) => a, doNullProp: true);
+            t.Add("unary.+", (object f, P.Quantity a) => a, doNullProp: true);
 
+            t.Add("binary.*", (object f, int a, int b) => a * b, doNullProp: true);
             t.Add("binary.*", (object f, long a, long b) => a * b, doNullProp: true);
             t.Add("binary.*", (object f, decimal a, decimal b) => a * b, doNullProp: true);
-            t.Add("binary.*", (object f, Quantity a, Quantity b) => a * b, doNullProp: true);
+            t.Add("binary.*", (object f, P.Quantity a, P.Quantity b) => a * b, doNullProp: true);
 
-            t.Add("binary./", (object f, decimal a, decimal b) => a / b, doNullProp: true);
-            t.Add("binary./", (object f, Quantity a, Quantity b) => a / b, doNullProp: true);
+            t.Add("binary./", (object f, decimal a, decimal b) => b != 0 ? a / b : (decimal?)null, doNullProp: true);
+            t.Add("binary./", (object f, P.Quantity a, P.Quantity b) => a / b, doNullProp: true);
 
+            t.Add("binary.+", (object f, int a, int b) => a + b, doNullProp: true);
             t.Add("binary.+", (object f, long a, long b) => a + b, doNullProp: true);
             t.Add("binary.+", (object f, decimal a, decimal b) => a + b, doNullProp: true);
             t.Add("binary.+", (object f, string a, string b) => a + b, doNullProp: true);
-            t.Add("binary.+", (object f, Quantity a, Quantity b) => a + b, doNullProp: true);
+            t.Add("binary.+", (object f, P.Quantity a, P.Quantity b) => a + b, doNullProp: true);
 
+            t.Add("binary.-", (object f, int a, int b) => a - b, doNullProp: true);
             t.Add("binary.-", (object f, long a, long b) => a - b, doNullProp: true);
             t.Add("binary.-", (object f, decimal a, decimal b) => a - b, doNullProp: true);
-            t.Add("binary.-", (object f, Quantity a, Quantity b) => a - b, doNullProp: true);
+            t.Add("binary.-", (object f, P.Quantity a, P.Quantity b) => a - b, doNullProp: true);
 
-            t.Add("binary.div", (object f, long a, long b) => a / b, doNullProp: true);
-            t.Add("binary.div", (object f, decimal a, decimal b) => (long)Math.Truncate(a / b), doNullProp: true);
+            t.Add("binary.div", (object f, int a, int b) => b != 0 ? a / b : (int?)null, doNullProp: true);
+            t.Add("binary.div", (object f, long a, long b) => b != 0 ? a / b : (long?)null, doNullProp: true);
+            t.Add("binary.div", (object f, decimal a, decimal b) => b != 0 ? (long?)Math.Truncate(a / b) : null, doNullProp: true);
 
-            t.Add("binary.mod", (object f, long a, long b) => a % b, doNullProp: true);
-            t.Add("binary.mod", (object f, decimal a, decimal b) => a % b, doNullProp: true);
+            t.Add("binary.mod", (object f, int a, int b) => b != 0 ? a % b : (int?)null, doNullProp: true);
+            t.Add("binary.mod", (object f, long a, long b) => b != 0 ? a % b : (long?)null, doNullProp: true);
+            t.Add("binary.mod", (object f, decimal a, decimal b) => b != 0 ? a % b : (decimal?)null, doNullProp: true);
 
-            t.Add("binary.>", (object f, long a, long b) => a > b, doNullProp: true);
-            t.Add("binary.>", (object f, decimal a, decimal b) => a > b, doNullProp: true);
-            t.Add("binary.>", (object f, string a, string b) => string.CompareOrdinal(a, b) > 0, doNullProp: true);
-            t.Add("binary.>", (object f, PartialDateTime a, PartialDateTime b) => a > b, doNullProp: true);
-            t.Add("binary.>", (object f, PartialTime a, PartialTime b) => a > b, doNullProp: true);
-            t.Add("binary.>", (object f, PartialDate a, PartialDate b) => a > b, doNullProp: true);
-            t.Add("binary.>", (object f, Quantity a, Quantity b) => a > b, doNullProp: true);
-
-            t.Add("binary.<", (object f, long a, long b) => a < b, doNullProp: true);
-            t.Add("binary.<", (object f, decimal a, decimal b) => a < b, doNullProp: true);
-            t.Add("binary.<", (object f, string a, string b) => string.CompareOrdinal(a, b) < 0, doNullProp: true);
-            t.Add("binary.<", (object f, PartialDateTime a, PartialDateTime b) => a < b, doNullProp: true);
-            t.Add("binary.<", (object f, PartialTime a, PartialTime b) => a < b, doNullProp: true);
-            t.Add("binary.<", (object f, PartialDate a, PartialDate b) => a < b, doNullProp: true);
-            t.Add("binary.<", (object f, Quantity a, Quantity b) => a < b, doNullProp: true);
-
-            t.Add("binary.<=", (object f, long a, long b) => a <= b, doNullProp: true);
-            t.Add("binary.<=", (object f, decimal a, decimal b) => a <= b, doNullProp: true);
-            t.Add("binary.<=", (object f, string a, string b) => string.CompareOrdinal(a, b) <= 0, doNullProp: true);
-            t.Add("binary.<=", (object f, PartialDateTime a, PartialDateTime b) => a <= b, doNullProp: true);
-            t.Add("binary.<=", (object f, PartialTime a, PartialTime b) => a <= b, doNullProp: true);
-            t.Add("binary.<=", (object f, PartialDate a, PartialDate b) => a <= b, doNullProp: true);
-            t.Add("binary.<=", (object f, Quantity a, Quantity b) => a <= b, doNullProp: true);
-
-            t.Add("binary.>=", (object f, long a, long b) => a >= b, doNullProp: true);
-            t.Add("binary.>=", (object f, decimal a, decimal b) => a >= b, doNullProp: true);
-            t.Add("binary.>=", (object f, string a, string b) => string.CompareOrdinal(a, b) >= 0, doNullProp: true);
-            t.Add("binary.>=", (object f, PartialDateTime a, PartialDateTime b) => a >= b, doNullProp: true);
-            t.Add("binary.>=", (object f, PartialTime a, PartialTime b) => a >= b, doNullProp: true);
-            t.Add("binary.>=", (object f, PartialDate a, PartialDate b) => a >= b, doNullProp: true);
-            t.Add("binary.>=", (object f, Quantity a, Quantity b) => a >= b, doNullProp: true);
+            t.Add("binary.>", (object f, P.Any a, P.Any b) => EqualityOperators.Compare(a, b, ">"), doNullProp: true);
+            t.Add("binary.<", (object f, P.Any a, P.Any b) => EqualityOperators.Compare(a, b, "<"), doNullProp: true);
+            t.Add("binary.<=", (object f, P.Any a, P.Any b) => EqualityOperators.Compare(a, b, "<="), doNullProp: true);
+            t.Add("binary.>=", (object f, P.Any a, P.Any b) => EqualityOperators.Compare(a, b, ">="), doNullProp: true);
 
             t.Add("single", (IEnumerable<ITypedElement> f) => f.Single(), doNullProp: true);
             t.Add("skip", (IEnumerable<ITypedElement> f, long a) => f.Skip((int)a), doNullProp: true);
@@ -129,28 +117,32 @@ namespace Hl7.FhirPath.Expressions
             t.Add("take", (IEnumerable<ITypedElement> f, long a) => f.Take((int)a), doNullProp: true);
             t.Add("builtin.item", (IEnumerable<ITypedElement> f, long a) => f.Item((int)a), doNullProp: true);
 
-            t.Add("toBoolean", (ITypedElement f) => f.ToBoolean(), doNullProp: true);
-            t.Add("convertsToBoolean", (ITypedElement f) => f.ConvertsToBoolean(), doNullProp: true);
-            t.Add("toInteger", (ITypedElement f) => f.ToInteger(), doNullProp: true);
-            t.Add("convertsToInteger", (ITypedElement f) => f.ConvertsToInteger(), doNullProp: true);
-            t.Add("toDecimal", (ITypedElement f) => f.ToDecimal(), doNullProp: true);
-            t.Add("convertsToDecimal", (ITypedElement f) => f.ConvertsToDecimal(), doNullProp: true);
-            t.Add("toDateTime", (ITypedElement f) => f.ToDateTime(), doNullProp: true);
-            t.Add("convertsToDateTime", (ITypedElement f) => f.ConvertsToDateTime(), doNullProp: true);
-            t.Add("toTime", (ITypedElement f) => f.ToTime(), doNullProp: true);
-            t.Add("convertsToTime", (ITypedElement f) => f.ConvertsToTime(), doNullProp: true);
-            t.Add("toDate", (ITypedElement f) => f.ToDate(), doNullProp: true);
-            t.Add("convertsToDate", (ITypedElement f) => f.ConvertsToDate(), doNullProp: true);
-            t.Add("toString", (ITypedElement f) => f.ToStringRepresentation(), doNullProp: true);
-            t.Add("convertsToString", (ITypedElement f) => f.ConvertsToString(), doNullProp: true);
-            t.Add("toQuantity", (ITypedElement f) => f.ToQuantity(), doNullProp: true);
-            t.Add("convertsToQuantity", (ITypedElement f) => f.ConvertsToQuantity(), doNullProp: true);
+            t.Add("toBoolean", (P.Any f) => f.ToBoolean(), doNullProp: true);
+            t.Add("convertsToBoolean", (P.Any f) => f.ConvertsToBoolean(), doNullProp: true);
+            t.Add("toInteger", (P.Any f) => f.ToInteger(), doNullProp: true);
+            t.Add("convertsToInteger", (P.Any f) => f.ConvertsToInteger(), doNullProp: true);
+            t.Add("toLong", (P.Any f) => f.ToLong(), doNullProp: true);
+            t.Add("convertsToLong", (P.Any f) => f.ConvertsToLong(), doNullProp: true);
+            t.Add("toDecimal", (P.Any f) => f.ToDecimal(), doNullProp: true);
+            t.Add("convertsToDecimal", (P.Any f) => f.ConvertsToDecimal(), doNullProp: true);
+            t.Add("toQuantity", (P.Any f) => f.ToQuantity(), doNullProp: true);
+            t.Add("convertsToQuantity", (P.Any f) => f.ConvertsToQuantity(), doNullProp: true);
+            t.Add("toString", (P.Any f) => f.ToStringRepresentation(), doNullProp: true);
+            t.Add("convertsToString", (P.Any f) => f.ConvertsToString(), doNullProp: true);
+            t.Add("toDate", (P.Any f) => f.ToDate(), doNullProp: true);
+            t.Add("convertsToDate", (P.Any f) => f.ConvertsToDate(), doNullProp: true);
+            t.Add("toDateTime", (P.Any f) => f.ToDateTime(), doNullProp: true);
+            t.Add("convertsToDateTime", (P.Any f) => f.ConvertsToDateTime(), doNullProp: true);            
+            t.Add("toTime", (P.Any f) => f.ToTime(), doNullProp: true);
+            t.Add("convertsToTime", (P.Any f) => f.ConvertsToTime(), doNullProp: true);
 
             t.Add("upper", (string f) => f.ToUpper(), doNullProp: true);
             t.Add("lower", (string f) => f.ToLower(), doNullProp: true);
             t.Add("toChars", (string f) => f.ToChars(), doNullProp: true);
-            t.Add("substring", (string f, long a) => f.FpSubstring((int)a), doNullProp: true);
-            t.Add("substring", (string f, long a, long b) => f.FpSubstring((int)a, (int)b), doNullProp: true);
+            t.Add("substring", (string f, int a) => f.FpSubstring(a, null), doNullProp: true);
+            //special case: only focus should be Null propagated:
+            t.Add(new CallSignature("substring", typeof(string), typeof(string), typeof(int), typeof(int?)),
+                InvokeeFactory.WrapWithPropNullForFocus((string f, int a, int? b) => f.FpSubstring(a, b)));
             t.Add("startsWith", (string f, string fragment) => f.StartsWith(fragment), doNullProp: true);
             t.Add("endsWith", (string f, string fragment) => f.EndsWith(fragment), doNullProp: true);
             t.Add("matches", (string f, string regex) => Regex.IsMatch(f, regex), doNullProp: true);
@@ -160,6 +152,21 @@ namespace Hl7.FhirPath.Expressions
             t.Add("replace", (string f, string regex, string subst) => f.FpReplace(regex, subst), doNullProp: true);
             t.Add("length", (string f) => f.Length, doNullProp: true);
             t.Add("split", (string f, string seperator) => f.FpSplit(seperator), doNullProp: true);
+            t.Add("join", (IEnumerable<ITypedElement> f, string separator) => f.FpJoin(separator), doNullProp: true);
+
+            // Math functions
+            t.Add("abs", (decimal f) => Math.Abs(f), doNullProp: true);
+            t.Add("abs", (P.Quantity f) => new P.Quantity(Math.Abs(f.Value), f.Unit), doNullProp: true);
+            t.Add("ceiling", (decimal f) => Math.Ceiling(f), doNullProp: true);
+            t.Add("exp", (decimal f) => Math.Exp((double)f), doNullProp: true);
+            t.Add("floor", (decimal f) => Math.Floor(f), doNullProp: true);
+            t.Add("ln", (decimal f) => Math.Log((double)f), doNullProp: true);
+            t.Add("log", (decimal f, decimal @base) => Math.Log((double)f, (double)@base), doNullProp: true);
+            t.Add("power", (decimal f, decimal exponent) => f.Power(exponent), doNullProp: true);
+            t.Add("round", (decimal f, long precision) => Math.Round(f, (int)precision), doNullProp: true);
+            t.Add("round", (decimal f) => Math.Round(f), doNullProp: true);
+            t.Add("sqrt", (decimal f) => f.Sqrt(), doNullProp: true);
+            t.Add("truncate", (decimal f) => Math.Truncate((double)f), doNullProp: true);
 
             // The next two functions existed pre-normative, so we have kept them.
             t.Add("is", (ITypedElement f, string name) => f.Is(name), doNullProp: true);
@@ -185,6 +192,7 @@ namespace Hl7.FhirPath.Expressions
             t.Add(new CallSignature("select", typeof(IEnumerable<ITypedElement>), typeof(object), typeof(Invokee)), runSelect);
             t.Add(new CallSignature("all", typeof(bool), typeof(object), typeof(Invokee)), runAll);
             t.Add(new CallSignature("any", typeof(bool), typeof(object), typeof(Invokee)), runAny);
+            t.Add(new CallSignature("exists", typeof(bool), typeof(object), typeof(Invokee)), runAny);
             t.Add(new CallSignature("repeat", typeof(IEnumerable<ITypedElement>), typeof(object), typeof(Invokee)), runRepeat);
             t.Add(new CallSignature("trace", typeof(IEnumerable<ITypedElement>), typeof(string), typeof(object), typeof(Invokee)), Trace);
 
@@ -222,16 +230,37 @@ namespace Hl7.FhirPath.Expressions
             return focus;
         }
 
+        private static IEnumerable<ITypedElement> runIif(Closure ctx, IEnumerable<Invokee> arguments)
+        {
+            // iif(criterion: expression, true-result: collection [, otherwise-result: collection]) : collection
+            // note: short-circuit behavior is expected in this function
+            var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
+
+            var expression = arguments.Skip(1).First()(ctx, InvokeeFactory.EmptyArgs);
+            var trueResult = arguments.Skip(2).First();
+            var otherResult = arguments.Skip(3).FirstOrDefault();
+
+            if (expression.Count() > 1)
+                throw Error.InvalidOperation($"Result of {nameof(expression)} is not of type boolean");
+
+            return (expression.BooleanEval() ?? false)
+                ? trueResult(ctx, InvokeeFactory.EmptyArgs)
+                : otherResult == null ? ElementNode.EmptyList : otherResult(ctx, InvokeeFactory.EmptyArgs);
+        }
+
         private static IEnumerable<ITypedElement> runWhere(Closure ctx, IEnumerable<Invokee> arguments)
         {
             var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
             var lambda = arguments.Skip(1).First();
+            var index = 0;
 
             foreach (ITypedElement element in focus)
             {
                 var newFocus = ElementNode.CreateList(element);
                 var newContext = ctx.Nest(newFocus);
                 newContext.SetThis(newFocus);
+                newContext.SetIndex(ElementNode.CreateList(index));
+                index++;
 
                 if (lambda(newContext, InvokeeFactory.EmptyArgs).BooleanEval() == true)
                     yield return element;
@@ -242,12 +271,15 @@ namespace Hl7.FhirPath.Expressions
         {
             var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
             var lambda = arguments.Skip(1).First();
+            var index = 0;
 
             foreach (ITypedElement element in focus)
             {
                 var newFocus = ElementNode.CreateList(element);
                 var newContext = ctx.Nest(newFocus);
                 newContext.SetThis(newFocus);
+                newContext.SetIndex(ElementNode.CreateList(index));
+                index++;
 
                 var result = lambda(newContext, InvokeeFactory.EmptyArgs);
                 foreach (var resultElement in result)       // implement SelectMany()
@@ -265,6 +297,7 @@ namespace Hl7.FhirPath.Expressions
 
             while (newNodes.Any())
             {
+                var index = 0;
                 var current = newNodes;
                 newNodes = new List<ITypedElement>();
 
@@ -273,14 +306,14 @@ namespace Hl7.FhirPath.Expressions
                     var newFocus = ElementNode.CreateList(element);
                     var newContext = ctx.Nest(newFocus);
                     newContext.SetThis(newFocus);
-
+                    newContext.SetIndex(ElementNode.CreateList(index));
+                    index++;
 
                     newNodes.AddRange(lambda(newContext, InvokeeFactory.EmptyArgs));
                 }
 
                 fullResult.AddRange(newNodes);
             }
-
             return fullResult;
         }
 
@@ -288,12 +321,15 @@ namespace Hl7.FhirPath.Expressions
         {
             var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
             var lambda = arguments.Skip(1).First();
+            var index = 0;
 
             foreach (ITypedElement element in focus)
             {
                 var newFocus = ElementNode.CreateList(element);
                 var newContext = ctx.Nest(newFocus);
                 newContext.SetThis(newFocus);
+                newContext.SetIndex(ElementNode.CreateList(index));
+                index++;
 
                 var result = lambda(newContext, InvokeeFactory.EmptyArgs).BooleanEval();
                 if (result == null) return ElementNode.EmptyList;
@@ -307,13 +343,15 @@ namespace Hl7.FhirPath.Expressions
         {
             var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
             var lambda = arguments.Skip(1).First();
+            var index = 0;
 
             foreach (ITypedElement element in focus)
             {
                 var newFocus = ElementNode.CreateList(element);
                 var newContext = ctx.Nest(newFocus);
                 newContext.SetThis(newFocus);
-
+                newContext.SetIndex(ElementNode.CreateList(index));
+                index++;
 
                 var result = lambda(newContext, InvokeeFactory.EmptyArgs).BooleanEval();
 

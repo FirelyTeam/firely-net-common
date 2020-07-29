@@ -7,6 +7,7 @@
  */
 
 using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Utility;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -18,9 +19,9 @@ namespace Hl7.FhirPath.Functions
         {
             if (!focus.Any()) return null;
 
-            if (focus.Count() == 1 && focus.Single().Value is bool)
+            if (focus.Count() == 1 && focus.Single().Value is bool boolean)
             {
-                return (bool)focus.Single().Value;
+                return boolean;
             }
 
             // Otherwise, we have "some" content, which we'll consider "true"
@@ -30,7 +31,9 @@ namespace Hl7.FhirPath.Functions
 
 
         public static bool Not(this IEnumerable<ITypedElement> focus)
-            => !focus.BooleanEval().Value;
+            => focus.Count() > 1
+            ? throw Error.InvalidOperation($"Operator {nameof(Not)} is not applicable for collections with more than one item.")
+            : !focus.BooleanEval().Value;
 
         public static IEnumerable<ITypedElement> DistinctUnion(this IEnumerable<ITypedElement> a, IEnumerable<ITypedElement> b)
             => a.Union(b, new EqualityOperators.ValueProviderEqualityComparer());
@@ -86,6 +89,20 @@ namespace Hl7.FhirPath.Functions
             {
                 return element.Children(name);
             }
+        }
+
+        public static string FpJoin(this IEnumerable<ITypedElement> collection, string separator)
+        {
+            //if the collection is empty return the empty result
+            if (!collection.Any())
+                return string.Empty;
+
+            //only join collections with string values inside
+            if (!collection.All(c => c.Value is string))
+                throw Error.InvalidOperation("Join function can only be performed on string collections.");
+
+            var values = collection.Select(n => n.Value);
+            return string.Join(separator, values);
         }
     }
 }

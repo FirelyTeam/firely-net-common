@@ -28,7 +28,7 @@
 
 */
 
-using Hl7.Fhir.Support.Utility;
+using Hl7.Fhir.Utility;
 using System;
 
 namespace Hl7.Fhir.Introspection

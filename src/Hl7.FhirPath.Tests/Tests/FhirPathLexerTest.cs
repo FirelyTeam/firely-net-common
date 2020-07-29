@@ -6,10 +6,10 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using Hl7.Fhir.Model.Primitives;
 using Hl7.FhirPath.Parser;
 using Hl7.FhirPath.Sprache;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.FhirPath.Tests
 {
@@ -30,7 +30,7 @@ namespace Hl7.FhirPath.Tests
             AssertParser.SucceedsMatch(parser, "\"name\".\"name2\"", "name.name2");
         }
 
-        private void SucceedsPrefixString(Parser<string> parser, string expr)
+        private void succeedsPrefixString(Parser<string> parser, string expr)
         {
             AssertParser.SucceedsMatch(parser, expr, expr.Substring(1));
         }
@@ -41,10 +41,10 @@ namespace Hl7.FhirPath.Tests
         {
             var parser = Lexer.ExternalConstant.End();
 
-            SucceedsPrefixString(parser, "%c");
-            SucceedsPrefixString(parser, "%const");
-            SucceedsPrefixString(parser, "%a1");
-            SucceedsPrefixString(parser, "%a__1");
+            succeedsPrefixString(parser, "%c");
+            succeedsPrefixString(parser, "%const");
+            succeedsPrefixString(parser, "%a1");
+            succeedsPrefixString(parser, "%a__1");
             AssertParser.SucceedsMatch(parser, "%`forbidden-characters-1234`", "forbidden-characters-1234");
             AssertParser.SucceedsMatch(parser, "%\"forbidden-characters-1234\"", "forbidden-characters-1234"); // still support the old syntax
             AssertParser.SucceedsMatch(parser, "%'forbidden-characters-1234'", "forbidden-characters-1234"); // new normative %<STRING>
@@ -95,7 +95,7 @@ namespace Hl7.FhirPath.Tests
             reject("@20150103T12:34:34+02:30");
             reject("@-2015-01");
 
-            void accept(string s) => AssertParser.SucceedsMatch(parser, s, PartialDateTime.Parse(Lexer.CleanupDateTimeLiteral(s)));
+            void accept(string s) => AssertParser.SucceedsMatch(parser, s, P.DateTime.Parse(Lexer.CleanupDateTimeLiteral(s)));
             void reject(string s) => AssertParser.FailsMatch(parser, s);
         }
 
@@ -118,7 +118,7 @@ namespace Hl7.FhirPath.Tests
             reject("@12:34:34+02:30");
             reject("@T12:34:34+48:30");
 
-            void accept(string s) => AssertParser.SucceedsMatch(parser, s, PartialTime.Parse(s.Substring(2)));
+            void accept(string s) => AssertParser.SucceedsMatch(parser, s, P.Time.Parse(s.Substring(2)));
             void reject(string s) => AssertParser.FailsMatch(parser, s);
         }
 
@@ -137,7 +137,7 @@ namespace Hl7.FhirPath.Tests
             reject("@2018-04-05T10:00:00");
             reject("@2018-04-05T10:00:00Z");
 
-            void accept(string s) => AssertParser.SucceedsMatch(parser, s, PartialDate.Parse(s.Substring(1)));
+            void accept(string s) => AssertParser.SucceedsMatch(parser, s, P.Date.Parse(s.Substring(1)));
             void reject(string s) => AssertParser.FailsMatch(parser, s);
         }
 
@@ -184,12 +184,12 @@ namespace Hl7.FhirPath.Tests
         {
             var parser = Lexer.DelimitedIdentifier.End();
 
-            SucceedsDelimitedString(parser, "`2a`");
-            SucceedsDelimitedString(parser, "`_`");
-            SucceedsDelimitedString(parser, "`_Abcdef_ghijklmnopqrstuvwxyz_`");
-            SucceedsDelimitedString(parser, "`Hi \uface`");
-            SucceedsDelimitedString(parser, "`@#$%^&*().'`");
-            SucceedsDelimitedString(parser, "`3.1415`");
+            succeedsDelimitedString(parser, "`2a`");
+            succeedsDelimitedString(parser, "`_`");
+            succeedsDelimitedString(parser, "`_Abcdef_ghijklmnopqrstuvwxyz_`");
+            succeedsDelimitedString(parser, "`Hi \uface`");
+            succeedsDelimitedString(parser, "`@#$%^&*().'`");
+            succeedsDelimitedString(parser, "`3.1415`");
 
             AssertParser.SucceedsMatch(parser, "`A\uface%$#34`", "A\uface%$#34");
             AssertParser.SucceedsMatch(parser, "`A\"quote`", "A\"quote");
@@ -244,7 +244,7 @@ namespace Hl7.FhirPath.Tests
             AssertParser.FailsMatch(parser, @"\b");
         }
 
-        private void SucceedsDelimitedString(Parser<string> parser, string s)
+        private void succeedsDelimitedString(Parser<string> parser, string s)
         {
             AssertParser.SucceedsMatch(parser, s, s.Substring(1, s.Length - 2));
         }
@@ -254,10 +254,10 @@ namespace Hl7.FhirPath.Tests
         {
             var parser = Lexer.String.End();
 
-            SucceedsDelimitedString(parser, @"'single quotes'");
-            SucceedsDelimitedString(parser, @"'""single quotes with doubles""'");
+            succeedsDelimitedString(parser, @"'single quotes'");
+            succeedsDelimitedString(parser, @"'""single quotes with doubles""'");
             AssertParser.SucceedsMatch(parser, @"'single \' quotes'", @"single ' quotes");
-            SucceedsDelimitedString(parser, @"''");
+            succeedsDelimitedString(parser, @"''");
 
             AssertParser.SucceedsMatch(parser, @"'xxx \u0040 yyy \\\/\f\n\r\t zzz !@#$%^&*()_-=+[]{}|;:,.<>?`~'",
                             "xxx @ yyy \\/\f\n\r\t zzz " + @"!@#$%^&*()_-=+[]{}|;:,.<>?`~");

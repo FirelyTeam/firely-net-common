@@ -27,11 +27,11 @@ namespace Hl7.FhirPath.Expressions
             ReturnType = returnType;
         }
 
-        public bool Matches(string functionName, IEnumerable<Type> argumentTypes)
-        {
-            return functionName == Name && argumentTypes.Count() == ArgumentTypes.Count() &&
-                   argumentTypes.Zip(ArgumentTypes, (call, sig) => Typecasts.CanCastTo(call,sig)).All(r => r == true);
-        }
+        //public bool Matches(string functionName, IEnumerable<Type> argumentTypes)
+        //{
+        //    return functionName == Name && argumentTypes.Count() == ArgumentTypes.Count() &&
+        //           argumentTypes.Zip(ArgumentTypes, (call, sig) => Typecasts.CanCastTo(call,sig)).All(r => r == true);
+        //}
 
         public bool DynamicMatches(string functionName, IEnumerable<object> arguments)
         {

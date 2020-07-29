@@ -197,6 +197,14 @@ namespace Hl7.Fhir.Utility
     }
 #endif
 
+#if NETSTANDARD1_1
+    public static class NetStd11TypeExtensions
+    {
+        public static bool IsAssignableFrom(this Type a, Type b) =>
+            a.GetTypeInfo().IsAssignableFrom(b.GetTypeInfo());
+    }
+#endif
+
     public static class ReflectionHelper
     {
         public static bool IsAValueType(this Type t)

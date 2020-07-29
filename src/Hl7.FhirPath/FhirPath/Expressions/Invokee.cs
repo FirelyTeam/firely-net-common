@@ -7,11 +7,11 @@
  */
 
 using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Utility;
 using Hl7.FhirPath.Functions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Hl7.FhirPath.Expressions
 {
@@ -46,6 +46,12 @@ namespace Hl7.FhirPath.Expressions
             return context.GetThat();
         }
 
+        public static IEnumerable<ITypedElement> GetIndex(Closure context, IEnumerable<Invokee> args)
+        {
+
+            return context.GetIndex();
+        }
+
 
         public static Invokee Wrap<R>(Func<R> func)
         {
@@ -71,6 +77,18 @@ namespace Hl7.FhirPath.Expressions
                     A lastPar = (A)(object)ctx.EvaluationContext;
                     return Typecasts.CastTo<IEnumerable<ITypedElement>>(func(lastPar));
                 }
+            };
+        }
+
+        internal static Invokee WrapWithPropNullForFocus<A, B, C, R>(Func<A, B, C, R> func)
+        {
+            return (ctx, args) =>
+            {
+                // propagate only null for focus
+                var focus = args.First()(ctx, InvokeeFactory.EmptyArgs);
+                if (!focus.Any()) return ElementNode.EmptyList;
+
+                return Wrap(func, false)(ctx, args);
             };
         }
 

@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace Hl7.Fhir.Support.Utility
+namespace Hl7.Fhir.Utility
 {
     internal static class IntExtensions
     {

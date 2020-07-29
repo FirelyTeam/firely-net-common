@@ -6,13 +6,15 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+#nullable enable
+
 using Hl7.Fhir.Language;
-using Hl7.Fhir.Model.Primitives;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Specification;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.ElementModel
 {
@@ -21,23 +23,21 @@ namespace Hl7.Fhir.ElementModel
         // [20190827 EK] Hack, allow a Quantity as a "primitive" value in ITypedElement.Value for now, so
         // we can at least continue to integrate the changes from the dead branch into 2.0
         // We need to have Quantity implement ITypedElement itself.
-        internal static PrimitiveElement ForQuantity(Quantity value)
+        internal static PrimitiveElement ForQuantity(P.Quantity value)
         {
-            if (value == null) throw new ArgumentNullException(nameof(value));
+            if (value is null) throw new ArgumentNullException(nameof(value));
 
-            return new PrimitiveElement
-            {
-                Value = value,
-                InstanceType = TypeSpecifier.Quantity.FullName,
-                Name = "@QuantityAsPrimitiveValue@"
-            };
+            return new PrimitiveElement(value, TypeSpecifier.Quantity.FullName, "@QuantityAsPrimitiveValue@");
         }
 
-        private PrimitiveElement()
-        {            
+        private PrimitiveElement(object value, string instanceType, string name)
+        {
+            Value = value ?? throw new ArgumentNullException(nameof(value));
+            InstanceType = instanceType ?? throw new ArgumentNullException(nameof(instanceType));
+            Name = name ?? throw new ArgumentNullException(nameof(name));
         }
 
-        public PrimitiveElement(object value, string name = null, bool useFullTypeName = false)
+        public PrimitiveElement(object value, string? name = null, bool useFullTypeName = false)
         {
             if (value == null) throw new ArgumentNullException(nameof(value));
 
@@ -45,10 +45,16 @@ namespace Hl7.Fhir.ElementModel
             if(!TypeSpecifier.PrimitiveTypes.Contains(systemType))
                 throw new ArgumentException("The supplied value cannot be represented with a System primitive.", nameof(value));
            
-            Value = Any.ConvertToSystemValue(value);
+            if(!ElementNode.TryConvertToElementValue(value, out object? convertedValue))
+                throw new NotSupportedException($"There is no known System type corresponding to the .NET type {value.GetType().Name} of this instance (with value '{value}').");
+
+            Value = convertedValue!;
             InstanceType = useFullTypeName ? systemType.FullName : systemType.Name;
             Name = name ?? "@primitivevalue@";
         }
+
+
+
 
         public string Name { get; private set; }
 
@@ -72,11 +78,11 @@ namespace Hl7.Fhir.ElementModel
 
         bool IElementDefinitionSummary.IsResource => false;
 
-        string IElementDefinitionSummary.DefaultTypeName => null;
+        string? IElementDefinitionSummary.DefaultTypeName => null;
 
         ITypeSerializationInfo[] IElementDefinitionSummary.Type => new[] { this };
 
-        string IElementDefinitionSummary.NonDefaultNamespace => null;
+        string? IElementDefinitionSummary.NonDefaultNamespace => null;
 
         XmlRepresentation IElementDefinitionSummary.Representation => XmlRepresentation.XmlAttr;
 
@@ -94,7 +100,7 @@ namespace Hl7.Fhir.ElementModel
 
         public ITypedElement Clone() => new PrimitiveElement(Value);
 
-        public IEnumerable<ITypedElement> Children(string name = null) => Enumerable.Empty<ITypedElement>();
+        public IEnumerable<ITypedElement> Children(string? name = null) => Enumerable.Empty<ITypedElement>();
         IReadOnlyCollection<IElementDefinitionSummary> IStructureDefinitionSummary.GetElements() =>
 #if NET40
             new ReadOnlyList<IElementDefinitionSummary>();

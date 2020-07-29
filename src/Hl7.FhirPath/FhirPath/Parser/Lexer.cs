@@ -6,13 +6,15 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using Hl7.Fhir.Model.Primitives;
 using Hl7.FhirPath.Sprache;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
+using P = Hl7.Fhir.ElementModel.Types;
+
+#pragma warning disable IDE1006 // Naming Styles
 
 namespace Hl7.FhirPath.Parser
 {
@@ -63,7 +65,9 @@ namespace Hl7.FhirPath.Parser
         //   : '"' (ESC | .)+? '"'
         //   | '`' (ESC | .)+? '`'
         //   ;
+
         public static readonly Parser<string> DelimitedIdentifier =
+
             DelimitedContents('"')
             .XOr(DelimitedContents('`'));
 
@@ -95,8 +99,8 @@ namespace Hl7.FhirPath.Parser
                 )?",
                 RegexOptions.IgnorePatternWhitespace);
 
-        public static readonly Parser<PartialDate> Date =
-            Parse.Regex(DateRegEx).Select(s => PartialDate.Parse(s.Substring(1)));
+        public static readonly Parser<P.Date> Date =
+            Parse.Regex(DateRegEx).Select(s => P.Date.Parse(s.Substring(1)));
 
         // DATETIME
         //      : '@'  ....
@@ -120,15 +124,15 @@ namespace Hl7.FhirPath.Parser
                 ) (Z|((\+|-)[0-9][0-9]:[0-9][0-9]))?",
                 RegexOptions.IgnorePatternWhitespace);
 
-        public static readonly Parser<PartialDateTime> DateTime =
-            Parse.Regex(DateTimeRegEx).Select(s => PartialDateTime.Parse(CleanupDateTimeLiteral(s)));
+        public static readonly Parser<P.DateTime> DateTime =
+            Parse.Regex(DateTimeRegEx).Select(s => P.DateTime.Parse(CleanupDateTimeLiteral(s)));
 
         internal static string CleanupDateTimeLiteral(string repr)
         {
             var result = repr.Substring(1);  // remove @
 
             // not acceptable for our partialDateTime as 'T' without an actual time.
-            // dates without time but with a timezone are fine for our PartialDateTime, but should come immediately
+            // dates without time but with a timezone are fine for our DateTime, but should come immediately
             // after the date: when a 'T' is encountered, a time is required.
             // Here, the T literal is only there to distinguish date and dateTime, and so part of
             // the FP literal and syntax, not the parseable value (just like '@').
@@ -149,24 +153,24 @@ namespace Hl7.FhirPath.Parser
         // NB: No timezone (as specified in FHIR and FhirPath, CQL incorrectly states that it allows a timezone)
         public static readonly Regex TimeRegEx = new Regex("@T" + TIMEFORMAT, RegexOptions.IgnorePatternWhitespace);
 
-        public static readonly Parser<PartialTime> Time =
-            Parse.Regex(TimeRegEx).Select(s => PartialTime.Parse(s.Substring(2)));
+        public static readonly Parser<P.Time> Time =
+            Parse.Regex(TimeRegEx).Select(s => P.Time.Parse(s.Substring(2)));
 
         // NUMBER
         //   : [0-9]+('.' [0-9]+)?
         //   ;
-        public static readonly Parser<Int64> IntegerNumber =
-            Parse.Number.Select(s => Int64.Parse(s));
+        public static readonly Parser<Int32> IntegerNumber =
+            Parse.Number.Select(s => Int32.Parse(s));
 
         public static readonly Parser<decimal> DecimalNumber =
                    from num in Parse.Number
                    from dot in Parse.Char('.')
                    from fraction in Parse.Number
-                   select Fhir.Model.Primitives.Decimal.Parse(num + dot + fraction);
+                   select (decimal)P.Decimal.Parse(num + dot + fraction);
 
         // BOOL: 'true' | 'false';
         public static readonly Parser<bool> Bool =
-            Parse.String("true").XOr(Parse.String("false")).Text().Select(s => Fhir.Model.Primitives.Boolean.Parse(s));
+            Parse.String("true").XOr(Parse.String("false")).Text().Select(s => (bool)P.Boolean.Parse(s));
 
         //qualifiedIdentifier
         //   : identifier ('.' identifier)*
@@ -180,7 +184,7 @@ namespace Hl7.FhirPath.Parser
             select name;
 
         public static readonly Parser<string> Quantity =
-           Parse.Regex(Fhir.Model.Primitives.Quantity.QUANTITYREGEX);
+           Parse.Regex(P.Quantity.QUANTITYREGEX);
     }
 
 
@@ -191,18 +195,16 @@ namespace Hl7.FhirPath.Parser
             return c.Select(chr => new string(Unescape(chr.Single()), 1));
         }
 
-        public static char Unescape(char c)
-        {
+        public static char Unescape(char c) =>
             // return the escaped character after a '\'
-            switch (c)
+            c switch
             {
-                case 'f': return '\f';
-                case 'n': return '\n';
-                case 'r': return '\r';
-                case 't': return '\t';
-                default: return c;
-            }
-        }
+                'f' => '\f',
+                'n' => '\n',
+                'r' => '\r',
+                't' => '\t',
+                _ => c,
+            };
 
         public static Parser<string> Unescape(this Parser<string> c)
         {
@@ -216,3 +218,5 @@ namespace Hl7.FhirPath.Parser
 
     }
 }
+
+#pragma warning restore IDE1006 // Naming Styles
