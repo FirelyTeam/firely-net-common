@@ -277,7 +277,6 @@ namespace Hl7.Fhir.Model
         if (DisplayElement != null) yield return DisplayElement;
         if (UserSelectedElement != null) yield return UserSelectedElement;
       }
-
     }
 
     [IgnoreDataMember]
@@ -292,7 +291,6 @@ namespace Hl7.Fhir.Model
         if (DisplayElement != null) yield return new ElementValue("display", DisplayElement);
         if (UserSelectedElement != null) yield return new ElementValue("userSelected", UserSelectedElement);
       }
-
     }
 
   }

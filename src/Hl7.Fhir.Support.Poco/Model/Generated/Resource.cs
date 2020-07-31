@@ -219,7 +219,6 @@ namespace Hl7.Fhir.Model
         if (ImplicitRulesElement != null) yield return ImplicitRulesElement;
         if (LanguageElement != null) yield return LanguageElement;
       }
-
     }
 
     [IgnoreDataMember]
@@ -233,7 +232,6 @@ namespace Hl7.Fhir.Model
         if (ImplicitRulesElement != null) yield return new ElementValue("implicitRules", ImplicitRulesElement);
         if (LanguageElement != null) yield return new ElementValue("language", LanguageElement);
       }
-
     }
 
   }

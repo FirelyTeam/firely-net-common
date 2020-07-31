@@ -280,7 +280,6 @@ namespace Hl7.Fhir.Model
         foreach (var elem in Security) { if (elem != null) yield return elem; }
         foreach (var elem in Tag) { if (elem != null) yield return elem; }
       }
-
     }
 
     [IgnoreDataMember]
@@ -296,7 +295,6 @@ namespace Hl7.Fhir.Model
         foreach (var elem in Security) { if (elem != null) yield return new ElementValue("security", elem); }
         foreach (var elem in Tag) { if (elem != null) yield return new ElementValue("tag", elem); }
       }
-
     }
 
   }

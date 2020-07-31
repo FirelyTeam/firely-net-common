@@ -97,7 +97,6 @@ namespace Hl7.Fhir.Model
       {
         foreach (var item in base.Children) yield return item;
       }
-
     }
 
     [IgnoreDataMember]
@@ -107,7 +106,6 @@ namespace Hl7.Fhir.Model
       {
         foreach (var item in base.NamedChildren) yield return item;
       }
-
     }
 
   }
