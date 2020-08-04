@@ -24,7 +24,7 @@ namespace Hl7.Fhir.Rest
 
             System.Diagnostics.Debug.WriteLine("{0}: {1}", entry.Method, entry.Url);           
 
-            if (entry.RequestBodyContent != null && !(entry.Method == HTTPVerb.POST || entry.Method == HTTPVerb.PUT))
+            if (entry.RequestBodyContent != null && !(entry.Method == HTTPVerb.POST || entry.Method == HTTPVerb.PUT || entry.Method == HTTPVerb.PATCH))
                 throw Error.InvalidOperation("Cannot have a body on an Http " + entry.Method.ToString());
 
             // Create an absolute uri when the interaction.Url is relative.

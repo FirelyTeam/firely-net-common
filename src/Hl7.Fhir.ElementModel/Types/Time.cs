@@ -15,7 +15,7 @@ using static Hl7.Fhir.Utility.Result;
 
 namespace Hl7.Fhir.ElementModel.Types
 {
-    public class Time : Any, IComparable, ICqlEquatable, ICqlOrderable
+    public class Time : Any, IComparable, ICqlEquatable, ICqlOrderable, ICqlConvertible
     {
         private Time(string original, DateTimeOffset parsedValue, DateTimePrecision precision, bool hasOffset)
         {
@@ -193,6 +193,7 @@ namespace Hl7.Fhir.ElementModel.Types
         public override string ToString() => _original;
 
         public static explicit operator Time(DateTimeOffset dto) => FromDateTimeOffset(dto);
+        public static explicit operator String(Time dt) => ((ICqlConvertible)dt).TryConvertToString().ValueOrThrow();
 
         bool? ICqlEquatable.IsEqualTo(Any other) => other is { } && TryEquals(other) is Ok<bool> ok ? ok.Value : (bool?)null;
 
@@ -200,6 +201,21 @@ namespace Hl7.Fhir.ElementModel.Types
         bool ICqlEquatable.IsEquivalentTo(Any other) => other is { } pd && TryEquals(pd).ValueOrDefault(false);
 
         int? ICqlOrderable.CompareTo(Any other) => other is { } && TryCompareTo(other) is Ok<int> ok ? ok.Value : (int?)null;
+
+        Result<String> ICqlConvertible.TryConvertToString() => Ok(new String(ToString()));
+
+        Result<Time> ICqlConvertible.TryConvertToTime() => Ok(this);
+
+        Result<Code> ICqlConvertible.TryConvertToCode() => CannotCastTo<Code>(this);
+        Result<Boolean> ICqlConvertible.TryConvertToBoolean() => CannotCastTo<Boolean>(this);
+        Result<Date> ICqlConvertible.TryConvertToDate() => CannotCastTo<Date>(this);
+        Result<DateTime> ICqlConvertible.TryConvertToDateTime() => CannotCastTo<DateTime>(this);
+        Result<Decimal> ICqlConvertible.TryConvertToDecimal() => CannotCastTo<Decimal>(this);
+        Result<Integer> ICqlConvertible.TryConvertToInteger() => CannotCastTo<Integer>(this);
+        Result<Long> ICqlConvertible.TryConvertToLong() => CannotCastTo<Long>(this);
+        Result<Quantity> ICqlConvertible.TryConvertToQuantity() => CannotCastTo<Quantity>(this);
+        Result<Ratio> ICqlConvertible.TryConvertToRatio() => CannotCastTo<Ratio>(this);
+        Result<Concept> ICqlConvertible.TryConvertToConcept() => CannotCastTo<Concept>(this);
     }
 }
 

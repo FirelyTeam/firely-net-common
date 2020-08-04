@@ -11,10 +11,11 @@
 using Hl7.Fhir.Utility;
 using System;
 using System.Text.RegularExpressions;
+using static Hl7.Fhir.Utility.Result;
 
 namespace Hl7.Fhir.ElementModel.Types
 {
-    public class Date : Any, IComparable, ICqlEquatable, ICqlOrderable
+    public class Date : Any, IComparable, ICqlEquatable, ICqlOrderable, ICqlConvertible
     {
         private Date(string original, DateTimeOffset parsedValue, DateTimePrecision precision, bool hasOffset)
         {
@@ -163,9 +164,9 @@ namespace Hl7.Fhir.ElementModel.Types
         /// Compares two dates according to CQL ordering rules.
         /// </summary> 
         /// <param name="other"></param>
-        /// <returns>An <see cref="Ok{T}"/> with an integer value representing the reseult of the comparison: 0 if this and other are equal, 
+        /// <returns>An <see cref="Result.Ok{T}"/> with an integer value representing the reseult of the comparison: 0 if this and other are equal, 
         /// -1 if this is smaller than other and +1 if this is bigger than other, or the other is null. If the values are incomparable
-        /// this function returns a <see cref="Fail{T}"/> with the reason why the comparison between the two values was impossible.
+        /// this function returns a <see cref="Result.Fail{T}"/> with the reason why the comparison between the two values was impossible.
         /// </returns>
         /// <remarks>The comparison is performed by considering each precision in order, beginning with years. 
         /// If the values are the same, comparison proceeds to the next precision; 
@@ -194,6 +195,7 @@ namespace Hl7.Fhir.ElementModel.Types
 
         public static implicit operator DateTime(Date pd) => pd.ToDateTime();
         public static explicit operator Date(DateTimeOffset dto) => FromDateTimeOffset(dto);
+        public static explicit operator String(Date d) => ((ICqlConvertible)d).TryConvertToString().ValueOrThrow();
 
         bool? ICqlEquatable.IsEqualTo(Any other) => other is { } && TryEquals(other) is Ok<bool> ok ? ok.Value : (bool?)null;
 
@@ -201,5 +203,21 @@ namespace Hl7.Fhir.ElementModel.Types
         bool ICqlEquatable.IsEquivalentTo(Any other) => other is { } pd && TryEquals(pd).ValueOrDefault(false);
 
         int? ICqlOrderable.CompareTo(Any other) => other is { } && TryCompareTo(other) is Ok<int> ok ? ok.Value : (int?)null;
+
+        Result<DateTime> ICqlConvertible.TryConvertToDateTime() => Ok(ToDateTime());
+
+        Result<Date> ICqlConvertible.TryConvertToDate() => Ok(this);
+
+        Result<String> ICqlConvertible.TryConvertToString() => Ok(new String(ToString()));
+
+        Result<Boolean> ICqlConvertible.TryConvertToBoolean() => CannotCastTo<Boolean>(this);
+        Result<Decimal> ICqlConvertible.TryConvertToDecimal() => CannotCastTo<Decimal>(this);
+        Result<Integer> ICqlConvertible.TryConvertToInteger() => CannotCastTo<Integer>(this);
+        Result<Long> ICqlConvertible.TryConvertToLong() => CannotCastTo<Long>(this);
+        Result<Quantity> ICqlConvertible.TryConvertToQuantity() => CannotCastTo<Quantity>(this);
+        Result<Ratio> ICqlConvertible.TryConvertToRatio() => CannotCastTo<Ratio>(this);
+        Result<Time> ICqlConvertible.TryConvertToTime() => CannotCastTo<Time>(this);
+        Result<Code> ICqlConvertible.TryConvertToCode() => CannotCastTo<Code>(this);
+        Result<Concept> ICqlConvertible.TryConvertToConcept() => CannotCastTo<Concept>(this);
     }
 }
