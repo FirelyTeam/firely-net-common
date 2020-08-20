@@ -43,7 +43,7 @@ namespace Hl7.Fhir.Rest
 
             request.Headers.Add("User-Agent", ".NET FhirClient for FHIR " + entry.Agent);
 
-            if (!settings.UseFormatParameter)
+            if (!settings.UseFormatParameter && !string.IsNullOrEmpty(entry.Headers.Accept)) 
                 request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse(entry.Headers.Accept));
 
             if (entry.Headers.IfMatch != null) request.Headers.Add("If-Match", entry.Headers.IfMatch);
