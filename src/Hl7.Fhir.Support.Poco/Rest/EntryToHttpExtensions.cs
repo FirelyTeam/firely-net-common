@@ -44,7 +44,7 @@ namespace Hl7.Fhir.Rest
             request.Headers.Add("User-Agent", ".NET FhirClient for FHIR " + entry.Agent);
 
             if (!settings.UseFormatParameter)
-                request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse(ContentType.BuildContentType(settings.PreferredFormat, forBundle: false)));
+                request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse(entry.Headers.Accept));
 
             if (entry.Headers.IfMatch != null) request.Headers.Add("If-Match", entry.Headers.IfMatch);
             if (entry.Headers.IfNoneMatch != null) request.Headers.Add("If-None-Match", entry.Headers.IfNoneMatch);
@@ -78,7 +78,7 @@ namespace Hl7.Fhir.Rest
 
 
             if (entry.RequestBodyContent != null)
-                setContentAndContentType(request, entry.RequestBodyContent, entry.ContentType, settings.PreferredFormat);
+                setContentAndContentType(request, entry.RequestBodyContent, entry.ContentType);
 
             return request;
         }
@@ -108,17 +108,10 @@ namespace Hl7.Fhir.Rest
             throw new HttpRequestException($"Valid HttpVerb could not be found for verb type: [{verb}]");
         }
 
-        private static void setContentAndContentType(HttpRequestMessage request, byte[] data, string contentType, ResourceFormat format)
+        private static void setContentAndContentType(HttpRequestMessage request, byte[] data, string contentType)
         {
-            if (data == null) throw Error.ArgumentNull(nameof(data));         
-            
-            request.Content = new ByteArrayContent(data);
-
-            if(contentType == null)
-            {
-                contentType = ContentType.BuildContentType(format, forBundle: false);
-            }
-               
+            if (data == null) throw Error.ArgumentNull(nameof(data));        
+            request.Content = new ByteArrayContent(data);             
             request.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
         }
 
@@ -127,7 +120,7 @@ namespace Hl7.Fhir.Rest
         {
             System.Diagnostics.Debug.WriteLine("{0}: {1}", (object)entry.Method, (object)entry.Url);
 
-            if (entry.RequestBodyContent != null && !(entry.Method == HTTPVerb.POST || entry.Method == HTTPVerb.PUT))
+            if (entry.RequestBodyContent != null && !(entry.Method == HTTPVerb.POST || entry.Method == HTTPVerb.PUT || entry.Method == HTTPVerb.PATCH))
                 throw Error.InvalidOperation((string)("Cannot have a body on an Http " + entry.Method.ToString()));
 
             // Create an absolute uri when the interaction.Url is relative.
@@ -149,9 +142,9 @@ namespace Hl7.Fhir.Rest
             setAgent(request, ".NET FhirClient for FHIR " + entry.Agent);
 
             if (!settings.UseFormatParameter)
-                request.Accept = ContentType.BuildContentType(settings.PreferredFormat, forBundle: false);
+                request.Accept = entry.Headers.Accept;
 
-            request.ContentType = entry.ContentType ?? ContentType.BuildContentType(settings.PreferredFormat, forBundle: false);
+            request.ContentType = entry.ContentType;
 
             if (entry.Headers.IfMatch != null) request.Headers["If-Match"] = entry.Headers.IfMatch;
             if (entry.Headers.IfNoneMatch != null) request.Headers["If-None-Match"] = entry.Headers.IfNoneMatch;

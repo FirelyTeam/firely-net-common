@@ -28,6 +28,7 @@ namespace Hl7.Fhir.Rest
         public string IfNoneMatch { get; set; }
         public string IfNoneExist { get; set; }
         public DateTimeOffset? IfModifiedSince { get; set; }
+        public string Accept { get; set; }
     }
 
     //Needs to be in sync with Bundle.HTTPVerbs
