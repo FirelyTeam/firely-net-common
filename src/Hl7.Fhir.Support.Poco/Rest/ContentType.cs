@@ -99,10 +99,15 @@ namespace Hl7.Fhir.Rest
             else
                 throw new ArgumentException("Cannot determine content type for data format " + format);
 
-            var version = SemVersion.Parse(fhirVersion);
-            var majorMinor = version.Major + "." + version.Minor;
+            contentType += "; charset=" + Encoding.UTF8.WebName;
 
-            return contentType + "; charset=" + Encoding.UTF8.WebName + "; " + VERSION_CONTENT_HEADER + majorMinor;
+            if (SemVersion.TryParse(fhirVersion, out var version))
+            {
+                var majorMinor = version.Major + "." + version.Minor;
+                contentType += "; " + VERSION_CONTENT_HEADER + majorMinor;
+            }
+            return contentType;
+
         }
 
 
