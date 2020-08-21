@@ -12,7 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Net;
 using System.Text.RegularExpressions;
-
+using Hl7.Fhir.Utility;
 
 namespace Hl7.Fhir.Rest
 {
@@ -45,6 +45,7 @@ namespace Hl7.Fhir.Rest
 
         public const string FORMAT_PARAM_XML = "xml";
         public const string FORMAT_PARAM_JSON = "json";
+        public const string VERSION_CONTENT_HEADER = "fhirVersion=";
 
 
         /// <summary>
@@ -87,7 +88,7 @@ namespace Hl7.Fhir.Rest
         }
 
 
-        public static string BuildContentType(ResourceFormat format, bool forBundle)
+        public static string BuildContentType(ResourceFormat format, string fhirVersion)
         {
             string contentType;
 
@@ -98,7 +99,15 @@ namespace Hl7.Fhir.Rest
             else
                 throw new ArgumentException("Cannot determine content type for data format " + format);
 
-            return contentType + ";charset=" + Encoding.UTF8.WebName;
+            contentType += "; charset=" + Encoding.UTF8.WebName;
+
+            if (SemVersion.TryParse(fhirVersion, out var version))
+            {
+                var majorMinor = version.Major + "." + version.Minor;
+                contentType += "; " + VERSION_CONTENT_HEADER + majorMinor;
+            }
+            return contentType;
+
         }
 
 
