@@ -1,4 +1,4 @@
-﻿/*
+/*
   Copyright (c) 2011-2012, HL7, Inc
   All rights reserved.
   
@@ -35,10 +35,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
-using Hl7.Fhir.Model;
-using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Utility;
-using System.IO;
 
 namespace Hl7.Fhir.Rest
 {
@@ -54,6 +51,17 @@ namespace Hl7.Fhir.Rest
             Sort = new List<(string, SortOrder)>();
             Parameters = new List<Tuple<string, string>>();
             Elements = new List<string>();
+        }
+
+        public SearchParams(string name, string value)
+        {
+            Include = new List<(string, IncludeModifier)>();
+            RevInclude = new List<(string, IncludeModifier)>();
+            Sort = new List<(string, SortOrder)>();
+            Parameters = new List<Tuple<string, string>>();
+            Elements = new List<string>();
+
+            Add(name, value);
         }
 
         /// <summary>
