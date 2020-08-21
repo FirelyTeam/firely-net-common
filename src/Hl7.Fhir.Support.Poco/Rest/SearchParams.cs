@@ -53,14 +53,8 @@ namespace Hl7.Fhir.Rest
             Elements = new List<string>();
         }
 
-        public SearchParams(string name, string value)
+        public SearchParams(string name, string value) :this
         {
-            Include = new List<(string, IncludeModifier)>();
-            RevInclude = new List<(string, IncludeModifier)>();
-            Sort = new List<(string, SortOrder)>();
-            Parameters = new List<Tuple<string, string>>();
-            Elements = new List<string>();
-
             Add(name, value);
         }
 
