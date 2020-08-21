@@ -53,10 +53,7 @@ namespace Hl7.Fhir.Rest
             Elements = new List<string>();
         }
 
-        public SearchParams(string name, string value) :this
-        {
-            Add(name, value);
-        }
+        public SearchParams(string name, string value) : this() => Add(name, value);
 
         /// <summary>
         /// List of all the search parameter that have some special meaning.
