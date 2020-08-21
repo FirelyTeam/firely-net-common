@@ -1,4 +1,4 @@
-﻿/*
+/*
   Copyright (c) 2011-2012, HL7, Inc
   All rights reserved.
   
@@ -35,10 +35,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
-using Hl7.Fhir.Model;
-using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Utility;
-using System.IO;
 
 namespace Hl7.Fhir.Rest
 {
@@ -55,6 +52,8 @@ namespace Hl7.Fhir.Rest
             Parameters = new List<Tuple<string, string>>();
             Elements = new List<string>();
         }
+
+        public SearchParams(string name, string value) : this() => Add(name, value);
 
         /// <summary>
         /// List of all the search parameter that have some special meaning.
