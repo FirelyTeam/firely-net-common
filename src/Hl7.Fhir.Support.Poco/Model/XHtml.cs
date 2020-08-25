@@ -28,50 +28,13 @@
 
 */
 
-using System;
 using System.Linq;
-using System.Runtime.Serialization;
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 
 namespace Hl7.Fhir.Model
 {
-
-    /// <summary>
-    /// Primitive Type xhtml
-    /// </summary>
-    /// <remarks>
-    /// Note that this type is not actually used in the POCO model - it is just here to provide
-    /// reflectable metadata for the xhtml type, and as a home for XHTML validation.
-    /// </remarks>
-#if !NETSTANDARD1_1
-    [Serializable]
-#endif
-    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    [FhirType("xhtml")]
-    [DataContract]
-    public class XHtml : PrimitiveType, IStringValue
+    public partial class XHtml
     {
-        public override string TypeName { get { return "xhtml"; } }
-
-        public XHtml(string value)
-        {
-            Value = value;
-        }
-
-        public XHtml() : this(null) { }
-
-        /// <summary>
-        /// Primitive value of the element
-        /// </summary>
-        [FhirElement("value", IsPrimitiveValue = true, XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 30)]
-        public string Value
-        {
-            get { return (string)ObjectValue; }
-            set { ObjectValue = value; OnPropertyChanged("Value"); }
-        }
-
 #if NETSTANDARD1_1
         public static bool IsValidValue(string _) => true;
 #else
@@ -79,5 +42,4 @@ namespace Hl7.Fhir.Model
 #endif
 
     }
-
 }

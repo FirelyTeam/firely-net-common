@@ -28,66 +28,26 @@
 
 */
 
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Validation;
-using System.Runtime.Serialization;
-using Hl7.Fhir.Specification;
 using System;
-using System.Text.RegularExpressions;
 using Hl7.Fhir.Serialization;
 
 namespace Hl7.Fhir.Model
 {
-    /// <summary>
-    /// Primitive Type date
-    /// </summary>
-#if !NETSTANDARD1_1
-    [Serializable]
-#endif
-    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    [FhirType("date")]
-    [DataContract]
-    public partial class Date : PrimitiveType, IStringValue
+    public partial class Date
     {
-        public override string TypeName { get { return "date"; } }
-        
-        // Must conform to the pattern "([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1]))?)?"
-        public const string PATTERN = @"([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1]))?)?";
-
-		public Date(string value)
-		{
-			Value = value;
-		}
-
-		public Date(): this(null) {}
-
         public Date(int year, int month, int day)
-            : this(String.Format(Model.FhirDateTime.FMT_YEARMONTHDAY, year, month, day))
+            : this(string.Format(FhirDateTime.FMT_YEARMONTHDAY, year, month, day))
         {
         }
 
         public Date(int year, int month)
-            : this(String.Format(Model.FhirDateTime.FMT_YEARMONTH, year, month))
+            : this(string.Format(FhirDateTime.FMT_YEARMONTH, year, month))
         {
         }
 
-        public Date(int year) : this(String.Format(Model.FhirDateTime.FMT_YEAR, year))
+        public Date(int year) : this(string.Format(FhirDateTime.FMT_YEAR, year))
         {
         }
-
-        /// <summary>
-        /// Primitive value of the element
-        /// </summary>
-        [FhirElement("value", IsPrimitiveValue = true, XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 30)]
-        [DatePattern]
-        [DataMember]
-        public string Value
-        {
-            get { return (string)ObjectValue; }
-            set { ObjectValue = value; OnPropertyChanged("Value"); }
-        }
-
-        public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
 
         /// <summary>
         /// Gets the current date in the local timezone
@@ -108,5 +68,4 @@ namespace Hl7.Fhir.Model
         public DateTimeOffset? ToDateTimeOffset() =>
             Value == null ? null : (DateTimeOffset?)PrimitiveTypeConverter.ConvertTo<DateTimeOffset>(Value);
     }
-
 }

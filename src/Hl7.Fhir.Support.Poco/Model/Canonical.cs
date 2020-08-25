@@ -27,37 +27,12 @@
  
 */
 
-using Hl7.Fhir.Introspection;
-using System.Runtime.Serialization;
-using Hl7.Fhir.Specification;
 using System;
-using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model
 {
-    /// <summary>
-    /// Primitive Type canonical
-    /// </summary>
-#if !NETSTANDARD1_1
-    [Serializable]
-#endif
-    [System.Diagnostics.DebuggerDisplay(@"\{{Value}}")] // http://blogs.msdn.com/b/jaredpar/archive/2011/03/18/debuggerdisplay-attribute-best-practices.aspx
-    [FhirType("canonical")]
-    [DataContract]
-    public class Canonical : PrimitiveType, IStringValue
+    public partial class Canonical
     {
-        public override string TypeName { get { return "canonical"; } }
-        
-        // Must conform to the pattern "\S*"
-        public const string PATTERN = @"\S*";
-
-		public Canonical(string value)
-		{
-			Value = value;
-		}
-
-		public Canonical(): this((string)null) {}
-
         public Canonical(Uri uri) : this(uri?.OriginalString) { }
 
         public static implicit operator Canonical(string value)
@@ -68,19 +43,5 @@ namespace Hl7.Fhir.Model
         {
             return value?.Value;
         }
-
-        /// <summary>
-        /// Primitive value of the element
-        /// </summary>
-        [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
-        [DataMember]
-        public string Value
-        {
-            get { return (string)ObjectValue; }
-            set { ObjectValue = value; OnPropertyChanged("Value"); }
-        }
-
-        public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
     }
-
 }
