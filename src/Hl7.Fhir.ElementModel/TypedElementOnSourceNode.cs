@@ -6,12 +6,12 @@
  * available at https://github.com/FirelyTeam/fhir-net-api/blob/master/LICENSE
  */
 
-using P = Hl7.Fhir.ElementModel.Types;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.ElementModel
 {
@@ -129,6 +129,8 @@ namespace Hl7.Fhir.ElementModel
                 case "unsignedInt":
                 case "positiveInt":
                     return typeof(P.Integer);
+                case "integer64":
+                    return typeof(P.Long);
                 case "time":
                     return typeof(P.Time);
                 case "date":
