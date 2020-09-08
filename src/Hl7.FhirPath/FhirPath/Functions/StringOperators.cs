@@ -98,7 +98,7 @@ namespace Hl7.FhirPath.Functions
             // There's a function in System.Web (UrlTokenEncode), but don't need another dependency for this stuff.                
             var b64 = EncodeBase64(data);
             return b64
-                .Trim('=')  // trim padding
+              //  .Trim('=')  // trim padding - in current draft this is not used
                 .Replace('+', '-').Replace('/', '_'); // use alternative 62nd/63rd
         }
 

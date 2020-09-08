@@ -41,11 +41,13 @@ namespace HL7.FhirPath.Tests.Functions
         {
             StringOperators.EncodeUrlBase64(null).Should().BeNull();
             StringOperators.EncodeUrlBase64("").Should().Be("");
-            StringOperators.EncodeUrlBase64("Ewout").Should().Be("RXdvdXQ");
+            //            StringOperators.EncodeUrlBase64("Ewout").Should().Be("RXdvdXQ");
+            StringOperators.EncodeUrlBase64("Ewout").Should().Be("RXdvdXQ=");
             StringOperators.EncodeUrlBase64("Ewout>").Should().Be("RXdvdXQ-");
             StringOperators.EncodeUrlBase64("编码方式").Should().Be("57yW56CB5pa55byP");
 
-            StringOperators.FpEncode("Ewout", "urlbase64").Should().Be("RXdvdXQ");
+            StringOperators.FpEncode("Ewout", "urlbase64").Should().Be("RXdvdXQ=");
+            //StringOperators.FpEncode("Ewout", "urlbase64").Should().Be("RXdvdXQ");
         }
 
         [TestMethod]
