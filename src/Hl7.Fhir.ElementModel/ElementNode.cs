@@ -178,7 +178,7 @@ namespace Hl7.Fhir.ElementModel
             if (child.Name == null) throw Error.Argument($"The ElementNode given should have its Name property set or the '{nameof(name)}' parameter should be given.");
 
             // Remove this child from the current parent (if any), then reassign to me
-            if (child.Parent != null) Parent.Remove(child);
+            if (child.Parent != null) child.Parent.Remove(child);
             child.Parent = this;
             
             // If we add a child, we better overwrite it's definition with what
