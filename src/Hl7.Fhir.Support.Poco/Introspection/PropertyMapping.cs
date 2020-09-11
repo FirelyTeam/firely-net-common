@@ -6,13 +6,11 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
-using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -51,7 +49,17 @@ namespace Hl7.Fhir.Introspection
         /// <remarks>If the element is a collection or is nullable, this reflects the
         /// collection item or the type that is made nullable respectively.
         /// </remarks>
-        public Type ElementType { get; private set; }
+        public Type ImplementingType { get; private set; }
+
+        /// <summary>
+        /// The native type of the element.
+        /// </summary>
+        [Obsolete("This element had a different name in R3 and R4. Please use ImplementingType from now on.")]
+        public Type ElementType 
+        {
+            get => ImplementingType;
+            set => ImplementingType = value;
+        }
 
         public int Order { get; private set; }
 
@@ -109,20 +117,20 @@ namespace Hl7.Fhir.Introspection
             result.IsCollection = ReflectionHelper.IsTypedCollection(prop.PropertyType) && !prop.PropertyType.IsArray;
 
             // Get to the actual (native) type representing this element
-            result.ElementType = prop.PropertyType;
-            if (result.IsCollection) result.ElementType = ReflectionHelper.GetCollectionItemType(prop.PropertyType);
-            if (ReflectionHelper.IsNullableType(result.ElementType)) result.ElementType = ReflectionHelper.GetNullableArgument(result.ElementType);
-            result.IsPrimitive = isAllowedNativeTypeForDataTypeValue(result.ElementType);
+            result.ImplementingType = prop.PropertyType;
+            if (result.IsCollection) result.ImplementingType = ReflectionHelper.GetCollectionItemType(prop.PropertyType);
+            if (ReflectionHelper.IsNullableType(result.ImplementingType)) result.ImplementingType = ReflectionHelper.GetNullableArgument(result.ImplementingType);
+            result.IsPrimitive = isAllowedNativeTypeForDataTypeValue(result.ImplementingType);
 
-            // Determine which FHIR type represents this ElementType
-            // This is normally just the ElementType itself, but can be overridden
+            // Determine the .NET type that represents the FHIR type for this element.
+            // This is normally just the ImplementingType itself, but can be overridden
             // with the [DeclaredType] attribute.
             var declaredType = getAttribute<DeclaredTypeAttribute>(prop, version);
-            var fhirType = declaredType?.Type ?? result.ElementType;
+            var fhirType = declaredType?.Type ?? result.ImplementingType;
 
             // The [AllowedElements] attribute can specify a set of allowed types
             // for this element. Take this list as the declared list of FHIR types.
-            // If not present assume this is the declared FHIR type above
+            // If not present assume this is the implementing FHIR type above
             var allowedTypes = getAttribute<AllowedTypesAttribute>(prop, version);
 
             result.IsOpen = allowedTypes?.IsOpen == true;

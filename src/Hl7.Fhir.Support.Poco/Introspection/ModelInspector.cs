@@ -51,7 +51,7 @@ namespace Hl7.Fhir.Introspection
         {
             lock (importLockObject)
             {
-                var mapping = FindClassMappingByType(type);
+                var mapping = FindClassMapping(type);
                 if (mapping != null) return mapping;
 
                 if (!ClassMapping.TryCreate(type, out mapping, _fhirVersion))
@@ -77,10 +77,10 @@ namespace Hl7.Fhir.Introspection
             _classMappingsByName[key] = mapping;
         }
 
-        public ClassMapping FindClassMappingByName(string name) =>
+        public ClassMapping FindClassMapping(string name) =>
             _classMappingsByName.TryGetValue(name.ToUpperInvariant(), out var entry) ? entry : null;
 
-        public ClassMapping FindClassMappingByType(Type type) =>
+        public ClassMapping FindClassMapping(Type type) =>
             _classMappingsByType.TryGetValue(type, out var entry) ? entry : null;
     }
 }

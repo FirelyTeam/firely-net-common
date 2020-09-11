@@ -25,15 +25,15 @@ namespace Hl7.Fhir.Tests.Introspection
             inspector.ImportType(typeof(Way));
             inspector.ImportType(typeof(Way2));
 
-            var way = inspector.FindClassMappingByName("wAy");
+            var way = inspector.FindClassMapping("wAy");
             Assert.IsNotNull(way);
             Assert.AreEqual(way.NativeType, typeof(Way));
 
-            var way2 = inspector.FindClassMappingByName("Way2");
+            var way2 = inspector.FindClassMapping("Way2");
             Assert.IsNotNull(way2);
             Assert.AreEqual(way2.NativeType, typeof(Way2));
 
-            var noway = inspector.FindClassMappingByName("nonexistent");
+            var noway = inspector.FindClassMapping("nonexistent");
             Assert.IsNull(noway);
         }
 
@@ -47,16 +47,16 @@ namespace Hl7.Fhir.Tests.Introspection
             inspector.Import(typeof(Resource).GetTypeInfo().Assembly);
 
             // Check for presence of some basic ingredients
-            Assert.IsNotNull(inspector.FindClassMappingByName("Meta"));
-            Assert.IsNotNull(inspector.FindClassMappingByType(typeof(Code)));
-            Assert.IsNotNull(inspector.FindClassMappingByName("boolean"));
+            Assert.IsNotNull(inspector.FindClassMapping("Meta"));
+            Assert.IsNotNull(inspector.FindClassMapping(typeof(Code)));
+            Assert.IsNotNull(inspector.FindClassMapping("boolean"));
 
             // Should also have found the abstract classes
-            Assert.IsNotNull(inspector.FindClassMappingByName("Element"));
-            Assert.IsNotNull(inspector.FindClassMappingByType(typeof(Resource)));
+            Assert.IsNotNull(inspector.FindClassMapping("Element"));
+            Assert.IsNotNull(inspector.FindClassMapping(typeof(Resource)));
            
             // The open generic Code<> should not be there
-            var codeOfT = inspector.FindClassMappingByType(typeof(Code<>));
+            var codeOfT = inspector.FindClassMapping(typeof(Code<>));
             Assert.IsNull(codeOfT);
         }
 
