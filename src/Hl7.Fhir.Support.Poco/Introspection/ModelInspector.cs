@@ -6,6 +6,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
@@ -13,23 +14,16 @@ using System.Reflection;
 
 namespace Hl7.Fhir.Introspection
 {
+
     public class ModelInspector
     {
-        public const string R3_VERSION = "3.0.0";
-        public const string R4_VERSION = "4.0.0";
-        public const string R5_VERSION = "5.0.0";
 
-        public ModelInspector(string fhirVersion)
+        public ModelInspector(FhirRelease fhirVersion)
         {
-            if (string.IsNullOrEmpty(fhirVersion))
-            {
-                throw new ArgumentException("message", nameof(fhirVersion));
-            }
-
             _fhirVersion = fhirVersion;
         }
 
-        private readonly string _fhirVersion;
+        private readonly FhirRelease _fhirVersion;
         // Index for easy lookup of datatypes, key is upper typenanme
         private readonly Dictionary<string, ClassMapping> _classMappingsByName = new Dictionary<string,ClassMapping>();
 

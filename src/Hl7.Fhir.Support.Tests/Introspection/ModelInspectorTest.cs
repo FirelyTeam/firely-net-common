@@ -20,7 +20,7 @@ namespace Hl7.Fhir.Tests.Introspection
         [TestMethod]
         public void TestResourceNameResolving()
         {
-            var inspector = new ModelInspector(ModelInspector.R3_VERSION);
+            var inspector = new ModelInspector(Specification.FhirRelease.STU3);
 
             inspector.ImportType(typeof(Way));
             inspector.ImportType(typeof(Way2));
@@ -41,7 +41,7 @@ namespace Hl7.Fhir.Tests.Introspection
         [TestMethod]
         public void TestAssemblyInspection()
         {
-            var inspector = new ModelInspector(ModelInspector.R3_VERSION);
+            var inspector = new ModelInspector(Specification.FhirRelease.STU3);
 
             // Inspect the HL7.Fhir.Model common assembly
             inspector.Import(typeof(Resource).GetTypeInfo().Assembly);

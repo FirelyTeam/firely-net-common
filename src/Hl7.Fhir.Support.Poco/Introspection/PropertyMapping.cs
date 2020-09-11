@@ -14,7 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-
+using System.Threading;
 
 namespace Hl7.Fhir.Introspection
 {
@@ -62,16 +62,19 @@ namespace Hl7.Fhir.Introspection
         /// </summary>
         public bool IsOpen { get; private set; }
 
+        private PropertyInfo _propInfo;
 
-        public static bool TryCreate(PropertyInfo prop, out PropertyMapping mapping, string version = null) => TryCreate(prop, out mapping, out var _, version);
+
+        public static bool TryCreate(PropertyInfo prop, out PropertyMapping mapping, FhirRelease version = (FhirRelease)int.MaxValue) 
+                => TryCreate(prop, out mapping, out var _, version);
 
         [Obsolete("Use TryCreate() instead.")]
-        public static PropertyMapping Create(PropertyInfo prop, string version = null) => TryCreate(prop, out var mapping, version) ? mapping : null;
+        public static PropertyMapping Create(PropertyInfo prop, FhirRelease version = (FhirRelease)int.MaxValue) => TryCreate(prop, out var mapping, version) ? mapping : null;
 
-        internal static bool TryCreate(PropertyInfo prop, out PropertyMapping result, out IList<Type> referredTypes, string version)
+        internal static bool TryCreate(PropertyInfo prop, out PropertyMapping result, out IList<Type> referredTypes, FhirRelease version)
         {
             if (prop == null) throw Error.ArgumentNull(nameof(prop));
-
+            
             referredTypes = new List<Type>();
             result = new PropertyMapping();
 
@@ -89,6 +92,7 @@ namespace Hl7.Fhir.Introspection
             result.Choice = elementAttr.Choice;
             result.SerializationHint = elementAttr.XmlSerialization;
             result.Order = elementAttr.Order;
+            result._propInfo = prop;
 
             var cardinalityAttr = getAttribute<Validation.CardinalityAttribute>(prop, version);
             result.IsMandatoryElement = cardinalityAttr != null ? cardinalityAttr.Min > 0 : false;
@@ -122,17 +126,10 @@ namespace Hl7.Fhir.Introspection
             // (e.g. the value from the Xml 'value' attribute or the Json primitive member value)
             if (result.IsPrimitive) result.RepresentsValueElement = isPrimitiveValueElement(elementAttr,prop);
 
-#if USE_CODE_GEN
-            result._getter = prop.GetValueGetter();
-            result._setter = prop.GetValueSetter();
-#else
-            result._getter = instance => prop.GetValue(instance, null);
-            result._setter = (instance,value) => prop.SetValue(instance, value, null);
-#endif       
             return true;
         }
 
-        private static T getAttribute<T>(PropertyInfo p, string version) where T : Attribute
+        private static T getAttribute<T>(PropertyInfo p, FhirRelease version) where T : Attribute
         {
             return ReflectionHelper.GetAttributes<T>(p).LastOrDefault(isRelevant);
 
@@ -153,22 +150,22 @@ namespace Hl7.Fhir.Introspection
             string buildQualifiedPropName(PropertyInfo p) => p.DeclaringType.Name + "." + p.Name;
         }
 
-        public bool MatchesSuffixedName(string suffixedName)
-        {
-            if (suffixedName == null) throw Error.ArgumentNull(nameof(suffixedName));
+        //public bool MatchesSuffixedName(string suffixedName)
+        //{
+        //    if (suffixedName == null) throw Error.ArgumentNull(nameof(suffixedName));
 
-            return Choice == ChoiceType.DatatypeChoice && suffixedName.ToUpperInvariant().StartsWith(Name.ToUpperInvariant());
-        }
+        //    return Choice == ChoiceType.DatatypeChoice && suffixedName.ToUpperInvariant().StartsWith(Name.ToUpperInvariant());
+        //}
 
-        public string GetChoiceSuffixFromName(string suffixedName)
-        {
-            if (suffixedName == null) throw Error.ArgumentNull(nameof(suffixedName));
+        //public string GetChoiceSuffixFromName(string suffixedName)
+        //{
+        //    if (suffixedName == null) throw Error.ArgumentNull(nameof(suffixedName));
 
-            if (MatchesSuffixedName(suffixedName))
-                return suffixedName.Remove(0, Name.Length);
-            else
-                throw Error.Argument(nameof(suffixedName), "The given suffixed name {0} does not match this property's name {1}".FormatWith(suffixedName, Name));
-        }
+        //    if (MatchesSuffixedName(suffixedName))
+        //        return suffixedName.Remove(0, Name.Length);
+        //    else
+        //        throw Error.Argument(nameof(suffixedName), "The given suffixed name {0} does not match this property's name {1}".FormatWith(suffixedName, Name));
+        //}
      
         private static bool isAllowedNativeTypeForDataTypeValue(Type type)
         {
@@ -180,11 +177,39 @@ namespace Hl7.Fhir.Introspection
                     PrimitiveTypeConverter.CanConvert(type);
         }
 
+        internal Func<object, object> Getter
+        {
+            get
+            {
+#if USE_CODE_GEN
+                LazyInitializer.EnsureInitialized(ref _getter, () => _propInfo.GetValueGetter());
+#else
+                LazyInitializer.EnsureInitialized(ref _getter, () => instance => _propInfo.GetValue(instance, null));
+#endif
+                return _getter;
+            }
+        }
+
         private Func<object, object> _getter;
+
+        internal Action<object,object> Setter
+        {
+            get
+            {
+#if USE_CODE_GEN
+                LazyInitializer.EnsureInitialized(ref _setter, () => _propInfo.GetValueSetter());
+#else
+                LazyInitializer.EnsureInitialized(ref _setter, () => (instance, value) => _propInfo.SetValue(instance, value, null));
+#endif
+                return _setter;
+            }
+        }
+
         private Action<object, object> _setter;
 
-        public object GetValue(object instance) => _getter(instance);
 
-        public void SetValue(object instance, object value) => _setter(instance, value);
+        public object GetValue(object instance) => Getter(instance);
+
+        public void SetValue(object instance, object value) => Setter(instance, value);
     }
 }
