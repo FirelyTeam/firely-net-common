@@ -10,6 +10,7 @@ using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
+using Hl7.Fhir.Validation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,6 +22,11 @@ namespace Hl7.Fhir.Introspection
     [System.Diagnostics.DebuggerDisplay(@"\{Name={Name} ElementType={ElementType.Name}}")]
     public class PropertyMapping
     {
+        private PropertyMapping()
+        {
+            // no public constructors
+        }
+
         public string Name { get; internal set; }
 
         public bool IsCollection { get; internal set; }
@@ -31,13 +37,20 @@ namespace Hl7.Fhir.Introspection
         public bool IsPrimitive { get; private set; }
 
         /// <summary>
-        /// The element is a primitive (<seealso cref="IsPrimitive"/>) and represents the `value` attribute.
+        /// The element is a primitive (<seealso cref="IsPrimitive"/>) and 
+        /// represents the primitive `value` attribute/property in the FHIR serialization.
         /// </summary>
         public bool RepresentsValueElement { get; private set; }
 
         public bool InSummary { get; private set; }
         public bool IsMandatoryElement { get; private set; }
 
+        /// <summary>
+        /// The native type of the element.
+        /// </summary>
+        /// <remarks>If the element is a collection or is nullable, this reflects the
+        /// collection item or the type that is made nullable respectively.
+        /// </remarks>
         public Type ElementType { get; private set; }
 
         public int Order { get; private set; }
@@ -50,7 +63,7 @@ namespace Hl7.Fhir.Introspection
         public ChoiceType Choice { get; private set; }
         
         /// <summary>
-        /// The list of possible FHIR types for this element, represented as C# types
+        /// This element is a polymorphic Resource, any resource is allowed here.
         /// </summary>
         /// <remark>May differ from the actual type of the property if this is a choice
         /// (in which case the property is of type Element) or if a TypeRedirect attribute was applied. Useful
@@ -64,18 +77,14 @@ namespace Hl7.Fhir.Introspection
 
         private PropertyInfo _propInfo;
 
-
-        public static bool TryCreate(PropertyInfo prop, out PropertyMapping mapping, FhirRelease version = (FhirRelease)int.MaxValue) 
-                => TryCreate(prop, out mapping, out var _, version);
-
         [Obsolete("Use TryCreate() instead.")]
-        public static PropertyMapping Create(PropertyInfo prop, FhirRelease version = (FhirRelease)int.MaxValue) => TryCreate(prop, out var mapping, version) ? mapping : null;
+        public static PropertyMapping Create(PropertyInfo prop, FhirRelease version = (FhirRelease)int.MaxValue)
+            => TryCreate(prop, out var mapping, version) ? mapping : null;
 
-        internal static bool TryCreate(PropertyInfo prop, out PropertyMapping result, out IList<Type> referredTypes, FhirRelease version)
+        public static bool TryCreate(PropertyInfo prop, out PropertyMapping result, FhirRelease version)
         {
             if (prop == null) throw Error.ArgumentNull(nameof(prop));
-            
-            referredTypes = new List<Type>();
+
             result = new PropertyMapping();
 
             // If there is no [FhirElement] on the property, skip it
@@ -96,7 +105,7 @@ namespace Hl7.Fhir.Introspection
 
             var cardinalityAttr = getAttribute<Validation.CardinalityAttribute>(prop, version);
             result.IsMandatoryElement = cardinalityAttr != null ? cardinalityAttr.Min > 0 : false;
-         
+
             result.IsCollection = ReflectionHelper.IsTypedCollection(prop.PropertyType) && !prop.PropertyType.IsArray;
 
             // Get to the actual (native) type representing this element
@@ -104,27 +113,29 @@ namespace Hl7.Fhir.Introspection
             if (result.IsCollection) result.ElementType = ReflectionHelper.GetCollectionItemType(prop.PropertyType);
             if (ReflectionHelper.IsNullableType(result.ElementType)) result.ElementType = ReflectionHelper.GetNullableArgument(result.ElementType);
             result.IsPrimitive = isAllowedNativeTypeForDataTypeValue(result.ElementType);
-            referredTypes.Add(result.ElementType);
 
-            // Derive the C# type that represents which types are allowed for this element.
-            // This may differ from the ImplementingType in several ways:
-            // * for a choice, ImplementingType = Any, but FhirType[] contains the possible choices
-            // * some elements (e.g. Extension.url) have ImplementingType = string, but FhirType = FhirUri, etc.
-            var allowedTypes = getAttribute<Validation.AllowedTypesAttribute>(prop, version);
-            if (allowedTypes != null)
-            {
-                result.IsOpen = allowedTypes.IsOpen;
-                result.FhirType = allowedTypes.IsOpen ? (new[] { typeof(Element) }) : allowedTypes.Types;
-            }
-            else if (elementAttr.TypeRedirect != null)
-                result.FhirType = new[] { elementAttr.TypeRedirect };
-            else
-                result.FhirType = new[] { result.ElementType };
+            // Determine which FHIR type represents this ElementType
+            // This is normally just the ElementType itself, but can be overridden
+            // with the [DeclaredType] attribute.
+            var declaredType = getAttribute<DeclaredTypeAttribute>(prop, version);
+            var fhirType = declaredType?.Type ?? result.ElementType;
+
+            // The [AllowedElements] attribute can specify a set of allowed types
+            // for this element. Take this list as the declared list of FHIR types.
+            // If not present assume this is the declared FHIR type above
+            var allowedTypes = getAttribute<AllowedTypesAttribute>(prop, version);
+
+            result.IsOpen = allowedTypes?.IsOpen == true;
+            result.FhirType = allowedTypes?.Types?.Any() == true ?
+                allowedTypes.Types : new[] { fhirType };
+
+            if (result.FhirType == null || !result.FhirType.Any())
+                throw new InvalidOperationException();
 
             // Check wether this property represents a native .NET type
             // marked to receive the class' primitive value in the fhir serialization
             // (e.g. the value from the Xml 'value' attribute or the Json primitive member value)
-            if (result.IsPrimitive) result.RepresentsValueElement = isPrimitiveValueElement(elementAttr,prop);
+            if (result.IsPrimitive) result.RepresentsValueElement = isPrimitiveValueElement(elementAttr, prop);
 
             return true;
         }
@@ -141,7 +152,7 @@ namespace Hl7.Fhir.Introspection
         {
             var isValueElement = valueElementAttr != null && valueElementAttr.IsPrimitiveValue;
 
-            if(isValueElement && !isAllowedNativeTypeForDataTypeValue(prop.PropertyType))
+            if (isValueElement && !isAllowedNativeTypeForDataTypeValue(prop.PropertyType))
                 throw Error.Argument(nameof(prop), "Property {0} is marked for use as a primitive element value, but its .NET type ({1}) " +
                     "is not supported by the serializer.".FormatWith(buildQualifiedPropName(prop), prop.PropertyType.Name));
 
@@ -166,7 +177,7 @@ namespace Hl7.Fhir.Introspection
         //    else
         //        throw Error.Argument(nameof(suffixedName), "The given suffixed name {0} does not match this property's name {1}".FormatWith(suffixedName, Name));
         //}
-     
+
         private static bool isAllowedNativeTypeForDataTypeValue(Type type)
         {
             // Special case, allow Nullable<enum>
@@ -192,7 +203,7 @@ namespace Hl7.Fhir.Introspection
 
         private Func<object, object> _getter;
 
-        internal Action<object,object> Setter
+        internal Action<object, object> Setter
         {
             get
             {
