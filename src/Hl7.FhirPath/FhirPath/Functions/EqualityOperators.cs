@@ -6,26 +6,35 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+#nullable enable
+
 using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Model.Primitives;
 using Hl7.FhirPath;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
+using Hl7.FhirPath.Expressions;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.FhirPath.Functions
 {
     internal static class EqualityOperators
     {
-        public static bool IsEqualTo(this IEnumerable<ITypedElement> left, IEnumerable<ITypedElement> right, bool compareNames = false)
+        public static bool? IsEqualTo(this IEnumerable<ITypedElement> left, IEnumerable<ITypedElement> right, bool compareNames = false)
         {
+            // If one or both of the arguments is an empty collection, a comparison operator will return an empty collection.
+            // (though we might handle this more generally with the null-propagating functionality of the compiler
+            // framework already.
+            if (left is null || right is null) return null;
+
             var r = right.GetEnumerator();
 
             foreach (var l in left)
             {
-                if (!r.MoveNext()) return false;        // number of children not the same            
-                if (!l.IsEqualTo(r.Current, compareNames)) return false;
+                if (!r.MoveNext()) return false;        // number of children not the same
+                var comparisonResult = l.IsEqualTo(r.Current, compareNames);
+                if (comparisonResult == false) return false;
+                if (comparisonResult == null) return null;
             }
 
             if (r.MoveNext())
@@ -34,40 +43,40 @@ namespace Hl7.FhirPath.Functions
                 return true;
         }
 
-        public static bool IsEqualTo(this ITypedElement left, ITypedElement right, bool compareNames = false)
+        // Note that the Equals as defined by FhirPath/CQL only returns empty when one or both of the arguments
+        // are empty. Otherwise, it will return either false or true. Uncomparable values (i.e. datetimes
+        // with incompatible precisions) are mapped to false, as are arguments of different types.
+        public static bool? IsEqualTo(this ITypedElement left, ITypedElement right, bool compareNames = false)
         {
+            // If one or both of the arguments is an empty collection, a comparison operator will return an empty collection.
+            // (though we might handle this more generally with the null-propagating functionality of the compiler
+            // framework already.
+            if (left is null || right is null) return null;
+
+            // TODO: Merge with ElementNodeComparator.IsEqualTo
+
             if (compareNames && (left.Name != right.Name)) return false;
 
-            var l = CastIntToLong(left.Value);
-            var r = CastIntToLong(right.Value);
+            var l = left.Value;
+            var r = right.Value;
+
+            // TODO: this is actually a cast with knowledge of FHIR->System mappings, we don't want that here anymore
+            // Convert quantities
+            if (left.InstanceType == "Quantity" && l == null)
+                l = Typecasts.ParseQuantity(left);
+            if (right.InstanceType == "Quantity" && r == null)
+                r = Typecasts.ParseQuantity(right);
 
             // Compare primitives (or extended primitives)
-            if (l != null && r != null)
+            if (l != null && r != null && P.Any.TryConvert(l, out var lAny) && P.Any.TryConvert(r, out var rAny))
             {
-                if (l.GetType() == typeof(string) && r.GetType() == typeof(string))
-                    return (string)l == (string)r;
-                else if (l.GetType() == typeof(bool) && r.GetType() == typeof(bool))
-                    return (bool)l == (bool)r;
-                else if (l.GetType() == typeof(long) && r.GetType() == typeof(long))
-                    return (long)l == (long)r;
-                else if (l.GetType() == typeof(decimal) && r.GetType() == typeof(decimal))
-                    return (decimal)l == (decimal)r;
-                else if (l.GetType() == typeof(long) && r.GetType() == typeof(decimal))
-                    return (decimal)(long)l == (decimal)r;
-                else if (l.GetType() == typeof(decimal) && r.GetType() == typeof(long))
-                    return (decimal)l == (decimal)(long)r;
-                else if (l.GetType() == typeof(PartialTime) && r.GetType() == typeof(PartialTime))
-                    return (PartialTime)l == (PartialTime)r;
-                else if (l.GetType() == typeof(PartialDateTime) && r.GetType() == typeof(PartialDateTime))
-                    return (PartialDateTime)l == (PartialDateTime)r;
-                else
-                    return false;
+                return IsEqualTo(lAny, rAny);
             }
             else if (l == null && r == null)
             {
                 // Compare complex types (extensions on primitives are not compared, but handled (=ignored) above
-                var childrenL = left.Children();
-                var childrenR = right.Children();
+                var childrenL = left!.Children();
+                var childrenR = right!.Children();
 
                 return childrenL.IsEqualTo(childrenR, compareNames: true);    // NOTE: Assumes null will never be returned when any() children exist
             }
@@ -76,15 +85,45 @@ namespace Hl7.FhirPath.Functions
                 // Else, we're comparing a complex (without a value) to a primitive which (probably) should return false
                 return false;
             }
+        }
 
-            object CastIntToLong(object val)
-            {
-                // [MV 20200128] Because FhirPath works with longs, integers will be cast to longs
-                return val?.GetType() == typeof(int) ? Convert.ToInt64(val) : val;
-            }
+        public static bool? IsEqualTo(P.Any? left, P.Any? right)
+        {
+            // If one or both of the arguments is an empty collection, a comparison operator will return an empty collection.
+            // (though we might handle this more generally with the null-propagating functionality of the compiler
+            // framework already.
+            if (left == null || right == null) return null;
+
+            // Try to convert both operands to a common type if they differ.
+            // When that fails, the CompareTo function on each type will itself
+            // report an error if they cannot handle that.
+            // TODO: in the end the engine/compiler will handle this and report an overload resolution fail
+            tryCoerce(ref left, ref right);
+
+            return left is P.ICqlEquatable cqle ? cqle.IsEqualTo(right) : null;
         }
 
 
+        private static bool tryCoerce(ref P.Any left, ref P.Any right)
+        {
+            left = upcastOne(left, right);
+            right = upcastOne(right, left);
+
+            return left.GetType() == right.GetType();
+
+            static P.Any upcastOne(P.Any value, P.Any other) =>
+                value switch
+                {
+                    P.Integer _ when other is P.Long => (P.Long)(P.Integer)value,
+                    P.Integer _ when other is P.Decimal => (P.Decimal)(P.Integer)value,
+                    P.Integer _ when other is P.Quantity => (P.Quantity)(P.Integer)value,
+                    P.Long _ when other is P.Decimal => (P.Decimal)(P.Long)value,
+                    P.Long _ when other is P.Quantity => (P.Quantity)(P.Long)value,
+                    P.Decimal _ when other is P.Quantity => (P.Quantity)(P.Decimal)value,
+                    P.Date _ when other is P.DateTime => (P.DateTime)(P.Date)value,
+                    _ => value
+                };
+        }
 
         public static bool IsEquivalentTo(this IEnumerable<ITypedElement> left, IEnumerable<ITypedElement> right, bool compareNames = false)
         {
@@ -97,41 +136,32 @@ namespace Hl7.FhirPath.Functions
                 if (!r.Any(ri => l.IsEquivalentTo(ri, compareNames))) return false;
             }
 
-            if (count != r.Count)
-                return false;
-            else
-                return true;
+            return count == r.Count;
         }
 
 
         public static bool IsEquivalentTo(this ITypedElement left, ITypedElement right, bool compareNames = false)
         {
+            // Note that because of this behaviour, we should switch off null-propagating behaviour of IsEquivalent to
+            if (left is null && right is null) return true;
+            if (left is null || right is null) return false;
+
             if (compareNames && !namesAreEquivalent(left, right)) return false;
 
             var l = left.Value;
             var r = right.Value;
 
+            // TODO: this is actually a cast with knowledge of FHIR->System mappings, we don't want that here anymore
+            // Convert quantities
+            if (left.InstanceType == "Quantity" && l == null)
+                l = Typecasts.ParseQuantity(left);
+            if (right.InstanceType == "Quantity" && r == null)
+                r = Typecasts.ParseQuantity(right);
+
             // Compare primitives (or extended primitives)
-            if (l != null && r != null)
+            if (l != null && r != null && P.Any.TryConvert(l, out var lAny) && P.Any.TryConvert(r, out var rAny))
             {
-                if (l.GetType() == typeof(string) && r.GetType() == typeof(string))
-                    return ((string)l).IsEquivalentTo((string)r);
-                else if (l.GetType() == typeof(bool) && r.GetType() == typeof(bool))
-                    return (bool)l == (bool)r;
-                else if (l.GetType() == typeof(long) && r.GetType() == typeof(long))
-                    return (long)l == (long)r;
-                else if (l.GetType() == typeof(decimal) && r.GetType() == typeof(decimal))
-                    return ((decimal)l).IsEquivalentTo((decimal)r);
-                else if (l.GetType() == typeof(long) && r.GetType() == typeof(decimal))
-                    return ((decimal)(long)l).IsEquivalentTo((decimal)r);
-                else if (l.GetType() == typeof(decimal) && r.GetType() == typeof(long))
-                    return ((decimal)l).IsEquivalentTo((decimal)(long)r);
-                else if (l.GetType() == typeof(PartialTime) && r.GetType() == typeof(PartialTime))
-                    return ((PartialTime)l).IsEquivalentTo((PartialTime)r);
-                else if (l.GetType() == typeof(PartialDateTime) && r.GetType() == typeof(PartialDateTime))
-                    return ((PartialDateTime)l).IsEquivalentTo((PartialDateTime)r);
-                else
-                    return false;
+                return IsEquivalentTo(lAny, rAny);
             }
             else if (l == null && r == null)
             {
@@ -147,41 +177,68 @@ namespace Hl7.FhirPath.Functions
                 return false;
             }
 
-            bool namesAreEquivalent(ITypedElement le, ITypedElement ri)
+            static bool namesAreEquivalent(ITypedElement le, ITypedElement ri)
             {
-                if (le.Name == "id" && ri.Name == "id") return true;      // don't compare 'id' elements for equivalence
+                if (le.Name == "id" && ri.Name == "id") return true;      // IN FHIR: don't compare 'id' elements for equivalence
                 if (le.Name != ri.Name) return false;
 
                 return true;
             }
         }
 
-        public static bool IsEquivalentTo(this string a, string b)
+        public static bool IsEquivalentTo(P.Any? left, P.Any? right)
         {
-            if (b == null) return false;
+            if (left == null && right == null) return true;
+            if (left == null || right == null) return false;
 
-            a = a.Trim().ToLowerInvariant();
-            b = b.Trim().ToLowerInvariant();
+            // Try to convert both operands to a common type if they differ.
+            // When that fails, the CompareTo function on each type will itself
+            // report an error if they cannot handle that.
+            // TODO: in the end the engine/compiler will handle this and report an overload resolution fail
+            tryCoerce(ref left, ref right);
 
-            return a == b;
-            //    return String.Compare(a, b, CultureInfo.InvariantCulture,
-            //CompareOptions.IgnoreNonSpace | CompareOptions.IgnoreCase | CompareOptions.IgnoreSymbols) == 0;
+            return left is P.ICqlEquatable cqle && cqle.IsEquivalentTo(right);
         }
 
-        public static bool IsEquivalentTo(this decimal a, decimal b)
-        {
-            var prec = Math.Min(a.precision(), b.precision());
-            var aR = Math.Round(a, prec);
-            var bR = Math.Round(b, prec);
 
-            return aR == bR;
+
+
+        public static bool? Compare(P.Any left, P.Any right, string op)
+        {
+            // If one or both of the arguments is an empty collection, a comparison operator will return an empty collection.
+            // (though we might handle this more generally with the null-propagating functionality of the compiler
+            // framework already.
+            if (left == null || right == null) return null;
+
+            // Try to convert both operands to a common type if they differ.
+            // When that fails, the CompareTo function on each type will itself
+            // report an error if they cannot handle that.
+            // TODO: in the end the engine/compiler will handle this and report an overload resolution fail
+            tryCoerce(ref left, ref right);
+
+            if (left is P.ICqlOrderable orderable) return interpret(orderable.CompareTo(right));
+
+            // Now, only the non-comparables are left (coding, concept, boolean).
+            // TODO: We should be able to retrieve the cql name of the type, not the
+            // dotnet type somehow.
+            throw new InvalidOperationException($"Values of type {left.GetType().Name} is not an ordered type and cannot be compared.");
+
+            bool? interpret(int? compareResult)
+            {
+                if (compareResult is null) return null;
+
+                return op switch
+                {
+                    "<" => compareResult < 0,
+                    "<=" => compareResult <= 0,
+                    "=" => compareResult == 0,
+                    ">" => compareResult > 0,
+                    ">=" => compareResult >= 0,
+                    _ => throw new ArgumentException($"Unknown comparison op '{op}'", nameof(op))
+                };
+            }
         }
 
-        private static int precision(this decimal a)
-        {
-            var repr = a.ToString(CultureInfo.InvariantCulture);
-            return repr.Length - repr.IndexOf('.') - 1;
-        }
 
         internal class ValueProviderEqualityComparer : IEqualityComparer<ITypedElement>
         {
@@ -190,17 +247,21 @@ namespace Hl7.FhirPath.Functions
                 if (x == null && y == null) return true;
                 if (x == null || y == null) return false;
 
-                return x.IsEqualTo(y);
+                // TODO: this is not completely correct behaviour
+                // The functions Union /Contains/Distinct etc that use
+                // this equality should probably also be changed to use
+                // 3-valued equality.
+                return x.IsEqualTo(y) == true;
             }
 
             public int GetHashCode(ITypedElement element)
             {
                 var result = element.Value != null ? element.Value.GetHashCode() : 0;
 
-                if (element is ITypedElement)
+                if (element is ITypedElement element1)
                 {
-                    var childnames = String.Concat(((ITypedElement)element).Children().Select(c => c.Name));
-                    if (!String.IsNullOrEmpty(childnames))
+                    var childnames = string.Concat(element1.Children().Select(c => c.Name));
+                    if (!string.IsNullOrEmpty(childnames))
                         result ^= childnames.GetHashCode();
                 }
 

@@ -12,7 +12,7 @@ namespace Hl7.Fhir.Utility
 {
     public static class DictionaryUtilities
     {
-        public static U GetOrDefault<T, U>(this Dictionary<T, U> dict, T key) =>
-            dict.TryGetValue(key, out U value) ? value : (default);
+        public static U GetOrDefault<T, U>(this IDictionary<T, U> dict, T key) =>
+            dict.TryGetValue(key, out U value) ? value : default;
     }
 }

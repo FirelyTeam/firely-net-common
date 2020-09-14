@@ -63,7 +63,6 @@ namespace Hl7.FhirPath.Expressions
             }
         }
 
-
         private string noMatchError(IEnumerable<object> arguments)
         {
             string result;
@@ -71,15 +70,16 @@ namespace Hl7.FhirPath.Expressions
             if (!arguments.Any())
                 return "(no signature)";
 
-            result = "on focus of type '{0}'".FormatWith(Typecasts.ReadableFhirPathName(arguments.First().GetType()));
-            
-            if(arguments.Skip(1).Any())
+            result = "on focus of type '{0}'".FormatWith(Typecasts.ReadableFhirPathName(arguments.First()));
+
+            if (arguments.Skip(1).Any())
             {
-                result = "with parameters of type '{0}' "
-                        .FormatWith(String.Join(",", arguments.Skip(1).Select(a => Typecasts.ReadableFhirPathName(a.GetType()))), result);
+                result = "with parameters of type " +
+                        String.Join(" and ",
+                        arguments.Skip(1).Select(a => Typecasts.ReadableFhirPathName(a)));
             }
 
-            return "Function cannot be called " + result;
-        }     
+            return "cannot be called " + result;
+        }
     }
 }

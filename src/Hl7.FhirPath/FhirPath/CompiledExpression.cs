@@ -39,25 +39,5 @@ namespace Hl7.FhirPath
             else
                 return result.Value == value;
         }
-
-        #region Obsolete members
-        [Obsolete("Use Scalar(this CompiledExpression evaluator, ITypedElement input, EvaluationContext ctx) instead. Obsolete since 2018-10-17")]
-        public static object Scalar(this CompiledExpression evaluator, IElementNavigator input, EvaluationContext ctx)
-        {
-            return evaluator.Scalar(input.ToTypedElement(), ctx);
-        }
-
-        [Obsolete("Use Predicate(this CompiledExpression evaluator, IElementNavigator input, EvaluationContext ctx) instead. Obsolete since 2018-10-17")]
-        public static bool Predicate(this CompiledExpression evaluator, IElementNavigator input, EvaluationContext ctx)
-        {
-            return evaluator.Predicate(input.ToTypedElement(), ctx);
-        }
-
-        [Obsolete("Use IsBoolean(this CompiledExpression evaluator, bool value, ITypedElement input, EvaluationContext ctx) instead. Obsolete since 2018-10-17")]
-        public static bool IsBoolean(this CompiledExpression evaluator, bool value, IElementNavigator input, EvaluationContext ctx)
-        {
-            return evaluator.IsBoolean(value, input.ToTypedElement(), ctx);
-        }
-        #endregion
     }
 }

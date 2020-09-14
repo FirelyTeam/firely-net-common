@@ -32,14 +32,6 @@ namespace Hl7.Fhir.Serialization
 
         /// <summary>Create a new <see cref="JsonNavigatorStream"/> instance for the specified serialized json resource file.</summary>
         /// <param name="path">The filepath of a serialized json resource.</param>
-        [Obsolete("Use JsonNavigatorStream.FromPath()")]
-        public JsonNavigatorStream(string path) : this(new FileStream(path, FileMode.Open, FileAccess.Read))
-        {
-            //
-        }
-
-        /// <summary>Create a new <see cref="JsonNavigatorStream"/> instance for the specified serialized json resource file.</summary>
-        /// <param name="path">The filepath of a serialized json resource.</param>
         /// <returns>A new <see cref="JsonNavigatorStream"/> instance.</returns>
         public static JsonNavigatorStream FromPath(string path)
             => new JsonNavigatorStream(new FileStream(path, FileMode.Open, FileAccess.Read));

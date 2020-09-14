@@ -28,19 +28,17 @@
 
 */
 
+using Hl7.Fhir.Utility;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Hl7.Fhir.Introspection
 {
-    [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
-    public sealed class NotMappedAttribute : Attribute
+    [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
+    public sealed class NotMappedAttribute : VersionedAttribute
     {
         public NotMappedAttribute()
         {
             // This attribute is just a marker, no functionality or data
         }
-    } 
+    }
 }

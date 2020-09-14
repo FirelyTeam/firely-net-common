@@ -1,4 +1,10 @@
-﻿using System;
+﻿/* 
+ * Copyright (c) 2020, Firely (info@fire.ly) and contributors
+ * See the file CONTRIBUTORS for details.
+ * 
+ * This file is licensed under the BSD 3-Clause license
+ * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ */
 
 namespace Hl7.Fhir.Model
 {
@@ -16,13 +22,7 @@ namespace Hl7.Fhir.Model
         T Value { get; set; }
     }
 
-    /// <summary>Common string Value property interface.</summary>
-    public interface IStringValue : IValue<string> { }
-
     /// <summary>Common generic nullable value property interface.</summary>
     /// <typeparam name="T">The value type.</typeparam>
     public interface INullableValue<T> : IValue<T?> where T : struct { }
-
-    /// <summary>Common nullable integer value property interface.</summary>
-    public interface INullableIntegerValue : INullableValue<int> { }
 }

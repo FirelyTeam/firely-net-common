@@ -17,7 +17,9 @@ using System.Xml.Linq;
 
 namespace Hl7.Fhir.Serialization
 {
+#pragma warning disable CS0618 // Type or member is obsolete
     public partial class FhirXmlNode : ISourceNode, IResourceTypeSupplier, IAnnotated, IExceptionSource, ICdaInfoSupplier
+#pragma warning restore CS0618 // Type or member is obsolete
     {
         internal FhirXmlNode(XObject node, FhirXmlParsingSettings settings)
         {
@@ -207,18 +209,13 @@ namespace Hl7.Fhir.Serialization
             while (scan != null);
         }
 
-
-        public bool MoveToNext(string nameFilter = null) => throw new NotImplementedException();
-
-        public bool MoveToFirstChild(string nameFilter = null) => throw new NotImplementedException();
-
-        public ISourceNode Clone() => throw new NotImplementedException();
-
         public override string ToString() => Current.ToString();
 
         public IEnumerable<object> Annotations(Type type)
         {
+#pragma warning disable CS0618 // Type or member is obsolete
             if (type == typeof(FhirXmlNode) || type == typeof(ISourceNode) || type == typeof(IResourceTypeSupplier) || type == typeof(ICdaInfoSupplier))
+#pragma warning restore CS0618 // Type or member is obsolete
                 return new[] { this };
 #pragma warning disable 612, 618
             else if (type == typeof(AdditionalStructuralRule) && !PermissiveParsing)
@@ -236,27 +233,27 @@ namespace Hl7.Fhir.Serialization
                     }
                 };
 
-                string[] commentsBefore(XObject current) =>
+                static string[] commentsBefore(XObject current) =>
                         current is XNode xn ?
                             filterComments(xn.PreviousNodes()) : new string[0];
 
-                string[] closingComment(XObject current)
+                static string[] closingComment(XObject current)
                 {
                     return current is XContainer xc && xc.LastNode != null
                         ? filterComments(cons(xc.LastNode, xc.LastNode.PreviousNodes()))
                         : (new string[0]);
                 }
 
-                string[] docEndComments(XObject current) =>
+                static string[] docEndComments(XObject current) =>
                     current is XNode xn && current.Parent is null ?
                         filterComments(xn.NodesAfterSelf())
                         : new string[0];
 
-                string[] filterComments(IEnumerable<XNode> source) =>
+                static string[] filterComments(IEnumerable<XNode> source) =>
                     source.TakeWhile(n => n.NodeType != XmlNodeType.Element)
                             .OfType<XComment>().Select(c => c.Value).Reverse().ToArray();
 
-                IEnumerable<XNode> cons(XNode header, IEnumerable<XNode> tail) =>
+                static IEnumerable<XNode> cons(XNode header, IEnumerable<XNode> tail) =>
                     header == null ? tail : new[] { header }.Union(tail);
 
 
@@ -273,7 +270,7 @@ namespace Hl7.Fhir.Serialization
                         NodeType = Current.NodeType,
                         Namespace = Current.Name().NamespaceName,
                         NodeText = Current.Text(),
-                        IsNamespaceDeclaration = (Current is XAttribute xa) ? xa.IsNamespaceDeclaration : false,
+                        IsNamespaceDeclaration = (Current is XAttribute xa) && xa.IsNamespaceDeclaration,
                         OriginalValue = Current.Value(),
                         LineNumber = lineNumber,
                         LinePosition = linePosition,
@@ -428,7 +425,8 @@ namespace Hl7.Fhir.Serialization
                             buildMessage(node.Name, serializationDetails.NodeType, "should use an xsi:type attribute.")));
                         break;
                 }
-                string buildMessage(string name, XmlNodeType actualType, string message) =>
+
+                static string buildMessage(string name, XmlNodeType actualType, string message) =>
                     $"{actualType} '{name}' {message}";
 
                 return null;
@@ -449,11 +447,11 @@ namespace Hl7.Fhir.Serialization
                 if (ie.Parent == null || ie.Parent.Name.Namespace != ie.Name.Namespace)
                     return ie.ToString(SaveOptions.DisableFormatting);
 
-                return StripNamespaces(ie).ToString(SaveOptions.DisableFormatting);
+                return stripNamespaces(ie).ToString(SaveOptions.DisableFormatting);
             }
         }
 
-        private XElement StripNamespaces(XElement rootElement)
+        private XElement stripNamespaces(XElement rootElement)
         {
             foreach (var element in rootElement.DescendantsAndSelf())
             {

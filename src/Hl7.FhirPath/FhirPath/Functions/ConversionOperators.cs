@@ -3,99 +3,193 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/ewoutkramer/fhir-net-api/master/LICENSE
  */
 
-using System.Xml;
 using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Model.Primitives;
-using Hl7.Fhir.Utility;
+using P = Hl7.Fhir.ElementModel.Types;
+using System.Xml;
+using Hl7.Fhir.ElementModel.Types;
+
+#nullable enable
 
 namespace Hl7.FhirPath.Functions
 {
     internal static class ConversionOperators
     {
-        private static T getValue<T>(this ITypedElement val, string name)
+        /// <summary>
+        /// FhirPath toBoolean() function
+        /// </summary>
+        /// <param name="focus"></param>
+        /// <returns></returns>
+        public static bool? ToBoolean(this Any focus)
         {
-            if (val == null) throw Error.ArgumentNull(name);
-            if (val.Value == null) throw Error.ArgumentNull(name + ".Value");
-            if (!(val.Value is T)) throw Error.Argument(name + " must be of type " + typeof(T).Name);
-
-            return (T)val.Value;
+            if (!(focus is ICqlConvertible c)) return null;
+            return c.TryConvertToBoolean().ValueOrDefault()?.Value;
         }
 
-        // FhirPath toInteger() function
-        public static long? ToInteger(this ITypedElement focus)
+        /// <summary>
+        /// FhirPath convertsToBoolean() function
+        /// </summary>
+        /// <param name="focus"></param>
+        /// <returns></returns>
+        public static bool ConvertsToBoolean(this Any focus) => ToBoolean(focus) is { };
+
+
+        /// <summary>
+        /// FhirPath toInteger() function
+        /// </summary>
+        /// <param name="focus"></param>
+        /// <returns></returns>
+        public static int? ToInteger(this Any focus)
         {
-            var val = focus.getValue<object>("focus");
-
-            if (val is long)
-                return (long)val;
-            else if (val is string)
-            {
-                try
-                {
-                    return XmlConvert.ToInt64((string)val);
-                }
-                catch
-                {
-                    return null;
-                }
-            }
-            else if(val is bool)
-            {
-                return (bool)val ? 1L : 0L;
-            }
-
-            return null;
+            if (!(focus is ICqlConvertible c)) return null;
+            return c.TryConvertToInteger().ValueOrDefault()?.Value;
         }
 
-        // FhirPath toDecimal() function
-        public static decimal? ToDecimal(this ITypedElement focus)
+        /// <summary>
+        /// FhirPath convertsToInteger() function.
+        /// </summary>
+        /// <param name="focus"></param>
+        /// <returns></returns>
+        public static bool ConvertsToInteger(this Any focus) => ToInteger(focus) is { };
+
+
+        /// <summary>
+        /// FhirPath toDecimal() function.
+        /// </summary>
+        /// <param name="focus"></param>
+        /// <returns></returns>
+        public static decimal? ToDecimal(this Any focus)
         {
-            var val = focus.getValue<object>("focus");
-
-            if (val is decimal)
-                return (decimal)val;
-            else if (val is string)
-            {
-                try
-                {
-                    return XmlConvert.ToDecimal((string)val);
-                }
-                catch
-                {
-                    return null;
-                }
-            }
-            else if (val is bool)
-            {
-                return (bool)val ? 1m : 0m;
-            }
-
-            return null;
+            if (!(focus is ICqlConvertible c)) return null;
+            return c.TryConvertToDecimal().ValueOrDefault()?.Value;
         }
 
 
-        // FhirPath toString() function
-        public static string ToStringRepresentation(this ITypedElement focus)
+        /// <summary>
+        /// FhirPath convertsToDecimal() function.
+        /// </summary>
+        /// <param name="focus"></param>
+        /// <returns></returns>
+        public static bool ConvertsToDecimal(this Any focus) => ToDecimal(focus) is { };
+
+
+        /// <summary>
+        /// FhirPath toLong() function.
+        /// </summary>
+        /// <param name="focus"></param>
+        /// <returns></returns>
+        public static long? ToLong(this Any focus)
         {
-            var val = focus.getValue<object>("focus");
-
-            if (val is string)
-                return (string)val;
-            else if (val is long)
-                return XmlConvert.ToString((long)val);
-            else if (val is decimal)
-                return XmlConvert.ToString((decimal)val);
-            else if (val is bool)
-                return (bool)val ? "true" : "false";
-            else if (val is PartialTime)
-                return ((PartialTime)val).ToString();
-            else if (val is PartialDateTime)
-                return ((PartialDateTime)val).ToString();
-
-            return null;
+            if (!(focus is ICqlConvertible c)) return null;
+            return c.TryConvertToLong().ValueOrDefault()?.Value;
         }
+
+
+        /// <summary>
+        /// FhirPath convertsToLong() function.
+        /// </summary>
+        /// <param name="focus"></param>
+        /// <returns></returns>
+        public static bool ConvertsToLong(this Any focus) => ToLong(focus) is { };
+
+
+        /// <summary>
+        /// FhirPath toQuantity() function.
+        /// </summary>
+        /// <param name="focus"></param>
+        /// <returns></returns>
+        public static P.Quantity? ToQuantity(this Any focus)
+        {
+            if (!(focus is ICqlConvertible c)) return null;
+            return c.TryConvertToQuantity().ValueOrDefault();
+        }
+
+        /// <summary>
+        /// FhirPath convertsToQuantity() function.
+        /// </summary>
+        /// <param name="focus"></param>
+        /// <returns></returns>
+        public static bool ConvertsToQuantity(this Any focus) => ToQuantity(focus) is { };
+
+
+        /// <summary>
+        /// FhirPath toString() function.
+        /// </summary>
+        /// <param name="focus"></param>
+        /// <returns></returns>
+        public static string? ToStringRepresentation(this Any focus)
+        {
+            if (!(focus is ICqlConvertible c)) return null;
+            return c.TryConvertToString().ValueOrDefault();
+        }
+
+        /// <summary>
+        /// FhirPath convertsToString() function.
+        /// </summary>
+        /// <param name="focus"></param>
+        /// <returns></returns>
+        public static bool ConvertsToString(this Any focus) => ToStringRepresentation(focus) is { };
+
+        /// <summary>
+        /// FhirPath toDate() function.
+        /// </summary>
+        /// <param name="focus"></param>
+        /// <returns></returns>
+        public static P.Date? ToDate(this Any focus)
+        {
+            if (!(focus is ICqlConvertible c)) return null;
+            return c.TryConvertToDate().ValueOrDefault();
+        }
+
+
+        /// <summary>
+        /// FhirPath convertsToDate() function.
+        /// </summary>
+        /// <param name="focus"></param>
+        /// <returns></returns>
+        public static bool ConvertsToDate(this Any focus) => ToDate(focus) is { };
+
+
+        /// <summary>
+        /// FhirPath toDateTime() function.
+        /// </summary>
+        /// <param name="focus"></param>
+        /// <returns></returns>
+        public static P.DateTime? ToDateTime(this Any focus)
+        {
+            if (!(focus is ICqlConvertible c)) return null;
+            return c.TryConvertToDateTime().ValueOrDefault();
+        }
+
+
+        /// <summary>
+        /// FhirPath convertsToDateTime() function.
+        /// </summary>
+        /// <param name="focus"></param>
+        /// <returns></returns>
+        public static bool ConvertsToDateTime(this Any focus) => ToDateTime(focus) is { };
+
+
+        /// <summary>
+        /// FhirPath toTime() function.
+        /// </summary>
+        /// <param name="focus"></param>
+        /// <returns></returns>
+        public static P.Time? ToTime(this Any focus)
+        {
+            if (!(focus is ICqlConvertible c)) return null;
+            return c.TryConvertToTime().ValueOrDefault();
+
+        }
+
+
+        /// <summary>
+        /// FhirPath convertsToTime() function.
+        /// </summary>
+        /// <param name="focus"></param>
+        /// <returns></returns>
+        public static bool ConvertsToTime(this Any focus) => ToTime(focus) is { };
     }
 }
