@@ -133,8 +133,11 @@ namespace Hl7.Fhir.Introspection
             var cardinalityAttr = getAttribute<Validation.CardinalityAttribute>(prop, version);
             result.IsMandatoryElement = cardinalityAttr != null ? cardinalityAttr.Min > 0 : false;
 
-            result.IsCollection = ReflectionHelper.IsTypedCollection(prop.PropertyType) &&
-                prop.PropertyType != typeof(string);           // prevent silly string:char[] confusion
+            // We broadly use .IsArray here - this means arrays in POCOs cannot be used to represent
+            // FHIR repeating elements. If we would allow this, we'd also have stuff like `string` and binary
+            // data as repeating element, and would need to exclude these exceptions on a case by case basis.
+            // This is pretty ugly, so we prefer to not support arrays - you should use lists instead.
+            result.IsCollection = ReflectionHelper.IsTypedCollection(prop.PropertyType) && !prop.PropertyType.IsArray;
 
             // Get to the actual (native) type representing this element
             result.ImplementingType = prop.PropertyType;
