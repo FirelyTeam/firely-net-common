@@ -54,7 +54,8 @@ namespace Hl7.Fhir.Model
         /// <summary>
         /// Unique id for inter-element referencing
         /// </summary>
-        [FhirElement("id", XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 10, TypeRedirect = typeof(FhirString))]
+        [FhirElement("id", XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=10)]
+        [DeclaredType(Type = typeof(FhirString))]
         [DataMember]
         public string ElementId
         {
