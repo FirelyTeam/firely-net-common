@@ -43,9 +43,7 @@ namespace Hl7.Fhir.Model
   /// Primitive Type decimal
   /// Do not use an IEEE type floating point type, instead use something that works like a true decimal, with inbuilt precision (e.g. Java BigInteger)
   /// </summary>
-#if !NETSTANDARD1_1
   [Serializable]
-#endif
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [FhirType("decimal")]
   [DataContract]

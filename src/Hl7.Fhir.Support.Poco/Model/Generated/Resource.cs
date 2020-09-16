@@ -45,9 +45,7 @@ namespace Hl7.Fhir.Model
   /// <summary>
   /// Base Resource
   /// </summary>
-#if !NETSTANDARD1_1
   [Serializable]
-#endif
   [FhirType("Resource", IsResource=true)]
   [DataContract]
   public abstract partial class Resource : Hl7.Fhir.Model.Base

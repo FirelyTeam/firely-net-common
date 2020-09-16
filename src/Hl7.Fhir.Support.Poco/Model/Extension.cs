@@ -29,21 +29,19 @@
 */
 
 
+using Hl7.Fhir.Introspection;
+using Hl7.Fhir.Specification;
+using Hl7.Fhir.Validation;
 using System;
 using System.Collections.Generic;
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Validation;
 using System.Runtime.Serialization;
-using Hl7.Fhir.Specification;
 
 namespace Hl7.Fhir.Model
 {
-  /// <summary>
-  /// Optional Extensions Element
-  /// </summary>
-#if !NETSTANDARD1_1
+    /// <summary>
+    /// Optional Extensions Element
+    /// </summary>
     [Serializable]
-#endif
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value} Url={_Url}}")]
     [FhirType("Extension")]
     [DataContract]
@@ -153,8 +151,8 @@ namespace Hl7.Fhir.Model
                 // Extension elements 
                 foreach (var item in base.NamedChildren) yield return item;
                 if (Url != null) yield return new ElementValue("url", new FhirUri(Url));
-                if (Value != null) yield return new ElementValue ("value",Value);
+                if (Value != null) yield return new ElementValue("value", Value);
             }
-        } 
+        }
     }
 }

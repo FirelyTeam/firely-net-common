@@ -43,9 +43,7 @@ namespace Hl7.Fhir.Model
   /// Primitive Type positiveInt
   /// An integer with a value that is positive (e.g. &gt;0)
   /// </summary>
-#if !NETSTANDARD1_1
   [Serializable]
-#endif
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [FhirType("positiveInt")]
   [DataContract]

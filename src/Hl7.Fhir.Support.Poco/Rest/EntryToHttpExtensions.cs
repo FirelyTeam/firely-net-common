@@ -22,7 +22,7 @@ namespace Hl7.Fhir.Rest
         public static HttpRequestMessage ToHttpRequestMessage(this EntryRequest entry, Uri baseUrl, FhirClientSettings settings)
         {
 
-            System.Diagnostics.Debug.WriteLine("{0}: {1}", entry.Method, entry.Url);           
+            System.Diagnostics.Debug.WriteLine("{0}: {1}", entry.Method, entry.Url);
 
             if (entry.RequestBodyContent != null && !(entry.Method == HTTPVerb.POST || entry.Method == HTTPVerb.PUT || entry.Method == HTTPVerb.PATCH))
                 throw Error.InvalidOperation("Cannot have a body on an Http " + entry.Method.ToString());
@@ -43,7 +43,7 @@ namespace Hl7.Fhir.Rest
 
             request.Headers.Add("User-Agent", ".NET FhirClient for FHIR " + entry.Agent);
 
-            if (!settings.UseFormatParameter && !string.IsNullOrEmpty(entry.Headers.Accept)) 
+            if (!settings.UseFormatParameter && !string.IsNullOrEmpty(entry.Headers.Accept))
                 request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse(entry.Headers.Accept));
 
             if (entry.Headers.IfMatch != null) request.Headers.Add("If-Match", entry.Headers.IfMatch);
@@ -64,7 +64,7 @@ namespace Hl7.Fhir.Rest
                 else
                     request.Headers.Add("Prefer", "return=" + PrimitiveTypeConverter.ConvertTo<string>(settings.PreferredReturn));
             }
-              
+
             else if (interactionType == InteractionType.Search && settings.PreferredParameterHandling != null)
             {
                 List<string> preferHeader = new List<string>();
@@ -74,7 +74,7 @@ namespace Hl7.Fhir.Rest
                     preferHeader.Add(settings.PreferredReturn.GetLiteral());
                 if (preferHeader.Count > 0)
                     request.Headers.Add("Prefer", string.Join(", ", preferHeader));
-            }        
+            }
 
 
             if (entry.RequestBodyContent != null)
@@ -110,8 +110,8 @@ namespace Hl7.Fhir.Rest
 
         private static void setContentAndContentType(HttpRequestMessage request, byte[] data, string contentType)
         {
-            if (data == null) throw Error.ArgumentNull(nameof(data));        
-            request.Content = new ByteArrayContent(data);             
+            if (data == null) throw Error.ArgumentNull(nameof(data));
+            request.Content = new ByteArrayContent(data);
             request.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
         }
 
@@ -148,7 +148,7 @@ namespace Hl7.Fhir.Rest
 
             if (entry.Headers.IfMatch != null) request.Headers["If-Match"] = entry.Headers.IfMatch;
             if (entry.Headers.IfNoneMatch != null) request.Headers["If-None-Match"] = entry.Headers.IfNoneMatch;
-#if NETSTANDARD1_1
+#if NETSTANDARD1_6
             if (entry.Headers.IfModifiedSince != null) request.Headers["If-Modified-Since"] = entry.Headers.IfModifiedSince.Value.UtcDateTime.ToString();
 #else
             if (entry.Headers.IfModifiedSince != null) request.IfModifiedSince = entry.Headers.IfModifiedSince.Value.UtcDateTime;
@@ -180,7 +180,7 @@ namespace Hl7.Fhir.Rest
                  entry.Type == InteractionType.Patch;
 
             // PCL doesn't support setting the length (and in this case will be empty anyway)
-#if !NETSTANDARD1_1
+#if !NETSTANDARD1_6
             if (entry.RequestBodyContent == null)
                 request.ContentLength = 0;
 #endif
@@ -217,7 +217,7 @@ namespace Hl7.Fhir.Rest
                 // platform does not support UserAgent property...too bad
                 try
                 {
-#if NETSTANDARD1_1
+#if NETSTANDARD1_6
                     request.Headers[HttpRequestHeader.UserAgent] = agent;
 #else
                     request.UserAgent = agent;

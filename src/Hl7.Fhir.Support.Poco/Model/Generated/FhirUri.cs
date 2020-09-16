@@ -43,9 +43,7 @@ namespace Hl7.Fhir.Model
   /// Primitive Type uri
   /// see http://en.wikipedia.org/wiki/Uniform_resource_identifier
   /// </summary>
-#if !NETSTANDARD1_1
   [Serializable]
-#endif
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [FhirType("uri")]
   [DataContract]

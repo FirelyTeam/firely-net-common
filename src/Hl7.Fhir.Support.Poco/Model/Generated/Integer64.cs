@@ -43,9 +43,7 @@ namespace Hl7.Fhir.Model
   /// Primitive Type integer64
   /// Typically this is used for record counters (e.g. database keys)
   /// </summary>
-#if !NETSTANDARD1_1
   [Serializable]
-#endif
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [FhirType("integer64")]
   [DataContract]

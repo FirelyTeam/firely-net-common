@@ -43,9 +43,7 @@ namespace Hl7.Fhir.Model
   /// Primitive Type url
   /// A URI that is a literal reference
   /// </summary>
-#if !NETSTANDARD1_1
   [Serializable]
-#endif
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [FhirType("url")]
   [DataContract]

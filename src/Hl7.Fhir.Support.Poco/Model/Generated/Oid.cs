@@ -43,9 +43,7 @@ namespace Hl7.Fhir.Model
   /// Primitive Type oid
   /// RFC 3001. See also ISO/IEC 8824:1990 €
   /// </summary>
-#if !NETSTANDARD1_1
   [Serializable]
-#endif
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [FhirType("oid")]
   [DataContract]

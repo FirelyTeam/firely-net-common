@@ -43,9 +43,7 @@ namespace Hl7.Fhir.Model
   /// Primitive Type markdown
   /// Systems are not required to have markdown support, so the text should be readable without markdown processing. The markdown syntax is GFM - see https://github.github.com/gfm/
   /// </summary>
-#if !NETSTANDARD1_1
   [Serializable]
-#endif
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [FhirType("markdown")]
   [DataContract]

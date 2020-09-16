@@ -43,9 +43,7 @@ namespace Hl7.Fhir.Model
   /// Primitive Type canonical
   /// see [Canonical References](references.html#canonical)
   /// </summary>
-#if !NETSTANDARD1_1
   [Serializable]
-#endif
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [FhirType("canonical")]
   [DataContract]

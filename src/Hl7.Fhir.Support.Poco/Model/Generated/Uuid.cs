@@ -43,9 +43,7 @@ namespace Hl7.Fhir.Model
   /// Primitive Type uuid
   /// See The Open Group, CDE 1.1 Remote Procedure Call specification, Appendix A.
   /// </summary>
-#if !NETSTANDARD1_1
   [Serializable]
-#endif
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [FhirType("uuid")]
   [DataContract]
