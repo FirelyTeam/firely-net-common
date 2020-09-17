@@ -18,7 +18,7 @@ using System.Threading;
 namespace Hl7.Fhir.Introspection
 {
     [System.Diagnostics.DebuggerDisplay(@"\{Name={Name} ElementType={ElementType.Name}}")]
-    public class PropertyMapping
+    public class PropertyMapping : IElementDefinitionSummary
     {
         private PropertyMapping()
         {
@@ -68,14 +68,31 @@ namespace Hl7.Fhir.Introspection
         /// <summary>
         /// True if this element is a choice or a Resource subtype (e.g in Resource.contained)
         /// </summary>
+        /// <remarks>In the case of a DataChoice, these elements have names ending in [x] in the StructureDefinition
+        /// and allow a (possibly restricted) set of types to be used. These are reflected
+        /// in the <see cref="FhirType"/> property.</remarks>
         public ChoiceType Choice { get; private set; }
         
         /// <summary>
         /// This element is a polymorphic Resource, any resource is allowed here.
         /// </summary>
-        /// <remark>May differ from the actual type of the property if this is a choice
-        /// (in which case the property is of type Element) or if a TypeRedirect attribute was applied. Useful
-        /// for when the type in the FHIR specification differs from the actual type in the class.</remark>
+        /// <remarks>These are elements like DomainResource.contained, Parameters.resource etc.</remarks>
+        public bool IsResourceChoice { get; private set; }
+
+        /// <summary>
+        /// The list of possible FHIR types for this element, represented as native types.
+        /// </summary>
+        /// <remark> <para>
+        /// These are the defined (choice) types for this element as specified in the
+        /// FHIR data definitions. It is derived from the actual type in the POCO class and 
+        /// the [AllowedTypes] attribute and may by a [DeclaredTypes] attribute.
+        /// </para>
+        /// <para>
+        /// May be a non-FHIR .NET primitive type for value elements of
+        /// primitive FHIR datatypes (e.g. FhirBoolean.Value) or other primitive
+        /// attributes (e.g. Extension.url)
+        /// </para>
+        /// </remark>
         public Type[] FhirType { get; private set; }        // may be multiple if this is a choice
 
         /// <summary>
@@ -84,6 +101,7 @@ namespace Hl7.Fhir.Introspection
         public bool IsOpen { get; private set; }
 
         private PropertyInfo _propInfo;
+        private FhirRelease _createdVersion;
 
         [Obsolete("Use TryCreate() instead.")]
         public static PropertyMapping Create(PropertyInfo prop, FhirRelease version = (FhirRelease)int.MaxValue)
@@ -110,10 +128,15 @@ namespace Hl7.Fhir.Introspection
             result.SerializationHint = elementAttr.XmlSerialization;
             result.Order = elementAttr.Order;
             result._propInfo = prop;
+            result._createdVersion = version;
 
             var cardinalityAttr = getAttribute<Validation.CardinalityAttribute>(prop, version);
             result.IsMandatoryElement = cardinalityAttr != null ? cardinalityAttr.Min > 0 : false;
 
+            // We broadly use .IsArray here - this means arrays in POCOs cannot be used to represent
+            // FHIR repeating elements. If we would allow this, we'd also have stuff like `string` and binary
+            // data as repeating element, and would need to exclude these exceptions on a case by case basis.
+            // This is pretty ugly, so we prefer to not support arrays - you should use lists instead.
             result.IsCollection = ReflectionHelper.IsTypedCollection(prop.PropertyType) && !prop.PropertyType.IsArray;
 
             // Get to the actual (native) type representing this element
@@ -166,25 +189,9 @@ namespace Hl7.Fhir.Introspection
 
             return isValueElement;
 
-            string buildQualifiedPropName(PropertyInfo p) => p.DeclaringType.Name + "." + p.Name;
         }
 
-        //public bool MatchesSuffixedName(string suffixedName)
-        //{
-        //    if (suffixedName == null) throw Error.ArgumentNull(nameof(suffixedName));
-
-        //    return Choice == ChoiceType.DatatypeChoice && suffixedName.ToUpperInvariant().StartsWith(Name.ToUpperInvariant());
-        //}
-
-        //public string GetChoiceSuffixFromName(string suffixedName)
-        //{
-        //    if (suffixedName == null) throw Error.ArgumentNull(nameof(suffixedName));
-
-        //    if (MatchesSuffixedName(suffixedName))
-        //        return suffixedName.Remove(0, Name.Length);
-        //    else
-        //        throw Error.Argument(nameof(suffixedName), "The given suffixed name {0} does not match this property's name {1}".FormatWith(suffixedName, Name));
-        //}
+        private static string buildQualifiedPropName(PropertyInfo p) => p.DeclaringType.Name + "." + p.Name;
 
         private static bool isAllowedNativeTypeForDataTypeValue(Type type)
         {
@@ -224,11 +231,82 @@ namespace Hl7.Fhir.Introspection
             }
         }
 
+        string IElementDefinitionSummary.ElementName => this.Name;
+
+        bool IElementDefinitionSummary.IsCollection => this.IsCollection;
+
+        bool IElementDefinitionSummary.IsRequired => this.IsMandatoryElement;
+
+        bool IElementDefinitionSummary.InSummary => this.InSummary;
+
+        bool IElementDefinitionSummary.IsChoiceElement => this.Choice == ChoiceType.DatatypeChoice;
+
+        bool IElementDefinitionSummary.IsResource => this.Choice == ChoiceType.ResourceChoice;
+
+        string IElementDefinitionSummary.DefaultTypeName => null;
+            
+        ITypeSerializationInfo[] IElementDefinitionSummary.Type
+        {
+            get
+            {
+                LazyInitializer.EnsureInitialized(ref _types, buildTypes);
+                return _types;
+            }
+        }
+
+        private ITypeSerializationInfo[] _types;
+
+        string IElementDefinitionSummary.NonDefaultNamespace => null;
+
+        XmlRepresentation IElementDefinitionSummary.Representation =>
+            SerializationHint != XmlRepresentation.None ?
+            SerializationHint : XmlRepresentation.XmlElement;
+
+        int IElementDefinitionSummary.Order => Order;
+
         private Action<object, object> _setter;
 
 
         public object GetValue(object instance) => Getter(instance);
 
         public void SetValue(object instance, object value) => Setter(instance, value);
+
+        private ITypeSerializationInfo[] buildTypes()
+        {
+            var success = ClassMapping.TryCreate(FhirType[0], out var elementTypeMapping, _createdVersion);
+
+            if (elementTypeMapping.IsNestedType)
+            {
+                var info = elementTypeMapping;
+                return new ITypeSerializationInfo[] { info };
+            }
+            else
+            {
+                var names = FhirType.Select(ft => getFhirTypeName(ft));
+                return names.Select(n => (ITypeSerializationInfo)new PocoTypeReferenceInfo(n)).ToArray();
+            }
+
+            string getFhirTypeName(Type ft)
+            {
+                // The special case where the mapping name is a backbone element name can safely
+                // be ignored here, since that is handled by the first case in the if statement above.
+                if (ClassMapping.TryCreate(ft, out var tm, _createdVersion))
+                    return ((IStructureDefinitionSummary)tm).TypeName;
+                else
+                    throw new NotSupportedException($"Type '{ft.Name}' is listed as an allowed type for property " +
+                        $"'{buildQualifiedPropName(_propInfo)}', but it does not seem to" +
+                        $"be a valid FHIR type POCO.");
+            }
+        }
+
+        struct PocoTypeReferenceInfo : IStructureDefinitionReference
+        {
+            public PocoTypeReferenceInfo(string canonical)
+            {
+                ReferredType = canonical;
+            }
+
+            public string ReferredType { get; private set; }
+        }
     }
 }
