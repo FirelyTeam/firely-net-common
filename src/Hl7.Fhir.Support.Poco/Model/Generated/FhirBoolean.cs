@@ -43,9 +43,7 @@ namespace Hl7.Fhir.Model
   /// Primitive Type boolean
   /// Value of "true" or "false"
   /// </summary>
-#if !NETSTANDARD1_1
   [Serializable]
-#endif
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [FhirType("boolean")]
   [DataContract]

@@ -43,9 +43,7 @@ namespace Hl7.Fhir.Model
   /// Primitive Type integer
   /// 32 bit number; for values larger than this, use decimal
   /// </summary>
-#if !NETSTANDARD1_1
   [Serializable]
-#endif
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [FhirType("integer")]
   [DataContract]

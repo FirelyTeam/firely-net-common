@@ -43,9 +43,7 @@ namespace Hl7.Fhir.Model
   /// Primitive Type time
   /// A time during the day, with no date specified
   /// </summary>
-#if !NETSTANDARD1_1
   [Serializable]
-#endif
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [FhirType("time")]
   [DataContract]

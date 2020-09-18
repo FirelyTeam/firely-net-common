@@ -43,9 +43,7 @@ namespace Hl7.Fhir.Model
   /// Primitive Type unsignedInt
   /// An integer with a value that is not negative (e.g. &gt;= 0)
   /// </summary>
-#if !NETSTANDARD1_1
   [Serializable]
-#endif
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [FhirType("unsignedInt")]
   [DataContract]

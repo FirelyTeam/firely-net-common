@@ -35,20 +35,10 @@ namespace Hl7.Fhir.ElementModel.Types
            @"(?'value'(\+|-)?\d+(\.\d+)?)\s*(('(?'unit'[^\']+)')|(?'time'[a-zA-Z]+))";
 
         public static readonly Regex QUANTITYREGEX =
-           new Regex(QUANTITY_BASE_REGEX,
-#if NETSTANDARD1_1
-                        RegexOptions.ExplicitCapture);
-#else
-                        RegexOptions.ExplicitCapture | RegexOptions.Compiled);
-#endif
+           new Regex(QUANTITY_BASE_REGEX, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
 
         internal static readonly Regex QUANTITYREGEX_FOR_PARSE =
-            new Regex($"^{QUANTITY_BASE_REGEX}?$",
-#if NETSTANDARD1_1
-                        RegexOptions.ExplicitCapture);
-#else
-                        RegexOptions.ExplicitCapture | RegexOptions.Compiled);
-#endif
+            new Regex($"^{QUANTITY_BASE_REGEX}?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled);
 
         public static Quantity Parse(string representation) =>
                 TryParse(representation, out var result) ? result : throw new FormatException($"String '{representation}' was not recognized as a valid quantity.");

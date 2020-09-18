@@ -45,9 +45,7 @@ namespace Hl7.Fhir.Model
   /// <summary>
   /// Reuseable Types
   /// </summary>
-#if !NETSTANDARD1_1
   [Serializable]
-#endif
   [FhirType("DataType")]
   [DataContract]
   public abstract partial class DataType : Hl7.Fhir.Model.Element

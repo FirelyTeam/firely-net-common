@@ -45,9 +45,7 @@ namespace Hl7.Fhir.Model
   /// <summary>
   /// Metadata about a resource
   /// </summary>
-#if !NETSTANDARD1_1
   [Serializable]
-#endif
   [FhirType("Meta")]
   [DataContract]
   public partial class Meta : Hl7.Fhir.Model.DataType

@@ -43,9 +43,7 @@ namespace Hl7.Fhir.Model
   /// Primitive Type id
   /// RFC 4122
   /// </summary>
-#if !NETSTANDARD1_1
   [Serializable]
-#endif
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [FhirType("id")]
   [DataContract]

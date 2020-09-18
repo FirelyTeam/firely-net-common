@@ -7,18 +7,16 @@
  */
 
 
+using Hl7.Fhir.Introspection;
+using Hl7.Fhir.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Serialization;
 
 namespace Hl7.Fhir.Model
 {
-#if !NETSTANDARD1_1
     [Serializable]
-#endif
     [FhirType("PrimitiveType")]
     [DataContract]
     public abstract class PrimitiveType : DataType

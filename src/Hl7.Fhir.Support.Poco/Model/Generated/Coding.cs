@@ -45,9 +45,7 @@ namespace Hl7.Fhir.Model
   /// <summary>
   /// A reference to a code defined by a terminology system
   /// </summary>
-#if !NETSTANDARD1_1
   [Serializable]
-#endif
   [FhirType("Coding")]
   [DataContract]
   public partial class Coding : Hl7.Fhir.Model.DataType
