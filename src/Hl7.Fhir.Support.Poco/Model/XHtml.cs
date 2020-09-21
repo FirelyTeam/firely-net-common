@@ -28,14 +28,14 @@
 
 */
 
-using System.Linq;
 using Hl7.Fhir.Utility;
+using System.Linq;
 
 namespace Hl7.Fhir.Model
 {
     public partial class XHtml
     {
-#if NETSTANDARD1_1
+#if NETSTANDARD1_6
         public static bool IsValidValue(string _) => true;
 #else
         public static bool IsValidValue(string value) => !SerializationUtil.RunFhirXhtmlSchemaValidation(value).Any();

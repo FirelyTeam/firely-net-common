@@ -6,13 +6,10 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
  */
 
+using Hl7.Fhir.Utility;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Net;
-using System.Text.RegularExpressions;
-using Hl7.Fhir.Utility;
 
 namespace Hl7.Fhir.Rest
 {
@@ -146,16 +143,9 @@ namespace Hl7.Fhir.Rest
 
         public static string GetMediaTypeFromHeaderValue(string mediaHeaderValue)
         {
-#if NETSTANDARD1_1
-                System.Net.Http.Headers.MediaTypeHeaderValue.TryParse(mediaHeaderValue, out System.Net.Http.Headers.MediaTypeHeaderValue headerValue);
-                if (headerValue != null)
-                {
-                    return headerValue.MediaType.ToLowerInvariant();
-                }
-                else
-                {
-                    return mediaHeaderValue;
-                }
+#if NETSTANDARD1_6
+            System.Net.Http.Headers.MediaTypeHeaderValue.TryParse(mediaHeaderValue, out System.Net.Http.Headers.MediaTypeHeaderValue headerValue);
+            return headerValue != null ? headerValue.MediaType.ToLowerInvariant() : mediaHeaderValue;
 #else
             try
             {
@@ -166,18 +156,18 @@ namespace Hl7.Fhir.Rest
             {
                 return mediaHeaderValue;
             }
-        #endif
+#endif
         }
 
         public static string GetCharSetFromHeaderValue(string mediaHeaderValue)
-                {
-        #if NETSTANDARD1_1
-                    System.Net.Http.Headers.MediaTypeHeaderValue.TryParse(mediaHeaderValue, out System.Net.Http.Headers.MediaTypeHeaderValue headerValue);
-                    return headerValue.CharSet;
-        #else
-                    var ct = new System.Net.Mime.ContentType(mediaHeaderValue);
-                    return ct.CharSet;
-        #endif
-                }
-         }
+        {
+#if NETSTANDARD1_6
+            System.Net.Http.Headers.MediaTypeHeaderValue.TryParse(mediaHeaderValue, out System.Net.Http.Headers.MediaTypeHeaderValue headerValue);
+            return headerValue.CharSet;
+#else
+            var ct = new System.Net.Mime.ContentType(mediaHeaderValue);
+            return ct.CharSet;
+#endif
+        }
+    }
 }

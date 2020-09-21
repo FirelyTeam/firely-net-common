@@ -83,12 +83,7 @@ namespace Hl7.Fhir.ElementModel.Types
         internal const string OFFSETFORMAT = "(?<offset>Z | (\\+|-) [0-9][0-9]:[0-9][0-9])";
 
         private static readonly Regex PARTIALTIMEREGEX =
-            new Regex("^" + PARTIALTIMEFORMAT + "$",
-#if NETSTANDARD1_1
-                RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture);
-#else
-                RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
-#endif
+            new Regex("^" + PARTIALTIMEFORMAT + "$", RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
 
         /// <summary>
         /// Converts the time to a full DateTimeOffset instance.

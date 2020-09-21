@@ -53,14 +53,14 @@ namespace Hl7.Fhir.ElementModel.Types
             var l = comparisonType.HasFlag(StringComparison.NormalizeWhitespace) ? normalizeWS(Value) : Value;
             var r = comparisonType.HasFlag(StringComparison.NormalizeWhitespace) ? normalizeWS(otherS.Value) : otherS.Value;
 
-#if !NETSTANDARD1_1
+#if !NETSTANDARD1_6
             var compareOptions = CompareOptions.None;
             if (comparisonType.HasFlag(StringComparison.IgnoreCase)) compareOptions |= CompareOptions.IgnoreCase;
             if (comparisonType.HasFlag(StringComparison.IgnoreDiacritics)) compareOptions |= CompareOptions.IgnoreNonSpace;
 
             return string.Compare(l, r, CultureInfo.InvariantCulture, compareOptions) == 0;
 #else
-            return string.Compare(l, r, comparisonType.HasFlag(StringComparison.IgnoreCase) ? 
+            return string.Compare(l, r, comparisonType.HasFlag(StringComparison.IgnoreCase) ?
                 System.StringComparison.OrdinalIgnoreCase : System.StringComparison.Ordinal) == 0;
 #endif
         }
@@ -113,7 +113,7 @@ namespace Hl7.Fhir.ElementModel.Types
         bool? ICqlEquatable.IsEqualTo(Any other) => other is { } ? Equals(other, CQL_EQUALS_COMPARISON) : (bool?)null;
         bool ICqlEquatable.IsEquivalentTo(Any other) => Equals(other, CQL_EQUIVALENCE_COMPARISON);
         int? ICqlOrderable.CompareTo(Any other) => other is { } ? CompareTo(other) : (int?)null;
-        
+
         Result<Boolean> ICqlConvertible.TryConvertToBoolean()
         {
             switch (Value.ToLower())
