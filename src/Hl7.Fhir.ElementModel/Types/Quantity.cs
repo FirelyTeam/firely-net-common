@@ -44,15 +44,16 @@ namespace Hl7.Fhir.ElementModel.Types
 
         public QuantityUnitSystem System { get; private set; }
 
-        public Quantity(decimal value, string unit = UCUM_UNIT) : this(value, unit, QuantityUnitSystem.UCUM)
+        public Quantity(decimal value, string? unit = UCUM_UNIT) 
+            : this(value, unit, QuantityUnitSystem.UCUM)
         {
             //
         }
 
-        public Quantity(decimal value, string unit, QuantityUnitSystem system)
+        public Quantity(decimal value, string? unit, QuantityUnitSystem system)
         {
             Value = value;
-            Unit = unit ?? throw new ArgumentNullException(nameof(unit));
+            Unit = unit ?? UCUM_UNIT;
             System = system;
         }
 
@@ -62,8 +63,13 @@ namespace Hl7.Fhir.ElementModel.Types
         /// <param name="value"></param>
         /// <param name="calendarUnit"></param>
         /// <returns></returns>
-        public static Quantity ForCalendarDuration(decimal value, string calendarUnit) =>
-            new Quantity(value, calendarUnit, QuantityUnitSystem.CalendarDuration);
+        public static Quantity ForCalendarDuration(decimal value, string calendarUnit)
+        {
+            if (calendarUnit is null)
+                throw new ArgumentNullException(nameof(calendarUnit));
+
+            return new Quantity(value, calendarUnit, QuantityUnitSystem.CalendarDuration);
+        }
 
         private static readonly string QUANTITY_BASE_REGEX =
            @"(?'value'(\+|-)?\d+(\.\d+)?)\s*(('(?'unit'[^\']+)')|(?'time'[a-zA-Z]+))";
