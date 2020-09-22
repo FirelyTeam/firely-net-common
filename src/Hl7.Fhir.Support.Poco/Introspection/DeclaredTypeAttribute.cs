@@ -18,7 +18,7 @@ using System.Reflection;
 namespace Hl7.Fhir.Introspection
 {
     [CLSCompliant(false)]
-    [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
     public class DeclaredTypeAttribute : VersionedAttribute
     {
         public DeclaredTypeAttribute()

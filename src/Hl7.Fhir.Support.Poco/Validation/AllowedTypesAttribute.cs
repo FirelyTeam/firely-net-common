@@ -28,8 +28,6 @@ namespace Hl7.Fhir.Validation
        
         public Type[] Types { get; set; }
 
-        public bool IsOpen { get; set; }
-
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
             if (value == null) return ValidationResult.Success;

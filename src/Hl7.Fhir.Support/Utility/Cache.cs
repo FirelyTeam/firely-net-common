@@ -15,11 +15,13 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Utility
 {
-    internal class CacheItem<V> 
+    internal class CacheItem<V>
     {
+        public CacheItem(V value) => _value = value;
+
         public DateTimeOffset LastAccessed { get; private set; } = DateTimeOffset.Now;
 
-        private V  _value;
+        private V _value;
         internal V Value
         {
             get
@@ -60,38 +62,59 @@ namespace Hl7.Fhir.Utility
         public CacheSettings Clone() => new CacheSettings(this);
     }
 
-    public class Cache<K, V>
+
+    public class Cache<K, V> where V : class
     {
         private readonly ConcurrentDictionary<K, CacheItem<V>> _cached;
         private readonly int _minimumCacheSize;
+        private readonly Func<K, CacheItem<V>> _retriever;
 
         public CacheSettings Settings { get; private set; }
 
         public Func<K, V> Retrieve { get; }
 
-        public Cache(Func<K, V> retrieveFunction) : this(retrieveFunction, CacheSettings.CreateDefault())  { }
+        public Cache() : this(CacheSettings.CreateDefault()) { }
+
+        public Cache(Func<K, V> retrieveFunction) : this(retrieveFunction, CacheSettings.CreateDefault()) { }
+
+        public Cache(CacheSettings settings) : this(null, CacheSettings.CreateDefault()) { }
 
         public Cache(Func<K, V> retrieveFunction, CacheSettings settings)
         {
+            if (settings is null) throw new ArgumentNullException(nameof(settings));
+
             _cached = new ConcurrentDictionary<K, CacheItem<V>>();
             Retrieve = retrieveFunction;
+            _retriever = Retrieve != null ?
+                key => new CacheItem<V>(retrieveFunction(key))
+                : default(Func<K, CacheItem<V>>);
             Settings = settings.Clone();
             _minimumCacheSize = (int)Math.Floor(Settings.MaxCacheSize * 0.9);
         }
 
         public V GetValue(K key)
         {
-            if (!_cached.TryGetValue(key, out var result))
+            if (_retriever == null)
             {
-                result = new CacheItem<V>() { Value = Retrieve(key) };
-                _cached.TryAdd(key, result);
-                EnforceMaxItems();
+                return _cached.TryGetValue(key, out var foundItem) ? foundItem.Value : null;
             }
-
-            return result.Value;
+            else
+            {
+                var cachedItem = _cached.GetOrAdd(key, _retriever);
+                enforceMaxItems();
+                return cachedItem.Value;
+            }
         }
 
-        private void EnforceMaxItems()
+        public V GetValueOrAdd(K key, V value)
+        {
+            var cachedItem = _cached.GetOrAdd(key, new CacheItem<V>(value));
+            enforceMaxItems();
+
+            return cachedItem.Value;
+        }
+
+        private void enforceMaxItems()
         {
             var currentCount = _cached.Count();
             if (currentCount > Settings.MaxCacheSize)
