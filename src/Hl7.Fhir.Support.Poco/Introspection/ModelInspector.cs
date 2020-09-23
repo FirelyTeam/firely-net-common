@@ -11,6 +11,7 @@ using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace Hl7.Fhir.Introspection
@@ -39,7 +40,7 @@ namespace Hl7.Fhir.Introspection
         private readonly ConcurrentDictionary<Type, ClassMapping> _classMappingsByType =
              new ConcurrentDictionary<Type, ClassMapping>();
 
-        public void Import(Assembly assembly)
+        public IReadOnlyList<IStructureDefinitionSummary> Import(Assembly assembly)
         {
             if (assembly == null) throw Error.ArgumentNull(nameof(assembly));
 
@@ -49,8 +50,7 @@ namespace Hl7.Fhir.Introspection
             IEnumerable<Type> exportedTypes = assembly.ExportedTypes;
 #endif
 
-            foreach (Type type in exportedTypes)
-                ImportType(type);
+            return exportedTypes.Select(t => ImportType(t)).ToList();
         }
 
         public IStructureDefinitionSummary Provide(string canonical)
@@ -72,11 +72,11 @@ namespace Hl7.Fhir.Introspection
 
         public ClassMapping ImportType(Type type)
         {
-            // Don't import types that aren't marked with [FhirType]
-            if (ClassMapping.GetAttribute<FhirTypeAttribute>(type, _fhirVersion) == null) return null;
-
             if (_classMappingsByType.TryGetValue(type, out var mapping))
                 return mapping;     // no need to import the same type twice
+
+            // Don't import types that aren't marked with [FhirType]
+            if (ClassMapping.GetAttribute<FhirTypeAttribute>(type.GetTypeInfo(), _fhirVersion) == null) return null;
 
             // When explicitly importing a (newer?) class mapping for the same
             // model type name, overwrite the old entry.
