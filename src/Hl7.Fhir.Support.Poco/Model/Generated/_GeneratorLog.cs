@@ -25,7 +25,12 @@
 // XHtml.cs
 // BackboneElement.cs
 // BackboneType.cs
+// CodeableConcept.cs
 // Coding.cs
 // DataType.cs
+// Identifier.cs
 // Meta.cs
+// Period.cs
+// ResourceReference.cs
+// DomainResource.cs
 // Resource.cs
