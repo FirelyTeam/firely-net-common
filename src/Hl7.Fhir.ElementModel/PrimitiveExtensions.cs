@@ -30,7 +30,7 @@ namespace Hl7.Fhir.ElementModel
             Code convertQuantityToCoding(ITypedElement inst)
             {
                 var q = inst.ParseQuantity();
-                return new Code(code: q.Unit, system: q.System ?? "http://unitsofmeasure.org");
+                return new Code(code: q.Unit, system: q.System == QuantityUnitSystem.UCUM ? Quantity.UCUM : null);
             }
 
             object parseExtension(ITypedElement inst)
