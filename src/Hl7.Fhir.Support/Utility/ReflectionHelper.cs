@@ -11,7 +11,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace Hl7.Fhir.Utility
 {
@@ -197,8 +196,8 @@ namespace Hl7.Fhir.Utility
     }
 #endif
 
-#if NETSTANDARD1_1
-    public static class NetStd11TypeExtensions
+#if NETSTANDARD1_6
+    public static class NetStd16TypeExtensions
     {
         public static bool IsAssignableFrom(this Type a, Type b) =>
             a.GetTypeInfo().IsAssignableFrom(b.GetTypeInfo());
@@ -240,10 +239,10 @@ namespace Hl7.Fhir.Utility
 
         public static PropertyInfo FindProperty(Type t, string name)
         {
-#if NETSTANDARD1_1
+#if NETSTANDARD1_6
             return t.GetRuntimeProperties().FirstOrDefault(rtp => rtp.Name == name);
 #else
-            return t.GetProperty(name,BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            return t.GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 #endif
 
         }
@@ -257,8 +256,8 @@ namespace Hl7.Fhir.Utility
         {
             if (t == null) throw Error.ArgumentNull("t");
 
-#if NETSTANDARD1_1
-            // Unfortunately, netstandard1.0 has no method to filter on bindingflags :-(
+#if NETSTANDARD1_6
+            // Unfortunately, netstandard1.6 has no method to filter on bindingflags :-(
             // Have to do it ourselves
             return t.GetRuntimeProperties().Where(p => hasPublicInstanceReadAccessor(p));
             //return t.GetRuntimeProperties(); //(BindingFlags.Instance | BindingFlags.Public);
@@ -287,7 +286,7 @@ namespace Hl7.Fhir.Utility
 
         internal static ConstructorInfo GetDefaultPublicConstructor(Type t)
         {
-#if NETSTANDARD1_1
+#if NETSTANDARD1_6
             return t.GetTypeInfo().DeclaredConstructors.FirstOrDefault(s => s.GetParameters().Length == 0 && s.IsPublic && !s.IsStatic);
 #else
             BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Public;

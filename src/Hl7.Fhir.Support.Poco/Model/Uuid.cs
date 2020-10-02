@@ -37,43 +37,8 @@ using System;
 
 namespace Hl7.Fhir.Model
 {
-    /// <summary>
-    /// Primitive Type uuid
-    /// </summary>
-#if !NETSTANDARD1_1
-    [Serializable]
-#endif
-    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    [FhirType("uuid")]
-    [DataContract]
-    public class Uuid : PrimitiveType, IStringValue
+    public partial class Uuid
     {
-        public override string TypeName { get { return "uuid"; } }
-        
-        // Must conform to the pattern "urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-        public const string PATTERN = @"urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
-
-		public Uuid(string value)
-		{
-			Value = value;
-		}
-
-		public Uuid(): this(null) {}
-
-        /// <summary>
-        /// Primitive value of the element
-        /// </summary>
-        [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
-        [UuidPattern]
-        [DataMember]
-        public string Value
-        {
-            get { return (string)ObjectValue; }
-            set { ObjectValue = value; OnPropertyChanged("Value"); }
-        }
-
-        public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
-
         public static Uuid Generate()
         {
             var newUuid = "urn:uuid:" + System.Guid.NewGuid().ToString();

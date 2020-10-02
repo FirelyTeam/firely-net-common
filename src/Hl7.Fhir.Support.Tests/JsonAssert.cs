@@ -6,12 +6,12 @@
  * available at https://github.com/FirelyTeam/fhir-net-api/blob/master/LICENSE
  */
 
-using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Hl7.Fhir.Utility;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Tests
 {
@@ -51,7 +51,7 @@ namespace Hl7.Fhir.Tests
                         }
                         AreSame(filename, exP.Value, acP.Value, errors);
                         return;
-                    }             
+                    }
                 case JContainer exC:
                     {
                         JContainer acC = (JContainer)actual;
@@ -68,7 +68,7 @@ namespace Hl7.Fhir.Tests
                 if (t is JProperty p)
                 {
                     if (p.Name == "fhir_comments") return false;
-                    if(p.Name.StartsWith("_") && p.Value is JObject jo)
+                    if (p.Name.StartsWith("_") && p.Value is JObject jo)
                     {
                         if (jo.Count == 1 && jo.ContainsKey("fhir_comments")) return false;
                     }
@@ -81,7 +81,7 @@ namespace Hl7.Fhir.Tests
             var expecteds = expected.Children().Where(c => isRelevant(c));
             var actuals = actual.Children().Where(c => isRelevant(c));
 
-            if(expecteds.First().Type == JTokenType.Property)
+            if (expecteds.First().Type == JTokenType.Property)
             {
                 expecteds = expecteds.OrderBy(p => ((JProperty)p).Name);
                 actuals = actuals.Cast<JProperty>().OrderBy(p => p.Name);
@@ -107,10 +107,11 @@ namespace Hl7.Fhir.Tests
 
         public static void compareValues(string filename, object exp, object act, string path, List<string> errors)
         {
+
             if (exp == null && act == null) return;
             else if (exp != null && act != null)
             {
-                if(exp.GetType() != act.GetType())
+                if (exp.GetType() != act.GetType())
                 {
                     errors.Add($"{filename}: The types of the values are not the same at '{path}'");
                     return;
@@ -127,7 +128,22 @@ namespace Hl7.Fhir.Tests
                         return;
                     }
 
-                        var actS = (string)act;
+                    var actS = (string)act;
+
+                    if (path.EndsWith("meta.lastUpdated"))
+                    {
+                        // hack: ignore meta.lastUpdated values
+
+                        if (P.DateTime.TryParse(actS, out var actualValue) &&
+                           P.DateTime.TryParse(expS, out var expectedValue))
+                        {
+                            if (!actualValue.Equals(expectedValue))
+                            {
+                                errors.Add($"{filename}: Values are not equal at '{path}', expected '{expected}', actual '{actual}'");
+                            }
+                            return;
+                        }
+                    }
                     // Hack for timestamps, binaries and narrative html
                     if (expS.EndsWith("+00:00")) expS = expS.Replace("+00:00", "Z");
                     if (actS.EndsWith("+00:00")) actS = actS.Replace("+00:00", "Z");
@@ -146,7 +162,7 @@ namespace Hl7.Fhir.Tests
                     actual = actS.Trim();
                 }
 
-                if (!Object.Equals(expected,actual))
+                if (!Object.Equals(expected, actual))
                 {
                     errors.Add($"{filename}: Values are not equal at '{path}', expected '{expected}', actual '{actual}'");
                     return;

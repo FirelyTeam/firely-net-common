@@ -36,41 +36,8 @@ using Hl7.Fhir.Specification;
 
 namespace Hl7.Fhir.Model
 {
-    /// <summary>
-    /// Primitive Type markdown
-    /// </summary>
-#if !NETSTANDARD1_1
-    [Serializable]
-#endif
-    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-
-    [FhirType("markdown")]
-    [DataContract]
-    public partial class Markdown : PrimitiveType, IStringValue
+    public partial class Markdown
     {
-        public override string TypeName { get { return "markdown"; } }
-
-        // Must conform to the pattern "[ \r\n\t\S]+"
-        public const string PATTERN = @"[ \r\n\t\S]+";
-
-        public Markdown(string value)
-		{
-			Value = value;
-		}
-
-		public Markdown(): this((string)null) {}
-
-        /// <summary>
-        /// Primitive value of the element
-        /// </summary>
-        [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
-        [DataMember]
-        public string Value
-        {
-            get { return (string)ObjectValue; }
-            set { ObjectValue = value; OnPropertyChanged("Value"); }
-        }
-
         public static bool IsValidValue(string value) => FhirString.IsValidValue(value);
     }
     

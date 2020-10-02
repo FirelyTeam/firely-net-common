@@ -29,16 +29,16 @@ namespace Hl7.Fhir.Tests.Introspection
             Assert.AreEqual("Way2", mapping.Name);
             Assert.AreEqual(typeof(Way2), mapping.NativeType);
 
-            Assert.IsFalse(ClassMapping.TryCreate(typeof(Way2), out _, "1.0.0"));
-            Assert.IsTrue(ClassMapping.TryCreate(typeof(Way2), out _, "2.0.0"));
-            Assert.IsTrue(ClassMapping.TryCreate(typeof(Way2), out _, "3.0.0"));
+            Assert.IsFalse(ClassMapping.TryCreate(typeof(Way2), out _, Specification.FhirRelease.DSTU1));
+            Assert.IsTrue(ClassMapping.TryCreate(typeof(Way2), out _, Specification.FhirRelease.DSTU2));
+            Assert.IsTrue(ClassMapping.TryCreate(typeof(Way2), out _, Specification.FhirRelease.STU3));
         }
 
 
         [TestMethod]
         public void TestDatatypeMappingCreation()
         {
-            Assert.IsTrue(ClassMapping.TryCreate(typeof(AnimalName), out var mapping, "10.0.0"));
+            Assert.IsTrue(ClassMapping.TryCreate(typeof(AnimalName), out var mapping, (Specification.FhirRelease)int.MaxValue));
             Assert.IsFalse(mapping.IsResource);
             Assert.AreEqual("AnimalName", mapping.Name);
             Assert.AreEqual(typeof(AnimalName), mapping.NativeType);
@@ -48,8 +48,8 @@ namespace Hl7.Fhir.Tests.Introspection
             Assert.AreEqual("AnimalName", mapping.Name);
             Assert.AreEqual(typeof(NewAnimalName), mapping.NativeType);
 
-            Assert.IsFalse(ClassMapping.TryCreate(typeof(ComplexNumber), out mapping, "1.0.0"));
-            Assert.IsTrue(ClassMapping.TryCreate(typeof(ComplexNumber), out mapping, "5.0.0"));
+            Assert.IsFalse(ClassMapping.TryCreate(typeof(ComplexNumber), out _, Specification.FhirRelease.DSTU1));
+            Assert.IsTrue(ClassMapping.TryCreate(typeof(ComplexNumber), out mapping, Specification.FhirRelease.R5));
             Assert.IsFalse(mapping.IsResource);
             Assert.AreEqual("Complex", mapping.Name);
             Assert.AreEqual(typeof(ComplexNumber), mapping.NativeType);
@@ -66,7 +66,7 @@ namespace Hl7.Fhir.Tests.Introspection
         public override IDeepCopyable DeepCopy() => throw new NotImplementedException(); 
     }
 
-    [FhirType("Way2", Since = "2.0.0")]
+    [FhirType("Way2", Since = Specification.FhirRelease.DSTU2)]
     public class Way2 : Resource 
     {
         public override IDeepCopyable DeepCopy() { throw new NotImplementedException(); } 
@@ -81,6 +81,6 @@ namespace Hl7.Fhir.Tests.Introspection
     [FhirType("AnimalName")]
     public class NewAnimalName : AnimalName { }
 
-    [FhirType("Complex", Since="2.0.0")]
+    [FhirType("Complex", Since=Specification.FhirRelease.DSTU2)]
     public class ComplexNumber { }
 }

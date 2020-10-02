@@ -139,6 +139,12 @@ namespace Hl7.FhirPath.Expressions
             t.Add("lower", (string f) => f.ToLower(), doNullProp: true);
             t.Add("toChars", (string f) => f.ToChars(), doNullProp: true);
             t.Add("substring", (string f, int a) => f.FpSubstring(a, null), doNullProp: true);
+            t.Add("trim", (string f) => f.Trim(), doNullProp: true);
+            t.Add("encode", (string f, string enc) => f.FpEncode(enc), doNullProp: true);
+            t.Add("decode", (string f, string enc) => f.FpDecode(enc), doNullProp: true);
+            t.Add("escape", (string f, string enc) => f.FpEscape(enc), doNullProp: true);
+            t.Add("unescape", (string f, string enc) => f.FpUnescape(enc), doNullProp: true);
+
             //special case: only focus should be Null propagated:
             t.Add(new CallSignature("substring", typeof(string), typeof(string), typeof(int), typeof(int?)),
                 InvokeeFactory.WrapWithPropNullForFocus((string f, int a, int? b) => f.FpSubstring(a, b)));

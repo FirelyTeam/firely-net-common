@@ -15,8 +15,6 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 
-#if !NETSTANDARD1_1
-
 namespace Hl7.Fhir.Serialization
 {
     /// <summary>
@@ -378,5 +376,3 @@ namespace Hl7.Fhir.Serialization
 
     }
 }
-
-#endif

@@ -11,14 +11,13 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
 
-#if !NETSTANDARD1_1
+#if !NETSTANDARD1_6
 using System.Xml.Schema;
 #endif
 
@@ -148,7 +147,7 @@ namespace Hl7.Fhir.Utility
             }
         }
 
-        public static string WriteXmlToString(Action<XmlWriter> serializer, bool pretty=false, bool appendNewLine = false)
+        public static string WriteXmlToString(Action<XmlWriter> serializer, bool pretty = false, bool appendNewLine = false)
         {
             StringBuilder sb = new StringBuilder();
 
@@ -304,24 +303,7 @@ namespace Hl7.Fhir.Utility
             return resultRE;
         }
 
-        //#if !NETSTANDARD1_1
-        //        public static void JoinFiles(string[] inputFilePaths, string outputFilePath)
-        //        {
-        //            using (var outputStream = File.Create(outputFilePath))
-        //            {
-        //                foreach (var inputFilePath in inputFilePaths)
-        //                {
-        //                    using (var inputStream = File.OpenRead(inputFilePath))
-        //                    {
-        //                        // Buffer size can be passed as the second argument.
-        //                        inputStream.CopyTo(outputStream);
-        //                    }
-        //                }
-        //            }
-        //        }
-        //#endif
-
-#if !NETSTANDARD1_1
+#if !NETSTANDARD1_6
         public static string[] RunFhirXhtmlSchemaValidation(string xmlText)
         {
             try
@@ -387,12 +369,7 @@ namespace Hl7.Fhir.Utility
 #endif
 
 
-
-#if NETSTANDARD1_1
-        private static Regex _re = new Regex("(&[a-zA-Z0-9]+;)", RegexOptions.CultureInvariant);
-#else
         private static Regex _re = new Regex("(&[a-zA-Z0-9]+;)", RegexOptions.Compiled | RegexOptions.CultureInvariant);
-#endif
         private static Dictionary<string, string> _xmlReplacements;
         private static Dictionary<string, string> getXmlReplacements()
         {
