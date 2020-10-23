@@ -71,7 +71,7 @@ namespace Hl7.Fhir.Tests.Introspection
         [TestMethod]
         public void TestPropsWithRedirect()
         {
-            _ = ClassMapping.TryCreate(typeof(TypeWithCodeOfT), out var mapping);
+            Assert.IsTrue(ClassMapping.TryCreate(typeof(TypeWithCodeOfT), out var mapping));
 
             var propMapping = mapping.FindMappedElementByName("type1");
             Assert.AreEqual(typeof(Code<SomeEnum>), propMapping.ImplementingType);

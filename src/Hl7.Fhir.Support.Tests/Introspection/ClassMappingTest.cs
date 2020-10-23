@@ -11,6 +11,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Introspection;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Reflection;
+using System.Collections.Generic;
 
 namespace Hl7.Fhir.Tests.Introspection
 {
@@ -77,6 +80,40 @@ namespace Hl7.Fhir.Tests.Introspection
             Assert.IsTrue(ClassMapping.TryCreate(typeof(Way2), out _, Specification.FhirRelease.DSTU2));
             Assert.IsTrue(ClassMapping.TryCreate(typeof(Way2), out _, Specification.FhirRelease.STU3));
         }
+
+
+        /// <summary>
+        /// Test for issue 556 (https://github.com/FirelyTeam/fhir-net-api/issues/556) 
+        /// </summary>
+        [TestMethod]
+        public void GetMappingsInParrallel()
+        {
+            var nrOfParrallelTasks = 50;
+
+            var fhirTypesInCommonAssembly = typeof(Base).Assembly.GetTypes()
+                .Where(t => t.GetCustomAttributes<FhirTypeAttribute>().Any() && t != typeof(Code<>));
+
+            var typesToInspect = new List<Type>();
+            while (typesToInspect.Count < 500)
+                typesToInspect.AddRange(fhirTypesInCommonAssembly);
+
+            // first, check this work without parrallellism
+            foreach (var type in typesToInspect) task(type);
+
+            // then do it in parrallel
+            var result = Parallel.ForEach(
+                    typesToInspect,
+                    new ParallelOptions() { MaxDegreeOfParallelism = nrOfParrallelTasks },
+                    task);
+
+            Assert.IsTrue(result.IsCompleted);
+
+            // Create mapping (presumably once) && also touch properties to initialize them as well.
+            static void task(Type t) => Assert.IsTrue(ClassMapping.TryCreate(t, out var map) && map.PropertyMappings != null);
+        }
+
+
+
 
 
         [TestMethod]

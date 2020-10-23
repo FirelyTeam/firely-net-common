@@ -22,7 +22,7 @@ namespace Hl7.Fhir.Serialization
         public PocoBuilder(ModelInspector inspector, PocoBuilderSettings settings = null)
         {
             _settings = settings?.Clone() ?? new PocoBuilderSettings();
-            _inspector = inspector;
+            _inspector = inspector ?? throw new ArgumentNullException(nameof(inspector));
         }
 
         private readonly PocoBuilderSettings _settings;
