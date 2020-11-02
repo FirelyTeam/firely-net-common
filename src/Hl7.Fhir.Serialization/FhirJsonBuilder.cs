@@ -8,7 +8,6 @@
 
 
 using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Language;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using Newtonsoft.Json.Linq;
@@ -72,8 +71,11 @@ namespace Hl7.Fhir.Serialization
 
         // These are the "primitive" FHIR instance types that possibly need a separate element/_element
         // serialization in json.
-        private static readonly string[] primitiveTypes = { "boolean",
+        private static readonly string[] primitiveTypes =
+        {
+            "boolean",
              "integer",
+             "integer64",
              "unsignedInt",
              "positiveInt",
              "time",
@@ -91,7 +93,8 @@ namespace Hl7.Fhir.Serialization
              "url",
              "markdown",
              "base64Binary",
-             "xhtml" };
+             "xhtml"
+        };
 
 
         private (JToken first, JObject second) buildNode(ITypedElement node)

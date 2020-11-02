@@ -27,21 +27,19 @@
   
 
 */
+using Hl7.Fhir.Introspection;
+using Hl7.Fhir.Specification;
+using Hl7.Fhir.Validation;
 using System;
 using System.Collections.Generic;
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Validation;
 using System.Runtime.Serialization;
-using Hl7.Fhir.Specification;
 
 namespace Hl7.Fhir.Model
 {
     /// <summary>
     /// Base for all elements
     /// </summary>
-#if !NETSTANDARD1_1
     [Serializable]
-#endif
     [DataContract]
     [FhirType("Element")]
     public abstract class Element : Base, IExtendable
@@ -54,7 +52,8 @@ namespace Hl7.Fhir.Model
         /// <summary>
         /// Unique id for inter-element referencing
         /// </summary>
-        [FhirElement("id", XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 10, TypeRedirect = typeof(FhirString))]
+        [FhirElement("id", XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 10)]
+        [DeclaredType(Type = typeof(FhirString))]
         [DataMember]
         public string ElementId
         {

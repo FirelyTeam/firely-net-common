@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * Copyright (c) 2018, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
  * 
@@ -199,62 +199,108 @@ namespace Hl7.Fhir.ElementModel
 
         private string deriveInstanceType(ISourceNode current, IElementDefinitionSummary info)
         {
-            string instanceType = null;
             var resourceTypeIndicator = current.GetResourceTypeIndicator();
 
+            // First, handle the case where this (appears to be) a resource.
             if (info.IsResource)
             {
-                instanceType = resourceTypeIndicator;
-                if (instanceType == null) raiseTypeError($"Element '{current.Name}' should contain a resource, but does not actually contain one", current, location: current.Location);
+                if (resourceTypeIndicator == null) raiseTypeError($"Element '{current.Name}' should contain a resource, but does not actually contain one", current, location: current.Location);
+                return resourceTypeIndicator;
             }
-            else if (!info.IsResource && resourceTypeIndicator != null)
+            else if (resourceTypeIndicator != null)
             {
                 raiseTypeError($"Element '{current.Name}' is not a contained resource, but seems to contain a resource of type '{resourceTypeIndicator}'.", current, location: current.Location);
-                instanceType = resourceTypeIndicator;
+                return resourceTypeIndicator;
             }
-            else if (info.IsChoiceElement)
+
+            // Now, it's a data element. But is a choice, so we need to take
+            // a look at the suffix on the element's name to figure out what we
+            // are dealing with.
+            if (info.IsChoiceElement)
             {
                 var suffix = current.Name.Substring(info.ElementName.Length);
 
                 if (string.IsNullOrEmpty(suffix))
                 {
                     raiseTypeError($"Choice element '{current.Name}' is not suffixed with a type.", current, location: current.Location);
-                    instanceType = null;
+                    return null;
                 }
+
+                suffix = normalizeSuffix(suffix);
+
+                // If any of the types is the abstract 'DataType' type, we'll just
+                // accept whatever type is mentioned, we have no real list to go on =>
+                // An example of where this happens is Extension.value[x], which is
+                // a POCO that is common to all (FHIR) datamodels, and since value[x] is an
+                // "open" types, we have no idea which types are allowed.
+                if (info.Type.Any(t => t.GetTypeName() == "DataType"))
+                    return suffix;
                 else
                 {
-                    instanceType = info.Type
+                    
+                    var isListed = info.Type
                         .OfType<IStructureDefinitionReference>()
                         .Select(t => t.ReferredType)
-                        .FirstOrDefault(t => string.Compare(t, suffix, System.StringComparison.OrdinalIgnoreCase) == 0);
+                        .Any(t => t == suffix);
 
-                    if (string.IsNullOrEmpty(instanceType))
+                    if (!isListed)
                         raiseTypeError($"Choice element '{current.Name}' is suffixed with unexpected type '{suffix}'", current, location: current.Location);
+
+                    return suffix;
                 }
+
+                string normalizeSuffix(string s)
+                {
+                    // Unfortunately, we decided to nicely capitalize the suffix, even for
+                    // primitives - luckily then, there's just a single list of primitives,
+                    // so we can "correct" them
+                    return suffixMap.TryGetValue(s, out var corrected) ? corrected : s;
+                };
             }
             else if (info.Representation == XmlRepresentation.TypeAttr) // May be used by models other then FHIR, e.g. CCDA represented by a StructureDefinition
             {
                 if (info.Type.Count() == 1)
                 {
-                    instanceType = info.Type.Single().GetTypeName();
+                    return info.Type.Single().GetTypeName();
                 }
                 else
                 {
                     var typeName = current.Children("type").FirstOrDefault()?.Text;
-                    if (typeName != null)
-                        instanceType = info.Type.Where(type => typeFromLogicalModelCanonical(type).Equals(typeName)).FirstOrDefault()?.GetTypeName();
-                    else
-                        instanceType = info.DefaultTypeName;
+                    return typeName != null
+                        ? info.Type.Where(type => typeFromLogicalModelCanonical(type).Equals(typeName)).FirstOrDefault()?.GetTypeName()
+                        : info.DefaultTypeName;
                 }
             }
-            else
-            {
-                var tp = info.Type.Single();
-                instanceType = tp.GetTypeName();
-            }
 
-            return instanceType;
+            var tp = info.Type.Single();
+            return tp.GetTypeName();
         }
+
+        private static readonly Dictionary<string, string> suffixMap = new Dictionary<string, string>()
+        {
+            { "Boolean", "boolean" },
+            { "Integer", "integer" },
+            { "Integer64", "integer64" },
+            { "UnsignedInt", "unsignedInt" },
+            { "PositiveInt","positiveInt" },
+            { "Time","time" },
+            { "Date","date" },
+            { "Instant","instant" },
+            { "DateTime", "dateTime" },
+            { "Decimal","decimal" },
+            { "String", "string" },
+            { "Code","code" },
+            { "Id","id" },
+            { "Uri","uri" },
+            { "Oid","oid" },
+            { "Uuid", "uuid" },
+            { "Canonical","canonical" },
+            { "Url", "url" },
+            { "Markdown", "markdown" },
+            { "Base64Binary", "base64Binary" },
+            { "Xhtml","xhtml" }
+        };
+
 
         private string typeFromLogicalModelCanonical(ITypeSerializationInfo info)
         {

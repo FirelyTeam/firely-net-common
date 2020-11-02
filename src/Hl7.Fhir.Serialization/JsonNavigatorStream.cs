@@ -14,7 +14,7 @@ using System;
 using System.Collections;
 using System.IO;
 
-#if !NETSTANDARD1_1
+#if !NETSTANDARD1_6
 
 namespace Hl7.Fhir.Serialization
 {
