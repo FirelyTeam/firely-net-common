@@ -66,7 +66,7 @@ namespace Hl7.Fhir.Model
         //}
         
 
-        [Obsolete("Use the TypeMember member instead, or TryDeriveResourceType() to derive the ResourceType from this name.")]
+        [Obsolete("Use the TypeMember member instead, or TryDeriveResourceType() to derive the ResourceType from this name.", true)]
         public object ResourceType => throw new NotSupportedException($"{nameof(ResourceType)} is obsolete and no longer supported.");
 
         /// <summary>
