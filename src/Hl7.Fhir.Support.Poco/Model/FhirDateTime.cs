@@ -44,7 +44,7 @@ namespace Hl7.Fhir.Model
         {
         }
 
-        [Obsolete("Use FhirDateTime(DateTimeOffset dt) instead", true)]
+        [Obsolete("Use FhirDateTime(DateTimeOffset dt) instead")]
         public FhirDateTime(DateTime dt) : this(new DateTimeOffset(dt))
         {
         }
