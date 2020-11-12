@@ -15,7 +15,7 @@ using Hl7.Fhir.Utility;
 namespace Hl7.Fhir.Tests.Introspection
 {
     [TestClass]
-	public class ModelInspectorTest
+    public class VersionAwarePocoProvTest
     {
         [TestMethod]
         public void TestResourceNameResolving()
@@ -25,7 +25,7 @@ namespace Hl7.Fhir.Tests.Introspection
             inspector.ImportType(typeof(Way));
             inspector.ImportType(typeof(Way2));
 
-            var way = inspector.FindClassMapping("wAy");
+            var way = inspector.FindClassMapping("Way");
             Assert.IsNotNull(way);
             Assert.AreEqual(way.NativeType, typeof(Way));
 
@@ -54,14 +54,13 @@ namespace Hl7.Fhir.Tests.Introspection
             // Should also have found the abstract classes
             Assert.IsNotNull(inspector.FindClassMapping("Element"));
             Assert.IsNotNull(inspector.FindClassMapping(typeof(Resource)));
-           
+
             // The open generic Code<> should not be there
             var codeOfT = inspector.FindClassMapping(typeof(Code<>));
             Assert.IsNull(codeOfT);
         }
 
-   }
-
+    }
 
     [FhirEnumeration("SomeEnum")]
     public enum SomeEnum { Member, AnotherMember }

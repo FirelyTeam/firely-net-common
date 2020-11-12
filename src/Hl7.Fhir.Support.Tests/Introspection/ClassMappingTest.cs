@@ -10,12 +10,59 @@ using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Introspection;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Reflection;
+using System.Collections.Generic;
 
 namespace Hl7.Fhir.Tests.Introspection
 {
     [TestClass]
     public class ClassMappingTest
     {
+        [TestMethod]
+        public void TestReflectionCache()
+        {
+            var way = ReflectionCache.Current.Get(typeof(Way));
+            var way2 = ReflectionCache.Current.Get(typeof(Way2));
+            var way3 = ReflectionCache.Current.Get(typeof(Way));
+            _ = ReflectionCache.Current.Get(typeof(string));
+            _ = ReflectionCache.Current.Get(typeof(int));
+
+            Assert.AreSame(way, way3, "Reflected types don't seem to be cached");
+            Assert.AreNotSame(way, way2);
+        }
+
+        [TestMethod]
+        public void Test‎‎‎ReflectedTypeCreation()
+        {
+            var way = new ReflectedType(typeof(Way));
+            Assert.AreEqual(typeof(Way), way.Reflected);
+            Assert.AreEqual(4, way.Attributes.Count);    // my 3 + 1 DebuggerDisplayAttribute
+
+            // Test properties are reflected only once
+            var wayProps = way.Properties;
+            var wayProps2 = way.Properties;
+            Assert.AreSame(wayProps, wayProps2, "Properties don't seem to be cached");
+
+            // Test list all properties
+            var onlyMyProps = wayProps.Where(p => p.Reflected.DeclaringType == typeof(Way));
+            Assert.AreEqual(1, onlyMyProps.Count());
+            Assert.IsTrue(wayProps.Count > 1);
+
+            // Test get property by name
+            Assert.IsFalse(way.TryGetProperty("xxx", out var _));
+            Assert.IsTrue(way.TryGetProperty("Member", out var memberProp));
+            Assert.IsTrue(onlyMyProps.Contains(memberProp));
+            Assert.AreEqual("Member", memberProp.Name);
+
+            // Test getter/setter
+            var wayInstance = new Way();
+            memberProp.Set(wayInstance, "test");
+            Assert.AreEqual("test", memberProp.Get(wayInstance));
+            Assert.AreEqual("test", wayInstance.Member);
+        }
+
         [TestMethod]
         public void TestResourceMappingCreation()
         {
@@ -33,6 +80,40 @@ namespace Hl7.Fhir.Tests.Introspection
             Assert.IsTrue(ClassMapping.TryCreate(typeof(Way2), out _, Specification.FhirRelease.DSTU2));
             Assert.IsTrue(ClassMapping.TryCreate(typeof(Way2), out _, Specification.FhirRelease.STU3));
         }
+
+
+        /// <summary>
+        /// Test for issue 556 (https://github.com/FirelyTeam/fhir-net-api/issues/556) 
+        /// </summary>
+        [TestMethod]
+        public void GetMappingsInParrallel()
+        {
+            var nrOfParrallelTasks = 50;
+
+            var fhirTypesInCommonAssembly = typeof(Base).Assembly.GetTypes()
+                .Where(t => t.GetCustomAttributes<FhirTypeAttribute>().Any() && t != typeof(Code<>));
+
+            var typesToInspect = new List<Type>();
+            while (typesToInspect.Count < 500)
+                typesToInspect.AddRange(fhirTypesInCommonAssembly);
+
+            // first, check this work without parrallellism
+            foreach (var type in typesToInspect) task(type);
+
+            // then do it in parrallel
+            var result = Parallel.ForEach(
+                    typesToInspect,
+                    new ParallelOptions() { MaxDegreeOfParallelism = nrOfParrallelTasks },
+                    task);
+
+            Assert.IsTrue(result.IsCompleted);
+
+            // Create mapping (presumably once) && also touch properties to initialize them as well.
+            static void task(Type t) => Assert.IsTrue(ClassMapping.TryCreate(t, out var map) && map.PropertyMappings != null);
+        }
+
+
+
 
 
         [TestMethod]
@@ -57,12 +138,25 @@ namespace Hl7.Fhir.Tests.Introspection
     }
 
 
+    [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
+    sealed class TestAttribute : Attribute
+    {
+        public TestAttribute(string data) => PositionalString = data;
+
+        public string PositionalString { get; private set; }
+    }
+
+
     /*
      * Resource classes for tests 
      */
     [FhirType("Way")]
+    [Test("One")]
+    [Test("Two")]
     public class Way : Resource
     {
+        [Test("AttrA")]
+        public string Member { get; set; }
         public override IDeepCopyable DeepCopy() => throw new NotImplementedException(); 
     }
 

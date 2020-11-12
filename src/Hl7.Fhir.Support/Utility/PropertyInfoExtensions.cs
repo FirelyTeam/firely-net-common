@@ -83,7 +83,7 @@ namespace Hl7.Fhir.Utility
             il.Emit(OpCodes.Ret);
 
             var del = (Func<T, object, object>)setter.CreateDelegate(typeof(Func<T, object, object>));
-            Action<T, object> actionDelegate = (obj, val) => del(obj, val);
+            void actionDelegate(T obj, object val) => del(obj, val);
 
             return actionDelegate;
         }

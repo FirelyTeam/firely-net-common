@@ -15,11 +15,13 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Utility
 {
-    internal class CacheItem<V> 
+    internal class CacheItem<V>
     {
+        public CacheItem(V value) => _value = value;
+
         public DateTimeOffset LastAccessed { get; private set; } = DateTimeOffset.Now;
 
-        private V  _value;
+        private V _value;
         internal V Value
         {
             get
@@ -60,38 +62,77 @@ namespace Hl7.Fhir.Utility
         public CacheSettings Clone() => new CacheSettings(this);
     }
 
-    public class Cache<K, V>
+
+    public class Cache<K, V> where V : class
     {
         private readonly ConcurrentDictionary<K, CacheItem<V>> _cached;
         private readonly int _minimumCacheSize;
+        private readonly Func<K, CacheItem<V>> _retriever;
 
+        /// <summary>
+        /// The settings for changing the behaviour of the case. Passed into the constructor and readonly here.
+        /// </summary>
         public CacheSettings Settings { get; private set; }
 
+        /// <summary>
+        /// The function that will be called when a cache miss is detected. If null, cache misses result in 
+        /// a returned value of null for the given key.
+        /// </summary>
         public Func<K, V> Retrieve { get; }
 
-        public Cache(Func<K, V> retrieveFunction) : this(retrieveFunction, CacheSettings.CreateDefault())  { }
+        public Cache() : this(CacheSettings.CreateDefault()) { }
+
+        public Cache(Func<K, V> retrieveFunction) : this(retrieveFunction, CacheSettings.CreateDefault()) { }
+
+        public Cache(CacheSettings settings) : this(null, CacheSettings.CreateDefault()) { }
 
         public Cache(Func<K, V> retrieveFunction, CacheSettings settings)
         {
+            if (settings is null) throw new ArgumentNullException(nameof(settings));
+
             _cached = new ConcurrentDictionary<K, CacheItem<V>>();
             Retrieve = retrieveFunction;
+            _retriever = Retrieve != null ?
+                key => new CacheItem<V>(retrieveFunction(key))
+                : default(Func<K, CacheItem<V>>);
             Settings = settings.Clone();
             _minimumCacheSize = (int)Math.Floor(Settings.MaxCacheSize * 0.9);
         }
 
+        /// <summary>
+        /// Retrieves a value from the cahce by key. If missing, the retrieve function passed to the constructor will be called.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns>The requested value. If there is no retriever function set, this may be <c>null</c>.</returns>
         public V GetValue(K key)
         {
-            if (!_cached.TryGetValue(key, out var result))
+            if (_retriever == null)
             {
-                result = new CacheItem<V>() { Value = Retrieve(key) };
-                _cached.TryAdd(key, result);
-                EnforceMaxItems();
+                return _cached.TryGetValue(key, out var foundItem) ? foundItem.Value : null;
             }
-
-            return result.Value;
+            else
+            {
+                var cachedItem = _cached.GetOrAdd(key, _retriever);
+                enforceMaxItems();
+                return cachedItem.Value;
+            }
         }
 
-        private void EnforceMaxItems()
+        /// <summary>
+        /// Retrieves a value from the cache by key. If missing, the passed <paramref name="value"/> is returned and added to the cache.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public V GetValueOrAdd(K key, V value)
+        {
+            var cachedItem = _cached.GetOrAdd(key, new CacheItem<V>(value));
+            enforceMaxItems();
+
+            return cachedItem.Value;
+        }
+
+        private void enforceMaxItems()
         {
             var currentCount = _cached.Count();
             if (currentCount > Settings.MaxCacheSize)

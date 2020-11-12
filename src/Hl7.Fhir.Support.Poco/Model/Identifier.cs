@@ -28,49 +28,19 @@
 
 */
 
-
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Specification;
-using Hl7.Fhir.Utility;
 using System;
-using System.Runtime.Serialization;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Hl7.Fhir.Model;
+
 
 namespace Hl7.Fhir.Model
 {
-    [Serializable]
-    [FhirType("codeOfT")]
-    [DataContract]
-    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    [DeclaredType(Type=typeof(Code))]
-    public class Code<T> : PrimitiveType, INullableValue<T>, ISystemAndCode where T : struct
+    [System.Diagnostics.DebuggerDisplay(@"\{ Value={ValueElement.Value} System={System}}")]
+    public partial class Identifier
     {
-        static Code()
-        {
-            if (!typeof(T).IsEnum())
-                throw new ArgumentException("T must be an enumerated type");
-        }
+        public const string SYSTMEM_URI = "urn:ietf:rfc:3986";
 
-        public override string TypeName => "code";
-
-        public Code() : this(null) { }
-
-        public Code(T? value)
-        {
-            Value = value;
-        }
-
-        // Primitive value of element
-        [FhirElement("value", IsPrimitiveValue = true, XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 30)]
-        [DataMember]
-        public T? Value
-        {
-            get => ObjectValue != null ? EnumUtility.ParseLiteral<T>((string)ObjectValue) : null;
-
-            set => ObjectValue = value != null ? ((Enum)(object)value).GetLiteral() : null;
-        }
-
-        string ISystemAndCode.System => ((Enum)(object)Value).GetSystem();
-
-        string ISystemAndCode.Code => ObjectValue as string; // this is the literal
     }
 }
