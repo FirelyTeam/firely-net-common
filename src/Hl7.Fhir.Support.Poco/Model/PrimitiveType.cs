@@ -36,9 +36,7 @@ namespace Hl7.Fhir.Model
 
         public override IDeepCopyable CopyTo(IDeepCopyable other)
         {
-            var dest = other as PrimitiveType;
-
-            if (dest != null)
+            if (other is PrimitiveType dest)
             {
                 base.CopyTo(dest);
                 if (ObjectValue != null) ((PrimitiveType)other).ObjectValue = ObjectValue;
@@ -57,17 +55,16 @@ namespace Hl7.Fhir.Model
 
         public override bool IsExactly(IDeepComparable other)
         {
-            var otherT = other as PrimitiveType;
-            if (otherT == null) return false;
+            if (!(other is PrimitiveType otherT)) return false;
 
             if (!base.IsExactly(other)) return false;
 
-            var otherValue = ((PrimitiveType)other).ObjectValue;
+            var otherValue = otherT.ObjectValue;
 
             if (ObjectValue is byte[] bytes && otherValue is byte[] bytesOther)
                 return Enumerable.SequenceEqual(bytes, bytesOther);
             else
-                return Object.Equals(ObjectValue, ((PrimitiveType)other).ObjectValue);
+                return Object.Equals(ObjectValue, otherT.ObjectValue);
         }
 
         [IgnoreDataMember]

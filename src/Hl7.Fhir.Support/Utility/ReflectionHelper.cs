@@ -418,7 +418,12 @@ namespace Hl7.Fhir.Utility
 
         public static T GetAttribute<T>(MemberInfo member) where T : Attribute => member.GetCustomAttribute<T>();
 
-        public static IEnumerable<T> GetAttributes<T>(MemberInfo member) where T : Attribute => member.GetCustomAttributes<T>();
+        public static IEnumerable<Attribute> GetAttributes(MemberInfo member) => member.GetCustomAttributes();
+
+        public static IEnumerable<Attribute> GetAttributes(Type type) => type.GetTypeInfo().GetCustomAttributes();
+
+        public static IEnumerable<T> GetAttributes<T>(MemberInfo member) where T : Attribute 
+            => member.GetCustomAttributes<T>();
 
 
         internal static IEnumerable<FieldInfo> FindEnumFields(Type t)
