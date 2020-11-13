@@ -3,11 +3,11 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using System;
 using Hl7.Fhir.Utility;
+using System;
 
 namespace Hl7.Fhir.Serialization
 {
@@ -17,7 +17,7 @@ namespace Hl7.Fhir.Serialization
         {
         }
 
-     
+
         public bool CanCreate(Type type)
         {
             if (type == null) throw Error.ArgumentNull(nameof(type));

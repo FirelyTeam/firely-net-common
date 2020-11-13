@@ -3,11 +3,10 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Utility;
 using System;
 using P = Hl7.Fhir.ElementModel.Types;
@@ -38,7 +37,7 @@ namespace Hl7.Fhir.Serialization
                 // The POCO's know nothing about the special partial date/time classes used by ITypedElement, 
                 // instead FhirDateTime, Time and FhirDate all represent these values as simple strings.
                 if (primitiveValue is P.DateTime || primitiveValue is P.Time || primitiveValue is P.Date)
-                    return PrimitiveTypeConverter.ConvertTo(primitiveValue.ToString(), nativeType);                    
+                    return PrimitiveTypeConverter.ConvertTo(primitiveValue.ToString(), nativeType);
                 else
                     return PrimitiveTypeConverter.ConvertTo(primitiveValue, nativeType);
             }
