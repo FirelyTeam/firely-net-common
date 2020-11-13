@@ -80,15 +80,9 @@ namespace Hl7.FhirPath.Functions
                 {
                     return new List<ITypedElement>() { element };
                 }
-                else
-                {
-                    return Enumerable.Empty<ITypedElement>();
-                }
             }
-            else
-            {
-                return element.Children(name);
-            }
+            
+            return element.Children(name);
         }
 
         public static string FpJoin(this IEnumerable<ITypedElement> collection, string separator)
