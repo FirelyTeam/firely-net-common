@@ -3,17 +3,19 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 #nullable enable
 
 using System;
 using System.Xml;
+using static Hl7.Fhir.Utility.Result;
+using Hl7.Fhir.Utility;
 
 namespace Hl7.Fhir.ElementModel.Types
 {
-    public class Long : Any, IComparable, ICqlEquatable, ICqlOrderable
+    public class Long : Any, IComparable, ICqlEquatable, ICqlOrderable, ICqlConvertible
     {
         public Long() : this(default) { }
 
@@ -64,16 +66,44 @@ namespace Hl7.Fhir.ElementModel.Types
         public static bool operator >=(Long a, Long b) => a.CompareTo(b) >= 0;
 
         public override int GetHashCode() => Value.GetHashCode();
-        public override string ToString() => Value.ToString();
+        public override string ToString() => XmlConvert.ToString(Value);
 
         public static implicit operator long(Long i) => i.Value;
         public static implicit operator Decimal(Long i) => new Decimal(i.Value);
-        public static implicit operator Quantity(Long i) => new Quantity((decimal)i.Value, Quantity.UCUM_UNIT);
+        public static implicit operator Quantity(Long i) => new Quantity(i.Value, Quantity.UCUM_UNIT);
 
         public static explicit operator Long(long i) => new Long(i);
+        public static explicit operator Boolean(Long l) => ((ICqlConvertible)l).TryConvertToBoolean().ValueOrThrow();
+        public static explicit operator String(Long l) => ((ICqlConvertible)l).TryConvertToString().ValueOrThrow();
+        public static explicit operator Integer(Long l) => ((ICqlConvertible)l).TryConvertToInteger().ValueOrThrow();
 
         bool? ICqlEquatable.IsEqualTo(Any other) => other is { } ? Equals(other) : (bool?)null;
         bool ICqlEquatable.IsEquivalentTo(Any other) => Equals(other);
         int? ICqlOrderable.CompareTo(Any other) => other is { } ? CompareTo(other) : (int?)null;
+
+        Result<Boolean> ICqlConvertible.TryConvertToBoolean() =>
+              Value switch
+              {
+                  1 => Ok((Boolean)true),
+                  0 => Ok((Boolean)false),
+                  _ => CannotCastTo<Boolean>(this)
+              };
+
+        Result<Decimal> ICqlConvertible.TryConvertToDecimal() => Ok(new Decimal(Value));
+        Result<Quantity> ICqlConvertible.TryConvertToQuantity() => Ok(new Quantity(Value));
+        Result<Long> ICqlConvertible.TryConvertToLong() => Ok(this);
+
+        Result<Integer> ICqlConvertible.TryConvertToInteger() =>
+            Value >= int.MinValue && Value <= int.MaxValue ?
+                Ok(new Integer((int)Value)) : CannotCastTo<Integer>(this);
+
+        Result<String> ICqlConvertible.TryConvertToString() => Ok(new String(ToString()));
+        Result<Ratio> ICqlConvertible.TryConvertToRatio() => CannotCastTo<Ratio>(this);
+        Result<Time> ICqlConvertible.TryConvertToTime() => CannotCastTo<Time>(this);
+        Result<Code> ICqlConvertible.TryConvertToCode() => CannotCastTo<Code>(this);
+        Result<Concept> ICqlConvertible.TryConvertToConcept() => CannotCastTo<Concept>(this);
+        Result<Date> ICqlConvertible.TryConvertToDate() => CannotCastTo<Date>(this);
+        Result<DateTime> ICqlConvertible.TryConvertToDateTime() => CannotCastTo<DateTime>(this);
+
     }
 }

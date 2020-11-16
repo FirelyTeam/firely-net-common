@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Utility;
@@ -51,6 +51,10 @@ namespace Hl7.FhirPath.Expressions
             // HACK, for now, $this is special, and we handle in run-time, not compile time...
             if (expression.Name == "builtin.that")
                 return InvokeeFactory.GetThat;
+
+            // HACK, for now, $index is special, and we handle in run-time, not compile time...
+            if (expression.Name == "builtin.index")
+                return InvokeeFactory.GetIndex;
 
             // HACK, for now, %context is special, and we handle in run-time, not compile time...
             if (expression.Name == "context")

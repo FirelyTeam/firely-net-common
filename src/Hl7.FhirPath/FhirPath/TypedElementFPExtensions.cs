@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 using System;
@@ -55,55 +55,5 @@ namespace Hl7.FhirPath
             var evaluator = getCompiledExpression(expression);
             return evaluator.IsBoolean(value, input, ctx ?? EvaluationContext.CreateDefault());
         }
-
-        #region Obsolete members
-        [Obsolete("Use Select(this ITypedElement input) instead. Obsolete since 2018-10-17")]
-        public static IEnumerable<IElementNavigator> Select(this IElementNavigator input, string expression, EvaluationContext ctx = null)
-        {
-            return Select(input.ToTypedElement(), expression, ctx).Select(t => t.ToElementNavigator());
-        }
-
-        [Obsolete("Replace with the overload taking an EvaluationContext, initialized with the resource paramete. Obsolete since 2018-10-17r")]
-        public static IEnumerable<IElementNavigator> Select(this IElementNavigator input, string expression, IElementNavigator resource)
-        {
-            return Select(input.ToTypedElement(), expression, new EvaluationContext(resource)).Select(t => t.ToElementNavigator());
-        }
-
-        [Obsolete("Use Scalar(this ITypedElement input) instead. Obsolete since 2018-10-17")]
-        public static object Scalar(this IElementNavigator input, string expression, EvaluationContext ctx = null)
-        {
-            return Scalar(input.ToTypedElement(), expression, ctx);
-        }
-
-        [Obsolete("Replace with the overload taking an EvaluationContext, initialized with the resource parameter. Obsolete since 2018-10-17")]
-        public static object Scalar(this IElementNavigator input, string expression, IElementNavigator resource)
-        {
-            return Scalar(input.ToTypedElement(), expression, new EvaluationContext(resource));
-        }
-
-        [Obsolete("Use Predicate(this ITypedElement input) instead. Obsolete since 2018-10-17")]
-        public static bool Predicate(this IElementNavigator input, string expression, EvaluationContext ctx = null)
-        {
-            return Predicate(input.ToTypedElement(), expression, ctx);
-        }
-
-        [Obsolete("Replace with the overload taking an EvaluationContext, initialized with the resource parameter. Obsolete since 2018-10-17")]
-        public static bool Predicate(this IElementNavigator input, string expression, IElementNavigator resource)
-        {
-            return Predicate(input.ToTypedElement(), expression, new EvaluationContext(resource));
-        }
-
-        [Obsolete("Use IsBoolean(this ITypedElement input) instead. Obsolete since 2018-10-17")]
-        public static bool IsBoolean(this IElementNavigator input, string expression, bool value, EvaluationContext ctx = null)
-        {
-            return IsBoolean(input.ToTypedElement(), expression, value, ctx);
-        }
-
-        [Obsolete("Replace with the overload taking an EvaluationContext, initialized with the resource parameter. Obsolete since 2018-10-17")]
-        public static bool IsBoolean(this IElementNavigator input, string expression, bool value, IElementNavigator resource)
-        {
-            return IsBoolean(input.ToTypedElement(), expression, value, new EvaluationContext(resource));
-        }
-        #endregion
     }
 }

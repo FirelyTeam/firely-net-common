@@ -27,53 +27,10 @@
 
 */
 
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Specification;
-using Hl7.Fhir.Validation;
-using System;
-using System.Runtime.Serialization;
-using System.Text.RegularExpressions;
-
 namespace Hl7.Fhir.Model
 {
-    /// <summary>
-    /// Primitive Type oid
-    /// </summary>
-#if !NETSTANDARD1_1
-    [Serializable]
-#endif
-    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-
-    [FhirType("oid")]
-    [DataContract]
-    public class Oid : PrimitiveType, IStringValue
+    public partial class Oid
     {
-        public override string TypeName { get { return "oid"; } }
-
-        // Must conform to the pattern "urn:oid:[0-2](\.(0|[1-9][0-9]*))+"
-        public const string PATTERN = @"urn:oid:[0-2](\.(0|[1-9][0-9]*))+";
-
-        public Oid(string value)
-        {
-            Value = value;
-        }
-
-        public Oid() : this((string)null) { }
-
-        /// <summary>
-        /// Primitive value of the element
-        /// </summary>
-        [FhirElement("value", IsPrimitiveValue = true, XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 30)]
-        [OidPattern]
-        [DataMember]
-        public string Value
-        {
-            get { return (string)ObjectValue; }
-            set { ObjectValue = value; OnPropertyChanged("Value"); }
-        }
-
-        public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
-
         public FhirUri AsUri() => new FhirUri(Value);
     }
 

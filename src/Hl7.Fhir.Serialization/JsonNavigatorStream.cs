@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://github.com/FirelyTeam/fhir-net-api/blob/master/LICENSE
+ * available at https://github.com/FirelyTeam/firely-net-sdk/blob/master/LICENSE
  */
 
 using Hl7.Fhir.ElementModel;
@@ -14,7 +14,7 @@ using System;
 using System.Collections;
 using System.IO;
 
-#if !NETSTANDARD1_1
+#if !NETSTANDARD1_6
 
 namespace Hl7.Fhir.Serialization
 {
@@ -29,14 +29,6 @@ namespace Hl7.Fhir.Serialization
         private readonly bool _disposeStream;
         private JsonReader _reader;
         private (JObject element, string fullUrl)? _current = null;
-
-        /// <summary>Create a new <see cref="JsonNavigatorStream"/> instance for the specified serialized json resource file.</summary>
-        /// <param name="path">The filepath of a serialized json resource.</param>
-        [Obsolete("Use JsonNavigatorStream.FromPath()")]
-        public JsonNavigatorStream(string path) : this(new FileStream(path, FileMode.Open, FileAccess.Read))
-        {
-            //
-        }
 
         /// <summary>Create a new <see cref="JsonNavigatorStream"/> instance for the specified serialized json resource file.</summary>
         /// <param name="path">The filepath of a serialized json resource.</param>

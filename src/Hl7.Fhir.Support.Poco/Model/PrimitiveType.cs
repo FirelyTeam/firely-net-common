@@ -3,23 +3,20 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 
+using Hl7.Fhir.Introspection;
+using Hl7.Fhir.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Serialization;
-using Hl7.Fhir.Utility;
 
 namespace Hl7.Fhir.Model
 {
-#if !NETSTANDARD1_1
     [Serializable]
-#endif
     [FhirType("PrimitiveType")]
     [DataContract]
     public abstract class PrimitiveType : DataType
@@ -39,9 +36,7 @@ namespace Hl7.Fhir.Model
 
         public override IDeepCopyable CopyTo(IDeepCopyable other)
         {
-            var dest = other as PrimitiveType;
-
-            if (dest != null)
+            if (other is PrimitiveType dest)
             {
                 base.CopyTo(dest);
                 if (ObjectValue != null) ((PrimitiveType)other).ObjectValue = ObjectValue;
@@ -60,19 +55,19 @@ namespace Hl7.Fhir.Model
 
         public override bool IsExactly(IDeepComparable other)
         {
-            var otherT = other as PrimitiveType;
-            if (otherT == null) return false;
+            if (!(other is PrimitiveType otherT)) return false;
 
             if (!base.IsExactly(other)) return false;
 
-            var otherValue = ((PrimitiveType)other).ObjectValue;
+            var otherValue = otherT.ObjectValue;
 
             if (ObjectValue is byte[] bytes && otherValue is byte[] bytesOther)
                 return Enumerable.SequenceEqual(bytes, bytesOther);
             else
-                return Object.Equals(ObjectValue, ((PrimitiveType)other).ObjectValue);
+                return Object.Equals(ObjectValue, otherT.ObjectValue);
         }
 
+        [IgnoreDataMember]
         public override IEnumerable<Base> Children
         {
             get
@@ -81,6 +76,7 @@ namespace Hl7.Fhir.Model
             }
         }
 
+        [IgnoreDataMember]
         public override IEnumerable<ElementValue> NamedChildren
         {
             get

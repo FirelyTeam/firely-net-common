@@ -3,28 +3,26 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Xml.Linq;
-using Hl7.Fhir.Serialization;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Hl7.Fhir.Utility;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using System.Linq;
+using System.Xml.Linq;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Tests
 {
     public class XmlAssert
     {
-        public static void AreSame(string filename, XDocument expected, XDocument actual, bool ignoreSchemaLocation=false)
+        public static void AreSame(string filename, XDocument expected, XDocument actual, bool ignoreSchemaLocation = false)
         {
             areSame(actual.Root.Name.LocalName, expected.Root, actual.Root, ignoreSchemaLocation);
         }
 
-        public static void AreSame(string filename, string expected, string actual, bool ignoreSchemaLocation=false)
+        public static void AreSame(string filename, string expected, string actual, bool ignoreSchemaLocation = false)
         {
             XDocument exp = SerializationUtil.XDocumentFromXmlText(expected);
             XDocument act = SerializationUtil.XDocumentFromXmlText(actual);
@@ -38,10 +36,10 @@ namespace Hl7.Fhir.Tests
                 throw new AssertFailedException(String.Format("Expected element '{0}', actual '{1}' at '{2}'",
                     expected.Name.ToString(), actual.Name.ToString(), context));
 
-            bool mustCheckMe(XAttribute a) => a.IsNamespaceDeclaration == false && 
+            bool mustCheckMe(XAttribute a) => a.IsNamespaceDeclaration == false &&
                             (!ignoreSchemaLocation || a.Name != XmlNs.XSCHEMALOCATION);
 
-            if (expected.Attributes().Where(mustCheckMe).Count() != 
+            if (expected.Attributes().Where(mustCheckMe).Count() !=
                     actual.Attributes().Where(mustCheckMe).Count())
                 throw new AssertFailedException(
                     String.Format("Number of attributes are not the same in element '{0}'", context));
@@ -76,7 +74,7 @@ namespace Hl7.Fhir.Tests
                 var ex = expectedList[elemNr];
                 var ac = actualList[elemNr];
 
-                if(ex.Name.LocalName != currentName)
+                if (ex.Name.LocalName != currentName)
                 {
                     currentName = ex.Name.LocalName;
                     counter = 0;
@@ -90,6 +88,22 @@ namespace Hl7.Fhir.Tests
 
         public static void AssertAreTheSame(string context, string expected, string actual)
         {
+            if (context.EndsWith("meta[0].lastUpdated[0].value"))
+            {
+                // hack: ignore meta.lastUpdated values
+
+                if (P.DateTime.TryParse(actual, out var actualValue) &&
+                   P.DateTime.TryParse(expected, out var expectedValue))
+                {
+                    if (!actualValue.Equals(expectedValue))
+                    {
+                        throw new AssertFailedException(
+                   String.Format("Attributes are not the same at {0}. Expected: '{1}', actual '{2}'",
+                       context, expected, actual));
+                    }
+                    return;
+                }
+            }
             // Hack for timestamps, binaries and narrative html
             if (expected.EndsWith("+00:00")) expected = expected.Replace("+00:00", "Z");
             if (actual.EndsWith("+00:00")) actual = actual.Replace("+00:00", "Z");

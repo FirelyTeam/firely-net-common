@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 using System;
@@ -19,6 +19,8 @@ namespace Hl7.Fhir.Utility
         public bool Success => this is Ok<T>;
 
         public T ValueOrDefault(T d) => this is Ok<T> ok ? ok.Value : d;
+
+        public T ValueOrDefault() => this is Ok<T> ok ? ok.Value : default;
 
         public T ValueOrElse(Func<Exception, T> f) =>
             this switch

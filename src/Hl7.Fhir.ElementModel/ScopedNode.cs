@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 using Hl7.Fhir.Specification;
@@ -32,9 +32,6 @@ namespace Hl7.Fhir.ElementModel
 
         public ScopedNode(ITypedElement wrapped)
         {
-            //if (wrapped.GetElementDefinitionSummary() == null)
-            //    throw Error.Argument("ScopedNavigator can only be used on a navigator chain that supplies type information (e.g. TypedNavigator, PocoNavigator)", nameof(wrapped));
-
             Current = wrapped;
             if (Current is IExceptionSource ies && ies.ExceptionHandler == null)
                 ies.ExceptionHandler = (o, a) => ExceptionHandler.NotifyOrThrow(o, a);

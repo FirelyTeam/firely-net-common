@@ -29,21 +29,19 @@
 */
 
 
-using System;
-
 using Hl7.Fhir.Introspection;
-using System.Runtime.Serialization;
-using Hl7.Fhir.Utility;
 using Hl7.Fhir.Specification;
+using Hl7.Fhir.Utility;
+using System;
+using System.Runtime.Serialization;
 
 namespace Hl7.Fhir.Model
 {
-#if !NETSTANDARD1_1
     [Serializable]
-#endif
     [FhirType("codeOfT")]
     [DataContract]
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
+    [DeclaredType(Type=typeof(Code))]
     public class Code<T> : PrimitiveType, INullableValue<T>, ISystemAndCode where T : struct
     {
         static Code()

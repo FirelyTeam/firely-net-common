@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 using Hl7.Fhir.Language;
@@ -11,7 +11,6 @@ using Hl7.FhirPath.Expressions;
 using Hl7.FhirPath.Parser;
 using Hl7.FhirPath.Sprache;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Reflection;
 using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.FhirPath.Tests
@@ -52,9 +51,9 @@ namespace Hl7.FhirPath.Tests
             AssertParser.SucceedsMatch(parser, "doSomething ( 3.14 ) ", new FunctionCallExpression(AxisExpression.That, "doSomething", TypeSpecifier.Any,
                                 new ConstantExpression(3.14m)));
 
-            AssertParser.SucceedsMatch(parser, "doSomething('hi', 3.14, 3, $this, somethingElse(true))", new FunctionCallExpression(AxisExpression.That, "doSomething", TypeSpecifier.Any,
+            AssertParser.SucceedsMatch(parser, "doSomething('hi', 3.14, 3, $this, $index, somethingElse(true))", new FunctionCallExpression(AxisExpression.That, "doSomething", TypeSpecifier.Any,
                         new ConstantExpression("hi"), new ConstantExpression(3.14m), new ConstantExpression(3),
-                        AxisExpression.This,
+                        AxisExpression.This, AxisExpression.Index,
                         new FunctionCallExpression(AxisExpression.That, "somethingElse", TypeSpecifier.Any, new ConstantExpression(true))));
 
             AssertParser.SucceedsMatch(parser, "as(Patient)", new FunctionCallExpression(AxisExpression.That, "as", TypeSpecifier.Any, new ConstantExpression("Patient")));
@@ -112,7 +111,7 @@ namespace Hl7.FhirPath.Tests
             AssertParser.SucceedsMatch(parser, "78 'kg'", new P.Quantity(78m, "kg"));
             AssertParser.SucceedsMatch(parser, "78.0 'kg'", new P.Quantity(78m, "kg"));
             AssertParser.SucceedsMatch(parser, "78.0'kg'", new P.Quantity(78m, "kg"));
-            AssertParser.SucceedsMatch(parser, "4 months", new P.Quantity(4m, "{month}"));
+            AssertParser.SucceedsMatch(parser, "4 months", P.Quantity.ForCalendarDuration(4m, "month"));
             AssertParser.SucceedsMatch(parser, "4 'mo'", new P.Quantity(4m, "mo"));
             AssertParser.SucceedsMatch(parser, "1 '1'", new P.Quantity(1m, P.Quantity.UCUM_UNIT));
 

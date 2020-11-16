@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 using Hl7.Fhir.ElementModel.Adapters;
@@ -78,9 +78,6 @@ namespace Hl7.Fhir.ElementModel
         nav is IAnnotated ann ? ann.Annotations(type) : Enumerable.Empty<object>();
         public static T Annotation<T>(this ITypedElement nav) =>
             nav is IAnnotated ann ? ann.Annotation<T>() : default;
-
-        [Obsolete("IElementNavigator should be replaced by the ITypedElement interface, which is returned by the parsers")]
-        public static IElementNavigator ToElementNavigator(this ITypedElement node) => new TypedElementToElementNavAdapter(node);
 
         public static ISourceNode ToSourceNode(this ITypedElement node) => new TypedElementToSourceNodeAdapter(node);
 

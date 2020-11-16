@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://github.com/FirelyTeam/fhir-net-api/blob/master/LICENSE
+ * available at https://github.com/FirelyTeam/firely-net-sdk/blob/master/LICENSE
  */
 
 using Hl7.Fhir.ElementModel;
@@ -46,7 +46,7 @@ namespace Hl7.Fhir.Serialization
         public bool DisallowSchemaLocation => _settings.DisallowSchemaLocation;
         public bool PermissiveParsing => _settings.PermissiveParsing;
 
-#if !NETSTANDARD1_1
+#if !NETSTANDARD1_6
         public bool ValidateFhirXhtml => _settings.ValidateFhirXhtml;
 #endif
 
@@ -134,7 +134,7 @@ namespace Hl7.Fhir.Serialization
             // don't move into xhtml
             if (Current.AtXhtmlDiv())
             {
-#if !NETSTANDARD1_1
+#if !NETSTANDARD1_6
                 if (!PermissiveParsing && ValidateFhirXhtml)
                     ValidateXhtml(new XDocument(Current), this, this);
 #endif
@@ -294,7 +294,7 @@ namespace Hl7.Fhir.Serialization
                 return Enumerable.Empty<object>();
         }
 
-#if !NETSTANDARD1_1
+#if !NETSTANDARD1_6
         //public static void ValidateXhtml(string xmlText, IExceptionSource ies, object source)
         //{
         //    reportOnValidation(() =>

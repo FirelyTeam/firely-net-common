@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 using Hl7.Fhir.Language;
@@ -354,7 +354,7 @@ namespace Hl7.FhirPath.Expressions
             }
         }
 
-
+        public static readonly AxisExpression Index = new AxisExpression("index");
         public static readonly AxisExpression This = new AxisExpression("this");
         public static readonly AxisExpression That = new AxisExpression("that");
     }

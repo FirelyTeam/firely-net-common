@@ -29,18 +29,19 @@
 */
 
 
+using Hl7.Fhir.Introspection;
+using Hl7.Fhir.Specification;
+using Hl7.Fhir.Validation;
 using System;
 using System.Collections.Generic;
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Validation;
 using System.Runtime.Serialization;
-using Hl7.Fhir.Specification;
 
 namespace Hl7.Fhir.Model
 {
-#if !NETSTANDARD1_1
+    /// <summary>
+    /// Optional Extensions Element
+    /// </summary>
     [Serializable]
-#endif
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value} Url={_Url}}")]
     [FhirType("Extension")]
     [DataContract]
@@ -61,7 +62,8 @@ namespace Hl7.Fhir.Model
         /// <summary>
         /// identifies the meaning of the extension
         /// </summary>
-        [FhirElement("url", XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 30, TypeRedirect = typeof(FhirUri))]
+        [FhirElement("url", XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 30)]
+        [DeclaredType(Type = typeof(FhirUri))]
         [Cardinality(Min = 1, Max = 1)]
         [UriPattern]
         [DataMember]
@@ -78,7 +80,6 @@ namespace Hl7.Fhir.Model
         /// </summary>
         [FhirElement("value", InSummary = true, Order = 40, Choice = ChoiceType.DatatypeChoice)]
         [CLSCompliant(false)]
-        [AllowedTypes(IsOpen = true)]
         [DataMember]
         public Hl7.Fhir.Model.DataType Value
         {
@@ -149,8 +150,8 @@ namespace Hl7.Fhir.Model
                 // Extension elements 
                 foreach (var item in base.NamedChildren) yield return item;
                 if (Url != null) yield return new ElementValue("url", new FhirUri(Url));
-                if (Value != null) yield return new ElementValue ("value",Value);
+                if (Value != null) yield return new ElementValue("value", Value);
             }
-        } 
+        }
     }
 }

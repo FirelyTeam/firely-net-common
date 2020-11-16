@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 using System;
@@ -170,13 +170,5 @@ namespace Hl7.FhirPath.Expressions
         {
             table.Add(new CallSignature(name, typeof(string)), InvokeeFactory.Return(value));
         }
-
-        #region Obsolete members
-        [Obsolete("Use AddVar(this SymbolTable table, string name, ITypedElement value) instead. Obsolete since 2018-10-17")]
-        public static void AddVar(this SymbolTable table, string name, IElementNavigator value)
-        {
-            table.Add(new CallSignature(name, typeof(string)), InvokeeFactory.Return(value.ToTypedElement()));
-        }
-        #endregion
     }
 }

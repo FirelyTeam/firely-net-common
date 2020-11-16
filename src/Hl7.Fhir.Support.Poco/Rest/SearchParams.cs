@@ -1,4 +1,4 @@
-﻿/*
+/*
   Copyright (c) 2011-2012, HL7, Inc
   All rights reserved.
   
@@ -35,8 +35,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
-using Hl7.Fhir.Model;
-using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Utility;
 
 namespace Hl7.Fhir.Rest
@@ -48,12 +46,14 @@ namespace Hl7.Fhir.Rest
     {
         public SearchParams()
         {
-            Include = new List<string>();
-            RevInclude = new List<string>();
-            Sort = new List<Tuple<string, SortOrder>>();
+            Include = new List<(string, IncludeModifier)>();
+            RevInclude = new List<(string, IncludeModifier)>();
+            Sort = new List<(string, SortOrder)>();
             Parameters = new List<Tuple<string, string>>();
             Elements = new List<string>();
         }
+
+        public SearchParams(string name, string value) : this() => Add(name, value);
 
         /// <summary>
         /// List of all the search parameter that have some special meaning.
@@ -117,10 +117,24 @@ namespace Hl7.Fhir.Rest
                 if (!Int32.TryParse(value, out count) || count <= 0) throw Error.Format("Invalid {0}: '{1}' is not a positive integer".FormatWith(name, value));
                 Count = count;
             }
-            else if (name == SEARCH_PARAM_INCLUDE) addNonEmpty(name, Include, value);
-            else if (name == SEARCH_PARAM_REVINCLUDE) addNonEmpty(name, RevInclude, value);
+            else if (name.StartsWith(SEARCH_PARAM_INCLUDE + SEARCH_MODIFIERSEPARATOR))
+            {
+                if (Enum.TryParse<IncludeModifier>(name.Substring(SEARCH_PARAM_INCLUDE.Length + 1), ignoreCase: true, out var modifier))               
+                    addNonEmpty(name, Include, (value, modifier));               
+                else
+                    throw Error.Format($"Invalid include modifier in {name}");                
+            }
+            else if (name == SEARCH_PARAM_INCLUDE) addNonEmpty(name, Include, (value, IncludeModifier.None));
+            else if (name.StartsWith(SEARCH_PARAM_REVINCLUDE + SEARCH_MODIFIERSEPARATOR))
+            {
+                if (Enum.TryParse<IncludeModifier>(name.Substring(SEARCH_PARAM_REVINCLUDE.Length + 1), ignoreCase: true, out var modifier))
+                    addNonEmpty(name, RevInclude, (value, modifier));
+                else
+                    throw Error.Format($"Invalid revinclude modifier in {name}");
+            }
+            else if (name == SEARCH_PARAM_REVINCLUDE) addNonEmpty(name, RevInclude, (value, IncludeModifier.None));
             else if (name.StartsWith(SEARCH_PARAM_SORT + SEARCH_MODIFIERSEPARATOR))
-                throw Error.Format($"Invalid {SEARCH_PARAM_SORT}: encountered DSTU2 (modifier) based sort, please change to STU3 format");
+                throw Error.Format($"Invalid {SEARCH_PARAM_SORT}: encountered DSTU2 (modifier) based sort, please change to newer format");
             else if (name == SEARCH_PARAM_SORT)
             {
                 if(String.IsNullOrEmpty(value))
@@ -173,9 +187,9 @@ namespace Hl7.Fhir.Rest
             return newValue;
         }
 
-        private static void addNonEmpty(string paramName, IList<string> values, string value)
+        private static void addNonEmpty(string paramName, IList<(string path, IncludeModifier modifier)> values, (string path, IncludeModifier modifier) value)
         {
-            if (String.IsNullOrEmpty(value)) throw Error.Format("Invalid {0} value: it cannot be empty".FormatWith(paramName));
+            if (String.IsNullOrEmpty(value.path)) throw Error.Format("Invalid {0} value: it cannot be empty".FormatWith(paramName));
             values.Add(value);
         }
 
@@ -183,8 +197,8 @@ namespace Hl7.Fhir.Rest
         {
             foreach (var e in elements)
             {
-                var newTuple = e[0] == '-' ? Tuple.Create(e.Substring(1), SortOrder.Descending) :
-                            Tuple.Create(e, SortOrder.Ascending);
+                var newTuple = e[0] == '-' ? (e.Substring(1), SortOrder.Descending) :
+                           (e, SortOrder.Ascending);
                 Sort.Add(newTuple);                    
             }
         }
@@ -273,7 +287,7 @@ namespace Hl7.Fhir.Rest
         /// </summary>
         [NotMapped]
         [IgnoreDataMemberAttribute]
-        public IList<Tuple<string, SortOrder>> Sort { get; private set; }
+        public IList<(string, SortOrder)> Sort { get; private set; }
 
 
         public const string SEARCH_PARAM_INCLUDE = "_include";
@@ -284,14 +298,14 @@ namespace Hl7.Fhir.Rest
         /// </summary>
         [NotMapped]
         [IgnoreDataMemberAttribute]
-        public IList<string> Include { get; private set; }
+        public IList<(string, IncludeModifier)> Include { get; private set; }
 
 
         public const string SEARCH_PARAM_REVINCLUDE = "_revinclude";
 
         [NotMapped]
         [IgnoreDataMemberAttribute]
-        public IList<string> RevInclude { get; private set; }
+        public IList<(string, IncludeModifier)> RevInclude { get; private set; }
 
 
         public const string SEARCH_PARAM_CONTAINED = "_contained";
@@ -333,8 +347,8 @@ namespace Hl7.Fhir.Rest
             if (!String.IsNullOrEmpty(Text)) result.Add(Tuple.Create(SEARCH_PARAM_TEXT, Text));
             if (!String.IsNullOrEmpty(Content)) result.Add(Tuple.Create(SEARCH_PARAM_CONTENT, Content));
             if (Count != null) result.Add(Tuple.Create(SEARCH_PARAM_COUNT, Count.Value.ToString()));
-            if (Include.Any()) result.AddRange(Include.Select(i => Tuple.Create(SEARCH_PARAM_INCLUDE, i)));
-            if (RevInclude.Any()) result.AddRange(RevInclude.Select(i => Tuple.Create(SEARCH_PARAM_REVINCLUDE, i)));
+            if (Include.Any()) result.AddRange(createIncludeParams(SEARCH_PARAM_INCLUDE, Include));
+            if (RevInclude.Any()) result.AddRange(createIncludeParams(SEARCH_PARAM_REVINCLUDE, RevInclude));
             if (Sort.Any()) result.Add(createSortParam(Sort));
             if (Summary != null) result.Add(Tuple.Create(SEARCH_PARAM_SUMMARY, Summary.Value.ToString().ToLower()));
             if (!String.IsNullOrEmpty(Filter)) result.Add(Tuple.Create(SEARCH_PARAM_FILTER, Filter));
@@ -345,13 +359,21 @@ namespace Hl7.Fhir.Rest
             result.AddRange(Parameters);
             return result;
 
-            Tuple<string,string> createSortParam(IList<Tuple<string,SortOrder>> sorts)
+            Tuple<string,string> createSortParam(IList<(string,SortOrder)> sorts)
             {
                 var values = 
                     from s in sorts
                     let orderPrefix = s.Item2 == SortOrder.Descending ? "-" : ""
                     select orderPrefix + s.Item1;
                 return new Tuple<string,string>(SEARCH_PARAM_SORT, String.Join(",", values));
+            }
+
+            IEnumerable<Tuple<string, string>> createIncludeParams(string paramtype, IList<(string path, IncludeModifier modifier)> includes)
+            {
+                return from i in includes
+                       let modifier = (i.modifier != IncludeModifier.None) ? SEARCH_MODIFIERSEPARATOR + i.modifier.GetLiteral() : ""
+                       select new Tuple<string, string>(paramtype + modifier, i.path);
+              
             }
         }
         
@@ -373,6 +395,24 @@ namespace Hl7.Fhir.Rest
         True,
         False,
         Both
+    }
+
+    public enum IncludeModifier
+    {
+        /// <summary>
+        /// No modifier on the include/revinclude parameter
+        /// </summary>
+        None,
+        /// <summary>
+        /// R4 only: Allows the include/revinclude process to iterate
+        /// </summary>
+        [EnumLiteral("iterate")]
+        Iterate,
+        /// <summary>
+        /// STU3 only: Allows the include/revinclude process to recurse
+        /// </summary>
+        [EnumLiteral("recurse")]
+        Recurse
     }
 
 

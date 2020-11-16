@@ -3,16 +3,13 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
+using Hl7.Fhir.Utility;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Net;
-using System.Text.RegularExpressions;
-
 
 namespace Hl7.Fhir.Rest
 {
@@ -45,6 +42,7 @@ namespace Hl7.Fhir.Rest
 
         public const string FORMAT_PARAM_XML = "xml";
         public const string FORMAT_PARAM_JSON = "json";
+        public const string VERSION_CONTENT_HEADER = "fhirVersion=";
 
 
         /// <summary>
@@ -87,7 +85,7 @@ namespace Hl7.Fhir.Rest
         }
 
 
-        public static string BuildContentType(ResourceFormat format, bool forBundle)
+        public static string BuildContentType(ResourceFormat format, string fhirVersion)
         {
             string contentType;
 
@@ -98,7 +96,15 @@ namespace Hl7.Fhir.Rest
             else
                 throw new ArgumentException("Cannot determine content type for data format " + format);
 
-            return contentType + ";charset=" + Encoding.UTF8.WebName;
+            contentType += "; charset=" + Encoding.UTF8.WebName;
+
+            if (SemVersion.TryParse(fhirVersion, out var version))
+            {
+                var majorMinor = version.Major + "." + version.Minor;
+                contentType += "; " + VERSION_CONTENT_HEADER + majorMinor;
+            }
+            return contentType;
+
         }
 
 
@@ -124,21 +130,6 @@ namespace Hl7.Fhir.Rest
             return JSON_CONTENT_HEADERS.Contains(f) || XML_CONTENT_HEADERS.Contains(f);
         }
 
-
-        /// <summary>
-        /// Checks whether a given content type is valid as a content type for bundles
-        /// </summary>
-        /// <param name="contentType">The content type, as it appears on e.g. a Http Content-Type header</param>
-        /// <returns></returns>
-        [Obsolete("Since DSTU1, there is no difference in mediatype header for bundles anymore. Use IsValidResourceContentType() instead.")]
-        public static bool IsValidBundleContentType(string contentType)
-        {
-            var f = contentType.ToLowerInvariant();
-
-            return (JSON_CONTENT_HEADERS.Contains(f));
-        }
-
-
         /// <summary>
         /// Checks whether a given format parameter is a valid as a content type for resource data
         /// </summary>
@@ -152,16 +143,9 @@ namespace Hl7.Fhir.Rest
 
         public static string GetMediaTypeFromHeaderValue(string mediaHeaderValue)
         {
-#if NETSTANDARD1_1
-                System.Net.Http.Headers.MediaTypeHeaderValue.TryParse(mediaHeaderValue, out System.Net.Http.Headers.MediaTypeHeaderValue headerValue);
-                if (headerValue != null)
-                {
-                    return headerValue.MediaType.ToLowerInvariant();
-                }
-                else
-                {
-                    return mediaHeaderValue;
-                }
+#if NETSTANDARD1_6
+            System.Net.Http.Headers.MediaTypeHeaderValue.TryParse(mediaHeaderValue, out System.Net.Http.Headers.MediaTypeHeaderValue headerValue);
+            return headerValue != null ? headerValue.MediaType.ToLowerInvariant() : mediaHeaderValue;
 #else
             try
             {
@@ -172,18 +156,18 @@ namespace Hl7.Fhir.Rest
             {
                 return mediaHeaderValue;
             }
-        #endif
+#endif
         }
 
         public static string GetCharSetFromHeaderValue(string mediaHeaderValue)
-                {
-        #if NETSTANDARD1_1
-                    System.Net.Http.Headers.MediaTypeHeaderValue.TryParse(mediaHeaderValue, out System.Net.Http.Headers.MediaTypeHeaderValue headerValue);
-                    return headerValue.CharSet;
-        #else
-                    var ct = new System.Net.Mime.ContentType(mediaHeaderValue);
-                    return ct.CharSet;
-        #endif
-                }
-         }
+        {
+#if NETSTANDARD1_6
+            System.Net.Http.Headers.MediaTypeHeaderValue.TryParse(mediaHeaderValue, out System.Net.Http.Headers.MediaTypeHeaderValue headerValue);
+            return headerValue.CharSet;
+#else
+            var ct = new System.Net.Mime.ContentType(mediaHeaderValue);
+            return ct.CharSet;
+#endif
+        }
+    }
 }

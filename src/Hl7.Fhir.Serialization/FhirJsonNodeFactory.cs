@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://github.com/FirelyTeam/fhir-net-api/blob/master/LICENSE
+ * available at https://github.com/FirelyTeam/firely-net-sdk/blob/master/LICENSE
  */
 
 using Hl7.Fhir.ElementModel;
@@ -38,22 +38,4 @@ namespace Hl7.Fhir.Serialization
         public static ISourceNode Create(JObject root, string rootName = null, FhirJsonParsingSettings settings = null) => 
             new FhirJsonNode(root, rootName, settings);
     }
-
-
-    [Obsolete("Please use the equivalent functions on the FhirJsonNavigator factory class")]
-    public struct JsonDomFhirNavigator
-    {
-        [Obsolete("Use FhirJsonNode.Create() instead.")]
-        public static IElementNavigator Create(JObject root, string rootName = null) =>
-            FhirJsonNode.Create(root, rootName).ToElementNavigator();
-
-        [Obsolete("Use FhirJsonNavigator.Read() instead.")]
-        public static IElementNavigator Create(JsonReader reader, string rootName = null) =>
-            FhirJsonNode.Read(reader, rootName).ToElementNavigator();
-
-        [Obsolete("Use FhirJsonNavigator.Parse() instead.")]
-        public static IElementNavigator Create(string json, string rootName = null) =>
-            FhirJsonNode.Parse(json, rootName).ToElementNavigator();
-    }
-
 }

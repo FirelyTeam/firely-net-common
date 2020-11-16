@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 
@@ -18,7 +18,7 @@ namespace Hl7.Fhir.Rest
 {
     public static class HttpToEntryExtensions
     {
-        
+
 
         private const string USERDATA_BODY = "$body";
         private const string EXTENSION_RESPONSE_HEADER = "http://hl7.org/fhir/StructureDefinition/http-response-header";
@@ -35,7 +35,7 @@ namespace Hl7.Fhir.Rest
                 Etag = response.Headers.ETag?.Tag.Trim('\"'),
                 ContentType = response.Content.Headers.ContentType?.MediaType
             };
-            result.SetHeaders(response.Headers);     
+            result.SetHeaders(response.Headers);
 
 
             return result;
@@ -80,15 +80,15 @@ namespace Hl7.Fhir.Rest
             result.ResponseUri = response.ResponseUri;
             result.Location = response.Headers[HttpUtil.LOCATION] ?? response.Headers[HttpUtil.CONTENTLOCATION];
 
-#if NETSTANDARD1_1
-                    if (!String.IsNullOrEmpty(response.Headers[HttpUtil.LASTMODIFIED]))
-                    {
-                        DateTimeOffset dateTimeOffset = new DateTimeOffset();
-                        bool success = DateTimeOffset.TryParse(response.Headers[HttpUtil.LASTMODIFIED], out dateTimeOffset);
-                        if (!success)
-                            throw new FormatException($"Last-Modified header has value '{response.Headers[HttpUtil.LASTMODIFIED]}', which is not recognized as a valid DateTime");
-                        result.LastModified = dateTimeOffset;
-                    }
+#if NETSTANDARD1_6
+            if (!String.IsNullOrEmpty(response.Headers[HttpUtil.LASTMODIFIED]))
+            {
+                DateTimeOffset dateTimeOffset = new DateTimeOffset();
+                bool success = DateTimeOffset.TryParse(response.Headers[HttpUtil.LASTMODIFIED], out dateTimeOffset);
+                if (!success)
+                    throw new FormatException($"Last-Modified header has value '{response.Headers[HttpUtil.LASTMODIFIED]}', which is not recognized as a valid DateTime");
+                result.LastModified = dateTimeOffset;
+            }
 #else
             result.LastModified = response.LastModified;
 #endif

@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 using Hl7.Fhir.ElementModel;
@@ -11,6 +11,7 @@ using Hl7.FhirPath.Functions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Hl7.FhirPath.Expressions
 {
@@ -43,6 +44,12 @@ namespace Hl7.FhirPath.Expressions
         public static IEnumerable<ITypedElement> GetThat(Closure context, IEnumerable<Invokee> _)
         {
             return context.GetThat();
+        }
+
+        public static IEnumerable<ITypedElement> GetIndex(Closure context, IEnumerable<Invokee> args)
+        {
+
+            return context.GetIndex();
         }
 
 

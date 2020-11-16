@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 using Hl7.Fhir.Serialization;
@@ -22,9 +22,9 @@ namespace Hl7.Fhir.Rest
         public static HttpRequestMessage ToHttpRequestMessage(this EntryRequest entry, Uri baseUrl, FhirClientSettings settings)
         {
 
-            System.Diagnostics.Debug.WriteLine("{0}: {1}", entry.Method, entry.Url);           
+            System.Diagnostics.Debug.WriteLine("{0}: {1}", entry.Method, entry.Url);
 
-            if (entry.RequestBodyContent != null && !(entry.Method == HTTPVerb.POST || entry.Method == HTTPVerb.PUT))
+            if (entry.RequestBodyContent != null && !(entry.Method == HTTPVerb.POST || entry.Method == HTTPVerb.PUT || entry.Method == HTTPVerb.PATCH))
                 throw Error.InvalidOperation("Cannot have a body on an Http " + entry.Method.ToString());
 
             // Create an absolute uri when the interaction.Url is relative.
@@ -43,8 +43,8 @@ namespace Hl7.Fhir.Rest
 
             request.Headers.Add("User-Agent", ".NET FhirClient for FHIR " + entry.Agent);
 
-            if (!settings.UseFormatParameter)
-                request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse(ContentType.BuildContentType(settings.PreferredFormat, forBundle: false)));
+            if (!settings.UseFormatParameter && !string.IsNullOrEmpty(entry.Headers.Accept))
+                request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse(entry.Headers.Accept));
 
             if (entry.Headers.IfMatch != null) request.Headers.Add("If-Match", entry.Headers.IfMatch);
             if (entry.Headers.IfNoneMatch != null) request.Headers.Add("If-None-Match", entry.Headers.IfNoneMatch);
@@ -64,7 +64,7 @@ namespace Hl7.Fhir.Rest
                 else
                     request.Headers.Add("Prefer", "return=" + PrimitiveTypeConverter.ConvertTo<string>(settings.PreferredReturn));
             }
-              
+
             else if (interactionType == InteractionType.Search && settings.PreferredParameterHandling != null)
             {
                 List<string> preferHeader = new List<string>();
@@ -74,11 +74,11 @@ namespace Hl7.Fhir.Rest
                     preferHeader.Add(settings.PreferredReturn.GetLiteral());
                 if (preferHeader.Count > 0)
                     request.Headers.Add("Prefer", string.Join(", ", preferHeader));
-            }        
+            }
 
 
             if (entry.RequestBodyContent != null)
-                setContentAndContentType(request, entry.RequestBodyContent, entry.ContentType, settings.PreferredFormat);
+                setContentAndContentType(request, entry.RequestBodyContent, entry.ContentType);
 
             return request;
         }
@@ -108,17 +108,10 @@ namespace Hl7.Fhir.Rest
             throw new HttpRequestException($"Valid HttpVerb could not be found for verb type: [{verb}]");
         }
 
-        private static void setContentAndContentType(HttpRequestMessage request, byte[] data, string contentType, ResourceFormat format)
+        private static void setContentAndContentType(HttpRequestMessage request, byte[] data, string contentType)
         {
-            if (data == null) throw Error.ArgumentNull(nameof(data));         
-            
+            if (data == null) throw Error.ArgumentNull(nameof(data));
             request.Content = new ByteArrayContent(data);
-
-            if(contentType == null)
-            {
-                contentType = ContentType.BuildContentType(format, forBundle: false);
-            }
-               
             request.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
         }
 
@@ -127,7 +120,7 @@ namespace Hl7.Fhir.Rest
         {
             System.Diagnostics.Debug.WriteLine("{0}: {1}", (object)entry.Method, (object)entry.Url);
 
-            if (entry.RequestBodyContent != null && !(entry.Method == HTTPVerb.POST || entry.Method == HTTPVerb.PUT))
+            if (entry.RequestBodyContent != null && !(entry.Method == HTTPVerb.POST || entry.Method == HTTPVerb.PUT || entry.Method == HTTPVerb.PATCH))
                 throw Error.InvalidOperation((string)("Cannot have a body on an Http " + entry.Method.ToString()));
 
             // Create an absolute uri when the interaction.Url is relative.
@@ -149,13 +142,13 @@ namespace Hl7.Fhir.Rest
             setAgent(request, ".NET FhirClient for FHIR " + entry.Agent);
 
             if (!settings.UseFormatParameter)
-                request.Accept = ContentType.BuildContentType(settings.PreferredFormat, forBundle: false);
+                request.Accept = entry.Headers.Accept;
 
-            request.ContentType = entry.ContentType ?? ContentType.BuildContentType(settings.PreferredFormat, forBundle: false);
+            request.ContentType = entry.ContentType;
 
             if (entry.Headers.IfMatch != null) request.Headers["If-Match"] = entry.Headers.IfMatch;
             if (entry.Headers.IfNoneMatch != null) request.Headers["If-None-Match"] = entry.Headers.IfNoneMatch;
-#if NETSTANDARD1_1
+#if NETSTANDARD1_6
             if (entry.Headers.IfModifiedSince != null) request.Headers["If-Modified-Since"] = entry.Headers.IfModifiedSince.Value.UtcDateTime.ToString();
 #else
             if (entry.Headers.IfModifiedSince != null) request.IfModifiedSince = entry.Headers.IfModifiedSince.Value.UtcDateTime;
@@ -187,7 +180,7 @@ namespace Hl7.Fhir.Rest
                  entry.Type == InteractionType.Patch;
 
             // PCL doesn't support setting the length (and in this case will be empty anyway)
-#if !NETSTANDARD1_1
+#if !NETSTANDARD1_6
             if (entry.RequestBodyContent == null)
                 request.ContentLength = 0;
 #endif
@@ -224,7 +217,7 @@ namespace Hl7.Fhir.Rest
                 // platform does not support UserAgent property...too bad
                 try
                 {
-#if NETSTANDARD1_1
+#if NETSTANDARD1_6
                     request.Headers[HttpRequestHeader.UserAgent] = agent;
 #else
                     request.UserAgent = agent;

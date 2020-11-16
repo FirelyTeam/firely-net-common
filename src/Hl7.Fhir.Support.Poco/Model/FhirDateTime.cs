@@ -28,44 +28,17 @@
 
 */
 
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Validation;
-using System.Runtime.Serialization;
-using Hl7.Fhir.Specification;
 using System;
 using Hl7.Fhir.Serialization;
-using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Model
 {
-    /// <summary>
-    /// Primitive Type dateTime
-    /// </summary>
-#if !NETSTANDARD1_1
-    [Serializable]
-#endif
-    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    [FhirType("dateTime")]
-    [DataContract]
-    public partial class FhirDateTime : PrimitiveType, IStringValue
+    public partial class FhirDateTime
     {
         public const string FMT_FULL = "yyyy-MM-dd'T'HH:mm:ssK";
         public const string FMT_YEAR = "{0:D4}";
         public const string FMT_YEARMONTH = "{0:D4}-{1:D2}";
         public const string FMT_YEARMONTHDAY = "{0:D4}-{1:D2}-{2:D2}";
-
-
-        public override string TypeName { get { return "dateTime"; } }
-
-        // Must conform to the pattern "([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?"
-        public const string PATTERN = @"([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?";
-
-        public FhirDateTime(string value)
-		{
-			Value = value;
-		}
-
-		public FhirDateTime(): this(null) {}
 
         public FhirDateTime(DateTimeOffset dt) : this(PrimitiveTypeConverter.ConvertTo<string>(dt))
         {
@@ -102,22 +75,6 @@ namespace Hl7.Fhir.Model
             : this(string.Format(System.Globalization.CultureInfo.InvariantCulture, FMT_YEAR, year))
         {
         }
-
-        /// <summary>
-        /// Primitive value of the element
-        /// </summary>
-        [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
-        [DateTimePattern]
-        [DataMember]
-        public string Value
-        {
-            get { return (string)ObjectValue; }
-            set { ObjectValue = value; OnPropertyChanged("Value"); }
-        }
-
-        public static bool IsValidValue(string value) 
-            => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
-
 
         public static FhirDateTime Now()
         {

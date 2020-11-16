@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://github.com/FirelyTeam/fhir-net-api/blob/master/LICENSE
+ * available at https://github.com/FirelyTeam/firely-net-sdk/blob/master/LICENSE
  */
 
 
@@ -25,7 +25,7 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public bool AllowJsonComments { get; set; } // = false;
 
-#if !NETSTANDARD1_1
+#if !NETSTANDARD1_6
         /// <summary>
         /// Validate narrative against the FHIR Xhtml schema.
         /// </summary>
@@ -54,7 +54,7 @@ namespace Hl7.Fhir.Serialization
             other.PermissiveParsing = PermissiveParsing;
             other.AllowJsonComments = AllowJsonComments;
 
-#if !NETSTANDARD1_1
+#if !NETSTANDARD1_6
             other.ValidateFhirXhtml = ValidateFhirXhtml;
 #endif
         }

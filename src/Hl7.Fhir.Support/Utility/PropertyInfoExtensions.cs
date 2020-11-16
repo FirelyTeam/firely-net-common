@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 #if USE_CODE_GEN
@@ -83,7 +83,7 @@ namespace Hl7.Fhir.Utility
             il.Emit(OpCodes.Ret);
 
             var del = (Func<T, object, object>)setter.CreateDelegate(typeof(Func<T, object, object>));
-            Action<T, object> actionDelegate = (obj, val) => del(obj, val);
+            void actionDelegate(T obj, object val) => del(obj, val);
 
             return actionDelegate;
         }

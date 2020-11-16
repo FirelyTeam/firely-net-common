@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://github.com/FirelyTeam/fhir-net-api/blob/master/LICENSE
+ * available at https://github.com/FirelyTeam/firely-net-sdk/blob/master/LICENSE
  */
 
 using System;
@@ -32,10 +32,6 @@ namespace Hl7.Fhir.Serialization
     {
         public static JsonSerializationDetails GetJsonSerializationDetails(this IAnnotated ann) =>
                 ann.TryGetAnnotation<JsonSerializationDetails>(out var rt) ? rt : null;
-
-        [Obsolete("Use GetJsonSerializationDetails(this ITypedElement input) instead")]
-        public static JsonSerializationDetails GetJsonSerializationDetails(this IElementNavigator navigator) =>
-            navigator is IAnnotated ia ? ia.GetJsonSerializationDetails() : null;
 
         public static JsonSerializationDetails GetJsonSerializationDetails(this ITypedElement node) =>
             node is IAnnotated ia ? ia.GetJsonSerializationDetails() : null;

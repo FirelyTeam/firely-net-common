@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 using Hl7.Fhir.Utility;
@@ -18,7 +18,7 @@ namespace Hl7.Fhir.Serialization
 {
     public static class PrimitiveTypeConverter
     {
-        private static readonly string[] FORBIDDEN_DECIMAL_PREFIXES = new[] { "+", ".", "00" };
+        private static readonly string[] _forbiddenDecimalPrefixes = new[] { "+", ".", "00" };
 
         public static T ConvertTo<T>(object value) => (T)ConvertTo(value, typeof(T));
 
@@ -93,7 +93,7 @@ namespace Hl7.Fhir.Serialization
                 return convertToDatetimeOffset(value).UtcDateTime;  // Obsolete: use DateTimeOffset instead!!
             if (typeof(decimal) == to)
             {
-                if (FORBIDDEN_DECIMAL_PREFIXES.Any(prefix => value.StartsWith(prefix)) || value.EndsWith("."))
+                if (_forbiddenDecimalPrefixes.Any(prefix => value.StartsWith(prefix)) || value.EndsWith("."))
                 {
                     // decimal cannot start with '+', '-' or '00' and cannot end with '.'
                     throw new FormatException("Input string was not in a correct format.");
@@ -163,26 +163,7 @@ namespace Hl7.Fhir.Serialization
 
         public static bool CanConvert(Type type)
         {
-#if NETSTANDARD1_1
-			// We support all primitive .NET types in the serializer
-			if (type == typeof(bool)
-				|| type == typeof(Byte)
-				|| type == typeof(char)
-				|| type == typeof(decimal)
-				|| type == typeof(double)
-				|| type == typeof(short)
-				|| type == typeof(int)
-				|| type == typeof(long)
-				|| type == typeof(sbyte)
-				|| type == typeof(float)
-				|| type == typeof(ushort)
-				|| type == typeof(uint)
-				|| type == typeof(ulong))
-				return true;
-
-#else
             if (Type.GetTypeCode(type) != TypeCode.Object) return true;
-#endif
 
             // And some specific complex native types
             return

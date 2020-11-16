@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 using Hl7.Fhir.Utility;
@@ -13,7 +13,7 @@ using System.Net;
 using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Rest
-{    
+{
     public class WebClientRequester : IClientRequester
     {
         public Uri BaseUrl { get; private set; }
@@ -41,7 +41,7 @@ namespace Hl7.Fhir.Rest
 
             var request = interaction.ToHttpWebRequest(BaseUrl, Settings);
 
-#if !NETSTANDARD1_1
+#if !NETSTANDARD1_6
             request.Timeout = Settings.Timeout;
 #endif
 
@@ -64,7 +64,7 @@ namespace Hl7.Fhir.Rest
                     //Read body before we call the hook, so the hook cannot read the body before we do
                     var inBody = readBody(webResponse);
                     AfterResponse?.Invoke(webResponse, inBody);
-                    
+
                     return webResponse.ToEntryResponse(inBody);
 
                 }

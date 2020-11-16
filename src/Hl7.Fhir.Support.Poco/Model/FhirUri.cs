@@ -29,50 +29,15 @@
 */
 
 using System;
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Validation;
-using System.Runtime.Serialization;
-using Hl7.Fhir.Specification;
 
 namespace Hl7.Fhir.Model
 {
-    /// <summary>
-    /// Primitive Type uri
-    /// </summary>
-#if !NETSTANDARD1_1
-    [Serializable]
-#endif
-    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    [FhirType("uri")]
-    [DataContract]
-    public class FhirUri : PrimitiveType, IStringValue
+    public partial class FhirUri
     {
-        public override string TypeName { get { return "uri"; } }
-        
-		public FhirUri(string value)
-		{
-			Value = value;
-		}
-
-		public FhirUri(): this((string)null) {}
-
-        /// <summary>
-        /// Primitive value of the element
-        /// </summary>
-        [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
-        [UriPattern]
-        [DataMember]
-        public string Value
-        {
-            get { return (string)ObjectValue; }
-            set { ObjectValue = value; OnPropertyChanged("Value"); }
-        }
-
         public FhirUri(Uri uri)
         {
             Value = uri.OriginalString;
         }
-
 
         public static bool IsValidValue(string value)
         {

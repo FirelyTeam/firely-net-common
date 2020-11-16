@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 
@@ -27,9 +27,10 @@ namespace Hl7.FhirPath.Expressions
             var input = new[] { root };
             newContext.SetThis(input);
             newContext.SetThat(input);
+            newContext.SetIndex(ElementNode.CreateList(0));
             newContext.SetOriginalContext(input);
-            if (ctx.Container != null) newContext.SetResource(new[] { ctx.Container });
-            if (ctx.RootContainer != null) newContext.SetRootResource(new[] { ctx.RootContainer });
+            if (ctx.Resource != null) newContext.SetResource(new[] { ctx.Resource });
+            if (ctx.RootResource != null) newContext.SetRootResource(new[] { ctx.RootResource });
 
             return newContext;
         }
@@ -58,8 +59,7 @@ namespace Hl7.FhirPath.Expressions
         public virtual IEnumerable<ITypedElement> ResolveValue(string name)
         {
             // First, try to directly get "normal" values
-            IEnumerable<ITypedElement> result = null;
-            _namedValues.TryGetValue(name, out result);
+            _namedValues.TryGetValue(name, out IEnumerable<ITypedElement> result);
 
             if (result != null) return result;
 

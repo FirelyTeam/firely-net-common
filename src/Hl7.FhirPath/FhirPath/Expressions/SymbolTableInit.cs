@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 using Hl7.Fhir.ElementModel;
@@ -116,27 +116,35 @@ namespace Hl7.FhirPath.Expressions
             t.Add("take", (IEnumerable<ITypedElement> f, long a) => f.Take((int)a), doNullProp: true);
             t.Add("builtin.item", (IEnumerable<ITypedElement> f, long a) => f.Item((int)a), doNullProp: true);
 
-            t.Add("toBoolean", (ITypedElement f) => f.ToBoolean(), doNullProp: true);
-            t.Add("convertsToBoolean", (ITypedElement f) => f.ConvertsToBoolean(), doNullProp: true);
-            t.Add("toInteger", (ITypedElement f) => f.ToInteger(), doNullProp: true);
-            t.Add("convertsToInteger", (ITypedElement f) => f.ConvertsToInteger(), doNullProp: true);
-            t.Add("toDecimal", (ITypedElement f) => f.ToDecimal(), doNullProp: true);
-            t.Add("convertsToDecimal", (ITypedElement f) => f.ConvertsToDecimal(), doNullProp: true);
-            t.Add("toDateTime", (ITypedElement f) => f.ToDateTime(), doNullProp: true);
-            t.Add("convertsToDateTime", (ITypedElement f) => f.ConvertsToDateTime(), doNullProp: true);
-            t.Add("toTime", (ITypedElement f) => f.ToTime(), doNullProp: true);
-            t.Add("convertsToTime", (ITypedElement f) => f.ConvertsToTime(), doNullProp: true);
-            t.Add("toDate", (ITypedElement f) => f.ToDate(), doNullProp: true);
-            t.Add("convertsToDate", (ITypedElement f) => f.ConvertsToDate(), doNullProp: true);
-            t.Add("toString", (ITypedElement f) => f.ToStringRepresentation(), doNullProp: true);
-            t.Add("convertsToString", (ITypedElement f) => f.ConvertsToString(), doNullProp: true);
-            t.Add("toQuantity", (ITypedElement f) => f.ToQuantity(), doNullProp: true);
-            t.Add("convertsToQuantity", (ITypedElement f) => f.ConvertsToQuantity(), doNullProp: true);
+            t.Add("toBoolean", (P.Any f) => f.ToBoolean(), doNullProp: true);
+            t.Add("convertsToBoolean", (P.Any f) => f.ConvertsToBoolean(), doNullProp: true);
+            t.Add("toInteger", (P.Any f) => f.ToInteger(), doNullProp: true);
+            t.Add("convertsToInteger", (P.Any f) => f.ConvertsToInteger(), doNullProp: true);
+            t.Add("toLong", (P.Any f) => f.ToLong(), doNullProp: true);
+            t.Add("convertsToLong", (P.Any f) => f.ConvertsToLong(), doNullProp: true);
+            t.Add("toDecimal", (P.Any f) => f.ToDecimal(), doNullProp: true);
+            t.Add("convertsToDecimal", (P.Any f) => f.ConvertsToDecimal(), doNullProp: true);
+            t.Add("toQuantity", (P.Any f) => f.ToQuantity(), doNullProp: true);
+            t.Add("convertsToQuantity", (P.Any f) => f.ConvertsToQuantity(), doNullProp: true);
+            t.Add("toString", (P.Any f) => f.ToStringRepresentation(), doNullProp: true);
+            t.Add("convertsToString", (P.Any f) => f.ConvertsToString(), doNullProp: true);
+            t.Add("toDate", (P.Any f) => f.ToDate(), doNullProp: true);
+            t.Add("convertsToDate", (P.Any f) => f.ConvertsToDate(), doNullProp: true);
+            t.Add("toDateTime", (P.Any f) => f.ToDateTime(), doNullProp: true);
+            t.Add("convertsToDateTime", (P.Any f) => f.ConvertsToDateTime(), doNullProp: true);            
+            t.Add("toTime", (P.Any f) => f.ToTime(), doNullProp: true);
+            t.Add("convertsToTime", (P.Any f) => f.ConvertsToTime(), doNullProp: true);
 
             t.Add("upper", (string f) => f.ToUpper(), doNullProp: true);
             t.Add("lower", (string f) => f.ToLower(), doNullProp: true);
             t.Add("toChars", (string f) => f.ToChars(), doNullProp: true);
             t.Add("substring", (string f, int a) => f.FpSubstring(a, null), doNullProp: true);
+            t.Add("trim", (string f) => f.Trim(), doNullProp: true);
+            t.Add("encode", (string f, string enc) => f.FpEncode(enc), doNullProp: true);
+            t.Add("decode", (string f, string enc) => f.FpDecode(enc), doNullProp: true);
+            t.Add("escape", (string f, string enc) => f.FpEscape(enc), doNullProp: true);
+            t.Add("unescape", (string f, string enc) => f.FpUnescape(enc), doNullProp: true);
+
             //special case: only focus should be Null propagated:
             t.Add(new CallSignature("substring", typeof(string), typeof(string), typeof(int), typeof(int?)),
                 InvokeeFactory.WrapWithPropNullForFocus((string f, int a, int? b) => f.FpSubstring(a, b)));
@@ -249,12 +257,15 @@ namespace Hl7.FhirPath.Expressions
         {
             var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
             var lambda = arguments.Skip(1).First();
+            var index = 0;
 
             foreach (ITypedElement element in focus)
             {
                 var newFocus = ElementNode.CreateList(element);
                 var newContext = ctx.Nest(newFocus);
                 newContext.SetThis(newFocus);
+                newContext.SetIndex(ElementNode.CreateList(index));
+                index++;
 
                 if (lambda(newContext, InvokeeFactory.EmptyArgs).BooleanEval() == true)
                     yield return element;
@@ -265,12 +276,15 @@ namespace Hl7.FhirPath.Expressions
         {
             var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
             var lambda = arguments.Skip(1).First();
+            var index = 0;
 
             foreach (ITypedElement element in focus)
             {
                 var newFocus = ElementNode.CreateList(element);
                 var newContext = ctx.Nest(newFocus);
                 newContext.SetThis(newFocus);
+                newContext.SetIndex(ElementNode.CreateList(index));
+                index++;
 
                 var result = lambda(newContext, InvokeeFactory.EmptyArgs);
                 foreach (var resultElement in result)       // implement SelectMany()
@@ -288,6 +302,7 @@ namespace Hl7.FhirPath.Expressions
 
             while (newNodes.Any())
             {
+                var index = 0;
                 var current = newNodes;
                 newNodes = new List<ITypedElement>();
 
@@ -296,7 +311,8 @@ namespace Hl7.FhirPath.Expressions
                     var newFocus = ElementNode.CreateList(element);
                     var newContext = ctx.Nest(newFocus);
                     newContext.SetThis(newFocus);
-
+                    newContext.SetIndex(ElementNode.CreateList(index));
+                    index++;
 
                     newNodes.AddRange(lambda(newContext, InvokeeFactory.EmptyArgs));
                 }
@@ -310,12 +326,15 @@ namespace Hl7.FhirPath.Expressions
         {
             var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
             var lambda = arguments.Skip(1).First();
+            var index = 0;
 
             foreach (ITypedElement element in focus)
             {
                 var newFocus = ElementNode.CreateList(element);
                 var newContext = ctx.Nest(newFocus);
                 newContext.SetThis(newFocus);
+                newContext.SetIndex(ElementNode.CreateList(index));
+                index++;
 
                 var result = lambda(newContext, InvokeeFactory.EmptyArgs).BooleanEval();
                 if (result == null) return ElementNode.EmptyList;
@@ -329,13 +348,15 @@ namespace Hl7.FhirPath.Expressions
         {
             var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
             var lambda = arguments.Skip(1).First();
+            var index = 0;
 
             foreach (ITypedElement element in focus)
             {
                 var newFocus = ElementNode.CreateList(element);
                 var newContext = ctx.Nest(newFocus);
                 newContext.SetThis(newFocus);
-
+                newContext.SetIndex(ElementNode.CreateList(index));
+                index++;
 
                 var result = lambda(newContext, InvokeeFactory.EmptyArgs).BooleanEval();
 

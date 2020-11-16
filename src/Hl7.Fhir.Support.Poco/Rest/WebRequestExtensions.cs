@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 using System;
@@ -18,7 +18,7 @@ namespace Hl7.Fhir.Rest
     {
         internal static void WriteBody(this HttpWebRequest request, bool CompressRequestBody, byte[] data)
         {
-#if NETSTANDARD1_1
+#if NETSTANDARD1_6
             Stream outs = null;
             //outs = request.GetRequestStreamAsync().Result;
             //outs.Write(data, 0, (int)data.Length);
@@ -92,52 +92,6 @@ namespace Hl7.Fhir.Rest
 
         internal static Task<WebResponse> GetResponseAsync(this WebRequest request, TimeSpan timeout)
         {
-#if NETSTANDARD1_1
-            return Task.Factory.StartNew<WebResponse>(() =>
-            {
-                var t = Task.Factory.FromAsync<WebResponse>(
-                    request.BeginGetResponse,
-                    request.EndGetResponse,
-                    null);
-
-                if (t.IsFaulted)
-                {
-                    WebException wex = t.Exception.GetBaseException() as WebException;
-                    if (wex != null)
-                    {
-                        var resp = wex.Response as HttpWebResponse;
-                        if (resp == null)
-                            throw t.Exception.GetBaseException();
-                        return resp;
-                    }
-                    throw t.Exception.GetBaseException();
-                }
-                else
-                {
-                     try
-                    {
-                        if (!t.Wait(timeout))
-                        {
-                            request.Abort();
-                            throw new TimeoutException();
-                        }
-                    }
-                    catch (AggregateException we)
-                    {
-                        WebException wex = we.GetBaseException() as WebException;
-                        if (wex != null)
-                        {
-                            var resp = wex.Response as HttpWebResponse;
-                            if (resp == null)
-                                throw we.GetBaseException();
-                            return resp;
-                        }
-                        throw we.GetBaseException();
-                    }
-                }
-                return t.Result;
-            });
-#else
             var t = Task.Factory.FromAsync<WebResponse>(
                 request.BeginGetResponse,
                 request.EndGetResponse,
@@ -157,7 +111,6 @@ namespace Hl7.Fhir.Rest
                 }
                 return parent.Result;
             });
-#endif
         }
     }
 }

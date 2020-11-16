@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://github.com/FirelyTeam/fhir-net-api/blob/master/LICENSE
+ * available at https://github.com/FirelyTeam/firely-net-sdk/blob/master/LICENSE
  */
 
 using Hl7.Fhir.ElementModel;
@@ -14,8 +14,6 @@ using System.IO;
 using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
-
-#if !NETSTANDARD1_1
 
 namespace Hl7.Fhir.Serialization
 {
@@ -30,14 +28,6 @@ namespace Hl7.Fhir.Serialization
         private readonly bool _disposeStream;
         private XmlReader _reader;
         private (XElement element, string fullUrl)? _current = null;
-
-        /// <summary>Create a new <see cref="XmlNavigatorStream"/> instance for the specified serialized xml resource file.</summary>
-        /// <param name="path">The filepath of a serialized xml resource.</param>
-        [Obsolete("Use XmlNavigatorStream.FromPath()")]
-        public XmlNavigatorStream(string path) : this(new FileStream(path, FileMode.Open, FileAccess.Read))
-        {
-            //
-        }
 
         /// <summary>Create a new <see cref="XmlNavigatorStream"/> instance for the specified serialized xml resource file.</summary>
         /// <param name="path">The filepath of a serialized xml resource.</param>
@@ -386,5 +376,3 @@ namespace Hl7.Fhir.Serialization
 
     }
 }
-
-#endif

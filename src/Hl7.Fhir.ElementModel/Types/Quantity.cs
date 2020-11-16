@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 #nullable enable
@@ -16,43 +16,69 @@ using static Hl7.Fhir.Utility.Result;
 
 namespace Hl7.Fhir.ElementModel.Types
 {
-    public class Quantity : Any, IComparable, ICqlEquatable, ICqlOrderable
+    /// <summary>
+    /// UCUM does not contain codes for calendar units. To support both the UCUM 'a' and 'mo' and
+    /// the calender year and month, we keep track of multiple coding system for units.
+    /// </summary>
+    public enum QuantityUnitSystem
+    {
+        /// <summary>
+        /// Unit is taken from the UCUM coding system (default).
+        /// </summary>
+        UCUM,
+
+        /// <summary>
+        /// Unit is taken from the set of calendar units (year or month)
+        /// </summary>
+        CalendarDuration
+    }
+
+
+    public class Quantity : Any, IComparable, ICqlEquatable, ICqlOrderable, ICqlConvertible
     {
         public const string UCUM = "http://unitsofmeasure.org";
         public const string UCUM_UNIT = "1";
 
         public decimal Value { get; }
-        public string? Unit { get; }
-        public string System => UCUM;
+        public string Unit { get; }
 
-        public Quantity(double value, string unit = UCUM_UNIT) : this((decimal)value, unit)
+        public QuantityUnitSystem System { get; private set; }
+
+        public Quantity(decimal value, string? unit = UCUM_UNIT) 
+            : this(value, unit, QuantityUnitSystem.UCUM)
         {
+            //
         }
 
-        public Quantity(decimal value, string unit = UCUM_UNIT)
+        public Quantity(decimal value, string? unit, QuantityUnitSystem system)
         {
             Value = value;
-            Unit = unit;
+            Unit = unit ?? UCUM_UNIT;
+            System = system;
+        }
+
+        /// <summary>
+        /// Construct a non-UCUM calendar duration (currently only 'year' and 'month').
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="calendarUnit"></param>
+        /// <returns></returns>
+        public static Quantity ForCalendarDuration(decimal value, string calendarUnit)
+        {
+            if (calendarUnit is null)
+                throw new ArgumentNullException(nameof(calendarUnit));
+
+            return new Quantity(value, calendarUnit, QuantityUnitSystem.CalendarDuration);
         }
 
         private static readonly string QUANTITY_BASE_REGEX =
            @"(?'value'(\+|-)?\d+(\.\d+)?)\s*(('(?'unit'[^\']+)')|(?'time'[a-zA-Z]+))";
 
         public static readonly Regex QUANTITYREGEX =
-           new Regex(QUANTITY_BASE_REGEX,
-#if NETSTANDARD1_1
-                        RegexOptions.ExplicitCapture);
-#else
-                        RegexOptions.ExplicitCapture | RegexOptions.Compiled);
-#endif
+           new Regex(QUANTITY_BASE_REGEX, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
 
         internal static readonly Regex QUANTITYREGEX_FOR_PARSE =
-            new Regex($"^{QUANTITY_BASE_REGEX}?$",
-#if NETSTANDARD1_1
-                        RegexOptions.ExplicitCapture);
-#else
-                        RegexOptions.ExplicitCapture | RegexOptions.Compiled);
-#endif
+            new Regex($"^{QUANTITY_BASE_REGEX}?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled);
 
         public static Quantity Parse(string representation) =>
                 TryParse(representation, out var result) ? result : throw new FormatException($"String '{representation}' was not recognized as a valid quantity.");
@@ -61,7 +87,7 @@ namespace Hl7.Fhir.ElementModel.Types
         {
             if (representation is null) throw new ArgumentNullException(nameof(representation));
 
-            quantity = new Quantity(default(decimal));
+            quantity = new Quantity(default);
 
             var result = QUANTITYREGEX_FOR_PARSE.Match(representation);
             if (!result.Success) return false;
@@ -76,9 +102,10 @@ namespace Hl7.Fhir.ElementModel.Types
             }
             else if (result.Groups["time"].Success)
             {
-                if (TryParseTimeUnit(result.Groups["time"].Value, out var tv))
+                if (TryParseTimeUnit(result.Groups["time"].Value, out var tv, out var isCalendarUnit))
                 {
-                    quantity = new Quantity(value!, tv!);
+                    quantity = isCalendarUnit ? Quantity.ForCalendarDuration(value!, tv!) 
+                        : new Quantity(value!, tv!);
                     return true;
                 }
                 else
@@ -91,41 +118,52 @@ namespace Hl7.Fhir.ElementModel.Types
             }
         }
 
-        public static bool TryParseTimeUnit(string humanUnit, out string? ucumUnit)
+        /// <summary>
+        /// Parses the literal time units either to UCUM or to a non-UCUM calendar unit.
+        /// </summary>
+        /// <param name="unitLiteral">The time unit as found in a quantity literal</param>
+        /// <param name="unit">The parsed unit, either as a UCUM code or a non-UCUM calender unit.</param>
+        /// <param name="isCalendarUnit">True is this is a non-UCUM calendar unit.</param>
+        /// <returns>True if this is a recognized time unit literal, false otherwise.</returns>
+        public static bool TryParseTimeUnit(string unitLiteral, out string? unit, out bool isCalendarUnit)
         {
-            if (humanUnit is null) throw new ArgumentNullException(nameof(humanUnit));
+            if (unitLiteral is null) throw new ArgumentNullException(nameof(unitLiteral));
 
-            ucumUnit = parse();
-            return ucumUnit != null;
+            unit = parse(out isCalendarUnit);
+            return unit != null;
 
-            string? parse()
+            string? parse(out bool isCalendarUnit)
             {
-                switch (humanUnit)
+                isCalendarUnit = false;
+
+                switch (unitLiteral)
                 {
                     case "year":
                     case "years":
-                        return "{year}";
+                        isCalendarUnit = true;
+                        return "year"; // calendar unit year
                     case "month":
                     case "months":
-                        return "{month}";
+                        isCalendarUnit = true;
+                        return "month";   // calendar unit month
                     case "week":
                     case "weeks":
-                        return "{week}";
+                        return "wk";  // UCUM week
                     case "day":
                     case "days":
-                        return "{day}";
+                        return "d";   // UCUM day
                     case "hour":
                     case "hours":
-                        return "{hour}";
+                        return "h";   // UCUM hour
                     case "minute":
                     case "minutes":
-                        return "{minute}";
+                        return "min";   // UCUM minute
                     case "second":
                     case "seconds":
-                        return "s";
+                        return "s";    // UCUM second
                     case "millisecond":
                     case "milliseconds":
-                        return "ms";
+                        return "ms";    // UCUM millisecond
                     default:
                         return null;
                 }
@@ -161,8 +199,8 @@ namespace Hl7.Fhir.ElementModel.Types
 
             if (comparisonType.HasFlag(QuantityComparison.CompareCalendarUnits))
             {
-                l = new Quantity(l.Value, normalizeCalenderUnit(l.Unit) ?? UCUM_UNIT);
-                r = new Quantity(r.Value, normalizeCalenderUnit(r.Unit) ?? UCUM_UNIT);
+                l = calendarUnitToUcum(l);
+                r = calendarUnitToUcum(r);
             }
 
             return l.TryCompareTo(r).Select(r => r == 0);
@@ -205,7 +243,7 @@ namespace Hl7.Fhir.ElementModel.Types
             // See http://hl7.org/fhirpath/#quantity and http://hl7.org/fhirpath/#comparison for more details.
             // Throw not supported now, in the future we will need to turn this into a Fail()
             // result for units that can really not be compared according to UCUM.
-            if (Unit != otherQ.Unit)
+            if (Unit != otherQ.Unit || System != otherQ.System)
             {
                 throw Error.NotSupported("Comparing quantities with different units is not yet supported");
             }
@@ -214,18 +252,23 @@ namespace Hl7.Fhir.ElementModel.Types
         }
 
 
-        private string? normalizeCalenderUnit(string? unit)
+        private Quantity calendarUnitToUcum(Quantity orig)
         {
-            return unit switch
+            // Only normalize calendar units
+            if (orig.System == QuantityUnitSystem.UCUM) return orig;
+
+            var ucumUnit = orig.Unit switch
             {
-                "{year}" => "a",
-                "{month}" => "mo",
-                "{week}" => "wk",
-                "{day}" => "d",
-                "{hour}" => "h",
-                "{minute}" => "min",
-                _ => unit
+                "year" => "a",
+                "month" => "mo",
+                //"week" => "wk",
+                //"day" => "d",
+                //"hour" => "h",
+                //"minute" => "min",
+                _ => throw new InvalidOperationException($"'{orig.Unit}' is not a valid calendar unit. Only 'year' and 'month' are.")
             };
+
+            return new Quantity(orig.Value, ucumUnit, QuantityUnitSystem.UCUM);
         }
 
         public static bool operator +(Quantity a, Quantity b) => throw Error.NotSupported("Adding two quantites is not yet supported");
@@ -245,6 +288,23 @@ namespace Hl7.Fhir.ElementModel.Types
         bool ICqlEquatable.IsEquivalentTo(Any other) => other is { } && TryEquals(other, CQL_EQUIVALENCE_COMPARISON).ValueOrDefault(false);
 
         int? ICqlOrderable.CompareTo(Any other) => other is { } && TryCompareTo(other) is Ok<int> ok ? ok.Value : (int?)null;
+
+        public static explicit operator String(Quantity q) => ((ICqlConvertible)q).TryConvertToString().ValueOrThrow();
+
+        Result<String> ICqlConvertible.TryConvertToString() => Ok(new String(ToString()));
+
+        Result<Quantity> ICqlConvertible.TryConvertToQuantity() => Ok(this);
+
+        Result<Code> ICqlConvertible.TryConvertToCode() => CannotCastTo<Code>(this);
+        Result<Boolean> ICqlConvertible.TryConvertToBoolean() => CannotCastTo<Boolean>(this);
+        Result<Date> ICqlConvertible.TryConvertToDate() => CannotCastTo<Date>(this);
+        Result<DateTime> ICqlConvertible.TryConvertToDateTime() => CannotCastTo<DateTime>(this);
+        Result<Decimal> ICqlConvertible.TryConvertToDecimal() => CannotCastTo<Decimal>(this);
+        Result<Integer> ICqlConvertible.TryConvertToInteger() => CannotCastTo<Integer>(this);
+        Result<Long> ICqlConvertible.TryConvertToLong() => CannotCastTo<Long>(this);
+        Result<Ratio> ICqlConvertible.TryConvertToRatio() => CannotCastTo<Ratio>(this);
+        Result<Time> ICqlConvertible.TryConvertToTime() => CannotCastTo<Time>(this);
+        Result<Concept> ICqlConvertible.TryConvertToConcept() => CannotCastTo<Concept>(this);
     }
 
     /// <summary>Specifies the comparison rules for quantities.</summary>
