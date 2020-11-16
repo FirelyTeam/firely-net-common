@@ -38,12 +38,12 @@ if (!$oldSuffix.StartsWith("alpha") -or [string]::IsNullOrEmpty($oldSuffix))
 Write-Host "Replacing version information with version: [$newVersion] suffix: [$suffix]" 
 
 #Replacing the version and suffix
-(Get-Content fhir-net-common.props) |
+(Get-Content $propFile) |
     Foreach-Object { $_ `
         -replace "<VersionPrefix>.*</VersionPrefix>", "<VersionPrefix>$newVersion</VersionPrefix>" `
         -replace "<VersionSuffix>.*</VersionSuffix>", "<VersionSuffix>$suffix</VersionSuffix>" `
     } |
-    Set-Content fhir-net-common.props
+    Set-Content $propFile
 
 #go back to the original directory
 Pop-Location
