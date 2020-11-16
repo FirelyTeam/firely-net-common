@@ -7,7 +7,16 @@ Param(
 #Go to src (version is not relevant to test projects)
 Push-Location $PsScriptRoot\..\src
 
-$xml = [xml](get-content fhir-net-common.props) 
+if (Test-Path  ..\src\firely-net-common.props -PathType leaf)
+{
+     $propFile = "..\src\firely-net-common.props"
+}
+else
+{
+   $propFile = "..\src\fhir-net-common.props" # fallback to old name
+} 
+
+$xml = [xml](get-content $propFile) 
 
 # newVersion is not set, so getting it from the fhir-net-api.props
 If ([string]::IsNullOrEmpty($newVersion)) 
