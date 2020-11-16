@@ -3,14 +3,14 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
+using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Introspection;
-using System.Collections;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Utility;
-using Hl7.Fhir.ElementModel;
+using System.Collections;
 
 namespace Hl7.Fhir.Serialization
 {
@@ -33,7 +33,7 @@ namespace Hl7.Fhir.Serialization
         }
 #pragma warning restore 612,618
 
-        public object Deserialize(PropertyMapping prop, string memberName, object existing=null)
+        public object Deserialize(PropertyMapping prop, string memberName, object existing = null)
         {
             if (prop == null) throw Error.ArgumentNull(nameof(prop));
 
@@ -42,7 +42,7 @@ namespace Hl7.Fhir.Serialization
             // nesting series of dispatcher calls
             if (!_arrayMode && prop.IsCollection)
             {
-                if (existing != null && !(existing is IList) ) throw Error.Argument(nameof(existing), "Can only read repeating elements into a type implementing IList");
+                if (existing != null && !(existing is IList)) throw Error.Argument(nameof(existing), "Can only read repeating elements into a type implementing IList");
                 var reader = new RepeatingElementReader(_inspector, _current, Settings);
                 return reader.Deserialize(prop, memberName, (IList)existing);
             }
@@ -50,7 +50,7 @@ namespace Hl7.Fhir.Serialization
             // If this is a primitive type, no classmappings and reflection is involved,
             // just parse the primitive from the input
             // NB: no choices for primitives!
-            if(prop.IsPrimitive)
+            if (prop.IsPrimitive)
             {
                 var reader = new PrimitiveValueReader(_current);
                 return reader.Deserialize(prop.ImplementingType);
@@ -58,7 +58,7 @@ namespace Hl7.Fhir.Serialization
 
             // A Choice property that contains a choice of any resource
             // (as used in Resource.contained)
-            if(prop.Choice == ChoiceType.ResourceChoice)
+            if (prop.Choice == ChoiceType.ResourceChoice)
             {
                 var reader = new ComplexTypeReader(_inspector, _current, Settings);
                 return reader.Deserialize(null);
@@ -74,7 +74,7 @@ namespace Hl7.Fhir.Serialization
 
             // Handle other Choices having any datatype or a list of datatypes
 
-            if (existing != null && !(existing is Resource) && !(existing is Element) ) throw Error.Argument(nameof(existing), "Can only read complex elements into types that are Element or Resource");
+            if (existing != null && !(existing is Resource) && !(existing is Element)) throw Error.Argument(nameof(existing), "Can only read complex elements into types that are Element or Resource");
             var cplxReader = new ComplexTypeReader(_inspector, _current, Settings);
             return cplxReader.Deserialize(mapping, (Base)existing);
         }

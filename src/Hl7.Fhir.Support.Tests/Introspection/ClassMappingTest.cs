@@ -3,17 +3,17 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Hl7.Fhir.Model;
 using Hl7.Fhir.Introspection;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Reflection;
+using Hl7.Fhir.Model;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Tests.Introspection
 {
@@ -83,7 +83,7 @@ namespace Hl7.Fhir.Tests.Introspection
 
 
         /// <summary>
-        /// Test for issue 556 (https://github.com/FirelyTeam/fhir-net-api/issues/556) 
+        /// Test for issue 556 (https://github.com/FirelyTeam/firely-net-sdk/issues/556) 
         /// </summary>
         [TestMethod]
         public void GetMappingsInParrallel()
@@ -157,24 +157,24 @@ namespace Hl7.Fhir.Tests.Introspection
     {
         [Test("AttrA")]
         public string Member { get; set; }
-        public override IDeepCopyable DeepCopy() => throw new NotImplementedException(); 
+        public override IDeepCopyable DeepCopy() => throw new NotImplementedException();
     }
 
     [FhirType("Way2", Since = Specification.FhirRelease.DSTU2)]
-    public class Way2 : Resource 
+    public class Way2 : Resource
     {
-        public override IDeepCopyable DeepCopy() { throw new NotImplementedException(); } 
+        public override IDeepCopyable DeepCopy() { throw new NotImplementedException(); }
     }
 
     /* 
      * Datatype classes for tests
      */
     [FhirType("AnimalName")]
-    public class AnimalName  { }
+    public class AnimalName { }
 
     [FhirType("AnimalName")]
     public class NewAnimalName : AnimalName { }
 
-    [FhirType("Complex", Since=Specification.FhirRelease.DSTU2)]
+    [FhirType("Complex", Since = Specification.FhirRelease.DSTU2)]
     public class ComplexNumber { }
 }

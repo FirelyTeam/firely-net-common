@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 using Hl7.Fhir.Introspection;
@@ -13,7 +13,6 @@ using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using P = Hl7.Fhir.ElementModel.Types;
 
@@ -55,7 +54,7 @@ namespace Hl7.Fhir.ElementModel
             ShortPath = shortPath;
         }
 
-        private Type determineInstanceType(Type type, PropertyMapping definition) 
+        private Type determineInstanceType(Type type, PropertyMapping definition)
             => definition.Choice != ChoiceType.None ? type : definition.FhirType[0];
 
         public IElementDefinitionSummary Definition { get; private set; }
@@ -201,5 +200,5 @@ namespace Hl7.Fhir.ElementModel
             else
                 return Enumerable.Empty<object>();
         }
-    }   
+    }
 }
