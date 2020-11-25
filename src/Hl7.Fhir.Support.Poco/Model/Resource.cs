@@ -28,12 +28,10 @@
 
 */
 
-using System;
-using System.Collections.Generic;
-using Hl7.Fhir.Introspection;
-using System.Runtime.Serialization;
 using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Hl7.Fhir.Model
@@ -41,7 +39,7 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay("\\{\"{TypeName,nq}/{Id,nq}\"}")]
     [InvokeIValidatableObject]
     public partial class Resource
-    {      
+    {
         /// <summary>
         /// Codes indicating the type of validation to perform
         /// </summary>
@@ -64,10 +62,7 @@ namespace Hl7.Fhir.Model
         //    [EnumLiteral("delete", "http://hl7.org/fhir/resource-validation-mode")]
         //    Delete,
         //}
-        
 
-        [Obsolete("Use the TypeMember member instead, or TryDeriveResourceType() to derive the ResourceType from this name.", true)]
-        public object ResourceType => throw new NotSupportedException($"{nameof(ResourceType)} is obsolete and no longer supported.");
 
         /// <summary>
         /// This is the base URL of the FHIR server that this resource is hosted on
