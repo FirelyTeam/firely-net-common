@@ -87,7 +87,9 @@ namespace Hl7.Fhir.Model
         }
 
         #region << Annotations >>
+        [NonSerialized]
         private readonly Lazy<AnnotationList> _annotations = new Lazy<AnnotationList>(() => new AnnotationList());
+        
         private AnnotationList annotations { get { return _annotations.Value; } }
 
         public IEnumerable<object> Annotations(Type type) => annotations.OfType(type);
