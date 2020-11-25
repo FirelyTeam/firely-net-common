@@ -43,10 +43,10 @@ namespace Hl7.Fhir.Model
   /// Primitive Type canonical
   /// see [Canonical References](references.html#canonical)
   /// </summary>
-  [Serializable]
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("canonical")]
+  [Serializable]
   [DataContract]
+  [FhirType("canonical")]
   public partial class Canonical : PrimitiveType, IValue<string>
   {
     /// <summary>

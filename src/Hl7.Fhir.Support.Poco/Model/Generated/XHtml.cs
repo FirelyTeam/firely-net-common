@@ -43,10 +43,10 @@ namespace Hl7.Fhir.Model
   /// Primitive Type xhtml
   /// XHTML
   /// </summary>
-  [Serializable]
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("xhtml")]
+  [Serializable]
   [DataContract]
+  [FhirType("xhtml")]
   public partial class XHtml : PrimitiveType, IValue<string>
   {
     /// <summary>

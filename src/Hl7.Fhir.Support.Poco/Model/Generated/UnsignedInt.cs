@@ -43,10 +43,10 @@ namespace Hl7.Fhir.Model
   /// Primitive Type unsignedInt
   /// An integer with a value that is not negative (e.g. &gt;= 0)
   /// </summary>
-  [Serializable]
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("unsignedInt")]
+  [Serializable]
   [DataContract]
+  [FhirType("unsignedInt")]
   public partial class UnsignedInt : PrimitiveType, INullableValue<int>
   {
     /// <summary>

@@ -43,10 +43,10 @@ namespace Hl7.Fhir.Model
   /// Primitive Type uri
   /// see http://en.wikipedia.org/wiki/Uniform_resource_identifier
   /// </summary>
-  [Serializable]
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("uri")]
+  [Serializable]
   [DataContract]
+  [FhirType("uri")]
   public partial class FhirUri : PrimitiveType, IValue<string>
   {
     /// <summary>

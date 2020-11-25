@@ -43,10 +43,10 @@ namespace Hl7.Fhir.Model
   /// Primitive Type base64Binary
   /// A stream of bytes, base64 encoded
   /// </summary>
-  [Serializable]
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("base64Binary")]
+  [Serializable]
   [DataContract]
+  [FhirType("base64Binary")]
   public partial class Base64Binary : PrimitiveType, IValue<byte[]>
   {
     /// <summary>

@@ -43,10 +43,10 @@ namespace Hl7.Fhir.Model
   /// Primitive Type time
   /// A time during the day, with no date specified
   /// </summary>
-  [Serializable]
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("time")]
+  [Serializable]
   [DataContract]
+  [FhirType("time")]
   public partial class Time : PrimitiveType, IValue<string>
   {
     /// <summary>
