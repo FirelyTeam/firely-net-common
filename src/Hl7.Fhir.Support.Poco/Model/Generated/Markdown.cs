@@ -43,10 +43,10 @@ namespace Hl7.Fhir.Model
   /// Primitive Type markdown
   /// Systems are not required to have markdown support, so the text should be readable without markdown processing. The markdown syntax is GFM - see https://github.github.com/gfm/
   /// </summary>
-  [Serializable]
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("markdown")]
+  [Serializable]
   [DataContract]
+  [FhirType("markdown")]
   public partial class Markdown : PrimitiveType, IValue<string>
   {
     /// <summary>

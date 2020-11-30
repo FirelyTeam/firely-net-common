@@ -43,10 +43,10 @@ namespace Hl7.Fhir.Model
   /// Primitive Type url
   /// A URI that is a literal reference
   /// </summary>
-  [Serializable]
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("url")]
+  [Serializable]
   [DataContract]
+  [FhirType("url")]
   public partial class FhirUrl : PrimitiveType, IValue<string>
   {
     /// <summary>

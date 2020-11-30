@@ -43,10 +43,10 @@ namespace Hl7.Fhir.Model
   /// Primitive Type code
   /// A string which has at least one character and no leading or trailing whitespace and where there is no whitespace other than single spaces in the contents
   /// </summary>
-  [Serializable]
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("code")]
+  [Serializable]
   [DataContract]
+  [FhirType("code")]
   public partial class Code : PrimitiveType, IValue<string>
   {
     /// <summary>

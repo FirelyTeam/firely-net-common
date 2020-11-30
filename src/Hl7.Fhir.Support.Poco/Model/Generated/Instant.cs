@@ -43,10 +43,10 @@ namespace Hl7.Fhir.Model
   /// Primitive Type instant
   /// Note: This is intended for where precisely observed times are required, typically system logs etc., and not human-reported times - for them, see date and dateTime (which can be as precise as instant, but is not required to be) below. Time zone is always required
   /// </summary>
-  [Serializable]
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("instant")]
+  [Serializable]
   [DataContract]
+  [FhirType("instant")]
   public partial class Instant : PrimitiveType, INullableValue<DateTimeOffset>
   {
     /// <summary>
