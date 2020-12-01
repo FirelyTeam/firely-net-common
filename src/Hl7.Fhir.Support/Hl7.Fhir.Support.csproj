@@ -7,12 +7,12 @@
   <Import Project="..\fhir-net-common.targets" />
 
   <PropertyGroup>
-    <PackageId>Hl7.Fhir.Support</PackageId>
+    <PackageId>Hl7.Fhir.DSTU2.Support</PackageId>
     <Title>HL7 FHIR support library</Title>
     <Summary>Common interfaces and classes used by all FHIR .NET assemblies</Summary>
-    <Description>Common interfaces and classes used by all FHIR .NET assemblies</Description>
-    <PackageTags>HL7;FHIR;Elements;Utility</PackageTags>
-    <AssemblyName>Hl7.Fhir.Support</AssemblyName>
+    <Description>Common interfaces and classes used by all FHIR .NET assemblies. Special made for DSTU2</Description>
+    <PackageTags>HL7;FHIR;DSTU2.Elements;Utility</PackageTags>
+    <AssemblyName>Hl7.Fhir.DSTU2.Support</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>    

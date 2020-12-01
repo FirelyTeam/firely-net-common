@@ -7,12 +7,12 @@
   <Import Project="..\fhir-net-common.targets" />
 
   <PropertyGroup>
-    <PackageId>Hl7.Fhir.ElementModel</PackageId>
+    <PackageId>Hl7.Fhir.DSTU2.ElementModel</PackageId>
     <Title>HL7 FHIR library for the base ElementModel classes</Title>
-    <Summary>Interfaces and classes to work with FHIR data without using POCOs.</Summary>
+    <Summary>Interfaces and classes to work with FHIR data without using POCOs. Special made for DSTU2</Summary>
     <Description>Interfaces and classes to work with FHIR data without using POCOs, in concert with the Hl7.Fhir.Serialization assembly.</Description>
-    <PackageTags>HL7;FHIR;Elements</PackageTags>
-    <AssemblyName>Hl7.Fhir.ElementModel</AssemblyName>
+    <PackageTags>HL7;FHIR;Elements;DSTU2</PackageTags>
+    <AssemblyName>Hl7.Fhir.DSTU2.ElementModel</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

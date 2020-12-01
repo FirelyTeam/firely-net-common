@@ -8,8 +8,10 @@
   </PropertyGroup>
   
   <PropertyGroup>
-    <Description>This is the support library for working with the POCO representation of HL7's FHIR model data</Description>
-    <PackageTags>HL7 FHIR REST parse serialize class model</PackageTags>
+    <PackageId>Hl7.Fhir.DSTU2.Support.Poco</PackageId>
+    <Description>This is the support library for working with the POCO representation of HL7's FHIR model data. Special made for DSTU2</Description>
+    <PackageTags>HL7 FHIR REST parse serialize class model;DSTU2</PackageTags>
+    <AssemblyName>Hl7.Fhir.DSTU2.Support.Poco</AssemblyName>
   </PropertyGroup>
 
     <ItemGroup>
