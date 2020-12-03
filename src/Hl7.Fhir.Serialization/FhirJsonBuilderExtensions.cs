@@ -11,7 +11,8 @@ using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Utility;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
+using System.IO;
+using System.Text;
 
 namespace Hl7.Fhir.Serialization
 {
@@ -26,6 +27,10 @@ namespace Hl7.Fhir.Serialization
         public static void WriteTo(this ITypedElement source, JsonWriter destination, FhirJsonSerializationSettings settings = null) =>
             new FhirJsonBuilder(settings).Build(source).writeTo(destination);
 
+#if NETSTANDARD2_0
+        public static void WriteToStream(this ITypedElement source, Stream stream, FhirJsonSerializationSettings settings = null) =>
+            new FhirJsonTextBuilder(settings).Build(source, stream);
+#endif
         public static void WriteTo(this ISourceNode source, JsonWriter destination, FhirJsonSerializationSettings settings = null) =>
             new FhirJsonBuilder(settings).Build(source).writeTo(destination);
 
@@ -35,8 +40,17 @@ namespace Hl7.Fhir.Serialization
         public static JObject ToJObject(this ITypedElement source, FhirJsonSerializationSettings settings = null) =>
             new FhirJsonBuilder(settings).Build(source);
 
+#if NETSTANDARD2_0
+        public static string ToJson(this ITypedElement source, FhirJsonSerializationSettings settings = null)
+        {
+            using var stream = new MemoryStream();
+            source.WriteToStream(stream, settings);
+            return Encoding.UTF8.GetString(stream.ToArray());
+        }
+#else
         public static string ToJson(this ITypedElement source, FhirJsonSerializationSettings settings = null)
             => SerializationUtil.WriteJsonToString(writer => source.WriteTo(writer, settings), settings?.Pretty ?? false, settings?.AppendNewLine ?? false);
+#endif
 
         public static string ToJson(this ISourceNode source, FhirJsonSerializationSettings settings = null)
             => SerializationUtil.WriteJsonToString(writer => source.WriteTo(writer, settings), settings?.Pretty ?? false, settings?.AppendNewLine ?? false);

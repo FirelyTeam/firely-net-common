@@ -38,4 +38,10 @@
     <ProjectReference Include="..\Hl7.Fhir.ElementModel\Hl7.Fhir.ElementModel.csproj" />
     <ProjectReference Include="..\Hl7.Fhir.Support\Hl7.Fhir.Support.csproj" />
   </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="System.Text.Json">
+      <Version>5.0.0</Version>
+    </PackageReference>
+  </ItemGroup>
 </Project>
