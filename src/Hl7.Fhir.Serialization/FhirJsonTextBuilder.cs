@@ -211,7 +211,10 @@ namespace Hl7.Fhir.Serialization
                 // not shadow here, normal business
                 if (value is null)
                 {
-                    writer.WriteObject(() => addChildren(child, writer));
+                    if (child.Children().Any())
+                    {
+                        writer.WriteObject(() => addChildren(child, writer));
+                    }
                 }
                 else
                 {

@@ -11,6 +11,7 @@ using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Utility;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
 using System.IO;
 using System.Text;
 
@@ -45,7 +46,8 @@ namespace Hl7.Fhir.Serialization
         {
             using var stream = new MemoryStream();
             source.WriteToStream(stream, settings);
-            return Encoding.UTF8.GetString(stream.ToArray());
+            var result = Encoding.UTF8.GetString(stream.ToArray());
+            return settings?.AppendNewLine ?? false ? result + Environment.NewLine : result;
         }
 #else
         public static string ToJson(this ITypedElement source, FhirJsonSerializationSettings settings = null)
