@@ -154,10 +154,9 @@ namespace Hl7.Fhir.Serialization
                 // failing that, check whether this is a roundtrip and we have the information
                 // about arrays in the serialization details. Failing that, assume the default:
                 // for unknown properties is to use an array - safest bet.
-                var generalJsonDetails = members[0].GetJsonSerializationDetails();
-                var hasIndex = generalJsonDetails?.ArrayIndex != null;
-                var needsArray = generalInfo?.IsCollection ?? hasIndex;
                 var details = members[0].GetJsonSerializationDetails();
+                var hasIndex = details?.ArrayIndex != null;
+                var needsArray = generalInfo?.IsCollection ?? hasIndex;
                 var objectInShadow = members[0].InstanceType != null ? primitiveTypes.Contains(members[0].InstanceType) : details?.UsesShadow ?? false;
 
                 if (!members.Any()) continue;
