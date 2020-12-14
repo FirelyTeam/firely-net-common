@@ -164,36 +164,41 @@ namespace Hl7.Fhir.Serialization
                 var propertyName = generalInfo?.IsChoiceElement == true ?
                        $"{members[0].Name}{members[0].InstanceType.Capitalize()}" : members[0].Name;
 
-                var valueList = new List<object>();
-
                 // property has a shadow property, because it has children elements as well
                 var shadowInProgress = objectInShadow && members.SelectMany(m => m.Children()).Any();
 
-                writer.WritePropertyName(shadowInProgress ? $"_{propertyName}" : propertyName);
-                writer.WriteObject(() =>
+                if (shadowInProgress)
                 {
-                    writeChildren(writer, members, details, valueList, shadowInProgress);
-                }, needsArray);
-
-                if (shadowInProgress && valueList.Any(n => n is { }))
+                    // write first shadow element (_properties)
+                    writeShadow(writer, propertyName, members, details, needsArray, out var valueList);
+                    if (valueList.Any(n => n is { }))
+                    {
+                        // shadow property has an existing value
+                        writer.WritePropertyName(propertyName);
+                        writer.WriteObject(() => writer.WriteValues(valueList), needsArray);
+                    }
+                }
+                else
                 {
-                    // shadow property has an existing value
-                    writer.WritePropertyName(propertyName);
-                    writer.WriteObject(() => writer.WriteValues(valueList), needsArray);
+                    writeNormal(writer, propertyName, members, details, needsArray);
                 }
             }
         }
 
-        private void writeChildren(Utf8JsonWriter writer, IEnumerable<ITypedElement> members, JsonSerializationDetails details, IList<object> valueList, bool shadowInProgress)
+        private void writeShadow(Utf8JsonWriter writer, string propertyName, IEnumerable<ITypedElement> members, JsonSerializationDetails details, bool needsArray, out IList<object> valueList)
         {
-            foreach (var child in members)
-            {
-                object value = child.Definition != null ? child.Value : details?.OriginalValue ?? child.Value;
+            writer.WritePropertyName($"_{propertyName}");
 
-                if (shadowInProgress)
+            var list = new List<object>();
+
+            writer.WriteObject(() =>
+            {
+                foreach (var child in members)
                 {
+                    object value = child.Definition != null ? child.Value : details?.OriginalValue ?? child.Value;
+
                     // save the value for later
-                    valueList.Add(value);
+                    list.Add(value);
 
                     // does this child has children of its own (like id or extensions)?
                     if (child.Children().Any())
@@ -204,22 +209,37 @@ namespace Hl7.Fhir.Serialization
                     {
                         writer.WriteValue(null);
                     }
-                    continue;
                 }
+            }, needsArray);
+            valueList = list; // valueList cannot be used inside an anonymous function
+        }
 
-                // not shadow here, normal business
-                if (value is null)
+        private void writeNormal(Utf8JsonWriter writer, string propertyName, IEnumerable<ITypedElement> members, JsonSerializationDetails details, bool needsArray)
+        {
+            // No values and no children? Then leave this function
+            if (members.All(m => m.Value is null) && !members.SelectMany(m => m.Children()).Any())
+                return;
+
+            writer.WritePropertyName(propertyName);
+            writer.WriteObject(() =>
+            {
+                foreach (var child in members)
                 {
-                    if (child.Children().Any())
+                    object value = child.Definition != null ? child.Value : details?.OriginalValue ?? child.Value;
+
+                    if (value is null)
                     {
-                        writer.WriteObject(() => addChildren(child, writer));
+                        if (child.Children().Any())
+                        {
+                            writer.WriteObject(() => addChildren(child, writer));
+                        }
+                    }
+                    else
+                    {
+                        writer.WriteValue(value);
                     }
                 }
-                else
-                {
-                    writer.WriteValue(value);
-                }
-            }
+            }, needsArray);
         }
     }
 
