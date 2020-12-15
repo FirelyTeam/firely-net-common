@@ -14,103 +14,102 @@ trigger:
     include:
     - develop
     - release/*
-	  - hotfix/*
-   	- refs/tags/v*
+    - hotfix/*
+    - refs/tags/v*
 
 pr:
   branches:
-    include: 
+    include:
     - *
 
 stages:
 - stage: build
   jobs:
-  - jobs: BuildAndTest
+  - job: BuildAndTest
     displayName: Unit test in Debug mode
-	steps:
-	- task: UseDotNet@2
-	  displayName: Use .Net Core SDK
-	  inputs:
-		version: $(NET_CORE_SDK)
+    steps:
+    - task: UseDotNet@2
+      displayName: Use .Net Core SDK
+      inputs:
+        version: $(NET_CORE_SDK)
 
-	- task: DotNetCoreCLI@2
-	  displayName: Restore
-	  inputs:
-		command: restore
-		projects: ./Hl7.Fhir.Common.sln
-		verbosityRestore: Minimal
+    - task: DotNetCoreCLI@2
+      displayName: Restore
+      inputs:
+        command: restore
+        projects: ./Hl7.Fhir.Common.sln
+        verbosityRestore: Minimal
 
-	- task: DotNetCoreCLI@2
-	  displayName: Build
-	  inputs:
-		projects: ./Hl7.Fhir.Common.sln
-		arguments: '--configuration Debug --no-restore'
+    - task: DotNetCoreCLI@2
+      displayName: Build
+      inputs:
+        projects: ./Hl7.Fhir.Common.sln
+        arguments: '--configuration Debug --no-restore'
 
-	- task: DotNetCoreCLI@2
-	  displayName: Test
-	  inputs:
-		command: test
-		projects: '**/Hl7.Fhir*Tests.csproj'
-		arguments: '--no-build'
-		
-  - jobs: BuildAndPack
+    - task: DotNetCoreCLI@2
+      displayName: Test
+      inputs:
+        command: test
+        projects: '**/Hl7.Fhir*Tests.csproj'
+        arguments: '--no-build'
+    
+  - job: BuildAndPack
     displayName: Build and Pack in Release mode
-	steps:
-	- task: UseDotNet@2
-	  displayName: Use .Net Core SDK
-	  inputs:
-		version: $(NET_CORE_SDK)
+    steps:
+    - task: UseDotNet@2
+      displayName: Use .Net Core SDK
+      inputs:
+        version: $(NET_CORE_SDK)
 
-	- task: DownloadSecureFile@1
-	  displayName: 'Download Signing key file'
-	  inputs:
-		secureFile: '47f5a9d4-7009-4fe1-9cb2-c0d6122ded23'
-		retryCount: 5
+    - task: DownloadSecureFile@1
+      displayName: 'Download Signing key file'
+      inputs:
+        secureFile: '47f5a9d4-7009-4fe1-9cb2-c0d6122ded23'
+        retryCount: 5
 
-	- task: CopyFiles@2
-	  displayName: 'Copy key file to $(Build.SourcesDirectory)\src'
-	  inputs:
-		SourceFolder: '$(Agent.TempDirectory)'
-		Contents: FhirNetApi.snk
-		TargetFolder: '$(Build.SourcesDirectory)\src'
+    - task: CopyFiles@2
+      displayName: 'Copy key file to $(Build.SourcesDirectory)\src'
+      inputs:
+        SourceFolder: '$(Agent.TempDirectory)'
+        Contents: FhirNetApi.snk
+        TargetFolder: '$(Build.SourcesDirectory)\src'
 
-	- task: PowerShell@2
-	  displayName: 'Retrieve current version'
-	  inputs:
-		targetType: filePath
-		filePath: './$(Build.SourcesDirectory)\build\RetrieveVersion.ps1'
+    - task: PowerShell@2
+      displayName: 'Retrieve current version'
+      inputs:
+        targetType: filePath
+        filePath: './$(Build.SourcesDirectory)\build\RetrieveVersion.ps1'
 
-	- task: PowerShell@2
-	  displayName: 'Setting version'
-	  inputs:
-		targetType: filePath
-		filePath: './$(Build.SourcesDirectory)\build\UpdateVersion.ps1'
-		arguments: '-newVersion $(CurrentVersion) -suffix $(CurrentSuffix)-$(Build.BuildNumber)'
+    - task: PowerShell@2
+      displayName: 'Setting version'
+      inputs:
+        targetType: filePath
+        filePath: './$(Build.SourcesDirectory)\build\UpdateVersion.ps1'
+        arguments: '-newVersion $(CurrentVersion) -suffix $(CurrentSuffix)-$(Build.BuildNumber)'
 
-	- task: DotNetCoreCLI@2
-	  displayName: Restore
-	  inputs:
-		command: restore
-		projects: ./Hl7.Fhir.Common.sln
-		verbosityRestore: Minimal
+    - task: DotNetCoreCLI@2
+      displayName: Restore
+      inputs:
+        command: restore
+        projects: ./Hl7.Fhir.Common.sln
+        verbosityRestore: Minimal
 
-	- task: DotNetCoreCLI@2
-	  displayName: Build
-	  inputs:
-		projects: ./Hl7.Fhir.Common.sln
-		arguments: '--configuration Release --no-restore'
+    - task: DotNetCoreCLI@2
+      displayName: Build
+      inputs:
+        projects: ./Hl7.Fhir.Common.sln
+        arguments: '--configuration Release --no-restore'
 
-	- task: DotNetCoreCLI@2
-	  displayName: Pack
-	  inputs:
-		command: pack
-		packagesToPack: '**/*.csproj;!**/*.Tests.csproj;!**/Sprache.csproj'
-		configuration: Release
-		nobuild: true
+    - task: DotNetCoreCLI@2
+      displayName: Pack
+      inputs:
+        command: pack
+        packagesToPack: '**/*.csproj;!**/*.Tests.csproj;!**/Sprache.csproj'
+        configuration: Release
+        nobuild: true
 
-	- task: PublishBuildArtifacts@1
-	  displayName: 'Publish Artifact'
-	  inputs:
-		PathtoPublish: '$(build.artifactstagingdirectory)'
-		ArtifactName: NuGetPackages
-
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifact'
+      inputs:
+        PathtoPublish: '$(build.artifactstagingdirectory)'
+        ArtifactName: NuGetPackages
