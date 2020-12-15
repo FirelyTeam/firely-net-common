@@ -17,11 +17,6 @@ trigger:
     - hotfix/*
     - refs/tags/v*
 
-pr:
-  branches:
-    include:
-    - *
-
 stages:
 - stage: build
   jobs:
