@@ -43,10 +43,10 @@ namespace Hl7.Fhir.Model
   /// Primitive Type integer
   /// 32 bit number; for values larger than this, use decimal
   /// </summary>
-  [Serializable]
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("integer")]
+  [Serializable]
   [DataContract]
+  [FhirType("integer")]
   public partial class Integer : PrimitiveType, INullableValue<int>
   {
     /// <summary>

@@ -43,10 +43,10 @@ namespace Hl7.Fhir.Model
   /// Primitive Type decimal
   /// Do not use an IEEE type floating point type, instead use something that works like a true decimal, with inbuilt precision (e.g. Java BigInteger)
   /// </summary>
-  [Serializable]
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("decimal")]
+  [Serializable]
   [DataContract]
+  [FhirType("decimal")]
   public partial class FhirDecimal : PrimitiveType, INullableValue<decimal>
   {
     /// <summary>

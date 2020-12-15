@@ -46,8 +46,8 @@ namespace Hl7.Fhir.Model
   /// A reference from one resource to another
   /// </summary>
   [Serializable]
-  [FhirType("Reference")]
   [DataContract]
+  [FhirType("Reference")]
   public partial class ResourceReference : Hl7.Fhir.Model.DataType
   {
     /// <summary>

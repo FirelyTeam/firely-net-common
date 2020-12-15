@@ -43,10 +43,10 @@ namespace Hl7.Fhir.Model
   /// Primitive Type oid
   /// RFC 3001. See also ISO/IEC 8824:1990 €
   /// </summary>
-  [Serializable]
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("oid")]
+  [Serializable]
   [DataContract]
+  [FhirType("oid")]
   public partial class Oid : PrimitiveType, IValue<string>
   {
     /// <summary>

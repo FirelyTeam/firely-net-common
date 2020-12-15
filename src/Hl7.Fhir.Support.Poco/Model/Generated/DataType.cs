@@ -46,8 +46,8 @@ namespace Hl7.Fhir.Model
   /// Reuseable Types
   /// </summary>
   [Serializable]
-  [FhirType("DataType")]
   [DataContract]
+  [FhirType("DataType")]
   public abstract partial class DataType : Hl7.Fhir.Model.Element
   {
     /// <summary>
