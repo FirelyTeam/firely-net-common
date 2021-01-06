@@ -166,6 +166,14 @@ namespace Hl7.FhirPath.Tests
             Assert.IsNull(ElementNode.ForPrimitive(true).Scalar("{}.toDate()"));
         }
 
+        [TestMethod]
+        public void ConvertStringWithDateTimeToDate()
+        {
+            var inputDateTime = "1988-12-10T11:12:14.925+01:00";
+            var primitiveStringNode = ElementNode.ForPrimitive(inputDateTime);
+            var date = primitiveStringNode.Scalar("toDate()");
+            Assert.IsNotNull(date);
+        }
 
         [TestMethod]
         public void ConvertToDateTime()
