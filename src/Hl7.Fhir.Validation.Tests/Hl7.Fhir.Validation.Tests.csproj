@@ -3,8 +3,8 @@
     <TargetFrameworks>netcoreapp2.1;net45</TargetFrameworks>
   </PropertyGroup>
 
-  <Import Project="..\fhir-net-common.props" />
-  <Import Project="..\fhir-net-common.targets" />
+  <Import Project="..\firely-net-common.props" />
+  <Import Project="..\firely-net-common.targets" />
 
   <PropertyGroup>
     <AssemblyName>Hl7.Fhir.Validation.Tests</AssemblyName>
