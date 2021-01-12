@@ -46,8 +46,8 @@ namespace Hl7.Fhir.Model
   /// Base for datatypes that can carry modifier extensions
   /// </summary>
   [Serializable]
-  [FhirType("BackboneType")]
   [DataContract]
+  [FhirType("BackboneType")]
   public abstract partial class BackboneType : Hl7.Fhir.Model.DataType, Hl7.Fhir.Model.IModifierExtendable
   {
     /// <summary>

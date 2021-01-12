@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 using System;
@@ -418,7 +418,12 @@ namespace Hl7.Fhir.Utility
 
         public static T GetAttribute<T>(MemberInfo member) where T : Attribute => member.GetCustomAttribute<T>();
 
-        public static IEnumerable<T> GetAttributes<T>(MemberInfo member) where T : Attribute => member.GetCustomAttributes<T>();
+        public static IEnumerable<Attribute> GetAttributes(MemberInfo member) => member.GetCustomAttributes();
+
+        public static IEnumerable<Attribute> GetAttributes(Type type) => type.GetTypeInfo().GetCustomAttributes();
+
+        public static IEnumerable<T> GetAttributes<T>(MemberInfo member) where T : Attribute 
+            => member.GetCustomAttributes<T>();
 
 
         internal static IEnumerable<FieldInfo> FindEnumFields(Type t)

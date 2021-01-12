@@ -46,8 +46,8 @@ namespace Hl7.Fhir.Model
   /// Metadata about a resource
   /// </summary>
   [Serializable]
-  [FhirType("Meta")]
   [DataContract]
+  [FhirType("Meta")]
   public partial class Meta : Hl7.Fhir.Model.DataType
   {
     /// <summary>

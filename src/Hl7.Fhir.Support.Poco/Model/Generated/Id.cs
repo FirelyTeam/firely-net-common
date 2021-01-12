@@ -43,10 +43,10 @@ namespace Hl7.Fhir.Model
   /// Primitive Type id
   /// RFC 4122
   /// </summary>
-  [Serializable]
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("id")]
+  [Serializable]
   [DataContract]
+  [FhirType("id")]
   public partial class Id : PrimitiveType, IValue<string>
   {
     /// <summary>

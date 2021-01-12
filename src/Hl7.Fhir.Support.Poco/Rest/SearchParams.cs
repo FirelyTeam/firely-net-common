@@ -142,6 +142,8 @@ namespace Hl7.Fhir.Rest
                 var elements = value.Split(',');
                 if (elements.Any(f => String.IsNullOrEmpty(f)))
                     throw Error.Format($"Invalid {SEARCH_PARAM_SORT}: must be a list of non-empty element names");
+                if (elements.Any(f => f == "-"))
+                    throw Error.Format($"Invalid {SEARCH_PARAM_SORT}: one of the values is just a single '-', an element name must be provided");
                 if (!elements.All(f => Char.IsLetter(f[0]) || f[0] == '-' || f[0] == '_'))
                     throw Error.Format($"Invalid {SEARCH_PARAM_SORT}: must be a list of element names, optionally prefixed with '-'");
 

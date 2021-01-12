@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -66,6 +66,33 @@ namespace Hl7.Fhir.Tests.Introspection
             profile = mapping.FindMappedElementByName("profile");
             Assert.IsNotNull(profile);
             Assert.AreEqual(typeof(Canonical), profile.FhirType.Single());
+        }
+
+        [TestMethod]
+        public void TestPropsWithRedirect()
+        {
+            Assert.IsTrue(ClassMapping.TryCreate(typeof(TypeWithCodeOfT), out var mapping));
+
+            var propMapping = mapping.FindMappedElementByName("type1");
+            Assert.AreEqual(typeof(Code<SomeEnum>), propMapping.ImplementingType);
+            Assert.AreEqual(typeof(FhirString), propMapping.FhirType.Single());
+
+            propMapping = mapping.FindMappedElementByName("type2");
+            Assert.AreEqual(typeof(Code<SomeEnum>), propMapping.ImplementingType);
+            Assert.AreEqual(typeof(Code), propMapping.FhirType.Single());
+        }
+
+
+        [FhirType("TypeWithCodeOfT")]
+        public class TypeWithCodeOfT
+        {
+            [FhirElement("type1")]
+            [DeclaredType(Type=typeof(FhirString))]
+            public Code<SomeEnum> Type1 { get; set; }
+
+            [FhirElement("type2")]
+            public Code<SomeEnum> Type2 { get; set; }
+
         }
 
         [TestMethod]

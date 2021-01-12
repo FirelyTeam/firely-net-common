@@ -43,10 +43,10 @@ namespace Hl7.Fhir.Model
   /// Primitive Type string
   /// Note that FHIR strings SHALL NOT exceed 1MB in size
   /// </summary>
-  [Serializable]
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("string")]
+  [Serializable]
   [DataContract]
+  [FhirType("string")]
   public partial class FhirString : PrimitiveType, IValue<string>
   {
     /// <summary>

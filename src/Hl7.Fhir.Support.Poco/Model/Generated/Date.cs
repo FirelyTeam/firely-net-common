@@ -43,10 +43,10 @@ namespace Hl7.Fhir.Model
   /// Primitive Type date
   /// A date or partial date (e.g. just year or year + month). There is no time zone. The format is a union of the schema types gYear, gYearMonth and date.  Dates SHALL be valid dates.
   /// </summary>
-  [Serializable]
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("date")]
+  [Serializable]
   [DataContract]
+  [FhirType("date")]
   public partial class Date : PrimitiveType, IValue<string>
   {
     /// <summary>

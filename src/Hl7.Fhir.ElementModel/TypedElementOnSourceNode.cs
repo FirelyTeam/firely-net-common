@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://github.com/FirelyTeam/fhir-net-api/blob/master/LICENSE
+ * available at https://github.com/FirelyTeam/firely-net-sdk/blob/master/LICENSE
  */
 
 using Hl7.Fhir.Specification;
@@ -254,7 +254,7 @@ namespace Hl7.Fhir.ElementModel
                     // Unfortunately, we decided to nicely capitalize the suffix, even for
                     // primitives - luckily then, there's just a single list of primitives,
                     // so we can "correct" them
-                    return suffixMap.TryGetValue(s, out var corrected) ? corrected : s;
+                    return _suffixMap.TryGetValue(s, out var corrected) ? corrected : s;
                 };
             }
             else if (info.Representation == XmlRepresentation.TypeAttr) // May be used by models other then FHIR, e.g. CCDA represented by a StructureDefinition
@@ -276,7 +276,7 @@ namespace Hl7.Fhir.ElementModel
             return tp.GetTypeName();
         }
 
-        private static readonly Dictionary<string, string> suffixMap = new Dictionary<string, string>()
+        private static readonly Dictionary<string, string> _suffixMap = new Dictionary<string, string>()
         {
             { "Boolean", "boolean" },
             { "Integer", "integer" },

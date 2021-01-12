@@ -4,15 +4,15 @@
     <TargetFrameworks>netstandard2.0;net45;netstandard1.6</TargetFrameworks>
   </PropertyGroup>
 
-  <Import Project="..\fhir-net-common.props" />
-  <Import Project="..\fhir-net-common.targets" />
+  <Import Project="..\firely-net-common.props" />
+  <Import Project="..\firely-net-common.targets" />
 
   <PropertyGroup>
     <PackageId>Hl7.Fhir.Support.Poco</PackageId>
-    <Title>HL7 FHIR library containing support classes for POCO support in the .NET API</Title>
+    <Title>HL7 FHIR library containing support classes for POCO support in the Firely .NET SDK</Title>
     <Summary>Base classes and supporting infrastructure to work with FHIR data using POCOs.</Summary>
     <Description>This is the support library for working with the POCO representation of HL7's FHIR model data</Description>
-    <PackageTags>HL7;FHIR;POCO;REST;PARSE;SERIALIZE</PackageTags>
+    <PackageTags>HL7;FHIR;POCO;REST;PARSE;SERIALIZE;Firely;SDK</PackageTags>
     <AssemblyName>Hl7.Fhir.Support.Poco</AssemblyName>
   </PropertyGroup>
 

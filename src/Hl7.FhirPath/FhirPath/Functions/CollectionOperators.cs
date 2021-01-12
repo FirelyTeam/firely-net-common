@@ -3,7 +3,7 @@
  * See the file CONTRIBUTORS for details.
  * 
  * This file is licensed under the BSD 3-Clause license
- * available at https://raw.githubusercontent.com/FirelyTeam/fhir-net-api/master/LICENSE
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
 using Hl7.Fhir.ElementModel;
@@ -80,15 +80,9 @@ namespace Hl7.FhirPath.Functions
                 {
                     return new List<ITypedElement>() { element };
                 }
-                else
-                {
-                    return Enumerable.Empty<ITypedElement>();
-                }
             }
-            else
-            {
-                return element.Children(name);
-            }
+            
+            return element.Children(name);
         }
 
         public static string FpJoin(this IEnumerable<ITypedElement> collection, string separator)
