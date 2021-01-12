@@ -49,6 +49,7 @@ stages:
         arguments: '--no-build'
     
   - job: BuildAndPack
+    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest')) # not a PR
     displayName: Build and Pack in Release mode
     steps:
     - task: UseDotNet@2
