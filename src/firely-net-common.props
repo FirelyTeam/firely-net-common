@@ -47,9 +47,10 @@
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <SignAssembly>True</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\FhirNetApi.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\FhirNetApi.snk</AssemblyOriginatorKeyFile> 
     <IncludeSymbols>True</IncludeSymbols>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>  
 </Project>
 
