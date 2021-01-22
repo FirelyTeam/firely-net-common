@@ -50,6 +50,7 @@
     <AssemblyOriginatorKeyFile>..\FhirNetApi.snk</AssemblyOriginatorKeyFile>
     <IncludeSymbols>True</IncludeSymbols>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+	<SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>  
 </Project>
 
