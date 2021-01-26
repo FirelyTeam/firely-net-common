@@ -44,7 +44,7 @@ namespace Hl7.Fhir.ElementModel.Types
 
         public QuantityUnitSystem System { get; private set; }
 
-        public Quantity(decimal value, string? unit = UCUM_UNIT) 
+        public Quantity(decimal value, string? unit = UCUM_UNIT)
             : this(value, unit, QuantityUnitSystem.UCUM)
         {
             //
@@ -104,7 +104,7 @@ namespace Hl7.Fhir.ElementModel.Types
             {
                 if (TryParseTimeUnit(result.Groups["time"].Value, out var tv, out var isCalendarUnit))
                 {
-                    quantity = isCalendarUnit ? Quantity.ForCalendarDuration(value!, tv!) 
+                    quantity = isCalendarUnit ? Quantity.ForCalendarDuration(value!, tv!)
                         : new Quantity(value!, tv!);
                     return true;
                 }
@@ -245,7 +245,7 @@ namespace Hl7.Fhir.ElementModel.Types
             // result for units that can really not be compared according to UCUM.
             if (Unit != otherQ.Unit || System != otherQ.System)
             {
-                throw Error.NotSupported("Comparing quantities with different units is not yet supported");
+                return Fail<int>(Error.NotSupported("Comparing quantities with different units is not yet supported"));
             }
 
             return decimal.Compare(Math.Round(Value, 8), Math.Round(otherQ.Value, 8));   // aligns with Decimal
