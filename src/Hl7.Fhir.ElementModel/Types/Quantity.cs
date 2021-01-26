@@ -179,7 +179,10 @@ namespace Hl7.Fhir.ElementModel.Types
         /// <param name="obj"></param>
         /// <returns>true if the values have comparable units, and the converted values are the same according to decimal equality rules.
         /// </returns>
-        /// <remarks>See <see cref="TryCompareTo(Any)"/> for more details.</remarks>
+        /// <remarks>See <see cref="TryCompareTo(Any)"/> for more details.
+        /// According to the .NET documentation Equals(object obj) cannot throw
+        /// an exception. That is why we make sure that a bool is always returned. See 
+        /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.object.equals"/></remarks>
         public override bool Equals(object obj) => obj is Any other && Equals(other, CQL_EQUALS_COMPARISON);
 
         public bool Equals(Any other, QuantityComparison comparisonType) =>
