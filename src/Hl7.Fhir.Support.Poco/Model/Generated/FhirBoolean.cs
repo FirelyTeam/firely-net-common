@@ -43,10 +43,10 @@ namespace Hl7.Fhir.Model
   /// Primitive Type boolean
   /// Value of "true" or "false"
   /// </summary>
-  [Serializable]
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("boolean")]
+  [Serializable]
   [DataContract]
+  [FhirType("boolean")]
   public partial class FhirBoolean : PrimitiveType, INullableValue<bool>
   {
     /// <summary>

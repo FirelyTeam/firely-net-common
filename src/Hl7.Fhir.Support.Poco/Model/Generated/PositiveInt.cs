@@ -43,10 +43,10 @@ namespace Hl7.Fhir.Model
   /// Primitive Type positiveInt
   /// An integer with a value that is positive (e.g. &gt;0)
   /// </summary>
-  [Serializable]
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("positiveInt")]
+  [Serializable]
   [DataContract]
+  [FhirType("positiveInt")]
   public partial class PositiveInt : PrimitiveType, INullableValue<int>
   {
     /// <summary>

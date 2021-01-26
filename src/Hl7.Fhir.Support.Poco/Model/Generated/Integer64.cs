@@ -43,10 +43,10 @@ namespace Hl7.Fhir.Model
   /// Primitive Type integer64
   /// Typically this is used for record counters (e.g. database keys)
   /// </summary>
-  [Serializable]
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("integer64")]
+  [Serializable]
   [DataContract]
+  [FhirType("integer64")]
   public partial class Integer64 : PrimitiveType, INullableValue<long>
   {
     /// <summary>

@@ -6,9 +6,9 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using System;
 using Hl7.Fhir.Tests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.FhirPath.Tests
@@ -92,9 +92,9 @@ namespace Hl7.FhirPath.Tests
             var b = new P.Quantity(30.5m, "g");
 
             ExceptionAssert.Throws<NotSupportedException>(() => a < b);
-            ExceptionAssert.Throws<NotSupportedException>(() => a == b);
+            Assert.IsFalse(a == b);
             ExceptionAssert.Throws<NotSupportedException>(() => a >= b);
-            ExceptionAssert.Throws<NotSupportedException>(() => a.Equals(b));
+            Assert.IsFalse(a.Equals(b));
         }
     }
 }

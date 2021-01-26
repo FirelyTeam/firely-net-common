@@ -43,10 +43,10 @@ namespace Hl7.Fhir.Model
   /// Primitive Type uuid
   /// See The Open Group, CDE 1.1 Remote Procedure Call specification, Appendix A.
   /// </summary>
-  [Serializable]
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-  [FhirType("uuid")]
+  [Serializable]
   [DataContract]
+  [FhirType("uuid")]
   public partial class Uuid : PrimitiveType, IValue<string>
   {
     /// <summary>
