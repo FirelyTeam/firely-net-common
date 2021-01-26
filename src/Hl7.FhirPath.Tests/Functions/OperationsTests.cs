@@ -11,6 +11,14 @@ namespace HL7.FhirPath.Tests
     [TestClass]
     public class OperationsTests
     {
+        private static IEnumerable<object[]> EmptyCollectionOperatorTestcases() =>
+            new (string expression, bool expected, bool invalid)[]
+                 {
+                     ("({} = {}).empty()", true, false),
+                     ("(true > {}).empty()", true, false),
+                     ("({} != 'dummy').empty()", true, false),
+                 }.Select(t => new object[] { t.expression, t.expected, t.invalid });
+
         private static IEnumerable<object[]> EqualityOperatorTestcases() =>
             new (string expression, bool expected, bool invalid)[]
                  {
@@ -22,6 +30,19 @@ namespace HL7.FhirPath.Tests
                     ("(@2012-01-01T10:30:31 = @2012-01-01T10:30).empty()", true, false),
                     ("@2012-01-01T10:30:31.0 = @2012-01-01T10:30:31", true, false),
                     ("@2012-01-01T10:30:31.1 = @2012-01-01T10:30:31", false, false)
+                 }.Select(t => new object[] { t.expression, t.expected, t.invalid });
+
+        private static IEnumerable<object[]> EquivalenceOperatorTestcases() =>
+            new (string expression, bool expected, bool invalid)[]
+                 {
+                    ("@2012 ~ @2012", true, false),
+                    ("@2012 ~ @2013", false, false),
+                    ("@2012-01 ~ @2012", false, false),
+                    ("@2012-01-01T10:30 ~ @2012-01-01T10:30", true, false),
+                    ("@2012-01-01T10:30 ~ @2012-01-01T10:31", false, false),
+                    ("@2012-01-01T10:30:31 ~ @2012-01-01T10:30", false, false),
+                    ("@2012-01-01T10:30:31.0 ~ @2012-01-01T10:30:31", true, false),
+                    ("@2012-01-01T10:30:31.1 ~ @2012-01-01T10:30:31", false, false)
                  }.Select(t => new object[] { t.expression, t.expected, t.invalid });
 
         private static IEnumerable<object[]> GreaterThanOperatorTestcases() =>
@@ -96,15 +117,55 @@ namespace HL7.FhirPath.Tests
                     ("@T10:30:00 >= @T10:30:00.0", true, false)
                }.Select(t => new object[] { t.expression, t.expected, t.invalid });
 
+        private static IEnumerable<object[]> IsTypeOperatorTestcases() =>
+           new (string expression, bool expected, bool invalid)[]
+                {
+                    ("10 is Integer", true, false),
+                    ("10.2 is Decimal", true, false),
+                    ("true is Boolean", true, false),
+                    ("false is Boolean", true, false),
+                    ("'string' is String", true, false),
+                    ("@2021-01-26 is Date", true, false),
+                    ("@2021-01-26T13:30 is DateTime", true, false),
+                    ("@T14:30:14.559 is Time", true, false),
+                    ("4 'kg' is Quantity", true, false),
+                    // backwards compatible with previous implementations of FhirPath
+                    ("10.is(Integer)", true, false),
+                    ("10.2.is(Decimal)", true, false),
+                    ("true.is(Boolean)", true, false),
+                    ("false.is(Boolean)", true, false),
+                    ("'string'.is(String)", true, false),
+                    ("@2021-01-26.is(Date)", true, false),
+                    ("@2021-01-26T13:30.is(DateTime)", true, false),
+                    ("@T14:30:14.559.is(Time)", true, false),
+                    ("(4 'kg').is(Quantity)", true, false),
+               }.Select(t => new object[] { t.expression, t.expected, t.invalid });
+
+        private static IEnumerable<object[]> AsTypeOperatorTestcases() =>
+            new (string expression, bool expected, bool invalid)[]
+                {
+                    ("10 as Integer = 10", true, false),
+                    ("{}.empty() as Boolean = true", true, false),
+                    ("'abcde'.length() as Integer = 5", true, false),
+                    // backwards compatible with previous implementations of FhirPath
+                    ("10.as(Integer) = 10", true, false),
+                    ("{}.empty().as(Boolean) = true", true, false),
+                    ("'abcde'.length().as(Integer) = 5", true, false)
+                }.Select(t => new object[] { t.expression, t.expected, t.invalid });
+
         public static IEnumerable<object[]> AllFunctionTestcases()
         {
             return
                 Enumerable.Empty<object[]>()
+                .Union(EmptyCollectionOperatorTestcases())
                 .Union(EqualityOperatorTestcases())
+                .Union(EquivalenceOperatorTestcases())
                 .Union(GreaterThanOperatorTestcases())
                 .Union(LessThanOperatorTestcases())
                 .Union(LessOrEqualOperatorTestcases())
                 .Union(GreaterOrEqualOperatorTestcases())
+                .Union(IsTypeOperatorTestcases())
+                .Union(AsTypeOperatorTestcases())
                 ;
         }
 
