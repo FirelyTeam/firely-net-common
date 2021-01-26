@@ -23,6 +23,7 @@ namespace HL7.FhirPath.Tests
                     ("@2012-01-01T10:30:31.0 = @2012-01-01T10:30:31", true, false),
                     ("@2012-01-01T10:30:31.1 = @2012-01-01T10:30:31", false, false)
                  }.Select(t => new object[] { t.expression, t.expected, t.invalid });
+
         private static IEnumerable<object[]> GreaterThanOperatorTestcases() =>
             new (string expression, bool expected, bool invalid)[]
                  {
@@ -41,12 +42,69 @@ namespace HL7.FhirPath.Tests
                     ("@T10:30:00 > @T10:30:00.0", false, false)
                  }.Select(t => new object[] { t.expression, t.expected, t.invalid });
 
+        private static IEnumerable<object[]> LessThanOperatorTestcases() =>
+            new (string expression, bool expected, bool invalid)[]
+                 {
+                    ("10 < 5", false, false),
+                    ("10 < 5.0", false, false),
+                    ("'abc' < 'ABC'", false, false),
+                    ("8 'm' < 4 'm'", false, false),
+                    ("(4 'm' < 4 'cm').empty()", true, false),   // we do not support unit conversion at the moment
+                    ("@2018-03-01 < @2018-01-01", false, false),
+                    ("(@2018-03 < @2018-03-01).empty()", true, false),
+                    ("@2018-03-01T10:30:00 < @2018-03-01T10:00:00", false, false),
+                    ("(@2018-03-01T10 < @2018-03-01T10:30).empty()", true, false),
+                    ("@2018-03-01T10:30:00 < @2018-03-01T10:30:00.0", false, false),
+                    ("@T10:30:00 < @T10:00:00", false, false),
+                    ("(@T10 < @T10:30).empty()", true, false),
+                    ("@T10:30:00 < @T10:30:00.0", false, false)
+                }.Select(t => new object[] { t.expression, t.expected, t.invalid });
+
+        private static IEnumerable<object[]> LessOrEqualOperatorTestcases() =>
+           new (string expression, bool expected, bool invalid)[]
+                {
+                    ("10 <= 5", false, false),
+                    ("10 <= 5.0", false, false),
+                    ("'abc' <= 'ABC'", false, false),
+                    ("8 'm' <= 4 'm'", false, false),
+                    ("(4 'm' <= 4 'cm').empty()", true, false),   // we do not support unit conversion at the moment
+                    ("@2018-03-01 <= @2018-01-01", false, false),
+                    ("(@2018-03 <= @2018-03-01).empty()", true, false),
+                    ("@2018-03-01T10:30:00 <= @2018-03-01T10:00:00", false, false),
+                    ("(@2018-03-01T10 <= @2018-03-01T10:30).empty()", true, false),
+                    ("@2018-03-01T10:30:00 <= @2018-03-01T10:30:00.0", true, false),
+                    ("@T10:30:00 <= @T10:00:00", false, false),
+                    ("(@T10 <= @T10:30).empty()", true, false),
+                    ("@T10:30:00 <= @T10:30:00.0", true, false)
+               }.Select(t => new object[] { t.expression, t.expected, t.invalid });
+
+        private static IEnumerable<object[]> GreaterOrEqualOperatorTestcases() =>
+           new (string expression, bool expected, bool invalid)[]
+                {
+                    ("10 >= 5", true, false),
+                    ("10 >= 5.0", true, false),
+                    ("'abc' >= 'ABC'", true, false),
+                    ("8 'm' >= 4 'm'", true, false),
+                    ("(4 'm' >= 4 'cm').empty()", true, false),   // we do not support unit conversion at the moment
+                    ("@2018-03-01 >= @2018-01-01", true, false),
+                    ("(@2018-03 >= @2018-03-01).empty()", true, false),
+                    ("@2018-03-01T10:30:00 >= @2018-03-01T10:00:00", true, false),
+                    ("(@2018-03-01T10 >= @2018-03-01T10:30).empty()", true, false),
+                    ("@2018-03-01T10:30:00 >= @2018-03-01T10:30:00.0", true, false),
+                    ("@T10:30:00 >= @T10:00:00", true, false),
+                    ("(@T10 >= @T10:30).empty()", true, false),
+                    ("@T10:30:00 >= @T10:30:00.0", true, false)
+               }.Select(t => new object[] { t.expression, t.expected, t.invalid });
+
         public static IEnumerable<object[]> AllFunctionTestcases()
         {
             return
                 Enumerable.Empty<object[]>()
                 .Union(EqualityOperatorTestcases())
                 .Union(GreaterThanOperatorTestcases())
+                .Union(LessThanOperatorTestcases())
+                .Union(LessOrEqualOperatorTestcases())
+                .Union(GreaterOrEqualOperatorTestcases())
                 ;
         }
 
