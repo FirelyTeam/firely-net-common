@@ -79,7 +79,6 @@ namespace Hl7.Fhir.Model
         /// Value of extension
         /// </summary>
         [FhirElement("value", InSummary = true, Order = 40, Choice = ChoiceType.DatatypeChoice)]
-        [CLSCompliant(false)]
         [DataMember]
         public Hl7.Fhir.Model.DataType Value
         {

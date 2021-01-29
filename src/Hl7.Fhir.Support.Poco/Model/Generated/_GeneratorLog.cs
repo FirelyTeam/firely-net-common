@@ -33,4 +33,5 @@
 // Period.cs
 // ResourceReference.cs
 // DomainResource.cs
+// Parameters.cs
 // Resource.cs
