@@ -69,10 +69,14 @@
 // BackboneType.cs
 // CodeableConcept.cs
 // Coding.cs
+// ContactDetail.cs
+// ContactPoint.cs
 // DataType.cs
 // Identifier.cs
 // Meta.cs
 // Period.cs
+// Quantity.cs
+// Range.cs
 // ResourceReference.cs
 // DomainResource.cs
 // OperationOutcome.cs
