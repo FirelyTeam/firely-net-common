@@ -78,6 +78,7 @@
 // Quantity.cs
 // Range.cs
 // ResourceReference.cs
+// UsageContext.cs
 // DomainResource.cs
 // OperationOutcome.cs
 // Parameters.cs
