@@ -33,5 +33,6 @@
 // Period.cs
 // ResourceReference.cs
 // DomainResource.cs
+// OperationOutcome.cs
 // Parameters.cs
 // Resource.cs
