@@ -34,7 +34,7 @@ using Hl7.Fhir.Utility;
 
 namespace Hl7.Fhir.Model
 {
-    [System.Diagnostics.DebuggerDisplay("\\{\"{TypeName,nq}/{Id,nq}\" Identity={ResourceIdentity()}}")]
+    [System.Diagnostics.DebuggerDisplay("\\{\"{TypeName,nq}/{Id,nq}\"}")]
     public abstract partial class DomainResource : IModifierExtendable
     {
         public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
