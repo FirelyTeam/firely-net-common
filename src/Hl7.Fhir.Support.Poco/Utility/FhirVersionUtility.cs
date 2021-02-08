@@ -12,7 +12,7 @@ namespace Hl7.Fhir.Utility
         /// </summary>
         /// <param name="version">Fhir Release version number</param>
         /// <returns>Official FHIR Release</returns>
-        public static FhirRelease? Parse(string version)
+        public static FhirRelease Parse(string version)
         {
             return version switch
             {
@@ -50,7 +50,7 @@ namespace Hl7.Fhir.Utility
                 "4.4.0" => FhirRelease.R5,
                 "4.5.0" => FhirRelease.R5,
                 "5.0.0" => FhirRelease.R5,
-                _ => null
+                _ => throw new Exception($"Unknown FHIR version {version}")
             };
         }
 
@@ -77,7 +77,7 @@ namespace Hl7.Fhir.Utility
         /// </summary>
         /// <param name="fhirMimeVersion">'fhirversion' MIME-Type parameter</param>
         /// <returns>Official FHIR Release</returns>
-        public static FhirRelease? FhirReleaseFromMimeVersion(string fhirMimeVersion)
+        public static FhirRelease FhirReleaseFromMimeVersion(string fhirMimeVersion)
         {
             // source: https://www.hl7.org/fhir/http.html#version-parameter
             return fhirMimeVersion switch
@@ -87,7 +87,7 @@ namespace Hl7.Fhir.Utility
                 "3.0" => FhirRelease.STU3,
                 "4.0" => FhirRelease.R4,
                 "5.0" => FhirRelease.R5,
-                _ => null
+                _ => throw new Exception($"Unknown value for the fhirversion MIME-type {fhirMimeVersion}")
             };
         }
 
