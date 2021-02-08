@@ -105,7 +105,7 @@ namespace Hl7.Fhir.Utility
                 FhirRelease.STU3 => "3.0",
                 FhirRelease.R4 => "4.0",
                 FhirRelease.R5 => "5.0",
-                _ => null
+                _ => throw new Exception($"Unknown FHIR version {fhirRelease}")
             };
         }
     }
