@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Hl7.Fhir.Utility;
 using Hl7.Fhir.Specification;
+using System;
 
 namespace Hl7.Fhir.Utility.Tests
 {
@@ -9,8 +10,7 @@ namespace Hl7.Fhir.Utility.Tests
     {
         [TestMethod]
         public void TestFhirReleaseFromVersion()
-        {
-            Assert.IsNull(FhirReleaseParser.Parse("0.0.1"));
+        {           
             Assert.AreEqual(FhirRelease.DSTU1, FhirReleaseParser.Parse("0.01"));
             Assert.AreEqual(FhirRelease.DSTU1, FhirReleaseParser.Parse("0.11"));
             Assert.AreEqual(FhirRelease.DSTU1, FhirReleaseParser.Parse("0.0.80"));
