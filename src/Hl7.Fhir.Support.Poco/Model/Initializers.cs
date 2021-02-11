@@ -89,7 +89,7 @@ namespace Hl7.Fhir.Model
         {
             this.System = system;
             this.Value = value;
-        }        
+        }
     }
 
     [System.Diagnostics.DebuggerDisplay(@"\{{DebuggerDisplay,nq}}")] // http://blogs.msdn.com/b/jaredpar/archive/2011/03/18/debuggerdisplay-attribute-best-practices.aspx
@@ -120,5 +120,35 @@ namespace Hl7.Fhir.Model
                 return sb.ToString();
             }
         }
-    }  
+    }
+
+    public partial class ContactPoint
+    {
+        public ContactPoint()
+        {
+        }
+
+        public ContactPoint(ContactPointSystem? system, ContactPointUse? use, string value)
+        {
+            this.System = system;
+            this.Use = use;
+            this.Value = value;
+        }
+    }
+
+    public partial class Quantity
+    {
+        public Quantity()
+        {
+        }
+
+        public Quantity(decimal value, string unit, string system = "http://unitsofmeasure.org")
+        {
+            Value = value;
+            Unit = unit;
+            Code = unit;
+            System = system;
+        }
+    }
+
 }
