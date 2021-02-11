@@ -169,20 +169,28 @@ namespace Hl7.Fhir.ElementModel
                 // for current node), all we can do is return the underlying string value
                 if (InstanceType == null) return sourceText;
 
+                // For performance reasons, let's try the normal case first - a non logical type
                 var ts = tryMapFhirPrimitiveTypeToSystemType(InstanceType);
+
+                // If that failed, the type might still be a custom "primitive" type for logical models
+                if (ts is null && Uri.IsWellFormedUriString(InstanceType, UriKind.Absolute))
+                {
+                    // Get the definition of the logical type
+                    var summary = Provider.Provide(InstanceType);
+
+                    // And find the `value` attribute, which all primitives should have, even in logical models
+                    var valueType = summary?.GetElements().FirstOrDefault(e => e.ElementName.Equals("value"))?.Type.FirstOrDefault()?.GetTypeName();
+                    ts = valueType is { } ? tryMapFhirPrimitiveTypeToSystemType(valueType) : null;
+
+                    // Still, even this failed, we need to bail out.
+                    if (ts is null)
+                        throw new InvalidOperationException($"Cannot figure out what the primitive type is for the value of logical type '{InstanceType}'.");
+                }
+
                 if (ts == null)
                 {
                     raiseTypeError($"Since type {InstanceType} is not a primitive, it cannot have a value", _source, location: _source.Location);
                     return null;
-                }
-
-                // Type might still be a custom "primitive" type for logical models
-                if (Uri.IsWellFormedUriString(InstanceType, UriKind.Absolute))
-                {
-                    var summary = Provider.Provide(InstanceType);
-                    var valueType = summary?.GetElements().FirstOrDefault(e => e.ElementName.Equals("value"))?.Type.FirstOrDefault()?.GetTypeName();
-                    if (!P.Any.TryGetSystemTypeByName(valueType, out ts))
-                        throw new InvalidOperationException($"Cannot figure out what the primitive type is for the value of logical type '{InstanceType}'.");
                 }
 
                 // Finally, we have a (potentially) unparsed string + type info
@@ -237,7 +245,7 @@ namespace Hl7.Fhir.ElementModel
                     return suffix;
                 else
                 {
-                    
+
                     var isListed = info.Type
                         .OfType<IStructureDefinitionReference>()
                         .Select(t => t.ReferredType)
