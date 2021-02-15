@@ -102,9 +102,9 @@ namespace Hl7.Fhir.Utility
         }
 
         /// <summary>
-        /// Returns the corresponding FHIR release version of the specific Firely SDK core package
+        /// Returns the corresponding FHIR release version of the specific FHIR Core package from HL7
         /// </summary>
-        /// <param name="packageName">Firely SDK package name </param>
+        /// <param name="packageName">FHIR Core package name</param>
         /// <returns>Official FHIR Release</returns>
         public static FhirRelease FhirReleaseFromCorePackageName(string packageName)
         {
@@ -118,10 +118,10 @@ namespace Hl7.Fhir.Utility
         }
 
         /// <summary>
-        /// Returns the corresponding .NET SDK core package of the specific FHIR Release version
+        /// Returns the corresponding FHIR core package of the specific FHIR Release version
         /// </summary>
         /// <param name="fhirRelease">FHIR Release version</param>
-        /// <returns>Firely SDK name</returns>
+        /// <returns>FHIR Core package name</returns>
         public static string CorePackageNameFromFhirRelease(FhirRelease fhirRelease)
         {
             return fhirRelease switch

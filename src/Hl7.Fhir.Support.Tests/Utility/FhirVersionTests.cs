@@ -60,9 +60,23 @@ namespace Hl7.Fhir.Utility.Tests
             Assert.AreEqual(FhirRelease.STU3, FhirReleaseParser.FhirReleaseFromMimeVersion("3.0"));
             Assert.AreEqual(FhirRelease.R4, FhirReleaseParser.FhirReleaseFromMimeVersion("4.0"));
             Assert.AreEqual(FhirRelease.R5, FhirReleaseParser.FhirReleaseFromMimeVersion("5.0"));
-
+        }
+        
+        [TestMethod]
+        public void TestFhirCorePackageFromFhirVersion()
+        {
+            Assert.AreEqual("hl7.fhir.r3.core", FhirReleaseParser.CorePackageNameFromFhirRelease(FhirRelease.STU3));
+            Assert.AreEqual("hl7.fhir.r4.core", FhirReleaseParser.CorePackageNameFromFhirRelease(FhirRelease.R4));
+            Assert.AreEqual("hl7.fhir.r5.core", FhirReleaseParser.CorePackageNameFromFhirRelease(FhirRelease.R5));
         }
 
+        [TestMethod]
+        public void FhirReleaseFromCorePackageName()
+        {
+            Assert.AreEqual(FhirRelease.STU3, FhirReleaseParser.FhirReleaseFromCorePackageName("hl7.fhir.r3.core"));
+            Assert.AreEqual(FhirRelease.R4, FhirReleaseParser.FhirReleaseFromCorePackageName("hl7.fhir.r4.core"));
+            Assert.AreEqual(FhirRelease.R5, FhirReleaseParser.FhirReleaseFromCorePackageName("hl7.fhir.r5.core"));
+        }
 
 
     }
