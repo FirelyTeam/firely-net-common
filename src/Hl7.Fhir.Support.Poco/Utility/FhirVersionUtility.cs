@@ -1,7 +1,5 @@
 ﻿using Hl7.Fhir.Specification;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Hl7.Fhir.Utility
 {
@@ -16,43 +14,37 @@ namespace Hl7.Fhir.Utility
         {
             return version switch
             {
-                "0.01" => FhirRelease.DSTU1,
-                "0.05" => FhirRelease.DSTU1,
-                "0.06" => FhirRelease.DSTU1,
-                "0.11" => FhirRelease.DSTU1,
-                "0.0.80" => FhirRelease.DSTU1,
-                "0.0.81" => FhirRelease.DSTU1,
-                "0.0.82" => FhirRelease.DSTU1,
+                //DSTU1 cycle
+                "0.01" or "0.05" or "0.06" or "0.11" or "0.0.80" or "0.0.81" or "0.0.82" => FhirRelease.DSTU1,    
+                
+                //DSTU2 ballot versions
+                "0.4.0" or "0.5.0" => FhirRelease.DSTU2,
 
-                "0.4.0" => FhirRelease.DSTU2,
-                "0.5.0" => FhirRelease.DSTU2,
-                "1.0.0" => FhirRelease.DSTU2,
-                "1.0.1" => FhirRelease.DSTU2,
-                "1.0.2" => FhirRelease.DSTU2,
+                //Official DSTU2 versions (and technical corrections) => 1.0.x
+                string s when s.StartsWith("1.0") => FhirRelease.DSTU2,
 
-                "1.1.0" => FhirRelease.STU3,
-                "1.4.0" => FhirRelease.STU3,
-                "1.6.0" => FhirRelease.STU3,
-                "1.8.0" => FhirRelease.STU3,
-                "3.0.0" => FhirRelease.STU3,
-                "3.0.1" => FhirRelease.STU3,
-                "3.0.2" => FhirRelease.STU3,
+                //STU3 ballot versions
+                "1.1.0" or "1.4.0" or "1.6.0" or "1.8.0" => FhirRelease.STU3,
+                //Official STU3 versions (and technical corrections) => 3.0.x
+                string s when s.StartsWith("3.0") => FhirRelease.STU3,
 
-                "3.2.0" => FhirRelease.R4,
-                "3.3.0" => FhirRelease.R4,
-                "3.5.0" => FhirRelease.R4,
-                "3.5a.0" => FhirRelease.R4,
-                "3.6.0" => FhirRelease.R4,
-                "4.0.0" => FhirRelease.R4,
-                "4.0.1" => FhirRelease.R4,
+                //R4 ballot version
+                "3.2.0" or "3.3.0" or "3.5.0" or "3.5a.0" or "3.6.0" => FhirRelease.R4,
 
-                "4.2.0" => FhirRelease.R5,
-                "4.4.0" => FhirRelease.R5,
-                "4.5.0" => FhirRelease.R5,
-                "5.0.0" => FhirRelease.R5,
-                _ => throw new Exception($"Unknown FHIR version {version}")
+                //Official R4 versions (and technical corrections) => 4.0.x
+                string s when s.StartsWith("4.0") => FhirRelease.R4,
+
+                //R5 ballot versions
+                "4.2.0" or "4.4.0" or "4.5.0" => FhirRelease.R5,
+
+                //Official R5 versions (and technical corrections) => 5.0.x
+                string s when s.StartsWith("5.0") => FhirRelease.R5,
+
+                _ => throw new NotSupportedException($"Unknown FHIR version {version}")
             };
         }
+
+
 
         /// <summary>
         /// Returns the version number of the latest official FHIR releases
@@ -68,7 +60,7 @@ namespace Hl7.Fhir.Utility
                 FhirRelease.STU3 => "3.0.2",
                 FhirRelease.R4 => "4.0.1",
                 FhirRelease.R5 => "4.5.0",
-                _ => throw new Exception($"Unknown FHIR version {fhirRelease}")
+                _ => throw new NotSupportedException($"Unknown FHIR version {fhirRelease}")
             };
         }
 
@@ -87,7 +79,7 @@ namespace Hl7.Fhir.Utility
                 "3.0" => FhirRelease.STU3,
                 "4.0" => FhirRelease.R4,
                 "5.0" => FhirRelease.R5,
-                _ => throw new Exception($"Unknown value for the fhirversion MIME-type {fhirMimeVersion}")
+                _ => throw new NotSupportedException($"Unknown value for the fhirversion MIME-type {fhirMimeVersion}")
             };
         }
 
