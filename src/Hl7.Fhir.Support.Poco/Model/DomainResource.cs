@@ -39,13 +39,7 @@ namespace Hl7.Fhir.Model
     public abstract partial class DomainResource : IModifierExtendable
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private Rest.ResourceIdentity DebuggerDisplay
-        {
-            get
-            {
-                return this.ResourceIdentity();
-            }
-        }
+        private Rest.ResourceIdentity DebuggerDisplay => this.ResourceIdentity();
 
         public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
