@@ -105,8 +105,41 @@ namespace Hl7.Fhir.Utility
                 FhirRelease.STU3 => "3.0",
                 FhirRelease.R4 => "4.0",
                 FhirRelease.R5 => "5.0",
-                _ => throw new Exception($"Unknown FHIR version {fhirRelease}")
+                _ => throw new NotSupportedException($"Unknown FHIR version {fhirRelease}")
             };
         }
+
+        /// <summary>
+        /// Returns the corresponding FHIR release version of the specific Firely SDK core package
+        /// </summary>
+        /// <param name="packageName">Firely SDK package name </param>
+        /// <returns>Official FHIR Release</returns>
+        public static FhirRelease FhirReleaseFromCorePackageName(string packageName)
+        {
+            return packageName switch
+            {
+                "hl7.fhir.r3.core" => FhirRelease.STU3,
+                "hl7.fhir.r4.core" => FhirRelease.R4,
+                "hl7.fhir.r5.core" => FhirRelease.R5,
+                _ => throw new NotSupportedException($"Unknown package name {packageName}")
+            };
+        }
+
+        /// <summary>
+        /// Returns the corresponding .NET SDK core package of the specific FHIR Release version
+        /// </summary>
+        /// <param name="fhirRelease">FHIR Release version</param>
+        /// <returns>Firely SDK name</returns>
+        public static string CorePackageNameFromFhirRelease(FhirRelease fhirRelease)
+        {
+            return fhirRelease switch
+            {
+                FhirRelease.STU3 => "hl7.fhir.r3.core",
+                FhirRelease.R4 => "hl7.fhir.r4.core",
+                FhirRelease.R5 => "hl7.fhir.r5.core",
+                _ => throw new NotSupportedException($"Unknown FHIR version {fhirRelease}")
+            };
+        }
+
     }
 }
