@@ -1,8 +1,8 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using P = Hl7.Fhir.ElementModel.Types;
 
-namespace Hl7.FhirPath.Tests
+namespace Hl7.Fhir.ElementModel.Tests
 {
     [TestClass]
     public class DateTest
