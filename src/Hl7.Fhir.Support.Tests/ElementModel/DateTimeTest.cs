@@ -6,11 +6,11 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using P = Hl7.Fhir.ElementModel.Types;
 
-namespace Hl7.FhirPath.Tests
+namespace Hl7.Fhir.ElementModel.Tests
 {
     [TestClass]
     public class DateTimeTest
@@ -25,7 +25,7 @@ namespace Hl7.FhirPath.Tests
             accept("2012-03", 2012, 3);
             accept("2012-03+01:00", 2012, 3, o: plusOne);
             accept("2012-03-04", 2012, 3, 4);
-            accept("2012-03-04-01:00", 2012, 3, 4, o: new TimeSpan(-1,0,0));
+            accept("2012-03-04-01:00", 2012, 3, 4, o: new TimeSpan(-1, 0, 0));
             accept("2012-03-04T12Z", 2012, 3, 4, 12, o: TimeSpan.Zero);
             accept("2012-03-04T12Z", 2012, 3, 4, 12, o: TimeSpan.Zero);
             accept("2012-03-04T12:34Z", 2012, 3, 4, 12, 34, o: TimeSpan.Zero);
@@ -126,8 +126,8 @@ namespace Hl7.FhirPath.Tests
             Assert.AreEqual(56, pt.Seconds);
             Assert.AreEqual(567, pt.Millis);
             Assert.AreEqual(plusOne, pt.Offset);
-        }  
-        
+        }
+
         [TestMethod]
         public void CanCastDateToDateTime()
         {

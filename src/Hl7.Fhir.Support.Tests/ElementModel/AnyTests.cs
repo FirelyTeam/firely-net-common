@@ -10,7 +10,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using P = Hl7.Fhir.ElementModel.Types;
 
-namespace Hl7.FhirPath.Tests
+namespace Hl7.Fhir.Model.Tests
 {
     [TestClass]
     public class AnyTests
@@ -64,7 +64,7 @@ namespace Hl7.FhirPath.Tests
 
             foreach (var (value, to, success, expected) in tests())
             {
-               // var anyExpected = Any.ConvertToAny(expected);
+                // var anyExpected = Any.ConvertToAny(expected);
 
                 Assert.AreEqual(success, P.Any.TryParse(value, to, out var parsed), $"While parsing {value} for type {to}");
 

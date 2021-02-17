@@ -1,10 +1,10 @@
-﻿using Hl7.FhirPath.Functions;
+﻿using Hl7.Fhir.ElementModel.Types;
+using Hl7.FhirPath.Functions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.Linq;
-using Hl7.Fhir.ElementModel.Types;
 
-namespace HL7.FhirPath.Tests.Tests
+namespace Hl7.Fhir.ElementModel.Tests
 {
     [TestClass]
     public class EquivalenceTests
@@ -51,8 +51,8 @@ namespace HL7.FhirPath.Tests.Tests
             Assert.IsFalse(EqualityOperators.IsEquivalentTo(new Quantity(4.0m, "kg"), new Code("http://nu.nl", "R")));
             Assert.IsFalse(EqualityOperators.IsEquivalentTo(new Integer(0), new String("hi!")));
 
-            Assert.ThrowsException<System.ArgumentException>( () => EqualityOperators.Compare(new Quantity(4.0m, "kg"), new Code("http://nu.nl", "R"), "="));
-            Assert.ThrowsException<System.ArgumentException>( () => EqualityOperators.Compare(new Integer(0), new String("hi!"), ">="));
+            Assert.ThrowsException<System.ArgumentException>(() => EqualityOperators.Compare(new Quantity(4.0m, "kg"), new Code("http://nu.nl", "R"), "="));
+            Assert.ThrowsException<System.ArgumentException>(() => EqualityOperators.Compare(new Integer(0), new String("hi!"), ">="));
         }
 
         internal static IEnumerable<object[]> equalityTestcases() =>
@@ -146,7 +146,7 @@ namespace HL7.FhirPath.Tests.Tests
                 //(Quantity.Parse("1 second"), Quantity.Parse("1 's'"), true),
                 //(Quantity.Parse("1 millisecond"), Quantity.Parse("1 'ms'"), true),
                 (Quantity.Parse("24.0 'kg'"), null, null),
-            }.Select(t => new[] { t.Item1, t.Item2, t.Item3 } );
+            }.Select(t => new[] { t.Item1, t.Item2, t.Item3 });
 
 
         internal static IEnumerable<object> equivalenceTestcases()
@@ -347,7 +347,7 @@ namespace HL7.FhirPath.Tests.Tests
                 //(Quantity.Parse("1 millisecond"), Quantity.Parse("1 'ms'"), true),
                 (Quantity.Parse("24.0 'kg'"), null, null),
              }.Select(t => new[] { t.Item1, t.Item2, t.Item3 });
-        
+
         [DataTestMethod]
         [DynamicData(nameof(orderingTestcases), DynamicDataSourceType.Method)]
         public void OrderingTest(object a, object b, int? s)
