@@ -44,6 +44,25 @@ namespace Hl7.Fhir.Utility
             };
         }
 
+        /// <summary>
+        /// Converts a version number into a specific official FHIR Release
+        /// </summary>
+        /// <param name="version">Fhir Release version number</param>
+        /// <param name="release">Official FHIR Release</param>
+        /// <returns>true if the conversion succeeded; false otherwise.</returns>
+        public static bool TryParse(string version, out FhirRelease? release)
+        {
+            release = null;
+            try
+            {
+                release = Parse(version);
+                return true;
+            }
+            catch(NotSupportedException)
+            {
+                return false;
+            }
+        }
 
 
         /// <summary>
@@ -84,7 +103,27 @@ namespace Hl7.Fhir.Utility
         }
 
         /// <summary>
-        ///  Returns the value of the 'fhirversion' MIME-type parameter corresponding to a specific FHIR Version
+        /// Gets the official FHIR version based on the value of a MIME-Type parameter 'fhirversion'
+        /// </summary>
+        /// <param name="fhirMimeVersion">'fhirversion' MIME-Type parameter</param>
+        /// <param name="release">Official FHIR Release</param>
+        /// <returns>true if the conversion succeeded; false otherwise.</returns>
+        public static bool TryFhirReleaseFromMimeVersion(string fhirMimeVersion, out FhirRelease? release)
+        {
+            release = null;
+            try
+            {
+                release = FhirReleaseFromMimeVersion(fhirMimeVersion);
+                return true;
+            }
+            catch (NotSupportedException)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Returns the value of the 'fhirversion' MIME-type parameter corresponding to a specific FHIR Version
         /// </summary>
         /// <param name="fhirRelease">Official FHIR release</param>
         /// <returns>Corresponding 'fhirversion' MIME-Type value</returns>
@@ -116,6 +155,27 @@ namespace Hl7.Fhir.Utility
                 _ => throw new NotSupportedException($"Unknown package name {packageName}")
             };
         }
+
+        /// <summary>
+        /// Gets the corresponding FHIR release version of the specific FHIR Core package from HL7
+        /// </summary>
+        /// <param name="packageName">FHIR Core package name</param>
+        /// <param name="release">Official FHIR Release</param>
+        /// <returns>true if the conversion succeeded; false otherwise</returns>
+        public static bool TryFhirReleaseFromCorePackageName(string packageName, out FhirRelease? release)
+        {
+            release = null;
+            try
+            {
+                release = FhirReleaseFromCorePackageName(packageName);
+                return true;
+            }
+            catch (NotSupportedException)
+            {
+                return false;
+            }
+        }
+
 
         /// <summary>
         /// Returns the corresponding FHIR core package of the specific FHIR Release version
