@@ -10,7 +10,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using P = Hl7.Fhir.ElementModel.Types;
 
-namespace Hl7.Fhir.Model.Tests
+namespace Hl7.Fhir.ElementModel.Tests
 {
     [TestClass]
     public class AnyTests
