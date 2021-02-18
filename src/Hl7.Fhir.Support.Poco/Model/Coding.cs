@@ -28,22 +28,22 @@
 
 */
 
-using System;
-using System.Collections.Generic;
-using Hl7.Fhir.Introspection;
-using System.Runtime.Serialization;
-using Hl7.Fhir.Utility;
-using System.Text;
 using System.Diagnostics;
+using System.Linq;
+using System.Text;
+using S = Hl7.Fhir.ElementModel.Types;
 
 
 namespace Hl7.Fhir.Model
 {
+
+
     [DebuggerDisplay(@"\{{DebuggerDisplay,nq}}")]
     public partial class Coding
     {
         public Coding()
         {
+
         }
 
         public Coding(string system, string code)
@@ -75,5 +75,7 @@ namespace Hl7.Fhir.Model
                 return sb.ToString();
             }
         }
-   }
+
+        public S.Code ToSystemCode() => new S.Code(System, Code, Display, Version);
+    }
 }
