@@ -11,12 +11,30 @@ namespace Hl7.Fhir.Utility
         /// <param name="version">Fhir Release version number</param>
         /// <returns>Official FHIR Release</returns>
         public static FhirRelease Parse(string version)
+        {          
+            if(TryParse(version, out var release))
+            {
+                return release.Value;
+            }
+            else
+            {
+                throw new NotSupportedException($"Unknown FHIR version {version} ");
+            }    
+        }
+
+        /// <summary>
+        /// Converts a version number into a specific official FHIR Release
+        /// </summary>
+        /// <param name="version">Fhir Release version number</param>
+        /// <param name="release">Official FHIR Release</param>
+        /// <returns>true if the conversion succeeded; false otherwise.</returns>
+        public static bool TryParse(string version, out FhirRelease? release)
         {
-            return version switch
+            release = version switch
             {
                 //DSTU1 cycle
-                "0.01" or "0.05" or "0.06" or "0.11" or "0.0.80" or "0.0.81" or "0.0.82" => FhirRelease.DSTU1,    
-                
+                "0.01" or "0.05" or "0.06" or "0.11" or "0.0.80" or "0.0.81" or "0.0.82" => FhirRelease.DSTU1,
+
                 //DSTU2 ballot versions
                 "0.4.0" or "0.5.0" => FhirRelease.DSTU2,
 
@@ -40,28 +58,10 @@ namespace Hl7.Fhir.Utility
                 //Official R5 versions (and technical corrections) => 5.0.x
                 string s when s.StartsWith("5.0") => FhirRelease.R5,
 
-                _ => throw new NotSupportedException($"Unknown FHIR version {version}")
+                _ => null
             };
-        }
+            return release != null;
 
-        /// <summary>
-        /// Converts a version number into a specific official FHIR Release
-        /// </summary>
-        /// <param name="version">Fhir Release version number</param>
-        /// <param name="release">Official FHIR Release</param>
-        /// <returns>true if the conversion succeeded; false otherwise.</returns>
-        public static bool TryParse(string version, out FhirRelease? release)
-        {
-            release = null;
-            try
-            {
-                release = Parse(version);
-                return true;
-            }
-            catch(NotSupportedException)
-            {
-                return false;
-            }
         }
 
 
@@ -90,16 +90,14 @@ namespace Hl7.Fhir.Utility
         /// <returns>Official FHIR Release</returns>
         public static FhirRelease FhirReleaseFromMimeVersion(string fhirMimeVersion)
         {
-            // source: https://www.hl7.org/fhir/http.html#version-parameter
-            return fhirMimeVersion switch
+            if (TryFhirReleaseFromMimeVersion(fhirMimeVersion, out var release))
             {
-                "0.0" => FhirRelease.DSTU1,
-                "1.0" => FhirRelease.DSTU2,
-                "3.0" => FhirRelease.STU3,
-                "4.0" => FhirRelease.R4,
-                "5.0" => FhirRelease.R5,
-                _ => throw new NotSupportedException($"Unknown value for the fhirversion MIME-type {fhirMimeVersion}")
-            };
+                return release.Value;
+            }
+            else
+            {
+                throw new NotSupportedException($"Unknown value for the fhirversion MIME-type {fhirMimeVersion}");
+            }
         }
 
         /// <summary>
@@ -110,16 +108,16 @@ namespace Hl7.Fhir.Utility
         /// <returns>true if the conversion succeeded; false otherwise.</returns>
         public static bool TryFhirReleaseFromMimeVersion(string fhirMimeVersion, out FhirRelease? release)
         {
-            release = null;
-            try
+            release = fhirMimeVersion switch
             {
-                release = FhirReleaseFromMimeVersion(fhirMimeVersion);
-                return true;
-            }
-            catch (NotSupportedException)
-            {
-                return false;
-            }
+                "0.0" => FhirRelease.DSTU1,
+                "1.0" => FhirRelease.DSTU2,
+                "3.0" => FhirRelease.STU3,
+                "4.0" => FhirRelease.R4,
+                "5.0" => FhirRelease.R5,
+                _ => null
+            };
+            return release != null;
         }
 
         /// <summary>
@@ -147,13 +145,14 @@ namespace Hl7.Fhir.Utility
         /// <returns>Official FHIR Release</returns>
         public static FhirRelease FhirReleaseFromCorePackageName(string packageName)
         {
-            return packageName switch
+            if (TryFhirReleaseFromCorePackageName(packageName, out var release))
             {
-                "hl7.fhir.r3.core" => FhirRelease.STU3,
-                "hl7.fhir.r4.core" => FhirRelease.R4,
-                "hl7.fhir.r5.core" => FhirRelease.R5,
-                _ => throw new NotSupportedException($"Unknown package name {packageName}")
-            };
+                return release.Value;
+            }
+            else
+            {
+                throw new NotSupportedException($"Unknown package name {packageName}");
+            }
         }
 
         /// <summary>
@@ -164,16 +163,14 @@ namespace Hl7.Fhir.Utility
         /// <returns>true if the conversion succeeded; false otherwise</returns>
         public static bool TryFhirReleaseFromCorePackageName(string packageName, out FhirRelease? release)
         {
-            release = null;
-            try
+            release = packageName switch
             {
-                release = FhirReleaseFromCorePackageName(packageName);
-                return true;
-            }
-            catch (NotSupportedException)
-            {
-                return false;
-            }
+                "hl7.fhir.r3.core" => FhirRelease.STU3,
+                "hl7.fhir.r4.core" => FhirRelease.R4,
+                "hl7.fhir.r5.core" => FhirRelease.R5,
+                _ => null
+            };
+            return packageName != null;
         }
 
 
