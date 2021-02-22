@@ -15,18 +15,22 @@ namespace Hl7.Fhir.Utility.Tests
 
             Result<int> resultInt = 5;
             Assert.AreEqual(Ok(5), resultInt);
+            Assert.IsFalse(resultInt is IFailed);
 
             var ex = new NotFiniteNumberException();
             var e = Fail<int>(ex);
-            Assert.AreEqual(Fail<int>(ex),e);
+            Assert.AreEqual(Fail<int>(ex), e);
+            Assert.IsFalse(e.Success);
 
             Assert.AreEqual(4, r.ValueOrThrow());
             Assert.ThrowsException<NotFiniteNumberException>(() => e.ValueOrThrow());
+            Assert.IsTrue(e is IFailed f && f.Error is NotFiniteNumberException);
 
-            Assert.AreEqual(8,e.ValueOrDefault(8));
-            Assert.AreEqual(ex.Message.Length,e.ValueOrElse(e => e.Message.Length));
 
-            Assert.AreEqual(Ok(true),resultInt.Chain(i => Ok(i*2).Chain(j => Ok(j > i))));
+            Assert.AreEqual(8, e.ValueOrDefault(8));
+            Assert.AreEqual(ex.Message.Length, e.ValueOrElse(e => e.Message.Length));
+
+            Assert.AreEqual(Ok(true), resultInt.Chain(i => Ok(i * 2).Chain(j => Ok(j > i))));
             Assert.AreEqual(e.Error, ((Fail<string>)e.Chain(_ => Ok($"Success!"))).Error);
 
             Assert.AreEqual(Ok(9),
