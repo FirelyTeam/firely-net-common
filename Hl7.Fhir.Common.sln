@@ -5,8 +5,8 @@ VisualStudioVersion = 15.0.28307.572
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2836B1CC-7AAF-46AB-BEA8-98DFEA170414}"
 	ProjectSection(SolutionItems) = preProject
-		src\fhir-net-common.props = src\fhir-net-common.props
-		src\fhir-net-common.targets = src\fhir-net-common.targets
+		src\firely-net-common.props = src\firely-net-common.props
+		src\firely-net-common.targets = src\firely-net-common.targets
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hl7.Fhir.Support", "src\Hl7.Fhir.Support\Hl7.Fhir.Support.csproj", "{018BCCC9-52FF-4A05-88FF-787A53BA8A31}"
