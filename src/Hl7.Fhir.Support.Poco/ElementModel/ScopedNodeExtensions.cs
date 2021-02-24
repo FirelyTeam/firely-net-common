@@ -100,6 +100,8 @@ namespace Hl7.Fhir.ElementModel
         /// <returns></returns>
         public static T Resolve<T>(this T element, Func<string, T> externalResolver = null) where T : class, ITypedElement
         {
+            if (element is null) return default;
+
             // First, get the url to fetch from the focus
             string url = null;
 
