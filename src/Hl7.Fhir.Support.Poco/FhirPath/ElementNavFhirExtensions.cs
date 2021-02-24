@@ -74,7 +74,7 @@ namespace Hl7.Fhir.FhirPath
         {
             return results.Select(r =>
             {
-                if (r == null)
+                if (r is null)
                     return null;
 
                 var fhirValue = r.Annotation<IFhirValueProvider>();
@@ -87,10 +87,11 @@ namespace Hl7.Fhir.FhirPath
 
                 return result switch
                 {
-                    bool _ => new FhirBoolean((bool)result),
-                    long _ => new Integer((int)(long)result),
-                    decimal _ => new FhirDecimal((decimal)result),
-                    string _ => new FhirString((string)result),
+                    bool b => new FhirBoolean(b),
+                    long l => new Integer64(l),
+                    int i => new Integer(i),
+                    decimal dec => new FhirDecimal(dec),
+                    string s => new FhirString(s),
                     P.Date d => new Date(d.ToString()),
                     P.Time t => new Time(t.ToString()),
                     P.DateTime dt => new FhirDateTime(dt.ToDateTimeOffset(TimeSpan.Zero).ToUniversalTime()),

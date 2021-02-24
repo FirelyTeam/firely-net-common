@@ -7,6 +7,7 @@
  */
 
 using Hl7.Fhir.Rest;
+using Hl7.Fhir.Support.Poco;
 using System;
 using System.Linq;
 
@@ -74,7 +75,7 @@ namespace Hl7.Fhir.ElementModel
 
                 foreach (var parent in scopedNode.ParentResources())
                 {
-                    if (parent.InstanceType == "Bundle")
+                    if (parent.InstanceType == FhirTypeConstants.BUNDLE)
                     {
                         var result = parent.BundledResources().FirstOrDefault(br => br.FullUrl == url)?.Resource;
                         if (result != null) return result;
@@ -102,9 +103,9 @@ namespace Hl7.Fhir.ElementModel
             // First, get the url to fetch from the focus
             string url = null;
 
-            if (element.InstanceType == "string" && element.Value is string s) // hmm, we cannot use FhirAllTypes.String.GetLiteral()
+            if (element.InstanceType == FhirTypeConstants.STRING && element.Value is string s)
                 url = s;
-            else if (element.InstanceType == "Reference")  // hmm, we cannot use FhirAllTypes.Reference.GetLiteral()
+            else if (element.InstanceType == FhirTypeConstants.REFERENCE)
                 url = element.ParseResourceReference()?.Reference;
 
             if (url == null) return default;   // nothing found to resolve

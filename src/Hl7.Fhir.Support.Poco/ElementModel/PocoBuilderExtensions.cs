@@ -1,4 +1,13 @@
-﻿using Hl7.Fhir.Model;
+﻿/* 
+ * Copyright (c) 2018, Firely (info@fire.ly) and contributors
+ * See the file CONTRIBUTORS for details.
+ * 
+ * This file is licensed under the BSD 3-Clause license
+ * available at https://github.com/FirelyTeam/firely-net-sdk/blob/master/LICENSE
+ */
+
+using Hl7.Fhir.Model;
+using Hl7.Fhir.Support.Poco;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -27,13 +36,13 @@ namespace Hl7.Fhir.ElementModel
 
             return instance.InstanceType switch
             {
-                "code" => instance.ParsePrimitive<Code>(),
-                "string" => new Code(instance.ParsePrimitive<FhirString>()?.Value),
-                "uri" => new Code(instance.ParsePrimitive<FhirUri>()?.Value),
-                "Coding" => instance.ParseCoding(),
-                "CodeableConcept" => instance.ParseCodeableConcept(),
-                "Quantity" => parseQuantity(),
-                "Extension" => parseExtension(),
+                FhirTypeConstants.CODE => instance.ParsePrimitive<Code>(),
+                FhirTypeConstants.STRING => new Code(instance.ParsePrimitive<FhirString>()?.Value),
+                FhirTypeConstants.URI => new Code(instance.ParsePrimitive<FhirUri>()?.Value),
+                FhirTypeConstants.CODING => instance.ParseCoding(),
+                FhirTypeConstants.CODEABLE_CONCEPT => instance.ParseCodeableConcept(),
+                FhirTypeConstants.QUANTITY => parseQuantity(),
+                FhirTypeConstants.EXTENSION => parseExtension(),
                 _ => null,
             };
 
