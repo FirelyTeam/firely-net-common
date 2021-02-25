@@ -60,13 +60,13 @@ namespace Hl7.Fhir.Utility
         public override int GetHashCode() => throw new NotImplementedException("Should be overridden in subclass of Result");
 
         public static Result<T> operator &(Result<T> l, Result<T> r) => l.Combine(r);
-        public static bool operator ==(Result<T> l, Result<T> r) => Equals(l,r);
-        public static bool operator !=(Result<T> l, Result<T> r) => !Equals(l,r);
+        public static bool operator ==(Result<T> l, Result<T> r) => Equals(l, r);
+        public static bool operator !=(Result<T> l, Result<T> r) => !Equals(l, r);
         //public static bool operator true(Result<T> l) => l is Ok<bool> ok && ok == true;
         //public static bool operator false(Result<T> l) => !(l is Ok<bool> ok && ok == true);
     }
 
-    public class Ok : Ok<Unit> 
+    public class Ok : Ok<Unit>
     {
         public Ok() : base(default) { }
     }
@@ -86,21 +86,25 @@ namespace Hl7.Fhir.Utility
         public override int GetHashCode() => Value.GetHashCode();
     }
 
-    public class Fail<T> : Result<T>
+
+    public interface IFailed
+    {
+        Exception Error { get; }
+    }
+
+    public class Fail<T> : Result<T>, IFailed
     {
         public Exception Error { get; private set; }
 
         public Fail(Exception error) => Error = error ?? throw new ArgumentNullException(nameof(error));
-
-        public void Throw() => throw Error;
 
         public override string ToString() => Error.Message;
         public override bool Equals(object obj) => obj is Fail<T> fail && Error.Equals(fail.Error);
         public override int GetHashCode() => Error.GetHashCode();
     }
 
-    public sealed class Fail : Fail<Unit> 
-    { 
+    public sealed class Fail : Fail<Unit>
+    {
         public Fail(Exception error) : base(error)
         {
         }
@@ -108,6 +112,8 @@ namespace Hl7.Fhir.Utility
 
     public static class Result
     {
+        public static void Throw(this IFailed f) => throw f.Error;
+
         public static Ok<R> Ok<R>(R value) => new Ok<R>(value);
         public static Ok Ok() => new Ok();
 
@@ -119,7 +125,7 @@ namespace Hl7.Fhir.Utility
 
         // This allows us to use LINQ with the Result<T> type
         public static Result<TC> SelectMany<TA, TB, TC>(this Result<TA> a, Func<TA, Result<TB>> func, Func<TA, TB, TC> select) =>
-            a.Chain(aVal => func(aVal).Chain(bVal => Ok(select(aVal, bVal))));              
+            a.Chain(aVal => func(aVal).Chain(bVal => Ok(select(aVal, bVal))));
     }
 
 }
