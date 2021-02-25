@@ -25,55 +25,37 @@
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
   POSSIBILITY OF SUCH DAMAGE.
   
-
 */
 
-
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Specification;
-using Hl7.Fhir.Utility;
-using System;
-using System.Runtime.Serialization;
-using S = Hl7.Fhir.ElementModel.Types;
+using System.Collections.Generic;
 
 namespace Hl7.Fhir.Model
 {
-    [Serializable]
-    [FhirType("codeOfT")]
-    [DataContract]
-    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    [DeclaredType(Type = typeof(Code))]
-    public class Code<T> : PrimitiveType, INullableValue<T>, ISystemAndCode where T : struct
+    public interface IConformanceResource
     {
-        static Code()
-        {
-            if (!typeof(T).IsEnum())
-                throw new ArgumentException("T must be an enumerated type");
-        }
+        string Url { get; set; }
+        Hl7.Fhir.Model.FhirUri UrlElement { get; set; }
+        string Name { get; set; }
+        FhirString NameElement { get; set; }
+        PublicationStatus? Status { get; set; }
+        string Publisher { get; set; }
+        FhirString PublisherElement { get; set; }
+        List<ContactDetail> Contact { get; set; }
+        Markdown Description { get; set; }
+        //FhirString DescriptionElement { get; set; }
+        List<UsageContext> UseContext { get; set; }
+        Markdown Purpose { get; set; }
+        Code<Hl7.Fhir.Model.PublicationStatus> StatusElement { get; set; }
+        bool? Experimental { get; set; }
+        Hl7.Fhir.Model.FhirBoolean ExperimentalElement { get; set; }
+        string Date { get; set; }
+        Hl7.Fhir.Model.FhirDateTime DateElement { get; set; }
+    }
 
-        public override string TypeName => "code";
+    public interface IVersionableConformanceResource : IConformanceResource
+    {
+        string Version { get; set; }
 
-        public Code() : this(null) { }
-
-        public Code(T? value)
-        {
-            Value = value;
-        }
-
-        // Primitive value of element
-        [FhirElement("value", IsPrimitiveValue = true, XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 30)]
-        [DataMember]
-        public T? Value
-        {
-            get => ObjectValue != null ? EnumUtility.ParseLiteral<T>((string)ObjectValue) : null;
-
-            set => ObjectValue = value != null ? ((Enum)(object)value).GetLiteral() : null;
-        }
-
-        string ISystemAndCode.System => ((Enum)(object)Value).GetSystem();
-
-        string ISystemAndCode.Code => ObjectValue as string; // this is the literal
-
-        public S.Code ToSystemCode() => new S.Code(((ISystemAndCode)this).System, ObjectValue as string, display: null, version: null);
+        Hl7.Fhir.Model.FhirString VersionElement { get; set; }
     }
 }

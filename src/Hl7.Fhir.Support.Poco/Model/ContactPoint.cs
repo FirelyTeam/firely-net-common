@@ -1,5 +1,5 @@
 ﻿/*
-  Copyright (c) 2011-2012, HL7, Inc
+  Copyright (c) 2011+, HL7, Inc.
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without modification, 
@@ -27,53 +27,47 @@
   
 
 */
-
-
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Specification;
-using Hl7.Fhir.Utility;
 using System;
+using System.Collections.Generic;
+using Hl7.Fhir.Introspection;
+using Hl7.Fhir.Validation;
+using System.Linq;
 using System.Runtime.Serialization;
-using S = Hl7.Fhir.ElementModel.Types;
+using System.Diagnostics;
 
 namespace Hl7.Fhir.Model
 {
-    [Serializable]
-    [FhirType("codeOfT")]
-    [DataContract]
-    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    [DeclaredType(Type = typeof(Code))]
-    public class Code<T> : PrimitiveType, INullableValue<T>, ISystemAndCode where T : struct
+    /// <summary>
+    /// Details of a Technology mediated contact point (phone, fax, email, etc)
+    /// </summary>
+    [System.Diagnostics.DebuggerDisplay(@"\{{DebuggerDisplay,nq}}")] // http://blogs.msdn.com/b/jaredpar/archive/2011/03/18/debuggerdisplay-attribute-best-practices.aspx
+    public partial class ContactPoint
     {
-        static Code()
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        [NotMapped]
+        private string DebuggerDisplay
         {
-            if (!typeof(T).IsEnum())
-                throw new ArgumentException("T must be an enumerated type");
+            get
+            {
+                string result = null;
+
+                if (this._SystemElement != null && this._SystemElement.Value != null && this._SystemElement.Value.HasValue)
+                    result = this._SystemElement.Value.ToString();
+                else
+                    result = "(null)";
+
+                if (this._UseElement != null && this._UseElement.Value != null && this._UseElement.Value.HasValue)
+                    result += String.Format(" ({0})", this._UseElement.Value.ToString());
+                result += ": ";
+
+                if (this._ValueElement != null && this._ValueElement.Value != null)
+                    result += String.Format("\"{0}\"", this._ValueElement.Value);
+                else
+                    result += "(null)";
+
+                return result;
+            }
         }
-
-        public override string TypeName => "code";
-
-        public Code() : this(null) { }
-
-        public Code(T? value)
-        {
-            Value = value;
-        }
-
-        // Primitive value of element
-        [FhirElement("value", IsPrimitiveValue = true, XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 30)]
-        [DataMember]
-        public T? Value
-        {
-            get => ObjectValue != null ? EnumUtility.ParseLiteral<T>((string)ObjectValue) : null;
-
-            set => ObjectValue = value != null ? ((Enum)(object)value).GetLiteral() : null;
-        }
-
-        string ISystemAndCode.System => ((Enum)(object)Value).GetSystem();
-
-        string ISystemAndCode.Code => ObjectValue as string; // this is the literal
-
-        public S.Code ToSystemCode() => new S.Code(((ISystemAndCode)this).System, ObjectValue as string, display: null, version: null);
     }
+    
 }

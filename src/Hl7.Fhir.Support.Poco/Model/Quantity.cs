@@ -28,52 +28,24 @@
 
 */
 
-
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
-using System;
-using System.Runtime.Serialization;
-using S = Hl7.Fhir.ElementModel.Types;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Model
 {
-    [Serializable]
-    [FhirType("codeOfT")]
-    [DataContract]
-    [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    [DeclaredType(Type = typeof(Code))]
-    public class Code<T> : PrimitiveType, INullableValue<T>, ISystemAndCode where T : struct
+    public partial class Quantity
     {
-        static Code()
+        public P.Quantity ToQuantity()
         {
-            if (!typeof(T).IsEnum())
-                throw new ArgumentException("T must be an enumerated type");
+            if (Value != null)
+            {
+                if (Comparator != null)
+                    throw Error.NotSupported("Cannot convert a Quantity with a comparator to a FhirPath Quantity");
+
+                return new P.Quantity(Value.Value, Code);
+            }
+            else
+                return null;
         }
-
-        public override string TypeName => "code";
-
-        public Code() : this(null) { }
-
-        public Code(T? value)
-        {
-            Value = value;
-        }
-
-        // Primitive value of element
-        [FhirElement("value", IsPrimitiveValue = true, XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 30)]
-        [DataMember]
-        public T? Value
-        {
-            get => ObjectValue != null ? EnumUtility.ParseLiteral<T>((string)ObjectValue) : null;
-
-            set => ObjectValue = value != null ? ((Enum)(object)value).GetLiteral() : null;
-        }
-
-        string ISystemAndCode.System => ((Enum)(object)Value).GetSystem();
-
-        string ISystemAndCode.Code => ObjectValue as string; // this is the literal
-
-        public S.Code ToSystemCode() => new S.Code(((ISystemAndCode)this).System, ObjectValue as string, display: null, version: null);
     }
 }

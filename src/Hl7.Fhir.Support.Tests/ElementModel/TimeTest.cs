@@ -6,11 +6,11 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using P = Hl7.Fhir.ElementModel.Types;
 
-namespace Hl7.FhirPath.Tests
+namespace Hl7.Fhir.ElementModel.Tests
 {
     [TestClass]
     public class TimeTest
@@ -18,18 +18,18 @@ namespace Hl7.FhirPath.Tests
         [TestMethod]
         public void TimeConstructor()
         {
-            accept("12:34:44.123456+02:00",12,34,44,123, new TimeSpan(2,0,0));
+            accept("12:34:44.123456+02:00", 12, 34, 44, 123, new TimeSpan(2, 0, 0));
             accept("12:34:44.1+02:00", 12, 34, 44, 100, new TimeSpan(2, 0, 0));
-            accept("12:34:44+02:00",12,34,44,null,new TimeSpan(2, 0, 0));
-            accept("12:34:44Z",12,34,44,null,TimeSpan.Zero);
-            accept("12:34:44+00:00",12,34,44,null,TimeSpan.Zero);
-            accept("12:34:44",12,34,44,null,null);
-            
-            accept("12:34Z",12,34,null,null,TimeSpan.Zero);
-            accept("12:34",12,34,null,null,null);
+            accept("12:34:44+02:00", 12, 34, 44, null, new TimeSpan(2, 0, 0));
+            accept("12:34:44Z", 12, 34, 44, null, TimeSpan.Zero);
+            accept("12:34:44+00:00", 12, 34, 44, null, TimeSpan.Zero);
+            accept("12:34:44", 12, 34, 44, null, null);
+
+            accept("12:34Z", 12, 34, null, null, TimeSpan.Zero);
+            accept("12:34", 12, 34, null, null, null);
             accept("12", 12, null, null, null, null);
             accept("12Z", 12, null, null, null, TimeSpan.Zero);
-            accept("12-04:30", 12, null,null,null, new TimeSpan(-4,-30,0));
+            accept("12-04:30", 12, null, null, null, new TimeSpan(-4, -30, 0));
 
             reject("");
             reject("+05:00");
@@ -42,7 +42,7 @@ namespace Hl7.FhirPath.Tests
             reject("92:34:44");
             reject("12:34:AM");
 
-            static void accept(string testValue, int? h, int? m, int? s, int? ms, TimeSpan? o )
+            static void accept(string testValue, int? h, int? m, int? s, int? ms, TimeSpan? o)
             {
                 Assert.IsTrue(P.Time.TryParse(testValue, out P.Time parsed), "TryParse");
                 Assert.AreEqual(h, parsed.Hours, "hours");
