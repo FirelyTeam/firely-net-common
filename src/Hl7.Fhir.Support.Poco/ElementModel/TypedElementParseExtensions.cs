@@ -13,7 +13,7 @@ using System.Linq;
 
 namespace Hl7.Fhir.ElementModel
 {
-    public static class PocoBuilderExtensions
+    public static class TypedElementParseExtensions
     {
         /// <summary>
         /// Parses a bindeable type (code, Coding, CodeableConcept, Quantity, string, uri) into a FHIR coded datatype.
