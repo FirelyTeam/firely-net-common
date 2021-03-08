@@ -72,7 +72,7 @@ namespace Hl7.Fhir.Specification
         /// <summary>
         /// All the types defined in this model
         /// </summary>
-        public IReadOnlyCollection<TypeDefinition> Types => _types.Values;
+        public IReadOnlyCollection<TypeDefinition> Types => _types.Values.ToArray();
         private readonly Dictionary<string, TypeDefinition> _types = null;
 
         /// <summary>

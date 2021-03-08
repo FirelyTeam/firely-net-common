@@ -6,11 +6,10 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using P = Hl7.Fhir.ElementModel.Types;
 
-namespace Hl7.FhirPath.Tests
+namespace Hl7.Fhir.ElementModel.Tests
 {
     [TestClass]
     public class RatioTest

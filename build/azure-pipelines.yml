@@ -4,7 +4,7 @@
 name: build-$(Date:yyyyMMdd)$(Rev:-r)
 
 variables:
-  NET_CORE_SDK: 2.1.x
+  NET_CORE_SDK: 5.0.x
   
 pool:
   vmImage: 'windows-latest'

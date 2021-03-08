@@ -29,14 +29,18 @@
 
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Linq;
 using Hl7.Fhir.Utility;
 
 namespace Hl7.Fhir.Model
 {
-    [System.Diagnostics.DebuggerDisplay("\\{\"{TypeName,nq}/{Id,nq}\" Identity={ResourceIdentity()}}")]
+    [System.Diagnostics.DebuggerDisplay("\\{\"{TypeName,nq}/{Id,nq}\" Identity={DebuggerDisplay}}")]
     public abstract partial class DomainResource : IModifierExtendable
     {
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private Rest.ResourceIdentity DebuggerDisplay => this.ResourceIdentity();
+
         public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             var result = new List<ValidationResult>(base.Validate(validationContext));
