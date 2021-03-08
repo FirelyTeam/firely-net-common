@@ -9,10 +9,11 @@
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Hl7.Fhir.Specification
 {
-    public class ComplexTypeDefinition : TypeDefinition
+    public class ComplexTypeDefinition : TypeDefinition, IStructureDefinitionSummary
     {
         public ComplexTypeDefinition(string name, Lazy<TypeDefinition> @base, Lazy<IReadOnlyList<TypeMemberDefinition>> members) : base(name, @base)
         {
@@ -26,8 +27,27 @@ namespace Hl7.Fhir.Specification
             _delayedMembers = members ?? throw new ArgumentNullException(nameof(members));
         }
 
+        private readonly Lazy<IReadOnlyList<TypeMemberDefinition>> _delayedMembers;
+
         public IReadOnlyList<TypeMemberDefinition> Members => _delayedMembers.Value;
 
-        private readonly Lazy<IReadOnlyList<TypeMemberDefinition>> _delayedMembers;
+        string IStructureDefinitionSummary.TypeName => Name;
+
+        bool IStructureDefinitionSummary.IsAbstract => IsAbstract;
+
+        bool IStructureDefinitionSummary.IsResource =>
+            this.TryGetAnnotation<FhirStructureDefinitionAnnotation>(out var ann) && ann.IsResource;
+
+        IReadOnlyCollection<IElementDefinitionSummary> IStructureDefinitionSummary.GetElements() =>
+            Members.Where(m => !isFhirPrimitiveValueMember(m)).ToList();
+
+        static bool isFhirPrimitiveValueMember(TypeMemberDefinition td) =>
+            td.Type is PrimitiveTypeDefinition && td.Name == "value";
+    }
+
+    public class FhirStructureDefinitionAnnotation
+    {
+        public bool IsResource { get; set; }
+        public bool IsBackboneElement { get; set; }
     }
 }

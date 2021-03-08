@@ -60,41 +60,4 @@ namespace Hl7.Fhir.Specification
             _models.Add(definition);
         }
     }
-
-
-    public class UnionTypeDefinition : TypeDefinition
-    {
-        public UnionTypeDefinition(string name, Lazy<TypeDefinition> @base, Lazy<IReadOnlyCollection<TypeDefinition>> members, Lazy<AnnotationList> annotations,
-            bool isAbstract, bool isOrdered, string binding, string identifier) : base(name, @base, annotations, isAbstract, isOrdered, binding, identifier)
-        {
-            _delayedMemberTypes = members ?? throw new ArgumentNullException(nameof(members));
-        }
-
-        public UnionTypeDefinition(string name, Lazy<TypeDefinition> @base, Lazy<IReadOnlyCollection<TypeDefinition>> members)
-            : base(name, @base)
-        {
-            _delayedMemberTypes = members ?? throw new ArgumentNullException(nameof(members));
-        }
-
-        public IReadOnlyCollection<TypeDefinition> MemberTypes => _delayedMemberTypes.Value;
-        private readonly Lazy<IReadOnlyCollection<TypeDefinition>> _delayedMemberTypes;
-    }
-
-    public class ListTypeDefinition : TypeDefinition
-    {
-        public ListTypeDefinition(string name, Lazy<TypeDefinition> @base, Lazy<TypeDefinition> elementType, Lazy<AnnotationList> annotations,
-            bool isAbstract, bool isOrdered, string binding, string identifier) : base(name, @base, annotations, isAbstract, isOrdered, binding, identifier)
-        {
-            _delayedElementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
-        }
-
-        public ListTypeDefinition(string name, Lazy<TypeDefinition> @base, Lazy<TypeDefinition> elementType)
-            : base(name, @base)
-        {
-            _delayedElementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
-        }
-
-        public TypeDefinition ElementType => _delayedElementType.Value;
-        private readonly Lazy<TypeDefinition> _delayedElementType;
-    }
 }
