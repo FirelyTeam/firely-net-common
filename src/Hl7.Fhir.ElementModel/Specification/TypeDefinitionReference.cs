@@ -14,13 +14,13 @@ namespace Hl7.Fhir.Specification
 {
     public class TypeDefinitionReference : TypeDefinition
     {
-        public TypeDefinitionReference(string modelName, string typeName) : base(typeName, null) =>
+        public TypeDefinitionReference(string modelName, string typeName) : base(null) =>
             (ModelName, TypeName) = (modelName, typeName);
 
         public string ModelName { get; }
         public string TypeName { get; }
 
-        public TypeDefinition Resolve(IDictionary<string, ModelDefinition> models) =>
+        public NamedTypeDefinition Resolve(IDictionary<string, ModelDefinition> models) =>
             models.TryGetValue(ModelName, out var model) && model.TryGetValue(TypeName, out var type)
                 ? type
                 : throw new InvalidOperationException($"Cannot resolve type {TypeName} from model {ModelName}.");

@@ -28,7 +28,7 @@ namespace Hl7.Fhir.Specification
             return model != null;
         }
 
-        public bool TryGetType(string modelName, string modelVersion, string typeName, out TypeDefinition definition)
+        public bool TryGetType(string modelName, string modelVersion, string typeName, out NamedTypeDefinition definition)
         {
 
             if (TryGetModel(modelName, modelVersion, out var model))
@@ -38,15 +38,15 @@ namespace Hl7.Fhir.Specification
             return false;
         }
 
-        public bool TryGetType(ModelDefinition model, string typeName, out TypeDefinition definition) =>
+        public bool TryGetType(ModelDefinition model, string typeName, out NamedTypeDefinition definition) =>
             model.TryGetType(typeName, out definition);
 
-        public TypeDefinition GetListTypeDefinition(TypeDefinition elementType)
+        public NamedTypeDefinition GetListTypeDefinition(NamedTypeDefinition elementType)
         {
             throw new NotImplementedException();
         }
 
-        public TypeDefinition GetUnionTypeDefinition(TypeDefinition elementType)
+        public NamedTypeDefinition GetUnionTypeDefinition(NamedTypeDefinition elementType)
         {
             throw new NotImplementedException();
         }

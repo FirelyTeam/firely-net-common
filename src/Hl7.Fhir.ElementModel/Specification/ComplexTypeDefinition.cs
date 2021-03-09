@@ -16,17 +16,18 @@ using System.Reflection;
 
 namespace Hl7.Fhir.Specification
 {
-    public class ComplexTypeDefinition : TypeDefinition, IStructureDefinitionSummary
+    public class ComplexTypeDefinition : NamedTypeDefinition, IStructureDefinitionSummary
     {
         public ComplexTypeDefinition(string name, TypeDefinition? @base, IReadOnlyList<TypeMemberDefinition> members)
-            : base(name, @base)
+            : this(name, @base, members, annotations: null, isAbstract: false, isOrdered: false, identifier: null, casts: null)
         {
             Members = members ?? throw new ArgumentNullException(nameof(members));
         }
 
-        public ComplexTypeDefinition(string name, TypeDefinition? @base, IReadOnlyList<TypeMemberDefinition>? members,
+        public ComplexTypeDefinition(string name, TypeDefinition? @base, IReadOnlyList<TypeMemberDefinition> members,
             AnnotationList? annotations,
-            bool isAbstract, bool isOrdered, string? identifier, IDictionary<TypeDefinition, MethodInfo>? casts) : base(name, @base, annotations, isAbstract, isOrdered, identifier, casts)
+            bool isAbstract, bool isOrdered, string? identifier, IDictionary<TypeDefinition, MethodInfo>? casts)
+            : base(name, @base, annotations, isAbstract, isOrdered, identifier, casts)
         {
             Members = members ?? throw new ArgumentNullException(nameof(members));
         }

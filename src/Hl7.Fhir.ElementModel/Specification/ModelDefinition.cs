@@ -21,11 +21,11 @@ namespace Hl7.Fhir.Specification
     /// a model to function properly.
     /// </summary>
     /// <remarks>Examples of a model are FHIR STU3, FHIR R5, CDA R1, CDA R2, etcetera.</remarks>
-    public class ModelDefinition : IAnnotated, IReadOnlyDictionary<string, TypeDefinition>
+    public class ModelDefinition : IAnnotated, IReadOnlyDictionary<string, NamedTypeDefinition>
     {
         protected static readonly AnnotationList EMPTY_ANNOTATIONS = new AnnotationList();
 
-        public ModelDefinition(string name, string version, IEnumerable<TypeDefinition> types, DeferredModelInitializer<AnnotationList> annotationsInitializer)
+        public ModelDefinition(string name, string version, IEnumerable<NamedTypeDefinition> types, DeferredModelInitializer<AnnotationList> annotationsInitializer)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Version = version ?? throw new ArgumentNullException(nameof(version));
@@ -36,7 +36,7 @@ namespace Hl7.Fhir.Specification
             _types = types.ToDictionary(md => md.Name);
         }
 
-        public ModelDefinition(string name, string version, IEnumerable<TypeDefinition> types, AnnotationList annotations = null)
+        public ModelDefinition(string name, string version, IEnumerable<NamedTypeDefinition> types, AnnotationList annotations = null)
                 : this(name, version, types, _ => annotations ?? EMPTY_ANNOTATIONS)
         {
             // no additional initializations
@@ -55,7 +55,7 @@ namespace Hl7.Fhir.Specification
 
         public ModelSpace DeclaringSpace { get; protected internal set; }
 
-        public bool TryGetType(string typeName, out TypeDefinition definition) => this.TryGetValue(typeName, out definition);
+        public bool TryGetType(string typeName, out NamedTypeDefinition definition) => this.TryGetValue(typeName, out definition);
 
         /// <summary>
         /// An name given to this model, e.g. "FHIR". Is also used as a namespace
@@ -72,8 +72,8 @@ namespace Hl7.Fhir.Specification
         /// <summary>
         /// All the types defined in this model
         /// </summary>
-        public IReadOnlyCollection<TypeDefinition> Types => _types.Values.ToArray();
-        private readonly Dictionary<string, TypeDefinition> _types = null;
+        public IReadOnlyCollection<NamedTypeDefinition> Types => _types.Values.ToArray();
+        private readonly Dictionary<string, NamedTypeDefinition> _types = null;
 
         /// <summary>
         /// Collection of additional model information.
@@ -91,22 +91,22 @@ namespace Hl7.Fhir.Specification
 
         #region IReadOnlyDictionary
         public IEnumerable<string> Keys => _types.Keys;
-        public IEnumerable<TypeDefinition> Values => _types.Values;
-        public TypeDefinition this[string typeName] => _types[typeName];
+        public IEnumerable<NamedTypeDefinition> Values => _types.Values;
+        public NamedTypeDefinition this[string typeName] => _types[typeName];
         public int Count => _types.Count;
         public bool ContainsKey(string key) => _types.ContainsKey(key);
-        public bool TryGetValue(string key, out TypeDefinition value) => _types.TryGetValue(key, out value);
+        public bool TryGetValue(string key, out NamedTypeDefinition value) => _types.TryGetValue(key, out value);
         #endregion
 
         #region IEnumerable
         IEnumerator IEnumerable.GetEnumerator() => _types.GetEnumerator();
-        public IEnumerator<KeyValuePair<string, TypeDefinition>> GetEnumerator() => _types.GetEnumerator();
+        public IEnumerator<KeyValuePair<string, NamedTypeDefinition>> GetEnumerator() => _types.GetEnumerator();
         #endregion
 
-        public Lazy<TypeDefinition> LazyTypeResolver(string typename)
+        public Lazy<NamedTypeDefinition> LazyTypeResolver(string typename)
         {
-            TypeDefinition factory() => TryGetType(typename, out var typeDef) ? typeDef : default;
-            return new Lazy<TypeDefinition>(factory);
+            NamedTypeDefinition factory() => TryGetType(typename, out var typeDef) ? typeDef : default;
+            return new Lazy<NamedTypeDefinition>(factory);
         }
     }
 }

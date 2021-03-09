@@ -14,21 +14,21 @@ namespace Hl7.Fhir.Specification
 {
     public class SystemModelDefinition : ModelDefinition
     {
-        public static TypeDefinition Any => throw new NotImplementedException();
-        public static TypeDefinition Boolean => throw new NotImplementedException();
-        public static TypeDefinition Code => throw new NotImplementedException();
-        public static TypeDefinition Concept => throw new NotImplementedException();
-        public static TypeDefinition Date => throw new NotImplementedException();
-        public static TypeDefinition DateTime => throw new NotImplementedException();
-        public static TypeDefinition Decimal => throw new NotImplementedException();
-        public static TypeDefinition Integer => throw new NotImplementedException();
-        public static TypeDefinition Integer64 => throw new NotImplementedException();
-        public static TypeDefinition Quantity => throw new NotImplementedException();
-        public static TypeDefinition String => throw new NotImplementedException();
-        public static TypeDefinition Time => throw new NotImplementedException();
+        public static NamedTypeDefinition Any => throw new NotImplementedException();
+        public static NamedTypeDefinition Boolean => throw new NotImplementedException();
+        public static NamedTypeDefinition Code => throw new NotImplementedException();
+        public static NamedTypeDefinition Concept => throw new NotImplementedException();
+        public static NamedTypeDefinition Date => throw new NotImplementedException();
+        public static NamedTypeDefinition DateTime => throw new NotImplementedException();
+        public static NamedTypeDefinition Decimal => throw new NotImplementedException();
+        public static NamedTypeDefinition Integer => throw new NotImplementedException();
+        public static NamedTypeDefinition Integer64 => throw new NotImplementedException();
+        public static NamedTypeDefinition Quantity => throw new NotImplementedException();
+        public static NamedTypeDefinition String => throw new NotImplementedException();
+        public static NamedTypeDefinition Time => throw new NotImplementedException();
 
  
-        private SystemModelDefinition(string name, string version, IEnumerable<TypeDefinition> types, DeferredModelInitializer<AnnotationList> annotationsInitializer) : base(name, version, types, annotationsInitializer)
+        private SystemModelDefinition(string name, string version, IEnumerable<NamedTypeDefinition> types, DeferredModelInitializer<AnnotationList> annotationsInitializer) : base(name, version, types, annotationsInitializer)
         {
             throw new NotImplementedException();
         }

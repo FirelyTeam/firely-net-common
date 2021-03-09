@@ -24,14 +24,12 @@ namespace Hl7.Fhir.Specification
             public string ReferredType { get; }
         }
 
-        protected static readonly AnnotationList EMPTY_ANNOTATION_LIST = new AnnotationList();
-
-        public TypeMemberDefinition(string name, TypeDefinition type, ComplexTypeDefinition declaringType, AnnotationList annotations)
+        public TypeMemberDefinition(string name, TypeDefinition type, ComplexTypeDefinition declaringType, AnnotationList? annotations)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Type = type ?? throw new ArgumentNullException(nameof(type));
             DeclaringType = declaringType ?? throw new ArgumentNullException(nameof(type));
-            _annotations = annotations ?? EMPTY_ANNOTATION_LIST;
+            _annotations = annotations;
         }
 
         public string Name { get; }
@@ -55,9 +53,14 @@ namespace Hl7.Fhir.Specification
         bool IElementDefinitionSummary.IsResource => ((IStructureDefinitionSummary)Type).IsResource;
 
         ITypeSerializationInfo[] IElementDefinitionSummary.Type =>
-             isBackboneElement() ? new[] { (ITypeSerializationInfo)Type } :
-                Type is UnionTypeDefinition union ? union.MemberTypes.Cast<ITypeSerializationInfo>().ToArray() :
-                    new[] { new ReferredTypeSummary(Type.Name) };
+            Type switch
+            {
+                UnionTypeDefinition union => union.MemberTypes.Cast<ITypeSerializationInfo>().ToArray(),
+                ListTypeDefinition list when list.ElementType is NamedTypeDefinition named => new[] { new ReferredTypeSummary(named.Name) },
+                NamedTypeDefinition named => new[] { new ReferredTypeSummary(named.Name) },
+                _ when isBackboneElement() => new[] { (ITypeSerializationInfo)Type },
+                _ => throw new NotSupportedException($"Don't know how to convert type {Type} to an {nameof(IElementDefinitionSummary)}.Type.")
+            };
 
         private bool isBackboneElement() =>
             Type is ComplexTypeDefinition && Type.TryGetAnnotation<FhirStructureDefinitionAnnotation>(out var ann) && ann.IsBackboneElement;
@@ -74,8 +77,8 @@ namespace Hl7.Fhir.Specification
         int IElementDefinitionSummary.Order => DeclaringType.Members
             .Select((def, ix) => (def, ix)).Single(d => d.def == this).ix;
 
-        public IEnumerable<object> Annotations(Type type) => _annotations.OfType(type);
-        private readonly AnnotationList _annotations;
+        public IEnumerable<object> Annotations(Type type) => _annotations?.OfType(type) ?? Enumerable.Empty<object>();
+        private readonly AnnotationList? _annotations;
 
         internal protected void FixReferences(IDictionary<string, ModelDefinition> models)
         {

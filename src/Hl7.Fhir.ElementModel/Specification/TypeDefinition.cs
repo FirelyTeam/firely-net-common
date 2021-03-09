@@ -15,34 +15,25 @@ using System.Reflection;
 
 namespace Hl7.Fhir.Specification
 {
-    // TODO: Generate code in poco-modelinfo that references some of these using readonlies (e.g. ModelInfo.Patient, etc.)
-    // TODO: Do the above for the system typespace too
-    // TODO: Override equals and == to make sure it's not just reference equality
+    public delegate object Cast(object from);
+
     public abstract class TypeDefinition : IAnnotated
     {
-        public TypeDefinition(string name, TypeDefinition? @base) :
-            this(name, @base, annotations: null, isAbstract: false, isOrdered: false,
-                identifier: null, casts: null)
+        protected TypeDefinition(TypeDefinition? @base) : this(@base, annotations: null, isAbstract: false, isOrdered: false, casts: null)
         {
             // nothing
         }
 
-        public TypeDefinition(string name, TypeDefinition? @base, AnnotationList? annotations,
-            bool isAbstract, bool isOrdered, string? identifier, IDictionary<TypeDefinition, MethodInfo>? casts)
+
+        protected TypeDefinition(TypeDefinition? @base, AnnotationList? annotations,
+            bool isAbstract, bool isOrdered, IDictionary<TypeDefinition, MethodInfo>? casts)
         {
-            Name = name ?? throw new ArgumentNullException(nameof(name));
-            Base = @base;
             _annotations = annotations;
+            Base = @base;
             IsAbstract = isAbstract;
             IsOrdered = isOrdered;
-            Identifier = identifier;
             Casts = casts;
         }
-
-        /// <summary>
-        /// The unique name for the type (within this model).
-        /// </summary>
-        public string Name { get; }
 
         public ModelDefinition? DeclaringModel { get; protected internal set; }
 
@@ -51,12 +42,9 @@ namespace Hl7.Fhir.Specification
         public bool IsAbstract { get; }
         public bool IsOrdered { get; }
 
-        /// <summary>
-        /// A globally unique identifier, in FHIR this would be the canonical.
-        /// </summary>
-        public string? Identifier { get; }
-
         public IDictionary<TypeDefinition, MethodInfo>? Casts { get; }
+
+        private readonly AnnotationList? _annotations;
 
         /// <summary>
         /// Collection of additional model-specific information for this type.
@@ -64,16 +52,6 @@ namespace Hl7.Fhir.Specification
         /// <param name="type"></param>
         /// <returns></returns>
         public IEnumerable<object> Annotations(Type type) => _annotations?.OfType(type) ?? Enumerable.Empty<object>();
-        private readonly AnnotationList? _annotations;
-
-        public override string ToString() => Name;
-
-        public string FullName => DeclaringModel?.Name + ":" + Name;
-
-        internal protected virtual void FixReferences(IDictionary<string, ModelDefinition> models)
-        {
-            if (Base is TypeDefinitionReference r) Base = r.Resolve(models);
-        }
 
         public bool TryGetCast(TypeDefinition to, out Cast? cast)
         {
@@ -89,9 +67,11 @@ namespace Hl7.Fhir.Specification
             }
         }
 
+        internal protected virtual void FixReferences(IDictionary<string, ModelDefinition> models)
+        {
+            if (Base is TypeDefinitionReference r) Base = r.Resolve(models);
+        }
     }
-
-    public delegate object Cast(object from);
 }
 
 #nullable disable

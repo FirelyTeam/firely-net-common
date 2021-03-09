@@ -13,7 +13,7 @@ using System.Reflection;
 
 namespace Hl7.Fhir.Specification
 {
-    public class PrimitiveTypeDefinition : TypeDefinition
+    public class PrimitiveTypeDefinition : NamedTypeDefinition
     {
         public PrimitiveTypeDefinition(string name, TypeDefinition @base) : base(name, @base)
         {

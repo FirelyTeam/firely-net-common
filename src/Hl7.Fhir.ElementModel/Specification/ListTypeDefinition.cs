@@ -16,17 +16,17 @@ namespace Hl7.Fhir.Specification
 {
     public class ListTypeDefinition : TypeDefinition
     {
-        public ListTypeDefinition(string name, TypeDefinition @base, TypeDefinition elementType, AnnotationList? annotations,
-            bool isAbstract, bool isOrdered, string identifier, IDictionary<TypeDefinition, MethodInfo>? casts) :
-            base(name, @base, annotations, isAbstract, isOrdered, identifier, casts)
+        public ListTypeDefinition(TypeDefinition @base, TypeDefinition elementType, AnnotationList? annotations,
+            IDictionary<TypeDefinition, MethodInfo>? casts) :
+            base(@base, annotations, isAbstract: false, isOrdered: false, casts)
         {
             ElementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
         }
 
-        public ListTypeDefinition(string name, TypeDefinition @base, TypeDefinition elementType)
-            : base(name, @base)
+        public ListTypeDefinition(TypeDefinition @base, TypeDefinition elementType)
+            : this(@base, elementType, annotations: null, casts: null)
         {
-            ElementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
+            // nothing
         }
 
         public TypeDefinition ElementType { get; private set; }

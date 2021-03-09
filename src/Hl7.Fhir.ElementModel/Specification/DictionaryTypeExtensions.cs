@@ -22,13 +22,13 @@ namespace Hl7.Fhir.Specification
     /// </summary>
     public static class DictionaryTypeExtensions
     {
-        public static TypeDefinition GetTypeDefinition(IDictionary<string, object> instance)
+        public static NamedTypeDefinition GetTypeDefinition(IDictionary<string, object> instance)
         {
             if (!instance.TryGetValue("_type", out var type)) return null;
 
             return type switch
             {
-                TypeDefinition td => td,
+                NamedTypeDefinition td => td,
                 (string v, ModelDefinition md) when md.TryGetType(v, out var typedef) => typedef,
                 _ => null
             };

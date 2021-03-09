@@ -17,18 +17,18 @@ namespace Hl7.Fhir.Specification
 {
     public class UnionTypeDefinition : TypeDefinition
     {
-        public UnionTypeDefinition(string name, TypeDefinition? @base, IReadOnlyCollection<TypeDefinition> members,
-            AnnotationList annotations,
-            IDictionary<TypeDefinition, MethodInfo>? casts) : base(name, @base, annotations,
-                isAbstract: false, isOrdered: false, identifier: null, casts)
+        public UnionTypeDefinition(TypeDefinition? @base, IReadOnlyCollection<TypeDefinition> members,
+            AnnotationList? annotations,
+            IDictionary<TypeDefinition, MethodInfo>? casts) : base(@base, annotations,
+                isAbstract: false, isOrdered: false, casts)
         {
             MemberTypes = members ?? throw new ArgumentNullException(nameof(members));
         }
 
-        public UnionTypeDefinition(string name, TypeDefinition? @base, IReadOnlyCollection<TypeDefinition> members)
-            : base(name, @base)
+        public UnionTypeDefinition(string name, NamedTypeDefinition? @base, IReadOnlyCollection<NamedTypeDefinition> members)
+            : this(@base, members, annotations: null, casts: null)
         {
-            MemberTypes = members ?? throw new ArgumentNullException(nameof(members));
+            // nothing
         }
 
         public IReadOnlyCollection<TypeDefinition> MemberTypes { get; }
