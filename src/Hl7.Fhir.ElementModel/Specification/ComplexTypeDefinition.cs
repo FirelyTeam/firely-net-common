@@ -6,30 +6,31 @@
  * available at https://github.com/FirelyTeam/fhir-net-api/blob/master/LICENSE
  */
 
+#nullable enable
+
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace Hl7.Fhir.Specification
 {
     public class ComplexTypeDefinition : TypeDefinition, IStructureDefinitionSummary
     {
-        public ComplexTypeDefinition(string name, Lazy<TypeDefinition> @base, Lazy<IReadOnlyList<TypeMemberDefinition>> members) : base(name, @base)
+        public ComplexTypeDefinition(string name, TypeDefinition? @base, IReadOnlyList<TypeMemberDefinition> members)
+            : base(name, @base)
         {
-            _delayedMembers = members ?? throw new ArgumentNullException(nameof(members));
+            Members = members ?? throw new ArgumentNullException(nameof(members));
         }
 
-        public ComplexTypeDefinition(string name, Lazy<TypeDefinition> @base, Lazy<IReadOnlyList<TypeMemberDefinition>> members,
-            Lazy<AnnotationList> annotations,
-            bool isAbstract, bool isOrdered, string binding, string identifier) : base(name, @base, annotations, isAbstract, isOrdered, binding, identifier)
+        public ComplexTypeDefinition(string name, TypeDefinition? @base, IReadOnlyList<TypeMemberDefinition>? members,
+            AnnotationList? annotations,
+            bool isAbstract, bool isOrdered, string? identifier, IDictionary<TypeDefinition, MethodInfo>? casts) : base(name, @base, annotations, isAbstract, isOrdered, identifier, casts)
         {
-            _delayedMembers = members ?? throw new ArgumentNullException(nameof(members));
+            Members = members ?? throw new ArgumentNullException(nameof(members));
         }
-
-        private readonly Lazy<IReadOnlyList<TypeMemberDefinition>> _delayedMembers;
-
-        public IReadOnlyList<TypeMemberDefinition> Members => _delayedMembers.Value;
+        public IReadOnlyList<TypeMemberDefinition> Members { get; private set; }
 
         string IStructureDefinitionSummary.TypeName => Name;
 
@@ -43,6 +44,13 @@ namespace Hl7.Fhir.Specification
 
         static bool isFhirPrimitiveValueMember(TypeMemberDefinition td) =>
             td.Type is PrimitiveTypeDefinition && td.Name == "value";
+
+        protected internal override void FixReferences(IDictionary<string, ModelDefinition> models)
+        {
+            base.FixReferences(models);
+
+            foreach (var member in Members) member.FixReferences(models);
+        }
     }
 
     public class FhirStructureDefinitionAnnotation
@@ -51,3 +59,5 @@ namespace Hl7.Fhir.Specification
         public bool IsBackboneElement { get; set; }
     }
 }
+
+#nullable disable

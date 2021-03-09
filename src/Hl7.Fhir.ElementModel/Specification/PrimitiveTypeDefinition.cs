@@ -5,21 +5,26 @@
  * This file is licensed under the BSD 3-Clause license
  * available at https://github.com/FirelyTeam/fhir-net-api/blob/master/LICENSE
  */
+#nullable enable
 
 using Hl7.Fhir.Utility;
-using System;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace Hl7.Fhir.Specification
 {
     public class PrimitiveTypeDefinition : TypeDefinition
     {
-        public PrimitiveTypeDefinition(string name, Lazy<TypeDefinition> @base) : base(name, @base)
+        public PrimitiveTypeDefinition(string name, TypeDefinition @base) : base(name, @base)
         {
         }
 
-        public PrimitiveTypeDefinition(string name, Lazy<TypeDefinition> @base, Lazy<AnnotationList> annotations,
-            bool isAbstract, bool isOrdered, string binding, string identifier) : base(name, @base, annotations, isAbstract, isOrdered, binding, identifier)
+        public PrimitiveTypeDefinition(string name, TypeDefinition? @base, AnnotationList? annotations,
+            bool isAbstract, bool isOrdered, string? identifier, IDictionary<TypeDefinition, MethodInfo>? casts)
+            : base(name, @base, annotations, isAbstract, isOrdered, identifier, casts)
         {
         }
     }
 }
+
+#nullable disable

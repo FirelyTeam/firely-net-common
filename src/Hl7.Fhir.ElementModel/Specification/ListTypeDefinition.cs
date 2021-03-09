@@ -5,27 +5,39 @@
  * This file is licensed under the BSD 3-Clause license
  * available at https://github.com/FirelyTeam/fhir-net-api/blob/master/LICENSE
  */
+#nullable enable
 
 using Hl7.Fhir.Utility;
 using System;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace Hl7.Fhir.Specification
 {
     public class ListTypeDefinition : TypeDefinition
     {
-        public ListTypeDefinition(string name, Lazy<TypeDefinition> @base, Lazy<TypeDefinition> elementType, Lazy<AnnotationList> annotations,
-            bool isAbstract, bool isOrdered, string binding, string identifier) : base(name, @base, annotations, isAbstract, isOrdered, binding, identifier)
+        public ListTypeDefinition(string name, TypeDefinition @base, TypeDefinition elementType, AnnotationList? annotations,
+            bool isAbstract, bool isOrdered, string identifier, IDictionary<TypeDefinition, MethodInfo>? casts) :
+            base(name, @base, annotations, isAbstract, isOrdered, identifier, casts)
         {
-            _delayedElementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
+            ElementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
         }
 
-        public ListTypeDefinition(string name, Lazy<TypeDefinition> @base, Lazy<TypeDefinition> elementType)
+        public ListTypeDefinition(string name, TypeDefinition @base, TypeDefinition elementType)
             : base(name, @base)
         {
-            _delayedElementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
+            ElementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
         }
 
-        public TypeDefinition ElementType => _delayedElementType.Value;
-        private readonly Lazy<TypeDefinition> _delayedElementType;
+        public TypeDefinition ElementType { get; private set; }
+
+        protected internal override void FixReferences(IDictionary<string, ModelDefinition> models)
+        {
+            base.FixReferences(models);
+
+            if (ElementType is TypeDefinitionReference r) ElementType = r.Resolve(models);
+        }
     }
 }
+
+#nullable disable

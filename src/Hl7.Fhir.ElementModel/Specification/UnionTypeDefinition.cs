@@ -6,27 +6,39 @@
  * available at https://github.com/FirelyTeam/fhir-net-api/blob/master/LICENSE
  */
 
+#nullable enable
+
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace Hl7.Fhir.Specification
 {
     public class UnionTypeDefinition : TypeDefinition
     {
-        public UnionTypeDefinition(string name, Lazy<TypeDefinition> @base, Lazy<IReadOnlyCollection<TypeDefinition>> members, Lazy<AnnotationList> annotations,
-            bool isAbstract, bool isOrdered, string binding, string identifier) : base(name, @base, annotations, isAbstract, isOrdered, binding, identifier)
+        public UnionTypeDefinition(string name, TypeDefinition? @base, IReadOnlyCollection<TypeDefinition> members,
+            AnnotationList annotations,
+            IDictionary<TypeDefinition, MethodInfo>? casts) : base(name, @base, annotations,
+                isAbstract: false, isOrdered: false, identifier: null, casts)
         {
-            _delayedMemberTypes = members ?? throw new ArgumentNullException(nameof(members));
+            MemberTypes = members ?? throw new ArgumentNullException(nameof(members));
         }
 
-        public UnionTypeDefinition(string name, Lazy<TypeDefinition> @base, Lazy<IReadOnlyCollection<TypeDefinition>> members)
+        public UnionTypeDefinition(string name, TypeDefinition? @base, IReadOnlyCollection<TypeDefinition> members)
             : base(name, @base)
         {
-            _delayedMemberTypes = members ?? throw new ArgumentNullException(nameof(members));
+            MemberTypes = members ?? throw new ArgumentNullException(nameof(members));
         }
 
-        public IReadOnlyCollection<TypeDefinition> MemberTypes => _delayedMemberTypes.Value;
-        private readonly Lazy<IReadOnlyCollection<TypeDefinition>> _delayedMemberTypes;
+        public IReadOnlyCollection<TypeDefinition> MemberTypes { get; }
+
+        protected internal override void FixReferences(IDictionary<string, ModelDefinition> models)
+        {
+            base.FixReferences(models);
+            foreach (var memberType in MemberTypes) memberType.FixReferences(models);
+        }
     }
 }
+
+#nullable disable

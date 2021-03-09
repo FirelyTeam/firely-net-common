@@ -34,7 +34,7 @@ namespace Hl7.Fhir.Specification
             };
         }
 
-#if NET45 || NETSTANDARD1_6
+#if NET45 || NETSTANDARD1_6 || NETSTANDARD2_0
         public static void Deconstruct(this object o, out string v, out ModelDefinition md)
         {
             if (o is ValueTuple<string, ModelDefinition> vt)
