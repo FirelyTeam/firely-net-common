@@ -90,7 +90,7 @@ namespace Hl7.Fhir.Utility
         /// <returns>Official FHIR Release</returns>
         public static FhirRelease FhirReleaseFromMimeVersion(string fhirMimeVersion)
         {
-            if (TryFhirReleaseFromMimeVersion(fhirMimeVersion, out var release))
+            if (TryGetFhirReleaseFromMimeVersion(fhirMimeVersion, out var release))
             {
                 return release.Value;
             }
@@ -106,7 +106,7 @@ namespace Hl7.Fhir.Utility
         /// <param name="fhirMimeVersion">'fhirversion' MIME-Type parameter</param>
         /// <param name="release">Official FHIR Release</param>
         /// <returns>true if the conversion succeeded; false otherwise.</returns>
-        public static bool TryFhirReleaseFromMimeVersion(string fhirMimeVersion, out FhirRelease? release)
+        public static bool TryGetFhirReleaseFromMimeVersion(string fhirMimeVersion, out FhirRelease? release)
         {
             release = fhirMimeVersion switch
             {
@@ -118,6 +118,12 @@ namespace Hl7.Fhir.Utility
                 _ => null
             };
             return release != null;
+        }
+
+        [Obsolete("This method is obsolete. Use TryGetFhirReleaseFromMimeVersion instead")]
+        public static bool TryFhirReleaseFromMimeVersion(string fhirMimeVersion, out FhirRelease? release)
+        {
+            return TryGetFhirReleaseFromMimeVersion(fhirMimeVersion, out release);
         }
 
         /// <summary>
@@ -145,7 +151,7 @@ namespace Hl7.Fhir.Utility
         /// <returns>Official FHIR Release</returns>
         public static FhirRelease FhirReleaseFromCorePackageName(string packageName)
         {
-            if (TryFhirReleaseFromCorePackageName(packageName, out var release))
+            if (TryGetFhirReleaseFromCorePackageName(packageName, out var release))
             {
                 return release.Value;
             }
@@ -161,7 +167,7 @@ namespace Hl7.Fhir.Utility
         /// <param name="packageName">FHIR Core package name</param>
         /// <param name="release">Official FHIR Release</param>
         /// <returns>true if the conversion succeeded; false otherwise</returns>
-        public static bool TryFhirReleaseFromCorePackageName(string packageName, out FhirRelease? release)
+        public static bool TryGetFhirReleaseFromCorePackageName(string packageName, out FhirRelease? release)
         {
             release = packageName switch
             {
@@ -170,8 +176,15 @@ namespace Hl7.Fhir.Utility
                 "hl7.fhir.r5.core" => FhirRelease.R5,
                 _ => null
             };
-            return packageName != null;
+            return release != null;
         }
+
+        [Obsolete("This method is obsolete. Use TryGetFhirReleaseFromCorePackageName instead")]
+        public static bool TryFhirReleaseFromCorePackageName(string packageName, out FhirRelease? release)
+        {
+            return TryGetFhirReleaseFromCorePackageName(packageName, out release);
+        } 
+
 
 
         /// <summary>
