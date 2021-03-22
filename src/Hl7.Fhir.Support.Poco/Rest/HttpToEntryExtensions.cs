@@ -30,7 +30,7 @@ namespace Hl7.Fhir.Rest
                 Status = ((int)response.StatusCode).ToString(),
                 ResponseUri = response.RequestMessage.RequestUri,//this is actually the requestUri, can't find the responseUri
                 Body = body,
-                Location = response.Headers.Location?.AbsoluteUri ?? response.Content.Headers.ContentLocation?.AbsoluteUri,
+                Location = response.Headers.Location?.ToString() ?? response.Content.Headers.ContentLocation.ToString(),
                 LastModified = response.Content.Headers.LastModified,
                 Etag = response.Headers.ETag?.Tag.Trim('\"'),
                 ContentType = response.Content.Headers.ContentType?.MediaType
