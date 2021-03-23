@@ -26,6 +26,8 @@ namespace Hl7.Fhir.FhirPath
             t.Add("hasValue", (ITypedElement f) => f.HasValue(), doNullProp: false);
             t.Add("resolve", (ITypedElement f, EvaluationContext ctx) => resolver(f, ctx), doNullProp: false);
 
+            t.Add("memberOf", (Func<object, string, bool>)memberOf, doNullProp: false);
+
             // Pre-normative this function was called htmlchecks, normative is htmlChecks
             // lets keep both to keep everyone happy.
             t.Add("htmlchecks", (ITypedElement f) => f.HtmlChecks(), doNullProp: false);
@@ -37,6 +39,8 @@ namespace Hl7.Fhir.FhirPath
             {
                 return ctx is FhirEvaluationContext fctx ? f.Resolve(fctx.ElementResolver) : f.Resolve();
             }
+
+            static bool memberOf(object focus, string valueset) => throw new NotImplementedException("Terminology functions in FhirPath are unsupported in the .NET FhirPath engine.");
         }
 
         /// <summary>
@@ -44,14 +48,7 @@ namespace Hl7.Fhir.FhirPath
         /// </summary>
         /// <param name="focus"></param>
         /// <returns></returns>
-        public static bool HasValue(this ITypedElement focus)
-        {
-            if (focus == null)
-                return false;
-            if (focus.Value == null)
-                return false;
-            return true;
-        }
+        public static bool HasValue(this ITypedElement focus) => focus?.Value is not null;
 
         /// <summary>
         /// Check if the node has a value, and not just extensions.
@@ -60,14 +57,10 @@ namespace Hl7.Fhir.FhirPath
         /// <returns></returns>
         public static bool HtmlChecks(this ITypedElement focus)
         {
-            if (focus == null)
-                return false;
-            if (focus.Value == null)
-                return false;
+            if (focus?.Value is null) return false;
+
             // Perform the checking of the content for valid html content
-            _ = focus.Value.ToString();
-            // TODO: Perform the checking
-            return true;
+            return XHtml.IsValidValue(focus.Value.ToString());
         }
 
         public static IEnumerable<Base> ToFhirValues(this IEnumerable<ITypedElement> results)
