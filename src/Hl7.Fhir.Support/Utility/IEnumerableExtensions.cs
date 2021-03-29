@@ -13,11 +13,15 @@ using System.Linq;
 namespace Hl7.Fhir.Utility
 {
     public static class IEnumerableExtensions
-    {
-        public static bool ContainsDuplicates<T>(this IEnumerable<T> enumerable)
-        {
-            var knownKeys = new HashSet<T>();
-            return enumerable.Any(i => !knownKeys.Add(i));
+    {       
+        public static bool TryGetDuplicates(this IEnumerable<string> enumerable, out List<string> duplicates)
+        {            
+            duplicates = enumerable.GroupBy(x => x)
+                          .Where(g => g.Count() > 1)
+                          .Select(y => y.Key)
+                          .ToList();
+                          
+            return duplicates.Any();           
         }
     }
 }
