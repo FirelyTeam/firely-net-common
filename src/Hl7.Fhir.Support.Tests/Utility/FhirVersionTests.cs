@@ -85,18 +85,18 @@ namespace Hl7.Fhir.Utility.Tests
         public void TestTryFhirVersionFromMimeVersion()
         {
             FhirRelease? version = null;
-            Assert.AreEqual(true, FhirReleaseParser.TryFhirReleaseFromMimeVersion("0.0", out version));
+            Assert.AreEqual(true, FhirReleaseParser.TryGetFhirReleaseFromMimeVersion("0.0", out version));
             Assert.AreEqual(FhirRelease.DSTU1, version);
-            Assert.AreEqual(true, FhirReleaseParser.TryFhirReleaseFromMimeVersion("1.0", out version));
+            Assert.AreEqual(true, FhirReleaseParser.TryGetFhirReleaseFromMimeVersion("1.0", out version));
             Assert.AreEqual(FhirRelease.DSTU2, version);
-            Assert.AreEqual(true, FhirReleaseParser.TryFhirReleaseFromMimeVersion("3.0", out version));
+            Assert.AreEqual(true, FhirReleaseParser.TryGetFhirReleaseFromMimeVersion("3.0", out version));
             Assert.AreEqual(FhirRelease.STU3, version);
-            Assert.AreEqual(true, FhirReleaseParser.TryFhirReleaseFromMimeVersion("4.0", out version));
+            Assert.AreEqual(true, FhirReleaseParser.TryGetFhirReleaseFromMimeVersion("4.0", out version));
             Assert.AreEqual(FhirRelease.R4, version);
-            Assert.AreEqual(true, FhirReleaseParser.TryFhirReleaseFromMimeVersion("5.0", out version));
+            Assert.AreEqual(true, FhirReleaseParser.TryGetFhirReleaseFromMimeVersion("5.0", out version));
             Assert.AreEqual(FhirRelease.R5, version);
 
-            Assert.AreEqual(false, FhirReleaseParser.TryFhirReleaseFromMimeVersion("0.0.0.0.1", out version));
+            Assert.AreEqual(false, FhirReleaseParser.TryGetFhirReleaseFromMimeVersion("0.0.0.0.1", out version));
             Assert.IsNull(version);
         }
 
@@ -120,15 +120,16 @@ namespace Hl7.Fhir.Utility.Tests
         public void TestTryFhirReleaseFromCorePackageName()
         {
             FhirRelease? version = null;
-            Assert.AreEqual(true, FhirReleaseParser.TryFhirReleaseFromCorePackageName("hl7.fhir.r3.core", out version));
+            Assert.AreEqual(true, FhirReleaseParser.TryGetFhirReleaseFromCorePackageName("hl7.fhir.r3.core", out version));
             Assert.AreEqual(FhirRelease.STU3, version);
-            Assert.AreEqual(true, FhirReleaseParser.TryFhirReleaseFromCorePackageName("hl7.fhir.r4.core", out version));
+            Assert.AreEqual(true, FhirReleaseParser.TryGetFhirReleaseFromCorePackageName("hl7.fhir.r4.core", out version));
             Assert.AreEqual(FhirRelease.R4, version);
-            Assert.AreEqual(true, FhirReleaseParser.TryFhirReleaseFromCorePackageName("hl7.fhir.r5.core", out version));
+            Assert.AreEqual(true, FhirReleaseParser.TryGetFhirReleaseFromCorePackageName("hl7.fhir.r5.core", out version));
             Assert.AreEqual(FhirRelease.R5, version);
 
-            Assert.AreEqual(false, FhirReleaseParser.TryFhirReleaseFromMimeVersion("hl7.fhir.core.r3", out version));
+            Assert.AreEqual(false, FhirReleaseParser.TryGetFhirReleaseFromCorePackageName("hl7.fhir.core.r3", out version));
             Assert.IsNull(version);
+
         }
 
 
