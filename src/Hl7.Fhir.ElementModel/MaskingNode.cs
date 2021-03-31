@@ -20,7 +20,7 @@ namespace Hl7.Fhir.ElementModel
         /// <summary>
         /// Set to true when a complex type property is mandatory so all its children need to be included
         /// </summary>
-        private bool _includeAll { get; set;}
+        private bool _includeAll { get; set; }
 
         public static MaskingNode ForSummary(ITypedElement node) =>
             new MaskingNode(node, new MaskingNodeSettings
@@ -38,9 +38,13 @@ namespace Hl7.Fhir.ElementModel
             });
 
         public static MaskingNode ForElements(ITypedElement node, string[] _elements) =>
+            ForElements(node, _elements, false);
+
+        public static MaskingNode ForElements(ITypedElement node, string[] _elements, bool includeMandatory) =>
             new MaskingNode(node, new MaskingNodeSettings
             {
                 IncludeElements = _elements ?? new string[] { },
+                IncludeMandatory = includeMandatory,
                 PreserveBundle = MaskingNodeSettings.PreserveBundleMode.All
             });
 
@@ -103,7 +107,7 @@ namespace Hl7.Fhir.ElementModel
             var scope = getScope(node);
 
             // Trivially, we will include the root
-            if (!scope.Location.Contains(".")) return (true,false);
+            if (!scope.Location.Contains(".")) return (true, false);
 
             bool atRootBundle() => atBundle() && scope.ParentResource == null;
             bool atBundle() => scope.NearestResourceType == "Bundle";
@@ -112,14 +116,14 @@ namespace Hl7.Fhir.ElementModel
             {
                 case MaskingNodeSettings.PreserveBundleMode.All when atBundle():
                 case MaskingNodeSettings.PreserveBundleMode.Root when atRootBundle():
-                    return (true,false);
+                    return (true, false);
 
-                // fall through...
+                    // fall through...
             }
 
             var included = _settings.IncludeAll || _includeAll;
 
-            bool mandatory=false;         // included because it's required & includeMandatory is on
+            bool mandatory = false;         // included because it's required & includeMandatory is on
             var ed = scope.Definition;
             if (ed != null)
             {
@@ -133,7 +137,7 @@ namespace Hl7.Fhir.ElementModel
             included |= _settings.IncludeElements?.Any(matches) ?? false;
 
             if (_settings.ExcludeElements?.Any(matches) == true)
-                return (false,false);
+                return (false, false);
 
             bool matches(string filter)
             {
@@ -141,10 +145,10 @@ namespace Hl7.Fhir.ElementModel
                 return loc == f || loc.StartsWith(f + ".") || loc.StartsWith(f + "[");    // include matches + children
             }
 
-            if (_settings.ExcludeMarkdown && scope.InstanceType == "markdown") return (false,false);
-            if (_settings.ExcludeNarrative & scope.InstanceType == "Narrative") return (false,false);
+            if (_settings.ExcludeMarkdown && scope.InstanceType == "markdown") return (false, false);
+            if (_settings.ExcludeNarrative & scope.InstanceType == "Narrative") return (false, false);
 
-            return (included,mandatory);
+            return (included, mandatory);
         }
 
 
