@@ -9,10 +9,14 @@ namespace Hl7.Fhir.Model
 {
     public static class ParametersExtensions
     {
-        public static bool TryGetDuplicates(this Parameters parameters , out List<string> duplicates)
+        public static bool TryGetDuplicates(this Parameters parameters , out IEnumerable<string> duplicates)
         {
-            duplicates = new List<string>() { };
-            return parameters.Parameter?.Select(p => p.Name)?.TryGetDuplicates(out duplicates) == true;            
+            duplicates =  parameters.Parameter?.Select(p => p.Name)?.GroupBy(x => x)
+                          .Where(g => g.Count() > 1)
+                          .Select(y => y.Key)
+                          .ToList();
+
+            return duplicates.Any();
         }
     }
 }
