@@ -6,10 +6,8 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using System;
-using System.Linq;
-using System.Collections.Generic;
 using Hl7.Fhir.Specification;
+using System.Collections.Generic;
 
 namespace Hl7.Fhir.ElementModel
 {
@@ -28,7 +26,7 @@ namespace Hl7.Fhir.ElementModel
         /// </summary>
         /// <param name="name">Return only the children with the given name.</param>
         /// <returns></returns>
-        IEnumerable<ITypedElement> Children(string name=null);
+        IEnumerable<ITypedElement> Children(string name = null);
 
         /// <summary>
         /// Name of the node, e.g. "active", "value".
@@ -52,9 +50,10 @@ namespace Hl7.Fhir.ElementModel
         /// dateTime        Hl7.Fhir.ElementModel.Types.DateTime
         /// decimal         decimal
         /// boolean         bool
-        /// integer         long
-        /// unsignedInt     long
-        /// positiveInt     long
+        /// integer         int
+        /// unsignedInt     int
+        /// positiveInt     int
+        /// long/integer64  long (name will be finalized in R5)
         /// string          string
         /// code            string
         /// id              string
@@ -72,7 +71,7 @@ namespace Hl7.Fhir.ElementModel
         /// <remarks>The format of the location is the dotted name of the property, including indices to make
         /// sure repeated occurences of an element can be distinguished. It needs to be sufficiently precise to aid 
         /// the user in locating issues in the data.</remarks>
-        string Location { get; }        
+        string Location { get; }
 
         IElementDefinitionSummary Definition { get; }
     }
