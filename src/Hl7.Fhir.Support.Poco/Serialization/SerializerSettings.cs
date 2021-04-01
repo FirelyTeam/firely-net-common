@@ -30,9 +30,9 @@ namespace Hl7.Fhir.Serialization
         public bool TrimWhiteSpacesInXml { get; set; } = true;
 
         /// <summary>
-        /// Include mandatory elements to the given set elements
+        /// Include mandatory elements when serializing a subset of chosen elements (_elements). 
         /// </summary>
-        public bool IncludeMandatoryToElements { get; set; } = false;
+        public bool IncludeMandatoryInElementsSummary { get; set; } = false;
 
         /// <summary>Default constructor. Creates a new <see cref="SerializerSettings"/> instance with default property values.</summary>
         public SerializerSettings() { }
@@ -55,7 +55,7 @@ namespace Hl7.Fhir.Serialization
             other.Pretty = Pretty;
             other.AppendNewLine = AppendNewLine;
             other.TrimWhiteSpacesInXml = TrimWhiteSpacesInXml;
-            other.IncludeMandatoryToElements = IncludeMandatoryToElements;
+            other.IncludeMandatoryInElementsSummary = IncludeMandatoryInElementsSummary;
         }
 
         /// <summary>Creates a new <see cref="SerializerSettings"/> object that is a copy of the current instance.</summary>
