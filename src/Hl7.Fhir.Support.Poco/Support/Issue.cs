@@ -128,12 +128,18 @@ namespace Hl7.Fhir.Support
         public static readonly Issue PROCESSING_START_NESTED_VALIDATION = Create(5002, OperationOutcome.IssueSeverity.Information, OperationOutcome.IssueType.Informational);
         public static readonly Issue PROCESSING_CATASTROPHIC_FAILURE = Create(5003, OperationOutcome.IssueSeverity.Fatal, OperationOutcome.IssueType.Exception);
 
-        // Terminology specific errors
-        public static readonly Issue TERMINOLOGY_CODE_NOT_IN_VALUESET = Create(6001, OperationOutcome.IssueSeverity.Error, OperationOutcome.IssueType.CodeInvalid);
-        public static readonly Issue TERMINOLOGY_ABSTRACT_CODE_NOT_ALLOWED = Create(6002, OperationOutcome.IssueSeverity.Error, OperationOutcome.IssueType.CodeInvalid);
-        public static readonly Issue TERMINOLOGY_INCORRECT_DISPLAY = Create(6003, OperationOutcome.IssueSeverity.Warning, OperationOutcome.IssueType.CodeInvalid);     
-        public static readonly Issue TERMINOLOGY_SERVICE_FAILED = Create(6004, OperationOutcome.IssueSeverity.Warning, OperationOutcome.IssueType.NotSupported);
+        // Terminology specific errors    
+        public static readonly Issue TERMINOLOGY_CODE_NOT_IN_VALUESET = Create(6001, OperationOutcome.IssueSeverity.Error, OperationOutcome.IssueType.CodeInvalid);       
+        public static readonly Issue TERMINOLOGY_ABSTRACT_CODE_NOT_ALLOWED = Create(6002, OperationOutcome.IssueSeverity.Error, OperationOutcome.IssueType.CodeInvalid);      
+        public static readonly Issue TERMINOLOGY_INCORRECT_DISPLAY = Create(6003, OperationOutcome.IssueSeverity.Warning, OperationOutcome.IssueType.CodeInvalid);       
+        public static readonly Issue TERMINOLOGY_SERVICE_FAILED = Create(6004, OperationOutcome.IssueSeverity.Warning, OperationOutcome.IssueType.NotSupported);        
         public static readonly Issue TERMINOLOGY_NO_CODE_IN_INSTANCE = Create(6005, OperationOutcome.IssueSeverity.Error, OperationOutcome.IssueType.CodeInvalid);
+
+        // Since the terminology service can't return Operation Outcomes, but only true of false. Terminology issues are split up into two categories: warnings of errors.
+        // Error means the code is invalid, warning contains just an informational message as outcome.
+        public static readonly Issue TERMINOLOGY_OUTPUT_WARNING = Create(6006, OperationOutcome.IssueSeverity.Warning, OperationOutcome.IssueType.Informational);
+        public static readonly Issue TERMINOLOGY_OUTPUT_ERROR = Create(6007, OperationOutcome.IssueSeverity.Error, OperationOutcome.IssueType.CodeInvalid);
+
     }
 
 
