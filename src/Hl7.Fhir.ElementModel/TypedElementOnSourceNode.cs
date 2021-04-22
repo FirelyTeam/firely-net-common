@@ -199,6 +199,17 @@ namespace Hl7.Fhir.ElementModel
                     return val;
                 else
                 {
+                    if (_settings.AllowDateTimeInDate && ts == typeof(P.Date))
+                    {
+                        if (P.Any.TryParse(sourceText, typeof(P.DateTime), out var dateTimeVal))
+                        {
+                            // TruncateToDate converts 1991-02-03T11:22:33Z to 1991-02-03+00:00 which is not a valid date! 
+                            var date = (dateTimeVal as P.DateTime).TruncateToDate();
+                            // so we cut off timezone by converting it to timeoffset and cast back to date.
+                            return P.Date.FromDateTimeOffset(date.ToDateTimeOffset(0, 0, 0, TimeSpan.Zero));
+                        }
+                    }
+
                     raiseTypeError($"Literal '{sourceText}' cannot be parsed as a {InstanceType}.", _source, location: _source.Location);
                     return sourceText;
                 }

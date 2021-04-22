@@ -39,6 +39,14 @@ namespace Hl7.Fhir.ElementModel
         /// </summary>
         public TypeErrorMode ErrorMode { get; set; } // = TypeErrorMode.Report;
 
+        /// <summary>
+        /// Allow to parse DateTime values in Date field.
+        /// </summary>
+        /// <remarks>
+        /// Needed for backward compatibility with old parser for resources which were saved and considered valid in the past.
+        /// </remarks>>
+        public bool AllowDateTimeInDate { get; set; }
+
         /// <summary>Default constructor. Creates a new <see cref="TypedElementSettings"/> instance with default property values.</summary>
         public TypedElementSettings() { }
 
@@ -58,6 +66,7 @@ namespace Hl7.Fhir.ElementModel
             if (other == null) throw Error.ArgumentNull(nameof(other));
 
             other.ErrorMode = ErrorMode;
+            other.AllowDateTimeInDate = AllowDateTimeInDate;
         }
 
         /// <summary>Creates a new <see cref="TypedElementSettings"/> object that is a copy of the current instance.</summary>
