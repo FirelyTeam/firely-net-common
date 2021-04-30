@@ -14,6 +14,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -51,6 +52,8 @@ namespace Hl7.Fhir.Utility
         public static XDocument XDocumentFromReader(XmlReader reader, bool ignoreComments = true)
             => XDocumentFromReaderInternal(WrapXmlReader(reader, ignoreComments));
 
+        /// <inheritdoc cref="JObjectFromReaderAsync(JsonReader)" />
+        [Obsolete("Use JObjectFromReaderAsync(JsonReader) instead.")]
         public static JObject JObjectFromReader(JsonReader reader)
         {
             // Override settings, sorry but this is vital
@@ -72,6 +75,26 @@ namespace Hl7.Fhir.Utility
             }
         }
 
+        public static async Task<JObject> JObjectFromReaderAsync(JsonReader reader)
+        {
+            // Override settings, sorry but this is vital
+            reader.DateParseHandling = DateParseHandling.None;
+            reader.FloatParseHandling = FloatParseHandling.Decimal;
+
+            try
+            {
+                return await JObject.LoadAsync(reader,
+                    new JsonLoadSettings
+                    {
+                        CommentHandling = CommentHandling.Ignore,
+                        LineInfoHandling = LineInfoHandling.Load
+                    }).ConfigureAwait(false);
+            }
+            catch (JsonReaderException jre)
+            {
+                throw new FormatException($"Invalid Json encountered. Details: " + jre.Message, jre);
+            }
+        }
 
         public static XDocument XDocumentFromXmlText(string xml, bool ignoreComments = true)
         {
@@ -81,6 +104,8 @@ namespace Hl7.Fhir.Utility
             }
         }
 
+        /// <inheritdoc cref="JObjectFromJsonTextAsync(string)" />
+        [Obsolete("Use JObjectFromJsonTextAsync(string) instead.")]
         public static JObject JObjectFromJsonText(string json)
         {
             using (var reader = JsonReaderFromJsonText(json))
@@ -89,6 +114,13 @@ namespace Hl7.Fhir.Utility
             }
         }
 
+        public static async Task<JObject> JObjectFromJsonTextAsync(string json)
+        {
+            using (var reader = JsonReaderFromJsonText(json))
+            {
+                return await JObjectFromReaderAsync(reader).ConfigureAwait(false);
+            }
+        }
 
         public static XmlReader XmlReaderFromXmlText(string xml, bool ignoreComments = true)
             => WrapXmlReader(XmlReader.Create(new StringReader(SerializationUtil.SanitizeXml(xml))), ignoreComments);
@@ -126,6 +158,8 @@ namespace Hl7.Fhir.Utility
             return XmlReader.Create(xmlReader, settings);
         }
 
+        /// <inheritdoc cref="WriteXmlToBytesAsync(Func{XmlWriter, Task})" />
+        [Obsolete("Use WriteXmlToBytesAsync(Func<XmlWriter, Task>) instead.")]
         public static byte[] WriteXmlToBytes(Action<XmlWriter> serializer)
         {
             // [WMR 20160421] Explicit disposal
@@ -147,6 +181,29 @@ namespace Hl7.Fhir.Utility
             }
         }
 
+        public static async Task<byte[]> WriteXmlToBytesAsync(Func<XmlWriter, Task> serializer)
+        {
+            // [WMR 20160421] Explicit disposal
+            using (MemoryStream stream = new MemoryStream())
+            {
+                XmlWriterSettings settings = new XmlWriterSettings
+                {
+                    Encoding = new UTF8Encoding(false),
+                    OmitXmlDeclaration = true,
+                    NewLineHandling = NewLineHandling.Entitize
+                };
+
+                using (XmlWriter xw = XmlWriter.Create(stream, settings))
+                {
+                    await serializer(xw).ConfigureAwait(false);
+                    await xw.FlushAsync().ConfigureAwait(false);
+                    return stream.ToArray();
+                }
+            }
+        }
+
+        /// <inheritdoc cref="WriteXmlToStringAsync(Func{XmlWriter, Task}, bool, bool)" />
+        [Obsolete("Use WriteXmlToBytesAsync(Func<XmlWriter, Task>, bool, bool) instead.")]
         public static string WriteXmlToString(Action<XmlWriter> serializer, bool pretty = false, bool appendNewLine = false)
         {
             StringBuilder sb = new StringBuilder();
@@ -163,6 +220,27 @@ namespace Hl7.Fhir.Utility
             {
                 serializer(xw);
                 xw.Flush();
+                return appendNewLine ? sb.AppendLine().ToString() : sb.ToString();
+            }
+        }
+
+        public static async Task<string> WriteXmlToStringAsync(Func<XmlWriter, Task> serializer, bool pretty = false, bool appendNewLine = false)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            XmlWriterSettings settings = new XmlWriterSettings
+            {
+                OmitXmlDeclaration = true,
+                NewLineHandling = NewLineHandling.Entitize,
+                Indent = pretty,
+                Async = true,
+            };
+
+            // [WMR 20160421] Explicit disposal
+            using (XmlWriter xw = XmlWriter.Create(sb, settings))
+            {
+                await serializer(xw).ConfigureAwait(false);
+                await xw.FlushAsync().ConfigureAwait(false);
                 return appendNewLine ? sb.AppendLine().ToString() : sb.ToString();
             }
         }

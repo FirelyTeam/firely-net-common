@@ -12,11 +12,14 @@ using Hl7.Fhir.Utility;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Serialization
 {
     public partial class FhirJsonNode
     {
+        /// <inheritdoc cref="ReadAsync(JsonReader, string, FhirJsonParsingSettings)" />
+        [Obsolete("Use ReadAsync(JsonReader, string, FhirJsonParsingSettings) instead.")]
         public static ISourceNode Read(JsonReader reader, string rootName = null, FhirJsonParsingSettings settings = null)
         {
             if (reader == null) throw Error.ArgumentNull(nameof(reader));
@@ -25,6 +28,16 @@ namespace Hl7.Fhir.Serialization
             return new FhirJsonNode(doc, rootName, settings);
         }
 
+        public static async Task<ISourceNode> ReadAsync(JsonReader reader, string rootName = null, FhirJsonParsingSettings settings = null)
+        {
+            if (reader == null) throw Error.ArgumentNull(nameof(reader));
+
+            var doc = await SerializationUtil.JObjectFromReaderAsync(reader).ConfigureAwait(false);
+            return new FhirJsonNode(doc, rootName, settings);
+        }
+
+        /// <inheritdoc cref="ParseAsync(string, string, FhirJsonParsingSettings)" />
+        [Obsolete("Use ParseAsync(string, string, FhirJsonParsingSettings) instead.")]
         public static ISourceNode Parse(string json, string rootName = null, FhirJsonParsingSettings settings = null)
         {
             if (json == null) throw Error.ArgumentNull(nameof(json));
@@ -32,6 +45,16 @@ namespace Hl7.Fhir.Serialization
             using (var reader = SerializationUtil.JsonReaderFromJsonText(json))
             {
                 return Read(reader, rootName, settings);
+            }
+        }
+
+        public static async Task<ISourceNode> ParseAsync(string json, string rootName = null, FhirJsonParsingSettings settings = null)
+        {
+            if (json == null) throw Error.ArgumentNull(nameof(json));
+
+            using (var reader = SerializationUtil.JsonReaderFromJsonText(json))
+            {
+                return await ReadAsync(reader, rootName, settings).ConfigureAwait(false);
             }
         }
 

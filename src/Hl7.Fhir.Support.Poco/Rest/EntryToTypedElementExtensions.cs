@@ -3,12 +3,18 @@ using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using System;
+using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Rest
 {
     public static class EntryToTypedEntryExtensions
     {
+        /// <inheritdoc cref="ToTypedEntryResponseAsync(EntryResponse, IStructureDefinitionSummaryProvider)" />
+        [Obsolete("Use ToTypedEntryResponseAsync(EntryResponse, IStructureDefinitionSummaryProvider) instead.")]
         public static TypedEntryResponse ToTypedEntryResponse(this EntryResponse response, IStructureDefinitionSummaryProvider provider)
+            => TaskHelper.Await(() => ToTypedEntryResponseAsync(response, provider));
+
+        public static async Task<TypedEntryResponse> ToTypedEntryResponseAsync(this EntryResponse response, IStructureDefinitionSummaryProvider provider)
         {
             var result = new TypedEntryResponse
             {
@@ -25,13 +31,13 @@ namespace Hl7.Fhir.Rest
             var body = response.GetBodyAsText();
             if (!string.IsNullOrEmpty(body))
             {               
-                result.TypedElement = parseResource(body, response.ContentType, provider, response.IsSuccessful());               
+                result.TypedElement = await parseResourceAsync(body, response.ContentType, provider, response.IsSuccessful()).ConfigureAwait(false);
             }
 
             return result;
         }
         
-        private static ITypedElement parseResource(string bodyText, string contentType, IStructureDefinitionSummaryProvider provider, bool throwOnFormatException)
+        private static async Task<ITypedElement> parseResourceAsync(string bodyText, string contentType, IStructureDefinitionSummaryProvider provider, bool throwOnFormatException)
         {
             if (bodyText == null) throw Error.ArgumentNull(nameof(bodyText));
             if (provider == null) throw Error.ArgumentNull(nameof(provider));
@@ -50,7 +56,7 @@ namespace Hl7.Fhir.Rest
             try
             {
                return (fhirType == ResourceFormat.Json)
-                    ? FhirJsonNode.Parse(bodyText).ToTypedElement(provider)
+                    ? (await FhirJsonNode.ParseAsync(bodyText).ConfigureAwait(false)).ToTypedElement(provider)
                     : FhirXmlNode.Parse(bodyText).ToTypedElement(provider);
             }
             catch (FormatException) when (!throwOnFormatException)
