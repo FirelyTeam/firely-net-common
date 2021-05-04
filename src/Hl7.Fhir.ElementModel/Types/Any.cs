@@ -96,7 +96,7 @@ namespace Hl7.Fhir.ElementModel.Types
             }
         }
 
-        internal static (bool, T) DoConvert<T>(Func<T> parser)
+        internal static (bool, T?) DoConvert<T>(Func<T> parser)
         {
             try
             {
@@ -178,7 +178,7 @@ namespace Hl7.Fhir.ElementModel.Types
 
 
         protected static Result<T> propagateNull<T>(object obj, Func<T> a) => obj is null ?
-            (Result<T>)new Fail<T>(ArgNullException) : new Ok<T>(a());
+            new Fail<T>(ArgNullException) : new Ok<T>(a());
     }
 
 

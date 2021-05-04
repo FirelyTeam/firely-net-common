@@ -10,15 +10,15 @@
 
 using Hl7.Fhir.ElementModel;
 using Hl7.FhirPath;
+using Hl7.FhirPath.Expressions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Hl7.FhirPath.Expressions;
 using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.FhirPath.Functions
 {
-    internal static class EqualityOperators
+    public static class EqualityOperators
     {
         public static bool? IsEqualTo(this IEnumerable<ITypedElement> left, IEnumerable<ITypedElement> right, bool compareNames = false)
         {
