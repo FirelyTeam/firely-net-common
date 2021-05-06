@@ -34,26 +34,38 @@ namespace Hl7.FhirPath
 
         public static IEnumerable<ITypedElement> Select(this ITypedElement input, string expression, EvaluationContext ctx = null)
         {
+            input = wrapInScopedNode(input);
             var evaluator = getCompiledExpression(expression);
             return evaluator(input, ctx ?? EvaluationContext.CreateDefault());
         }
 
         public static object Scalar(this ITypedElement input, string expression, EvaluationContext ctx = null)
         {
+            input = wrapInScopedNode(input);
             var evaluator = getCompiledExpression(expression);
             return evaluator.Scalar(input, ctx ?? EvaluationContext.CreateDefault());
         }
 
         public static bool Predicate(this ITypedElement input, string expression, EvaluationContext ctx = null)
         {
+            input = wrapInScopedNode(input);
             var evaluator = getCompiledExpression(expression);
             return evaluator.Predicate(input, ctx ?? EvaluationContext.CreateDefault());
         }
 
         public static bool IsBoolean(this ITypedElement input, string expression, bool value, EvaluationContext ctx = null)
         {
+            input = wrapInScopedNode(input);
+
             var evaluator = getCompiledExpression(expression);
             return evaluator.IsBoolean(value, input, ctx ?? EvaluationContext.CreateDefault());
+        }
+
+        private static ITypedElement wrapInScopedNode(ITypedElement input)
+        {
+            if (input is not ScopedNode)
+                input = new ScopedNode(input);
+            return input;
         }
     }
 }
