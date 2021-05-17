@@ -28,35 +28,25 @@
 
 */
 
-using Hl7.Fhir.Validation;
 using System;
 
 namespace Hl7.Fhir.Introspection
 {
     /// <summary>
-    /// This attribute is applied to classes that represent FHIR datatypes and resources.
+    /// Signals that the assembly contains classes that define metadata for the
+    /// FHIR resources and datatypes.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
-    public sealed class FhirTypeAttribute : InvokeIValidatableObjectAttribute
+    [AttributeUsage(AttributeTargets.Assembly, Inherited = false, AllowMultiple = true)]
+    public sealed class FhirModelAssemblyAttribute : VersionedValidationAttribute
     {
-        public FhirTypeAttribute(string name)
+        public FhirModelAssemblyAttribute()
         {
-            Name = name ?? throw new ArgumentNullException(nameof(name));
+            Since = Specification.FhirRelease.STU3;
         }
 
-        /// <summary>
-        /// The name of the FHIR type this class represents.
-        /// </summary>
-        public string Name { get; private set; }
-
-        /// <summary>
-        /// Indicates whether this class represents the nested complex type for a (backbone) element.
-        /// </summary>
-        public bool IsNestedType { get; set; }
-
-        /// <summary>
-        /// Indicates whether this class represents a Resource
-        /// </summary>
-        public bool IsResource { get; set; }
+        public FhirModelAssemblyAttribute(Specification.FhirRelease since)
+        {
+            Since = since;
+        }
     }
 }
