@@ -46,6 +46,13 @@ namespace Hl7.Fhir.Introspection
             Name = name ?? throw new ArgumentNullException(nameof(name));
         }
 
+        public FhirElementAttribute(string name, ChoiceType choice, XmlRepresentation representation)
+        {
+            Name = name;
+            Choice = choice;
+            XmlSerialization = representation;
+        }
+
         public ChoiceType Choice { get; set; } = ChoiceType.None;
 
         /// <summary>
@@ -74,7 +81,7 @@ namespace Hl7.Fhir.Introspection
         // ValidationContext
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
-            if(validationContext == null) throw new ArgumentNullException("validationContext");
+            if (validationContext == null) throw new ArgumentNullException("validationContext");
 
             if (value == null) return ValidationResult.Success;
 
@@ -100,7 +107,7 @@ namespace Hl7.Fhir.Introspection
                 validateElement(value, validationContext, result);
             }
 
-            return result.FirstOrDefault();                
+            return result.FirstOrDefault();
         }
 
         private static void validateElement(object value, ValidationContext validationContext, List<ValidationResult> result)
