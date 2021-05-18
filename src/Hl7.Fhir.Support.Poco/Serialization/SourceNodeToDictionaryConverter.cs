@@ -1,5 +1,6 @@
-﻿using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Introspection;
+﻿#nullable enable
+
+using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
@@ -37,23 +38,18 @@ namespace Hl7.Fhir.Serialization
             }
         }
 
+
         public IDictionary<string, object> Load(ISourceNode source, Type elementType)
         {
-            if (elementType.IsAbstract)
-                throw buildTypeError($"The type of an element must be a concrete type, '{elementType.GetFhirTypeName()}' is abstract.", source.Location);
+            //if (elementType.GetTypeInfo().IsAbstract)
+            //    throw buildTypeError($"The type of an element must be a concrete type, '{elementType.GetFhirTypeName()}' is abstract.", source.Location);
 
             IDictionary<string, PropertyInfo> childDefs = elementType.GetFhirProperties();
-            var children =
-                enumerateElements(childDefs, source).Prepend(new(TYPE_KEY, elementType));
-
-            return children.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-        }
-
-        private IEnumerable<KeyValuePair<string, object>> enumerateElements(IDictionary<string, PropertyInfo> childDefs, ISourceNode parent)
-        {
-            IEnumerable<ISourceNode> childSet = parent.Children();
+            IEnumerable<ISourceNode> childSet = source.Children();
             List<string>? unknownElements = null;
-            List<KeyValuePair<string, object>> children = new();
+            Dictionary<string, object> children = new();
+
+            children.Add(TYPE_KEY, elementType);
 
             foreach (var scan in childSet)
             {
@@ -68,21 +64,20 @@ namespace Hl7.Fhir.Serialization
 
                 //TODO: child with Value
                 //TODO: group children in lists
-                var elementAttr = pi.GetFhirElementAttribute();
 
-                // Special case 1: a nested resource
-                if (elementAttr.Choice == ChoiceType.ResourceChoice)
-                    children.Add(new KeyValuePair<string, object>(scan.Name, Load(scan)));
+                if (pi.IsContainedResource())
+                    children.Add(scan.Name, Load(scan));
                 else
                 {
                     // this handles both datatype choices and & single type elements
                     var instanceType = deriveInstanceType(scan, pi);
-                    children.Add(new KeyValuePair<string, object>(scan.Name, instanceType));
+                    children.Add(scan.Name, Load(scan, instanceType));
                 }
             }
 
             if (unknownElements is not null)
-                throw buildTypeError($"Encountered unknown child element(s) '{string.Join(", ", unknownElements)}'.", parent.Location);
+                throw buildTypeError($"Encountered unknown child element(s) '{string.Join(", ", unknownElements)}'.",
+                    source.Location);
 
             return children;
         }
@@ -91,34 +86,32 @@ namespace Hl7.Fhir.Serialization
         private Type deriveInstanceType(ISourceNode current, PropertyInfo pi)
         {
             var resourceTypeIndicator = current.GetResourceTypeIndicator();
-            var elementAttr = pi.GetFhirElementAttribute();
 
+            // Instead of this "validation", just include the "resourceType"
             if (resourceTypeIndicator != null)
                 throw buildTypeError($"Element '{current.Name}' is not a contained resource, but seems to contain a resource of type '{resourceTypeIndicator}'.", current.Location);
 
-            switch (elementAttr.Choice)
+            if (!pi.IsChoiceElement())
+                return pi.GetPropertyTypeForElement();
+            else
             {
-                case ChoiceType.None:
-                    return pi.GetPropertyTypeForElement();
-                case ChoiceType.DatatypeChoice:
-                    {
-                        var suffix = current.Name.Substring(elementAttr.Name.Length);
+                var elementName = pi.GetElementName();
+                var suffix = current.Name.Substring(elementName.Length);
 
-                        if (string.IsNullOrEmpty(suffix))
-                            throw buildTypeError($"Choice element '{current.Name}' is not suffixed with a type.", current.Location);
+                if (string.IsNullOrEmpty(suffix))
+                    throw buildTypeError($"Choice element '{current.Name}' is not suffixed with a type.", current.Location);
 
-                        var runtimeType = _modelAssembly.GetFhirTypeByName(suffix, StringComparison.OrdinalIgnoreCase);
-                        if (runtimeType is null)
-                            throw buildTypeError($"Cannot load type information for type '{suffix}'", current.Location);
+                var runtimeType = _modelAssembly.GetFhirTypeByName(suffix, StringComparison.OrdinalIgnoreCase);
+                if (runtimeType is null)
+                    throw buildTypeError($"Cannot load type information for type '{suffix}'", current.Location);
 
-                        var allowedTypesAttr = pi.GetAllowedTypesAttribute();
-                        if (!allowedTypesAttr.Types.Any(t => t.IsAssignableFrom(runtimeType)))
-                            throw buildTypeError($"Choice element '{current.Name}' is suffixed with unexpected type '{suffix}'", current.Location);
+                //In the philosohpy of not doing validation while parsing,
+                //we should not do this check anymore.
+                //var allowedTypes = pi.GetAllowedTypes();
+                //if (!allowedTypes.Any(t => t.IsAssignableFrom(runtimeType)))
+                //    throw buildTypeError($"Choice element '{current.Name}' is suffixed with unexpected type '{suffix}'", current.Location);
 
-                        return runtimeType;
-                    }
-                default:
-                    throw new InvalidOperationException("Should not be called for contained resources.");
+                return runtimeType;
             }
         }
 
@@ -155,7 +148,7 @@ namespace Hl7.Fhir.Serialization
             // Now, check the choice elements for a match
             // (this should actually be the longest match, but that's kind of expensive,
             // so as long as we don't add stupid ambiguous choices to a single type, this will work.
-            pi = dis.Where(kvp => name.StartsWith(kvp.Key) && kvp.Value.GetFhirElementAttribute().Choice == ChoiceType.DatatypeChoice)
+            pi = dis.Where(kvp => name.StartsWith(kvp.Key) && kvp.Value.IsChoiceElement())
                 .Select(kvp => kvp.Value).FirstOrDefault();
 
             return pi != null;
@@ -163,5 +156,4 @@ namespace Hl7.Fhir.Serialization
     }
 }
 
-
-
+#nullable restore
