@@ -32,8 +32,8 @@ namespace Hl7.Fhir.Support.Tests.Serialization
         public void CanConvertPocoToSourceNode()
         {
             Coding c = new Coding("http://nu.nl", "bla");
-            var sn = TypedSerialization.ToTypedElement(c).ToSourceNode();
-            Assert.AreEqual("Coding", sn.Name);
+            var sn = TypedSerialization.ToSourceNode(c, "kode");
+            Assert.AreEqual("kode", sn.Name);
 
             Coding c2 = TypedSerialization.ToPoco<Coding>(sn);
 

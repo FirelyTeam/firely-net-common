@@ -25,24 +25,19 @@ namespace Hl7.Fhir.ElementModel
 
             static ModelInspector configureInspector(Assembly a)
             {
-                var commonAssembly = typeof(Resource).GetTypeInfo().Assembly;
+                if (a.GetCustomAttribute<FhirModelAssemblyAttribute>() is not FhirModelAssemblyAttribute modelAssemblyAttr)
+                    throw new InvalidOperationException($"Assembly {a.FullName} cannot be used to supply FHIR metadata," +
+                        $" as it is not marked with a {nameof(FhirModelAssemblyAttribute)} attribute.");
 
-                if (a.FullName == commonAssembly.FullName)
-                {
-                    // If all we need is the common POCOs, assume we are using
-                    // the latest version of FHIR.
-                    var newInspector = new ModelInspector(Specification.FhirRelease.R5);
+                var newInspector = new ModelInspector(modelAssemblyAttr.Since);
+                newInspector.Import(a);
+
+                // Make sure we always include the common types too. 
+                var commonAssembly = typeof(Resource).GetTypeInfo().Assembly;
+                if (a.FullName != commonAssembly.FullName)
                     newInspector.Import(commonAssembly);
-                    return newInspector;
-                }
-                else
-                {
-                    // TODO: We can obtain the FhirRelease from the assembly passed in
-                    var newInspector = new ModelInspector(Specification.FhirRelease.STU3);
-                    newInspector.Import(a);
-                    newInspector.Import(commonAssembly);
-                    return newInspector;
-                }
+
+                return newInspector;
             }
         }
 
@@ -62,5 +57,9 @@ namespace Hl7.Fhir.ElementModel
 
         public static ITypedElement ToTypedElement(Base @base, string rootName = null) =>
             new PocoElementNode(GetInspectorForAssembly(@base.GetType().GetTypeInfo().Assembly), @base, rootName: rootName);
+
+        public static ISourceNode ToSourceNode(Base @base, string rootName = null) =>
+                ToTypedElement(@base, rootName).ToSourceNode();
+
     }
 }
