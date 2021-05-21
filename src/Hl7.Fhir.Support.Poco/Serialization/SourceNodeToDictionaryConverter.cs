@@ -30,7 +30,7 @@ namespace Hl7.Fhir.Serialization
                 ClassMapping? classMapping = _inspector.FindClassMapping(rootTypeName);
 
                 return classMapping is not null
-                    ? load(source, classMapping)
+                    ? Load(source, classMapping)
                     : throw buildTypeError($"Cannot load type information for type '{rootTypeName}'", source.Location);
             }
             else
@@ -44,11 +44,11 @@ namespace Hl7.Fhir.Serialization
             ClassMapping? classMapping = _inspector.ImportType(elementType);
 
             return classMapping is not null
-                ? load(source, classMapping)
+                ? Load(source, classMapping)
                 : throw buildTypeError($"Cannot load FHIR type information from .NET type '{elementType.Name}'. Is this an existing type tagged with [FhirType] for release {_inspector.FhirRelease}?", source.Location);
         }
 
-        private IDictionary<string, object> load(ISourceNode source, ClassMapping classMapping)
+        internal IDictionary<string, object> Load(ISourceNode source, ClassMapping classMapping)
         {
             //if (elementType.GetTypeInfo().IsAbstract)
             //    throw buildTypeError($"The type of an element must be a concrete type, '{elementType.GetFhirTypeName()}' is abstract.", source.Location);
@@ -91,35 +91,29 @@ namespace Hl7.Fhir.Serialization
         }
 
         // Derive the instance type 
-        private Type deriveInstanceType(ISourceNode current, PropertyMapping pm)
+        private ClassMapping deriveInstanceType(ISourceNode current, PropertyMapping pm)
         {
-            var resourceTypeIndicator = current.GetResourceTypeIndicator();
-
-            // Instead of this "validation", just include the "resourceType"
-            if (resourceTypeIndicator != null)
+            if (current.GetResourceTypeIndicator() is var resourceTypeIndicator)
                 throw buildTypeError($"Element '{current.Name}' is not a contained resource, but seems to contain a resource of type '{resourceTypeIndicator}'.", current.Location);
 
             if (pm.Choice == ChoiceType.None)
-                return pi.GetPropertyTypeForElement();
+                return _inspector.FindClassMapping(pm.FhirType[0]);
             else
             {
-                var elementName = pi.GetElementName();
+                var elementName = pm.Name;
                 var suffix = current.Name.Substring(elementName.Length);
 
                 if (string.IsNullOrEmpty(suffix))
                     throw buildTypeError($"Choice element '{current.Name}' is not suffixed with a type.", current.Location);
 
-                var runtimeType = _inspector.GetFhirTypeByName(suffix, StringComparison.OrdinalIgnoreCase);
-                if (runtimeType is null)
+                return _inspector.FindClassMapping(suffix) ??
                     throw buildTypeError($"Cannot load type information for type '{suffix}'", current.Location);
 
-                //In the philosohpy of not doing validation while parsing,
-                //we should not do this check anymore.
-                //var allowedTypes = pi.GetAllowedTypes();
-                //if (!allowedTypes.Any(t => t.IsAssignableFrom(runtimeType)))
-                //    throw buildTypeError($"Choice element '{current.Name}' is suffixed with unexpected type '{suffix}'", current.Location);
-
-                return runtimeType;
+                //    //In the philosohpy of not doing validation while parsing,
+                //    //we should not do this check anymore.
+                //    //var allowedTypes = pi.GetAllowedTypes();
+                //    //if (!allowedTypes.Any(t => t.IsAssignableFrom(runtimeType)))
+                //    //    throw buildTypeError($"Choice element '{current.Name}' is suffixed with unexpected type '{suffix}'", current.Location);
             }
         }
 

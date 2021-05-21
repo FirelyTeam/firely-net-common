@@ -150,7 +150,7 @@ namespace Hl7.Fhir.Introspection
             // This is normally just the ImplementingType itself, but can be overridden
             // with the [DeclaredType] attribute.
             var declaredType = ClassMapping.GetAttribute<DeclaredTypeAttribute>(prop, version);
-            var fhirType = declaredType?.Type ?? mayRedirect(result.ImplementingType);
+            var fhirType = declaredType?.Type ?? result.ImplementingType;
 
             // The [AllowedElements] attribute can specify a set of allowed types
             // for this element. Take this list as the declared list of FHIR types.
@@ -169,12 +169,6 @@ namespace Hl7.Fhir.Introspection
             if (result.IsPrimitive) result.RepresentsValueElement = isPrimitiveValueElement(elementAttr, prop);
 
             return true;
-
-            Type mayRedirect(Type t)
-            {
-                var redirect = ClassMapping.GetAttribute<DeclaredTypeAttribute>(t.GetTypeInfo(), version);
-                return redirect?.Type != null ? redirect.Type : t;
-            }
         }
 
         private static bool isPrimitiveValueElement(FhirElementAttribute valueElementAttr, PropertyInfo prop)

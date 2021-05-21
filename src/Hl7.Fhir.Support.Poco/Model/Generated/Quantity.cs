@@ -124,6 +124,7 @@ namespace Hl7.Fhir.Model
     /// &lt; | &lt;= | &gt;= | &gt; - how to understand the value
     /// </summary>
     [FhirElement("comparator", InSummary=true, Order=40)]
+    [DeclaredType(Type = typeof(Code))]
     [DataMember]
     public Code<Hl7.Fhir.Model.Quantity.QuantityComparator> ComparatorElement
     {

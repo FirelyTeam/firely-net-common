@@ -28,13 +28,13 @@
 
 */
 
+using Hl7.Fhir.Introspection;
+using Hl7.Fhir.Specification;
+using Hl7.Fhir.Utility;
+using Hl7.Fhir.Validation;
 using System;
 using System.Collections.Generic;
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Validation;
 using System.Runtime.Serialization;
-using Hl7.Fhir.Utility;
-using Hl7.Fhir.Specification;
 
 namespace Hl7.Fhir.Model
 {
@@ -90,6 +90,7 @@ namespace Hl7.Fhir.Model
         /// </summary>
         [FhirElement("status", InSummary = true, Order = 30)]
         [Cardinality(Min = 1, Max = 1)]
+        [DeclaredType(Type = typeof(Code))]
         [DataMember]
         public Code<Hl7.Fhir.Model.Narrative.NarrativeStatus> StatusElement
         {
