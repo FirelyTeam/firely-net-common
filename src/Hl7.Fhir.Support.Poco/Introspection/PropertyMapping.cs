@@ -66,7 +66,7 @@ namespace Hl7.Fhir.Introspection
         public XmlRepresentation SerializationHint { get; private set; }
 
         /// <summary>
-        /// True if this element is a choice or a Resource subtype (e.g in Resource.contained)
+        /// Specifies whether this element contains a choice (either a choice element or a contained resource)
         /// </summary>
         /// <remarks>In the case of a DataChoice, these elements have names ending in [x] in the StructureDefinition
         /// and allow a (possibly restricted) set of types to be used. These are reflected

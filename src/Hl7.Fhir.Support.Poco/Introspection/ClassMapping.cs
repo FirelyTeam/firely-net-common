@@ -6,11 +6,12 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
+#nullable enable
+
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -18,98 +19,11 @@ using System.Threading;
 
 namespace Hl7.Fhir.Introspection
 {
-    public class ReflectionCache
-    {
-        private static readonly ConcurrentDictionary<Type, ReflectedType> _mappings = new ConcurrentDictionary<Type, ReflectedType>();
-
-        public static readonly ReflectionCache Current = new ReflectionCache();
-
-        public ReflectedType Get(Type typeToReflect)
-        {
-            if (typeToReflect is null)
-            {
-                throw new ArgumentNullException(nameof(typeToReflect));
-            }
-
-            return _mappings.GetOrAdd(typeToReflect, t => new ReflectedType(t));
-        }
-    }
-
-    public class ReflectedType
-    {
-        public ReflectedType(Type typeToReflect)
-        {
-            Reflected = typeToReflect ?? throw new ArgumentNullException(nameof(typeToReflect));
-
-            _attributes = new Lazy<IReadOnlyCollection<Attribute>>(getAttributes);
-            _properties = new Lazy<IReadOnlyCollection<ReflectedProperty>>(getProperties);
-            _propertiesByName = new Lazy<IReadOnlyDictionary<string, ReflectedProperty>>(() => getPropertiesByName(_properties));
-
-            List<Attribute> getAttributes() => ReflectionHelper.GetAttributes(Reflected).ToList();
-            List<ReflectedProperty> getProperties() =>
-                ReflectionHelper
-                    .FindPublicProperties(Reflected)
-                    .Select(pi => new ReflectedProperty(pi))
-                    .ToList();
-            Dictionary<string, ReflectedProperty> getPropertiesByName(Lazy<IReadOnlyCollection<ReflectedProperty>> props) =>
-                    props.Value.ToDictionary(rp => rp.Name);
-        }
-
-        public Type Reflected { get; private set; }
-
-        private readonly Lazy<IReadOnlyCollection<Attribute>> _attributes;
-        public IReadOnlyCollection<Attribute> Attributes => _attributes.Value;
-
-        private readonly Lazy<IReadOnlyCollection<ReflectedProperty>> _properties;
-        private readonly Lazy<IReadOnlyDictionary<string, ReflectedProperty>> _propertiesByName;
-        public IReadOnlyCollection<ReflectedProperty> Properties => _properties.Value;
-
-        public bool TryGetProperty(string name, out ReflectedProperty prop) => _propertiesByName.Value.TryGetValue(name, out prop);
-    }
-
-    public class ReflectedProperty
-    {
-        public ReflectedProperty(PropertyInfo propToReflect)
-        {
-            Reflected = propToReflect ?? throw new ArgumentNullException(nameof(propToReflect));
-
-            _attributes = new Lazy<IReadOnlyCollection<Attribute>>(getAttributes);
-
-#if USE_CODE_GEN
-            _getter = new Lazy<Func<object, object>>(() => Reflected.GetValueGetter());
-            _setter = new Lazy<Action<object, object>>(() => Reflected.GetValueSetter());
-#else
-            _getter = new Lazy<Func<object, object>>(() => instance => Reflected.GetValue(instance, null));
-            _setter = new Lazy<Action<object, object>>(() => (instance, value) => Reflected.SetValue(instance, value, null));
-
-            // This is slow, but there is an alternative: we can avoid codegen (voor iOS) when not dealing with netstandard 1.1
-            // using (Func<object,object>)Delegate.CreateDelegate(typeof(Func<object,object>), Reflected.GetGetMethod())
-#endif
-            List<Attribute> getAttributes() => ReflectionHelper.GetAttributes(Reflected).ToList();
-        }
-
-        public PropertyInfo Reflected { get; private set; }
-
-        public string Name => Reflected.Name;
-
-        private readonly Lazy<IReadOnlyCollection<Attribute>> _attributes;
-
-        public IReadOnlyCollection<Attribute> Attributes => _attributes.Value;
-
-        private readonly Lazy<Func<object, object>> _getter;
-
-        public object Get(object instance) => _getter.Value(instance);
-
-        private readonly Lazy<Action<object, object>> _setter;
-
-        public void Set(object instance, object value) => _setter.Value(instance, value);
-    }
-
-
-
     public class ClassMapping : IStructureDefinitionSummary
     {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         private ClassMapping()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             // No public constructor.
         }
@@ -133,9 +47,7 @@ namespace Hl7.Fhir.Introspection
         /// </summary>
         public Type NativeType { get; private set; }
 
-        /// <summary>
-        /// 
-        /// </summary>
+        [Obsolete("This property is never initialized and its value will always be null.")]
         public Type DeclaredType { get; private set; }
 
         /// <summary>
@@ -160,6 +72,9 @@ namespace Hl7.Fhir.Introspection
             {
                 ByOrder = byOrder;
                 ByName = byName;
+
+                if (byName.Comparer != StringComparer.OrdinalIgnoreCase)
+                    throw new ArgumentException("Dictionary should be keyed by OrdinalIgnoreCase.");
             }
 
             /// <summary>
@@ -168,7 +83,7 @@ namespace Hl7.Fhir.Introspection
             public readonly List<PropertyMapping> ByOrder;
 
             /// <summary>
-            /// List of the properties, keyed by uppercase name.
+            /// List of the properties, keyed by name.
             /// </summary>
             public readonly Dictionary<string, PropertyMapping> ByName;
         }
@@ -192,7 +107,7 @@ namespace Hl7.Fhir.Introspection
         /// </summary>
 
 
-        public IList<PropertyMapping> PropertyMappings => Mappings.ByOrder;
+        public IReadOnlyList<PropertyMapping> PropertyMappings => Mappings.ByOrder;
 
         /// <summary>
         /// Holds a reference to a property that represents a primitive FHIR value. This
@@ -230,22 +145,37 @@ namespace Hl7.Fhir.Introspection
         /// <summary>
         /// Returns the mapping for an element of this class.
         /// </summary>
-        public PropertyMapping FindMappedElementByName(string name)
+        public PropertyMapping? FindMappedElementByName(string name)
         {
             if (name == null) throw Error.ArgumentNull(nameof(name));
 
-            var key = name.ToUpperInvariant();
-            return Mappings.ByName.TryGetValue(key, out var mapping) ? mapping : null;
+            return Mappings.ByName.TryGetValue(name, out var mapping) ? mapping : null;
         }
 
-        internal static T GetAttribute<T>(MemberInfo t, FhirRelease version) where T : Attribute
+        /// <summary>
+        /// Returns the mapping for an element of this class by a name that
+        /// might be suffixed by a type name (e.g. for choice elements).
+        /// </summary>
+        public PropertyMapping? FindMappedElementByChoiceName(string name)
+        {
+            if (name == null) throw Error.ArgumentNull(nameof(name));
+
+            // Now, check the choice elements for a match
+            // (this should actually be the longest match, but that's kind of expensive,
+            // so as long as we don't add stupid ambiguous choices to a single type, this will work.
+            return Mappings.ByOrder
+                .Where(m => name.StartsWith(m.Name) && m.Choice == ChoiceType.DatatypeChoice)
+                .FirstOrDefault();
+        }
+
+        internal static T? GetAttribute<T>(MemberInfo t, FhirRelease version) where T : Attribute
         {
             return ReflectionHelper.GetAttributes<T>(t).LastOrDefault(isRelevant);
 
             bool isRelevant(Attribute a) => a is not IFhirVersionDependent vd || a.AppliesToRelease(version);
         }
 
-        public static bool TryCreate(Type type, out ClassMapping result, FhirRelease fhirVersion = (FhirRelease)int.MaxValue)
+        public static bool TryCreate(Type type, out ClassMapping? result, FhirRelease fhirVersion = (FhirRelease)int.MaxValue)
         {
             result = null;
 
@@ -277,7 +207,7 @@ namespace Hl7.Fhir.Introspection
         public static ClassMapping Create(Type type)
         {
             if (TryCreate(type, out var result))
-                return result;
+                return result!;
 
             throw Error.Argument($"Type {nameof(type)} is not marked with the FhirTypeAttribute or is an open generic type");
         }
@@ -288,13 +218,13 @@ namespace Hl7.Fhir.Introspection
         /// </summary>
         private static PropertyMappingCollection inspectProperties(Type nativeType, FhirRelease fhirVersion)
         {
-            var byName = new Dictionary<string, PropertyMapping>();
+            var byName = new Dictionary<string, PropertyMapping>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var property in ReflectionHelper.FindPublicProperties(nativeType))
             {
                 if (!PropertyMapping.TryCreate(property, out var propMapping, fhirVersion)) continue;
 
-                var propKey = propMapping.Name.ToUpperInvariant();
+                var propKey = propMapping.Name;
 
                 if (byName.ContainsKey(propKey))
                     throw Error.InvalidOperation($"Class has multiple properties that are named '{propKey}'. The property name must be unique");
@@ -325,3 +255,5 @@ namespace Hl7.Fhir.Introspection
 
     }
 }
+
+#nullable restore

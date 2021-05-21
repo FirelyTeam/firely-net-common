@@ -25,7 +25,7 @@ namespace Hl7.Fhir.Introspection
     /// <remarks>POCO's in the "common" assemblies
     /// can reflect the definition of multiple releases of FHIR using <see cref="IFhirVersionDependent"/>
     /// attributes. A <see cref="ModelInspector"/> will always capture the metadata for one such
-    /// <see cref="FhirRelease" /> which is passed to it in the constructor.
+    /// <see cref="Specification.FhirRelease" /> which is passed to it in the constructor.
     /// </remarks>
     public class ModelInspector : IStructureDefinitionSummaryProvider
     {
@@ -67,10 +67,10 @@ namespace Hl7.Fhir.Introspection
         /// </summary>
         public ModelInspector(FhirRelease fhirRelease)
         {
-            _fhirRelease = fhirRelease;
+            FhirRelease = fhirRelease;
         }
 
-        private readonly FhirRelease _fhirRelease;
+        public readonly FhirRelease FhirRelease;
 
         // Index for easy lookup of datatypes.
         private readonly ConcurrentDictionary<string, ClassMapping> _classMappingsByName =
@@ -85,7 +85,6 @@ namespace Hl7.Fhir.Introspection
         /// </summary>
         public IReadOnlyList<ClassMapping> Import(Assembly assembly)
         {
-
             if (assembly == null) throw Error.ArgumentNull(nameof(assembly));
 
 #if NET40
@@ -126,7 +125,7 @@ namespace Hl7.Fhir.Introspection
                 return mapping;     // no need to import the same type twice
 
             // Don't import types that aren't marked with [FhirType]
-            if (ClassMapping.GetAttribute<FhirTypeAttribute>(type.GetTypeInfo(), _fhirRelease) == null) return null;
+            if (ClassMapping.GetAttribute<FhirTypeAttribute>(type.GetTypeInfo(), FhirRelease) == null) return null;
 
             // When explicitly importing a (newer?) class mapping for the same
             // model type name, overwrite the old entry.
@@ -142,14 +141,14 @@ namespace Hl7.Fhir.Introspection
             }
             else
             {
-                Message.Info("Created Class mapping for newly encountered type {0} (FHIR type {1})", type.Name, mapping.Name);
+                Message.Info("Created Class mapping for newly encountered type {0} (FHIR type {1})", type.Name, mapping!.Name);
                 return mapping;
             }
         }
 
         private ClassMapping? getOrAddClassMappingForTypeInternal(Type type, bool overwrite)
         {
-            var typeMapping = _classMappingsByType.GetOrAdd(type, tp => createMapping(tp, _fhirRelease));
+            var typeMapping = _classMappingsByType.GetOrAdd(type, tp => createMapping(tp, FhirRelease));
 
             if (typeMapping == null) return null;
 
@@ -181,14 +180,13 @@ namespace Hl7.Fhir.Introspection
         }
 
         /// <summary>
-        /// Retrieves a (cached) <see cref="ClassMapping" /> given a FHIR type name.
+        /// Retrieves an already imported <see cref="ClassMapping" /> given a FHIR type name.
         /// </summary>
         public ClassMapping? FindClassMapping(string fhirTypeName) =>
             _classMappingsByName.TryGetValue(fhirTypeName, out var entry) ? entry : null;
 
         /// <summary>
-        /// Retrieves a (cached) <see cref="ClassMapping" /> given a Type reflecting
-        /// a FHIR type.
+        /// Retrieves an already imported <see cref="ClassMapping" /> given a Type.
         /// </summary>
         public ClassMapping? FindClassMapping(Type t) =>
             _classMappingsByType.TryGetValue(t, out var entry) ? entry : null;

@@ -1,10 +1,9 @@
 ﻿#nullable enable
 
 using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Utility;
+using Hl7.Fhir.Introspection;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using P = Hl7.Fhir.ElementModel.Types;
 
@@ -13,11 +12,13 @@ namespace Hl7.Fhir.Serialization
     public class SourceNodeToDictionaryConverter
     {
         public static string TYPE_KEY = "_type";
-        private readonly Assembly _modelAssembly;
+        private readonly ModelInspector _inspector;
 
         public SourceNodeToDictionaryConverter(Assembly modelAssembly)
         {
-            _modelAssembly = modelAssembly ?? throw new ArgumentNullException(nameof(modelAssembly));
+            _inspector = modelAssembly is not null ?
+                ModelInspector.ForAssembly(modelAssembly)
+                : throw new ArgumentNullException(nameof(modelAssembly));
         }
 
         public IDictionary<string, object> Load(ISourceNode source)
@@ -26,10 +27,10 @@ namespace Hl7.Fhir.Serialization
 
             if (rootTypeName is not null)
             {
-                Type? pocoType = _modelAssembly.GetFhirTypeByName(rootTypeName);
+                ClassMapping? classMapping = _inspector.FindClassMapping(rootTypeName);
 
-                return pocoType is not null
-                    ? Load(source, pocoType)
+                return classMapping is not null
+                    ? load(source, classMapping)
                     : throw buildTypeError($"Cannot load type information for type '{rootTypeName}'", source.Location);
             }
             else
@@ -38,24 +39,31 @@ namespace Hl7.Fhir.Serialization
             }
         }
 
-
         public IDictionary<string, object> Load(ISourceNode source, Type elementType)
+        {
+            ClassMapping? classMapping = _inspector.ImportType(elementType);
+
+            return classMapping is not null
+                ? load(source, classMapping)
+                : throw buildTypeError($"Cannot load FHIR type information from .NET type '{elementType.Name}'. Is this an existing type tagged with [FhirType] for release {_inspector.FhirRelease}?", source.Location);
+        }
+
+        private IDictionary<string, object> load(ISourceNode source, ClassMapping classMapping)
         {
             //if (elementType.GetTypeInfo().IsAbstract)
             //    throw buildTypeError($"The type of an element must be a concrete type, '{elementType.GetFhirTypeName()}' is abstract.", source.Location);
 
-            IDictionary<string, PropertyInfo> childDefs = elementType.GetFhirProperties();
             IEnumerable<ISourceNode> childSet = source.Children();
             List<string>? unknownElements = null;
             Dictionary<string, object> children = new();
 
-            children.Add(TYPE_KEY, elementType);
+            children.Add(TYPE_KEY, classMapping.NativeType);
 
             foreach (var scan in childSet)
             {
-                var hit = tryGetBySuffixedName(childDefs, scan.Name, out var pi);
-
-                if (!hit)
+                var pm = classMapping.FindMappedElementByName(scan.Name) ??
+                        classMapping.FindMappedElementByChoiceName(scan.Name);
+                if (pm is null)
                 {
                     if (unknownElements is null) unknownElements = new();
                     unknownElements.Add(scan.Name);
@@ -65,12 +73,12 @@ namespace Hl7.Fhir.Serialization
                 //TODO: child with Value
                 //TODO: group children in lists
 
-                if (pi.IsContainedResource())
+                if (pm.Choice == ChoiceType.ResourceChoice)
                     children.Add(scan.Name, Load(scan));
                 else
                 {
                     // this handles both datatype choices and & single type elements
-                    var instanceType = deriveInstanceType(scan, pi);
+                    var instanceType = deriveInstanceType(scan, pm);
                     children.Add(scan.Name, Load(scan, instanceType));
                 }
             }
@@ -83,7 +91,7 @@ namespace Hl7.Fhir.Serialization
         }
 
         // Derive the instance type 
-        private Type deriveInstanceType(ISourceNode current, PropertyInfo pi)
+        private Type deriveInstanceType(ISourceNode current, PropertyMapping pm)
         {
             var resourceTypeIndicator = current.GetResourceTypeIndicator();
 
@@ -91,7 +99,7 @@ namespace Hl7.Fhir.Serialization
             if (resourceTypeIndicator != null)
                 throw buildTypeError($"Element '{current.Name}' is not a contained resource, but seems to contain a resource of type '{resourceTypeIndicator}'.", current.Location);
 
-            if (!pi.IsChoiceElement())
+            if (pm.Choice == ChoiceType.None)
                 return pi.GetPropertyTypeForElement();
             else
             {
@@ -101,7 +109,7 @@ namespace Hl7.Fhir.Serialization
                 if (string.IsNullOrEmpty(suffix))
                     throw buildTypeError($"Choice element '{current.Name}' is not suffixed with a type.", current.Location);
 
-                var runtimeType = _modelAssembly.GetFhirTypeByName(suffix, StringComparison.OrdinalIgnoreCase);
+                var runtimeType = _inspector.GetFhirTypeByName(suffix, StringComparison.OrdinalIgnoreCase);
                 if (runtimeType is null)
                     throw buildTypeError($"Cannot load type information for type '{suffix}'", current.Location);
 
@@ -137,21 +145,6 @@ namespace Hl7.Fhir.Serialization
                 //throw buildTypeError($"Literal '{text}' cannot be parsed as a {primitiveType.GetFhirTypeName()}.", node.Location);
                 return text;
             }
-        }
-
-        private static bool tryGetBySuffixedName(IDictionary<string, PropertyInfo> dis, string name, out PropertyInfo pi)
-        {
-            // Simplest case, one on one match between name and element name
-            if (dis.TryGetValue(name, out pi))
-                return true;
-
-            // Now, check the choice elements for a match
-            // (this should actually be the longest match, but that's kind of expensive,
-            // so as long as we don't add stupid ambiguous choices to a single type, this will work.
-            pi = dis.Where(kvp => name.StartsWith(kvp.Key) && kvp.Value.IsChoiceElement())
-                .Select(kvp => kvp.Value).FirstOrDefault();
-
-            return pi != null;
         }
     }
 }
