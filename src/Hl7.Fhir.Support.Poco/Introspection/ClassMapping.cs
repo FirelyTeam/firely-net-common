@@ -32,7 +32,7 @@ namespace Hl7.Fhir.Introspection
             }
 
             return _mappings.GetOrAdd(typeToReflect, t => new ReflectedType(t));
-        }        
+        }
     }
 
     public class ReflectedType
@@ -50,7 +50,7 @@ namespace Hl7.Fhir.Introspection
                 ReflectionHelper
                     .FindPublicProperties(Reflected)
                     .Select(pi => new ReflectedProperty(pi))
-                    .ToList();               
+                    .ToList();
             Dictionary<string, ReflectedProperty> getPropertiesByName(Lazy<IReadOnlyCollection<ReflectedProperty>> props) =>
                     props.Value.ToDictionary(rp => rp.Name);
         }
@@ -85,7 +85,7 @@ namespace Hl7.Fhir.Introspection
             // This is slow, but there is an alternative: we can avoid codegen (voor iOS) when not dealing with netstandard 1.1
             // using (Func<object,object>)Delegate.CreateDelegate(typeof(Func<object,object>), Reflected.GetGetMethod())
 #endif
-            List<Attribute> getAttributes() => ReflectionHelper.GetAttributes(Reflected).ToList();         
+            List<Attribute> getAttributes() => ReflectionHelper.GetAttributes(Reflected).ToList();
         }
 
         public PropertyInfo Reflected { get; private set; }
@@ -194,7 +194,7 @@ namespace Hl7.Fhir.Introspection
 
         public IList<PropertyMapping> PropertyMappings => Mappings.ByOrder;
 
-         /// <summary>
+        /// <summary>
         /// Holds a reference to a property that represents a primitive FHIR value. This
         /// property will also be present in the PropertyMappings collection. If this class has 
         /// no such property, it is null. 
@@ -207,7 +207,7 @@ namespace Hl7.Fhir.Introspection
         {
             get
             {
-                if (IsCodeOfT) 
+                if (IsCodeOfT)
                     return "code";
                 else if (IsNestedType)
                 {
@@ -242,7 +242,7 @@ namespace Hl7.Fhir.Introspection
         {
             return ReflectionHelper.GetAttributes<T>(t).LastOrDefault(isRelevant);
 
-            bool isRelevant(Attribute a) => !(a is IFhirVersionDependent vd) || vd.AppliesToVersion(version);
+            bool isRelevant(Attribute a) => a is not IFhirVersionDependent vd || a.AppliesToRelease(version);
         }
 
         public static bool TryCreate(Type type, out ClassMapping result, FhirRelease fhirVersion = (FhirRelease)int.MaxValue)
@@ -322,6 +322,6 @@ namespace Hl7.Fhir.Introspection
 
         [Obsolete("ClassMapping.IsMappable() is slow and obsolete, use ClassMapping.TryCreate() instead.")]
         public static bool IsMappableType(Type type) => TryCreate(type, out var _);
-        
+
     }
 }

@@ -43,7 +43,7 @@ namespace Hl7.Fhir.Introspection
 
     public static class FhirVersionDependentExtensions
     {
-        [Obsolete("Use AppliesToRelease() instead.")]
+        [Obsolete("Use Attribute.AppliesToRelease() instead.")]
         public static bool AppliesToVersion(this IFhirVersionDependent me, FhirRelease fhirVersion)
             => me.Since <= fhirVersion;
 
@@ -56,6 +56,7 @@ namespace Hl7.Fhir.Introspection
         /// value at all.</remarks>
         public static bool AppliesToRelease(this Attribute me, FhirRelease release) =>
              me is not IFhirVersionDependent vd || vd.Since <= release;
+
 
     }
 }
