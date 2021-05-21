@@ -29,6 +29,7 @@
 */
 
 using Hl7.Fhir.Specification;
+using System;
 
 namespace Hl7.Fhir.Introspection
 {
@@ -42,7 +43,19 @@ namespace Hl7.Fhir.Introspection
 
     public static class FhirVersionDependentExtensions
     {
-        public static bool AppliesToVersion(this IFhirVersionDependent me, FhirRelease fhirVersion) 
-            => me.Since <= fhirVersion;      
+        [Obsolete("Use AppliesToRelease() instead.")]
+        public static bool AppliesToVersion(this IFhirVersionDependent me, FhirRelease fhirVersion)
+            => me.Since <= fhirVersion;
+
+        /// <summary>
+        /// Determines whether the given attribute applies to a given FHIR release.
+        /// </summary>
+        /// <remarks>An attribute is applicable to a given <see cref="FhirRelease"/> if
+        /// the attribute has a <see cref="IFhirVersionDependent.Since"/> value that
+        /// equivalent to or older than <paramref name="release"/> or has no <c>Since</c>
+        /// value at all.</remarks>
+        public static bool AppliesToRelease(this Attribute me, FhirRelease release) =>
+             me is not IFhirVersionDependent vd || vd.Since <= release;
+
     }
 }
