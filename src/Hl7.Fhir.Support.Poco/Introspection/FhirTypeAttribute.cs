@@ -36,7 +36,7 @@ namespace Hl7.Fhir.Introspection
     /// <summary>
     /// This attribute is applied to classes that represent FHIR datatypes and resources.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
     public sealed class FhirTypeAttribute : InvokeIValidatableObjectAttribute
     {
         public FhirTypeAttribute(string name)
