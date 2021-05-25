@@ -11,15 +11,15 @@ namespace Hl7.Fhir.Utility
         /// <param name="version">Fhir Release version number</param>
         /// <returns>Official FHIR Release</returns>
         public static FhirRelease Parse(string version)
-        {          
-            if(TryParse(version, out var release))
+        {
+            if (TryParse(version, out var release))
             {
                 return release.Value;
             }
             else
             {
                 throw new NotSupportedException($"Unknown FHIR version {version} ");
-            }    
+            }
         }
 
         /// <summary>
@@ -53,7 +53,7 @@ namespace Hl7.Fhir.Utility
                 string s when s.StartsWith("4.0") => FhirRelease.R4,
 
                 //R5 ballot versions
-                "4.2.0" or "4.4.0" or "4.5.0" => FhirRelease.R5,
+                "4.2.0" or "4.4.0" or "4.5.0" or "4.6.0" => FhirRelease.R5,
 
                 //Official R5 versions (and technical corrections) => 5.0.x
                 string s when s.StartsWith("5.0") => FhirRelease.R5,
@@ -78,7 +78,7 @@ namespace Hl7.Fhir.Utility
                 FhirRelease.DSTU2 => "1.0.2",
                 FhirRelease.STU3 => "3.0.2",
                 FhirRelease.R4 => "4.0.1",
-                FhirRelease.R5 => "4.5.0",
+                FhirRelease.R5 => "4.6.0",
                 _ => throw new NotSupportedException($"Unknown FHIR version {fhirRelease}")
             };
         }
@@ -183,7 +183,7 @@ namespace Hl7.Fhir.Utility
         public static bool TryFhirReleaseFromCorePackageName(string packageName, out FhirRelease? release)
         {
             return TryGetFhirReleaseFromCorePackageName(packageName, out release);
-        } 
+        }
 
 
 
