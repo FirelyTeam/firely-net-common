@@ -244,7 +244,7 @@ namespace Hl7.Fhir.Introspection
             {
                 if (!PropertyMapping.TryCreate(property, out var propMapping, fhirVersion)) continue;
 
-                var propKey = propMapping.Name;
+                var propKey = propMapping!.Name;
 
                 if (byName.ContainsKey(propKey))
                     throw Error.InvalidOperation($"Class has multiple properties that are named '{propKey}'. The property name must be unique");
