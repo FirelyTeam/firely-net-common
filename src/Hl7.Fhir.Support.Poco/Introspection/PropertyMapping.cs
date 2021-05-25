@@ -104,15 +104,19 @@ namespace Hl7.Fhir.Introspection
         private PropertyInfo _propInfo;
         private FhirRelease _createdVersion;
 
+        public ClassMapping Parent { get; private set; }
+
         [Obsolete("Use TryCreate() instead.")]
         public static PropertyMapping Create(PropertyInfo prop, FhirRelease version = (FhirRelease)int.MaxValue)
             => TryCreate(prop, out var mapping, version) ? mapping : null;
 
-        public static bool TryCreate(PropertyInfo prop, out PropertyMapping result, FhirRelease version)
+        public static bool TryCreate(PropertyInfo prop, out PropertyMapping result, FhirRelease version) =>
+            TryCreate(prop, out result, version, parent: null);
+
+        public static bool TryCreate(PropertyInfo prop, out PropertyMapping result, FhirRelease version, ClassMapping parent)
         {
             if (prop == null) throw Error.ArgumentNull(nameof(prop));
-
-            result = new PropertyMapping();
+            result = default;
 
             // If there is no [FhirElement] on the property, skip it
             var elementAttr = ClassMapping.GetAttribute<FhirElementAttribute>(prop, version);
@@ -123,13 +127,17 @@ namespace Hl7.Fhir.Introspection
             var notmappedAttr = ClassMapping.GetAttribute<NotMappedAttribute>(prop, version);
             if (notmappedAttr != null) return false;
 
-            result.Name = elementAttr.Name;
-            result.InSummary = elementAttr.InSummary;
-            result.Choice = elementAttr.Choice;
-            result.SerializationHint = elementAttr.XmlSerialization;
-            result.Order = elementAttr.Order;
-            result._propInfo = prop;
-            result._createdVersion = version;
+            result = new PropertyMapping
+            {
+                Parent = parent,
+                Name = elementAttr.Name,
+                InSummary = elementAttr.InSummary,
+                Choice = elementAttr.Choice,
+                SerializationHint = elementAttr.XmlSerialization,
+                Order = elementAttr.Order,
+                _propInfo = prop,
+                _createdVersion = version
+            };
 
             var cardinalityAttr = ClassMapping.GetAttribute<CardinalityAttribute>(prop, version);
             result.IsMandatoryElement = cardinalityAttr != null ? cardinalityAttr.Min > 0 : false;
@@ -265,12 +273,27 @@ namespace Hl7.Fhir.Introspection
 
         private ITypeSerializationInfo[] buildTypes()
         {
-            _ = ClassMapping.TryCreate(FhirType[0], out var elementTypeMapping, _createdVersion);
+            _ = ClassMapping.TryGetMappingForType(FhirType[0], _createdVersion, out var elementTypeMapping);
 
             if (elementTypeMapping.IsNestedType)
             {
                 var info = elementTypeMapping;
                 return new ITypeSerializationInfo[] { info };
+            }
+            else if (this.IsPrimitive)
+            {
+                // Backwards compat hack: the primitives (since .value is never queried, this
+                // means Element.id, Narrative.div and Extension.url) should be returned as FHIR type names, not
+                // system (CQL) type names.
+                var bwcompatType = Name switch
+                {
+                    "url" => "uri",
+                    "id" => "string",
+                    "div" => "xhtml",
+                    _ => throw new NotSupportedException($"Encountered unexpected primitive type {Name} in backward compat behaviour for ITypedElement.InstanceType.")
+                };
+
+                return new[] { (ITypeSerializationInfo)new PocoTypeReferenceInfo(bwcompatType) };
             }
             else
             {
@@ -282,7 +305,7 @@ namespace Hl7.Fhir.Introspection
             {
                 // The special case where the mapping name is a backbone element name can safely
                 // be ignored here, since that is handled by the first case in the if statement above.
-                if (ClassMapping.TryCreate(ft, out var tm, _createdVersion))
+                if (ClassMapping.TryGetMappingForType(ft, _createdVersion, out var tm))
                     return ((IStructureDefinitionSummary)tm).TypeName;
                 else
                     throw new NotSupportedException($"Type '{ft.Name}' is listed as an allowed type for property " +

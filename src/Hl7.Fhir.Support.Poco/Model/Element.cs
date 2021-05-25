@@ -33,6 +33,7 @@ using Hl7.Fhir.Validation;
 using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
+using SystemPrimitive = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Model
 {
@@ -53,7 +54,7 @@ namespace Hl7.Fhir.Model
         /// Unique id for inter-element referencing
         /// </summary>
         [FhirElement("id", XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 10)]
-        [DeclaredType(Type = typeof(FhirString))]
+        [DeclaredType(Type = typeof(SystemPrimitive.String))]
         [DataMember]
         public string ElementId
         {

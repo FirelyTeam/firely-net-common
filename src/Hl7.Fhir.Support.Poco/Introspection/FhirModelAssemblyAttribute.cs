@@ -37,7 +37,7 @@ namespace Hl7.Fhir.Introspection
     /// FHIR resources and datatypes.
     /// </summary>
     [AttributeUsage(AttributeTargets.Assembly, Inherited = false, AllowMultiple = true)]
-    public sealed class FhirModelAssemblyAttribute : VersionedValidationAttribute
+    public sealed class FhirModelAssemblyAttribute : VersionedAttribute
     {
         public FhirModelAssemblyAttribute()
         {

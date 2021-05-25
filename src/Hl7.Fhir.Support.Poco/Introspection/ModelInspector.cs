@@ -57,10 +57,13 @@ namespace Hl7.Fhir.Introspection
                 if (a.FullName != commonAssembly.FullName)
                     newInspector.Import(commonAssembly);
 
+                // And finally, the System/CQL primitive types
+                foreach (var mapping in ClassMapping.CqlPrimitiveTypes)
+                    newInspector.RegisterTypeMapping(mapping.NativeType, mapping);
+
                 return newInspector;
             }
         }
-
 
         /// <summary>
         /// Constructs a ModelInspector that will reflect the FHIR metadata for the given FHIR release
@@ -76,8 +79,7 @@ namespace Hl7.Fhir.Introspection
         private readonly ConcurrentDictionary<string, ClassMapping> _classMappingsByName =
             new(StringComparer.OrdinalIgnoreCase);
 
-        // Primary index of classmappings, key is Type
-        private readonly ConcurrentDictionary<Type, ClassMapping?> _classMappingsByType = new();
+        private readonly ConcurrentDictionary<Type, ClassMapping> _classMappingsByType = new();
 
         /// <summary>
         /// Locates all types in the assembly representing FHIR metadata and extracts
@@ -98,6 +100,38 @@ namespace Hl7.Fhir.Introspection
                 .ToList()!;
         }
 
+        /// <summary>
+        /// Extracts the FHIR metadata from a <see cref="Type"/> into a <see cref="ClassMapping"/>.
+        /// </summary>
+        public ClassMapping? ImportType(Type type)
+        {
+            // When explicitly importing a (newer?) class mapping for the same
+            // model type name, overwrite the old entry.            
+            if (!ClassMapping.TryGetMappingForType(type, FhirRelease, out var mapping))
+                return null;
+
+            RegisterTypeMapping(type, mapping!);
+            return mapping;
+        }
+
+        internal void RegisterTypeMapping(Type t, ClassMapping mapping)
+        {
+            _classMappingsByName[mapping!.Name] = mapping;
+            _classMappingsByType[t] = mapping;
+        }
+
+        /// <summary>
+        /// Retrieves an already imported <see cref="ClassMapping" /> given a FHIR type name.
+        /// </summary>
+        public ClassMapping? FindClassMapping(string fhirTypeName) =>
+            _classMappingsByName.TryGetValue(fhirTypeName, out var entry) ? entry : null;
+
+        /// <summary>
+        /// Retrieves an already imported <see cref="ClassMapping" /> given a Type.
+        /// </summary>
+        public ClassMapping? FindClassMapping(Type t) =>
+            _classMappingsByType.TryGetValue(t, out var entry) ? entry : null;
+
         /// <inheritdoc cref="IStructureDefinitionSummaryProvider.Provide(string)"/>
         public IStructureDefinitionSummary? Provide(string canonical)
         {
@@ -115,81 +149,6 @@ namespace Hl7.Fhir.Introspection
             return FindClassMapping(canonical);
         }
 
-
-        /// <summary>
-        /// Extracts the FHIR metadata from a <see cref="Type"/> into a <see cref="ClassMapping"/>.
-        /// </summary>
-        public ClassMapping? ImportType(Type type)
-        {
-            if (_classMappingsByType.TryGetValue(type, out var mapping))
-                return mapping;     // no need to import the same type twice
-
-            // Don't import types that aren't marked with [FhirType]
-            if (ClassMapping.GetAttribute<FhirTypeAttribute>(type.GetTypeInfo(), FhirRelease) == null) return null;
-
-            // When explicitly importing a (newer?) class mapping for the same
-            // model type name, overwrite the old entry.
-            return getOrAddClassMappingForTypeInternal(type, overwrite: true);
-        }
-
-        private ClassMapping? createMapping(Type type, FhirRelease version)
-        {
-            if (!ClassMapping.TryCreate(type, out var mapping, version))
-            {
-                Message.Info("Skipped type {0} while doing inspection: not recognized as representing a FHIR type", type.Name);
-                return null;
-            }
-            else
-            {
-                Message.Info("Created Class mapping for newly encountered type {0} (FHIR type {1})", type.Name, mapping!.Name);
-                return mapping;
-            }
-        }
-
-        private ClassMapping? getOrAddClassMappingForTypeInternal(Type type, bool overwrite)
-        {
-            var typeMapping = _classMappingsByType.GetOrAdd(type, tp => createMapping(tp, FhirRelease));
-
-            if (typeMapping == null) return null;
-
-            // Whether we are pre-empted here or not, resultMapping will always be "the" single instance
-            // with a mapping for this type, shared across all threads. Now we are going to add an entry by
-            // name for this mapping.
-
-            var key = typeMapping.Name;
-            // Add this mapping by name of the mapping, overriding any entry already present
-            if (overwrite)
-            {
-                _ = _classMappingsByName
-                            .AddOrUpdate(key, typeMapping, (_, __) => typeMapping);
-            }
-            else
-            {
-                var nameMapping = _classMappingsByName.GetOrAdd(key, typeMapping);
-
-                if (!object.ReferenceEquals(typeMapping, nameMapping))
-                {
-                    // ouch, there was already a mapping under this name, that does not correspond to the instance
-                    // for our type mapping -> there must be multiple types having a mapping for the same model type.
-                    throw new ArgumentException($"Type '{type.Name}' has a mapping for model type '{typeMapping.Name}', " +
-                        $"but type '{nameMapping.NativeType.Name}' was already registered for that model type.");
-                }
-            }
-
-            return typeMapping;
-        }
-
-        /// <summary>
-        /// Retrieves an already imported <see cref="ClassMapping" /> given a FHIR type name.
-        /// </summary>
-        public ClassMapping? FindClassMapping(string fhirTypeName) =>
-            _classMappingsByName.TryGetValue(fhirTypeName, out var entry) ? entry : null;
-
-        /// <summary>
-        /// Retrieves an already imported <see cref="ClassMapping" /> given a Type.
-        /// </summary>
-        public ClassMapping? FindClassMapping(Type t) =>
-            _classMappingsByType.TryGetValue(t, out var entry) ? entry : null;
     }
 }
 

@@ -59,27 +59,40 @@ namespace Hl7.Fhir.Serialization
 
             children.Add(TYPE_KEY, classMapping.NativeType);
 
+            if (source.Text is not null)
+            {
+                object value = classMapping.HasPrimitiveValueMember ?
+                    parseValue(source.Text, classMapping.PrimitiveValueProperty.ImplementingType)
+                   : source.Text;
+
+                children.Add("value", value);
+            }
+
             foreach (var scan in childSet)
             {
-                var pm = classMapping.FindMappedElementByName(scan.Name) ??
+                var childPropertyMapping = classMapping.FindMappedElementByName(scan.Name) ??
                         classMapping.FindMappedElementByChoiceName(scan.Name);
-                if (pm is null)
+                if (childPropertyMapping is null)
                 {
                     if (unknownElements is null) unknownElements = new();
                     unknownElements.Add(scan.Name);
                     continue;
                 }
 
-                //TODO: child with Value
                 //TODO: group children in lists
 
-                if (pm.Choice == ChoiceType.ResourceChoice)
+                if (childPropertyMapping.Choice == ChoiceType.ResourceChoice)
                     children.Add(scan.Name, Load(scan));
                 else
                 {
-                    // this handles both datatype choices and & single type elements
-                    var instanceType = deriveInstanceType(scan, pm);
-                    children.Add(scan.Name, Load(scan, instanceType));
+                    if (childPropertyMapping.IsPrimitive && scan.Text is not null)
+                        children.Add(scan.Name, parseValue(scan.Text, childPropertyMapping.ImplementingType));
+                    else
+                    {
+                        // this handles both datatype choices and & single type elements
+                        var childClassMapping = determineClassMapping(scan, childPropertyMapping);
+                        children.Add(scan.Name, Load(scan, childClassMapping));
+                    }
                 }
             }
 
@@ -91,7 +104,7 @@ namespace Hl7.Fhir.Serialization
         }
 
         // Derive the instance type 
-        private ClassMapping deriveInstanceType(ISourceNode current, PropertyMapping pm)
+        private ClassMapping determineClassMapping(ISourceNode current, PropertyMapping pm)
         {
             if (current.GetResourceTypeIndicator() is var resourceTypeIndicator)
                 throw buildTypeError($"Element '{current.Name}' is not a contained resource, but seems to contain a resource of type '{resourceTypeIndicator}'.", current.Location);
@@ -126,14 +139,12 @@ namespace Hl7.Fhir.Serialization
             return new StructuralTypeException(exMessage);
         }
 
-        private object? parseValue(ISourceNode node, Type primitiveType)
+        private static object parseValue(string text, Type primitiveType)
         {
-            if (node.Text is not string text) return null;
-
             // Finally, we have a (potentially) unparsed string + type info
             // parse this primitive into the desired type
             if (P.Any.TryParse(text, primitiveType, out var val))
-                return val;
+                return val!;
             else
             {
                 //throw buildTypeError($"Literal '{text}' cannot be parsed as a {primitiveType.GetFhirTypeName()}.", node.Location);

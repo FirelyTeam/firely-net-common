@@ -12,20 +12,38 @@ using Hl7.Fhir.Model;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Introspection
 {
     public class ClassMapping : IStructureDefinitionSummary
     {
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-        private ClassMapping()
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        private static readonly ConcurrentDictionary<(Type, FhirRelease), ClassMapping?> _mappedClasses = new();
+
+        public static bool TryGetMappingForType(Type t, FhirRelease release, out ClassMapping? mapping)
         {
-            // No public constructor.
+            mapping = _mappedClasses.GetOrAdd((t, release), createMapping);
+            return mapping is not null;
+
+            static ClassMapping? createMapping((Type, FhirRelease) typeAndRelease) =>
+                TryCreate(typeAndRelease.Item1, out var m, typeAndRelease.Item2) ? m : null;
+        }
+
+        public static void AddMappingForType(Type t, FhirRelease release, ClassMapping mapping)
+        {
+            _mappedClasses[(t, release)] = mapping;
+        }
+
+        private ClassMapping(string name, Type nativeType)
+        {
+            Name = name;
+            NativeType = nativeType;
+            _mappingInitializer = () => new PropertyMappingCollection();
         }
 
         /// <summary>
@@ -48,26 +66,31 @@ namespace Hl7.Fhir.Introspection
         public Type NativeType { get; private set; }
 
         [Obsolete("This property is never initialized and its value will always be null.")]
-        public Type DeclaredType { get; private set; }
+        public Type? DeclaredType { get; private set; } = null;
 
         /// <summary>
         /// Is <c>true</c> when this class represents a Resource datatype.
         /// </summary>
-        public bool IsResource { get; private set; }
+        public bool IsResource { get; private set; } = false;
 
         /// <summary>
         /// Is <c>true</c> when this class represents a code with a required binding.
         /// </summary>
         /// <remarks>See <see cref="Name"></see>.</remarks>
-        public bool IsCodeOfT { get; private set; }
+        public bool IsCodeOfT { get; private set; } = false;
 
         /// <summary>
         /// Indicates whether this class represents the nested complex type for a (backbone) element.
         /// </summary>
-        public bool IsNestedType { get; private set; }
+        public bool IsNestedType { get; private set; } = false;
 
         private class PropertyMappingCollection
         {
+            public PropertyMappingCollection()
+            {
+                // nothing deyond default initializers.
+            }
+
             public PropertyMappingCollection(Dictionary<string, PropertyMapping> byName, List<PropertyMapping> byOrder)
             {
                 ByOrder = byOrder;
@@ -80,12 +103,12 @@ namespace Hl7.Fhir.Introspection
             /// <summary>
             /// List of the properties, in the order of appearance.
             /// </summary>
-            public readonly List<PropertyMapping> ByOrder;
+            public readonly List<PropertyMapping> ByOrder = new();
 
             /// <summary>
             /// List of the properties, keyed by name.
             /// </summary>
-            public readonly Dictionary<string, PropertyMapping> ByName;
+            public readonly Dictionary<string, PropertyMapping> ByName = new();
         }
 
         // This list is created lazily. This not only improves initial startup time of 
@@ -95,11 +118,11 @@ namespace Hl7.Fhir.Introspection
             get
             {
                 LazyInitializer.EnsureInitialized(ref _mappings, _mappingInitializer);
-                return _mappings;
+                return _mappings!;
             }
         }
 
-        private PropertyMappingCollection _mappings;
+        private PropertyMappingCollection? _mappings;
         private Func<PropertyMappingCollection> _mappingInitializer;
 
         /// <summary>
@@ -118,22 +141,15 @@ namespace Hl7.Fhir.Introspection
 
         public bool HasPrimitiveValueMember => PropertyMappings.Any(pm => pm.RepresentsValueElement);
 
-        string IStructureDefinitionSummary.TypeName
-        {
-            get
+        string IStructureDefinitionSummary.TypeName =>
+            this switch
             {
-                if (IsCodeOfT)
-                    return "code";
-                else if (IsNestedType)
-                {
-                    return NativeType.CanBeTreatedAsType(typeof(BackboneElement)) ?
-                        "BackboneElement"
-                        : "Element";
-                }
-                else
-                    return Name;
-            }
-        }
+                { IsCodeOfT: true } => "code",
+                { IsNestedType: true } => NativeType.CanBeTreatedAsType(typeof(BackboneElement)) ?
+                            "BackboneElement"
+                            : "Element",
+                _ => Name
+            };
 
         bool IStructureDefinitionSummary.IsAbstract => NativeType.GetTypeInfo().IsAbstract;
 
@@ -177,7 +193,13 @@ namespace Hl7.Fhir.Introspection
 
         public static bool TryCreate(Type type, out ClassMapping? result, FhirRelease fhirVersion = (FhirRelease)int.MaxValue)
         {
-            result = null;
+            // Simulate reading the ClassMappings from the primitive types (from http://hl7.org/fhirpath namespace).
+            // These are in fact defined as POCOs in Hl7.Fhir.ElementModel.Types,
+            // but we cannot reflect on them, mainly because the current organization of our assemblies and
+            // namespaces make it impossible to include them under Introspection. This is not a showstopper,
+            // since these basic primitives have hardly any additional metadata apart from their names.            
+            result = CqlPrimitiveTypes.SingleOrDefault(m => m.NativeType == type);
+            if (result is not null) return true;
 
             var typeAttribute = GetAttribute<FhirTypeAttribute>(type.GetTypeInfo(), fhirVersion);
             if (typeAttribute == null) return false;
@@ -188,13 +210,11 @@ namespace Hl7.Fhir.Introspection
                 return false;
             }
 
-            result = new ClassMapping
+            result = new ClassMapping(collectTypeName(typeAttribute, type), type)
             {
-                Name = collectTypeName(typeAttribute, type),
                 IsResource = typeAttribute.IsResource || type.CanBeTreatedAsType(typeof(Resource)),
                 IsCodeOfT = ReflectionHelper.IsClosedGenericType(type) &&
                                 ReflectionHelper.IsConstructedFromGenericTypeDefinition(type, typeof(Code<>)),
-                NativeType = type,
                 IsNestedType = typeAttribute.IsNestedType,
                 _mappingInitializer = () => inspectProperties(type, fhirVersion)
             };
@@ -253,6 +273,17 @@ namespace Hl7.Fhir.Introspection
         [Obsolete("ClassMapping.IsMappable() is slow and obsolete, use ClassMapping.TryCreate() instead.")]
         public static bool IsMappableType(Type type) => TryCreate(type, out var _);
 
+
+        internal static ClassMapping[] CqlPrimitiveTypes = new[]
+        {
+            new ClassMapping("System.Boolean", typeof(P.Boolean)),
+            new ClassMapping("System.String", typeof(P.String)),
+            new ClassMapping("System.Integer", typeof(P.Integer)),
+            new ClassMapping("System.Decimal", typeof(P.Decimal)),
+            new ClassMapping("System.DateTime", typeof(P.DateTime)),
+            new ClassMapping("System.Time", typeof(P.Time)),
+            new ClassMapping("System.Quantity", typeof(P.Quantity))
+        };
     }
 }
 

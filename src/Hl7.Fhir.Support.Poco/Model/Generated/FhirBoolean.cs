@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Validation;
+using SystemPrimitive = Hl7.Fhir.ElementModel.Types;
 
 /*
   Copyright (c) 2011+, HL7, Inc.
@@ -68,6 +69,7 @@ namespace Hl7.Fhir.Model
     /// Primitive value of the element
     /// </summary>
     [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
+    [DeclaredType(Type = typeof(SystemPrimitive.Boolean))]
     [DataMember]
     public bool? Value
     {
