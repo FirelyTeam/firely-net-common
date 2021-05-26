@@ -38,6 +38,14 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public bool PermissiveParsing { get; set; } = true;
 
+        /// <summary>
+        /// Allow to parse DateTime values in Date field.
+        /// </summary>
+        /// <remarks>
+        /// Needed for backward compatibility with old parser for resources which were saved and considered valid in the past.
+        /// </remarks>>
+        public bool AllowDateTimeInDate { get; set; } = false;
+
         /// <summary>Default constructor. Creates a new <see cref="ParserSettings"/> instance with default property values.</summary>
         public ParserSettings() { }
 
@@ -60,6 +68,7 @@ namespace Hl7.Fhir.Serialization
             other.AllowUnrecognizedEnums = AllowUnrecognizedEnums;
             other.AcceptUnknownMembers = AcceptUnknownMembers;
             other.PermissiveParsing = PermissiveParsing;
+            other.AllowDateTimeInDate = AllowDateTimeInDate;
         }
 
         /// <summary>
@@ -72,6 +81,7 @@ namespace Hl7.Fhir.Serialization
 
             settings.AllowUnrecognizedEnums = AllowUnrecognizedEnums;
             settings.IgnoreUnknownMembers = AcceptUnknownMembers;
+            settings.AllowDateTimeInDate = AllowDateTimeInDate;
         }
 
         /// <summary>Creates a new <see cref="ParserSettings"/> object that is a copy of the current instance.</summary>

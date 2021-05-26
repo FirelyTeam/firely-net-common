@@ -26,6 +26,14 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public bool IgnoreUnknownMembers { get; set; } // = false
 
+        /// <summary>
+        /// Allow to parse DateTime values in Date field.
+        /// </summary>
+        /// <remarks>
+        /// Needed for backward compatibility with old parser for resources which were saved and considered valid in the past.
+        /// </remarks>>
+        public bool AllowDateTimeInDate { get; set; }
+
         /// <summary>Default constructor. Creates a new <see cref="PocoBuilderSettings"/> instance with default property values.</summary>
         public PocoBuilderSettings() { }
 
@@ -46,6 +54,7 @@ namespace Hl7.Fhir.Serialization
 
             other.AllowUnrecognizedEnums = AllowUnrecognizedEnums;
             other.IgnoreUnknownMembers = IgnoreUnknownMembers;
+            other.AllowDateTimeInDate = AllowDateTimeInDate;
         }
 
         /// <summary>Creates a new <see cref="PocoBuilderSettings"/> object that is a copy of the current instance.</summary>

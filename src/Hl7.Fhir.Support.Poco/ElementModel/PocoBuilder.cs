@@ -77,7 +77,8 @@ namespace Hl7.Fhir.Serialization
             {
                 ErrorMode = _settings.IgnoreUnknownMembers ?
                     TypedElementSettings.TypeErrorMode.Ignore
-                    : TypedElementSettings.TypeErrorMode.Report
+                    : TypedElementSettings.TypeErrorMode.Report,
+                AllowDateTimeInDate = _settings.AllowDateTimeInDate
             };
 
             string dataType;
