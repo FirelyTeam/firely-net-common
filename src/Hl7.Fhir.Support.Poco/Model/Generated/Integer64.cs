@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [Serializable]
   [DataContract]
-  [FhirType("integer64")]
+  [FhirType("integer64","http://hl7.org/fhir/StructureDefinition/integer64")]
   public partial class Integer64 : PrimitiveType, INullableValue<long>
   {
     /// <summary>

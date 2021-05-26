@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   /// </summary>
   [Serializable]
   [DataContract]
-  [FhirType("Coding")]
+  [FhirType("Coding","http://hl7.org/fhir/StructureDefinition/Coding")]
   public partial class Coding : Hl7.Fhir.Model.DataType
   {
     /// <summary>

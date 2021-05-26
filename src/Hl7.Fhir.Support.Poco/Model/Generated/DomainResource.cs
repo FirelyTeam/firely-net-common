@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   /// </summary>
   [Serializable]
   [DataContract]
-  [FhirType("DomainResource", IsResource=true)]
+  [FhirType("DomainResource","http://hl7.org/fhir/StructureDefinition/DomainResource", IsResource=true)]
   public abstract partial class DomainResource : Hl7.Fhir.Model.Resource, Hl7.Fhir.Model.IModifierExtendable
   {
     /// <summary>

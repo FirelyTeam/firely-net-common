@@ -42,7 +42,7 @@ namespace Hl7.Fhir.Model
     /// </summary>
     [Serializable]
     [DataContract]
-    [FhirType("Element")]
+    [FhirType("Element", "http://hl7.org/fhir/StructureDefinition/Element")]
     public abstract class Element : Base, IExtendable
     {
         /// <summary>

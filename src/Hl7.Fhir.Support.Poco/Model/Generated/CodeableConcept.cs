@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   /// </summary>
   [Serializable]
   [DataContract]
-  [FhirType("CodeableConcept")]
+  [FhirType("CodeableConcept","http://hl7.org/fhir/StructureDefinition/CodeableConcept")]
   public partial class CodeableConcept : Hl7.Fhir.Model.DataType
   {
     /// <summary>

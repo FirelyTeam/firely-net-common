@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   /// </summary>
   [Serializable]
   [DataContract]
-  [FhirType("BackboneElement")]
+  [FhirType("BackboneElement","http://hl7.org/fhir/StructureDefinition/BackboneElement")]
   public abstract partial class BackboneElement : Hl7.Fhir.Model.Element, Hl7.Fhir.Model.IModifierExtendable
   {
     /// <summary>

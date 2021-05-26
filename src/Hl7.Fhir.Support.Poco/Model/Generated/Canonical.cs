@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [Serializable]
   [DataContract]
-  [FhirType("canonical")]
+  [FhirType("canonical","http://hl7.org/fhir/StructureDefinition/canonical")]
   public partial class Canonical : PrimitiveType, IValue<string>
   {
     /// <summary>

@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [Serializable]
   [DataContract]
-  [FhirType("uuid")]
+  [FhirType("uuid","http://hl7.org/fhir/StructureDefinition/uuid")]
   public partial class Uuid : PrimitiveType, IValue<string>
   {
     /// <summary>

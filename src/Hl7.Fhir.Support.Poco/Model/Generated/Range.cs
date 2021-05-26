@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   /// </summary>
   [Serializable]
   [DataContract]
-  [FhirType("Range")]
+  [FhirType("Range","http://hl7.org/fhir/StructureDefinition/Range")]
   public partial class Range : Hl7.Fhir.Model.DataType
   {
     /// <summary>

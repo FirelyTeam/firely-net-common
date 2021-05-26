@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   /// </summary>
   [Serializable]
   [DataContract]
-  [FhirType("OperationOutcome", IsResource=true)]
+  [FhirType("OperationOutcome","http://hl7.org/fhir/StructureDefinition/OperationOutcome", IsResource=true)]
   public partial class OperationOutcome : Hl7.Fhir.Model.DomainResource
   {
     /// <summary>

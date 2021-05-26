@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   /// </summary>
   [Serializable]
   [DataContract]
-  [FhirType("Quantity")]
+  [FhirType("Quantity","http://hl7.org/fhir/StructureDefinition/Quantity")]
   public partial class Quantity : Hl7.Fhir.Model.DataType
   {
     /// <summary>

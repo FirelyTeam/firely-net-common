@@ -39,7 +39,7 @@ using System.Runtime.Serialization;
 namespace Hl7.Fhir.Model
 {
     [Serializable]
-    [FhirType("Base")]
+    [FhirType("Base", "http://hl7.org/fhir/StructureDefinition/Base")]
     [DataContract]
     public abstract class Base : Validation.IValidatableObject, IDeepCopyable, IDeepComparable, IAnnotated, IAnnotatable, INotifyPropertyChanged
     {
@@ -89,7 +89,7 @@ namespace Hl7.Fhir.Model
         #region << Annotations >>
         [NonSerialized]
         private readonly Lazy<AnnotationList> _annotations = new Lazy<AnnotationList>(() => new AnnotationList());
-        
+
         private AnnotationList annotations { get { return _annotations.Value; } }
 
         public IEnumerable<object> Annotations(Type type) => annotations.OfType(type);

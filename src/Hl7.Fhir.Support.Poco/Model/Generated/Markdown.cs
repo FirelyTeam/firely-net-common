@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [Serializable]
   [DataContract]
-  [FhirType("markdown")]
+  [FhirType("markdown","http://hl7.org/fhir/StructureDefinition/markdown")]
   public partial class Markdown : PrimitiveType, IValue<string>
   {
     /// <summary>

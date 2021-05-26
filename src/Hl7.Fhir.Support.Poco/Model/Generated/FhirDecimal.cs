@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [Serializable]
   [DataContract]
-  [FhirType("decimal")]
+  [FhirType("decimal","http://hl7.org/fhir/StructureDefinition/decimal")]
   public partial class FhirDecimal : PrimitiveType, INullableValue<decimal>
   {
     /// <summary>

@@ -81,6 +81,8 @@ namespace Hl7.Fhir.Introspection
 
         private readonly ConcurrentDictionary<Type, ClassMapping> _classMappingsByType = new();
 
+        private readonly ConcurrentDictionary<string, ClassMapping> _classMappingsByCanonical = new();
+
         /// <summary>
         /// Locates all types in the assembly representing FHIR metadata and extracts
         /// the data as <see cref="ClassMapping"/>s.
@@ -118,6 +120,9 @@ namespace Hl7.Fhir.Introspection
         {
             _classMappingsByName[mapping!.Name] = mapping;
             _classMappingsByType[t] = mapping;
+
+            if (mapping.Canonical is not null)
+                _classMappingsByCanonical[mapping.Canonical] = mapping;
         }
 
         /// <summary>
@@ -132,23 +137,17 @@ namespace Hl7.Fhir.Introspection
         public ClassMapping? FindClassMapping(Type t) =>
             _classMappingsByType.TryGetValue(t, out var entry) ? entry : null;
 
+        /// <summary>
+        /// Retrieves an already imported <see cref="ClassMapping" /> given a canonical.
+        /// </summary>
+        public ClassMapping? FindClassMappingByCanonical(string canonical) =>
+            _classMappingsByCanonical.TryGetValue(canonical, out var entry) ? entry : null;
+
         /// <inheritdoc cref="IStructureDefinitionSummaryProvider.Provide(string)"/>
-        public IStructureDefinitionSummary? Provide(string canonical)
-        {
-            var isLocalType = !canonical.Contains("/");
-
-            if (!isLocalType)
-            {
-                // So, we have received a canonical url, not being a relative path
-                // (know resource/datatype), we -for now- only know how to get a ClassMapping
-                // for this, if it's a built-in T4 generated POCO, so there's no way
-                // to find a mapping for this.
-                return null;
-            }
-
-            return FindClassMapping(canonical);
-        }
-
+        public IStructureDefinitionSummary? Provide(string canonical) =>
+            canonical.Contains("/") ?
+                FindClassMappingByCanonical(canonical)
+                : FindClassMapping(canonical);
     }
 }
 

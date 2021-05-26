@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [Serializable]
   [DataContract]
-  [FhirType("instant")]
+  [FhirType("instant","http://hl7.org/fhir/StructureDefinition/instant")]
   public partial class Instant : PrimitiveType, INullableValue<DateTimeOffset>
   {
     /// <summary>

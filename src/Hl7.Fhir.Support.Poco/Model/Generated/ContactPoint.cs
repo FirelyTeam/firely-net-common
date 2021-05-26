@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   /// </summary>
   [Serializable]
   [DataContract]
-  [FhirType("ContactPoint")]
+  [FhirType("ContactPoint","http://hl7.org/fhir/StructureDefinition/ContactPoint")]
   public partial class ContactPoint : Hl7.Fhir.Model.DataType
   {
     /// <summary>
