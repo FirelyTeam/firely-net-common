@@ -45,10 +45,8 @@ namespace Hl7.Fhir.Utility
             return (Func<T, object>)getter.CreateDelegate(typeof(Func<T, object>));
         }
 
-        public static Func<object, object> GetValueGetter(this PropertyInfo propertyInfo)
-        {
-            return GetValueGetter<object>(propertyInfo);
-        }
+        public static Func<object, object> GetValueGetter(this PropertyInfo propertyInfo) =>
+            GetValueGetter<object>(propertyInfo);
 
         public static Action<T, object> GetValueSetter<T>(this PropertyInfo propertyInfo)
         {

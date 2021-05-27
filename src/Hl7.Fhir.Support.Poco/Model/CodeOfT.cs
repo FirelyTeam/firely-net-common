@@ -42,7 +42,6 @@ namespace Hl7.Fhir.Model
     [FhirType("codeOfT")]
     [DataContract]
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    [DeclaredType(Type = typeof(Code))]
     public class Code<T> : PrimitiveType, INullableValue<T>, ISystemAndCode where T : struct
     {
         static Code()

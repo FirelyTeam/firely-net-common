@@ -35,6 +35,7 @@ using Hl7.Fhir.Validation;
 using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
+using SystemPrimitive = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Model
 {
@@ -63,7 +64,7 @@ namespace Hl7.Fhir.Model
         /// identifies the meaning of the extension
         /// </summary>
         [FhirElement("url", XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 30)]
-        [DeclaredType(Type = typeof(FhirUri))]
+        [DeclaredType(Type = typeof(SystemPrimitive.String))]
         [Cardinality(Min = 1, Max = 1)]
         [UriPattern]
         [DataMember]
