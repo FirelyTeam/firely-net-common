@@ -80,6 +80,10 @@ namespace Hl7.Fhir.Model
         {
             return new FhirDateTime(PrimitiveTypeConverter.ConvertTo<string>(DateTimeOffset.Now));
         }
+       
+        [Obsolete("Use ToDateTimeOffset(TimeSpan zone) instead. Obsolete since 2018-11-22")]
+        public DateTimeOffset ToDateTimeOffset(TimeSpan? zone = null) =>
+           ToDateTimeOffset(zone ?? TimeSpan.Zero);
 
         /// <summary>
         /// Converts this Fhir DateTime as a .NET DateTimeOffset
@@ -91,17 +95,88 @@ namespace Hl7.Fhir.Model
         /// <returns>A DateTimeOffset filled out to midnight, january 1 (UTC) in case of a partial date/time. If the Fhir DateTime
         /// does not specify a timezone, the existing timezone is assumed. Note that the zone parameter has no 
         /// effect on this, this merely converts the given Fhir datetime to the desired timezone</returns>
-        public DateTimeOffset ToDateTimeOffset(TimeSpan? zone = null)
+        public DateTimeOffset ToDateTimeOffset(TimeSpan zone)
         {
             if (this.Value == null) throw new InvalidOperationException("FhirDateTime's value is null");
 
             // ToDateTimeOffset() will convert partial date/times by filling out to midnight/january 1 UTC
-            // When there's no timezone, *keep the existing timezone*
+            // When there's no timezone, the UTC is assumed
             var dto = PrimitiveTypeConverter.ConvertTo<DateTimeOffset>(this.Value);
 
-            return zone == null ? dto : dto.ToOffset(zone.Value);
+            return dto.ToOffset(zone);
         }
 
+
+        /// <summary>
+        /// Determines whether a Fhir DateTime can be converted to a a .NET DateTimeOffset. Fails in case of a partial DateTime (no timezone), 
+        /// otherwise 'success' will be returned including the DateTimeOffset as out parameter. 
+        /// </summary>
+        /// <param name="dto">A DateTimeOffset, if a timezone is correctly specified</param>
+        /// <returns>A boolean representing if a DateTimeOffset keeping the original timezone can be converted</returns>
+        public bool TryToDateTimeOffset(out DateTimeOffset dto)
+        {
+            dto = default;
+
+            if (this.Value == null)
+                return false;          
+
+            if (tryGetTimeSpan(out var timespan))
+            {
+                dto = ToDateTimeOffset(timespan);
+                return true;
+            }
+            else
+            {
+                return false;
+            }           
+        }
+
+        private bool tryGetTimeSpan(out TimeSpan ts)
+        {
+            ts = default;
+
+            if (this.containsTimeZone())
+            {
+                if (this.Value.Substring(this.Value.Length - 1) == "Z")
+                {
+                    ts = TimeSpan.Zero;
+                    return true;
+                }
+                
+                //converts +07:00 to 07:00, and keeps -07:00 as is.
+                var tz = this.Value.Substring(this.Value.Length - 6).Replace("+", "");
+
+                if (TimeSpan.TryParse(tz, out var timespan))
+                {
+                    ts = timespan;
+                    return true;
+                }                    
+                else
+                {
+                    //can't determine timezone
+                    return false;
+                }                    
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        private bool containsTimeZone()
+        {
+            //YYYY-MM-DDThh:mm:ss.sss+zz:zz // 
+            if (this.Value.IndexOf('+') == 23 || this.Value.LastIndexOf('-') == 23)
+                return true;
+            //YYYY-MM-DDThh:mm:ss+zz:zz
+            else if (this.Value.IndexOf('+') == 19 || this.Value.LastIndexOf('-') == 19)
+                return true;
+            //Ends with 'Z'
+            else if (this.Value.Substring(this.Value.Length - 1) == "Z")
+                return true;
+            else
+                return false;
+        }
 
         [Obsolete("Use ToDateTimeOffset(TimeSpan zone) instead")]
         public DateTime? ToDateTime() 
