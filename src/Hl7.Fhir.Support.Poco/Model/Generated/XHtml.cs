@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [Serializable]
   [DataContract]
-  [FhirType("xhtml")]
+  [FhirType("xhtml","http://hl7.org/fhir/StructureDefinition/xhtml")]
   public partial class XHtml : PrimitiveType, IValue<string>
   {
     /// <summary>

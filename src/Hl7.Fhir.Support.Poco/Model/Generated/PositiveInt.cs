@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [Serializable]
   [DataContract]
-  [FhirType("positiveInt")]
+  [FhirType("positiveInt","http://hl7.org/fhir/StructureDefinition/positiveInt")]
   public partial class PositiveInt : PrimitiveType, INullableValue<int>
   {
     /// <summary>

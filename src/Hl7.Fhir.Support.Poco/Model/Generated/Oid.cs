@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [Serializable]
   [DataContract]
-  [FhirType("oid")]
+  [FhirType("oid","http://hl7.org/fhir/StructureDefinition/oid")]
   public partial class Oid : PrimitiveType, IValue<string>
   {
     /// <summary>

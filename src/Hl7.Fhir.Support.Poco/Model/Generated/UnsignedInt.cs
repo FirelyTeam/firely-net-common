@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [Serializable]
   [DataContract]
-  [FhirType("unsignedInt")]
+  [FhirType("unsignedInt","http://hl7.org/fhir/StructureDefinition/unsignedInt")]
   public partial class UnsignedInt : PrimitiveType, INullableValue<int>
   {
     /// <summary>

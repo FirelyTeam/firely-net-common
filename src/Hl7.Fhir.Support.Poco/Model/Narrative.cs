@@ -43,7 +43,7 @@ namespace Hl7.Fhir.Model
     /// Human-readable summary of the resource (essential clinical and business information)
     /// </summary>
     [Serializable]
-    [FhirType("Narrative")]
+    [FhirType("Narrative", "http://hl7.org/fhir/StructureDefinition/Narrative")]
     [DataContract]
     public class Narrative : Hl7.Fhir.Model.DataType
     {

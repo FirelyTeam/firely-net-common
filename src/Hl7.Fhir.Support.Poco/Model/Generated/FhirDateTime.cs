@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [Serializable]
   [DataContract]
-  [FhirType("dateTime")]
+  [FhirType("dateTime","http://hl7.org/fhir/StructureDefinition/dateTime")]
   public partial class FhirDateTime : PrimitiveType, IValue<string>
   {
     /// <summary>

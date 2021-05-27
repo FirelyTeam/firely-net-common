@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   /// </summary>
   [Serializable]
   [DataContract]
-  [FhirType("Resource", IsResource=true)]
+  [FhirType("Resource","http://hl7.org/fhir/StructureDefinition/Resource", IsResource=true)]
   public abstract partial class Resource : Hl7.Fhir.Model.Base
   {
     /// <summary>

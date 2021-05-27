@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   /// </summary>
   [Serializable]
   [DataContract]
-  [FhirType("Parameters", IsResource=true)]
+  [FhirType("Parameters","http://hl7.org/fhir/StructureDefinition/Parameters", IsResource=true)]
   public partial class Parameters : Hl7.Fhir.Model.Resource
   {
     /// <summary>

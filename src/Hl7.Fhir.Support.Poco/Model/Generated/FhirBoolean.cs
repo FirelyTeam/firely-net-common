@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [Serializable]
   [DataContract]
-  [FhirType("boolean")]
+  [FhirType("boolean","http://hl7.org/fhir/StructureDefinition/boolean")]
   public partial class FhirBoolean : PrimitiveType, INullableValue<bool>
   {
     /// <summary>

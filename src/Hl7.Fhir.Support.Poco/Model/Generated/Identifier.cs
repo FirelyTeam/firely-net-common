@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   /// </summary>
   [Serializable]
   [DataContract]
-  [FhirType("Identifier")]
+  [FhirType("Identifier","http://hl7.org/fhir/StructureDefinition/Identifier")]
   public partial class Identifier : Hl7.Fhir.Model.DataType
   {
     /// <summary>

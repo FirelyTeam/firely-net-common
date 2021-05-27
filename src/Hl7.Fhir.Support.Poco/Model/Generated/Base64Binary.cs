@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [Serializable]
   [DataContract]
-  [FhirType("base64Binary")]
+  [FhirType("base64Binary","http://hl7.org/fhir/StructureDefinition/base64Binary")]
   public partial class Base64Binary : PrimitiveType, IValue<byte[]>
   {
     /// <summary>

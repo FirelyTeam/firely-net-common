@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   /// </summary>
   [Serializable]
   [DataContract]
-  [FhirType("Period")]
+  [FhirType("Period","http://hl7.org/fhir/StructureDefinition/Period")]
   public partial class Period : Hl7.Fhir.Model.DataType
   {
     /// <summary>

@@ -84,6 +84,12 @@ namespace Hl7.Fhir.Introspection
         /// </summary>
         public bool IsNestedType { get; private set; } = false;
 
+        /// <summary>
+        /// The canonical for the StructureDefinition defining this type
+        /// </summary>
+        /// <remarks>Will be null for backbone types.</remarks>
+        public string? Canonical { get; private set; }
+
         private class PropertyMappingCollection
         {
             public PropertyMappingCollection()
@@ -216,7 +222,8 @@ namespace Hl7.Fhir.Introspection
                 IsCodeOfT = ReflectionHelper.IsClosedGenericType(type) &&
                                 ReflectionHelper.IsConstructedFromGenericTypeDefinition(type, typeof(Code<>)),
                 IsNestedType = typeAttribute.IsNestedType,
-                _mappingInitializer = () => inspectProperties(type, fhirVersion)
+                _mappingInitializer = () => inspectProperties(type, fhirVersion),
+                Canonical = typeAttribute.Canonical
             };
 
             return true;
@@ -263,7 +270,7 @@ namespace Hl7.Fhir.Introspection
             if (ReflectionHelper.IsClosedGenericType(type))
             {
                 name += "<";
-                name += String.Join(",", type.GetTypeInfo().GenericTypeArguments.Select(arg => arg.FullName));
+                name += string.Join(",", type.GetTypeInfo().GenericTypeArguments.Select(arg => arg.FullName));
                 name += ">";
             }
 

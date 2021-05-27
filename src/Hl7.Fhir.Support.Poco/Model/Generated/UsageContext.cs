@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   /// </summary>
   [Serializable]
   [DataContract]
-  [FhirType("UsageContext")]
+  [FhirType("UsageContext","http://hl7.org/fhir/StructureDefinition/UsageContext")]
   public partial class UsageContext : Hl7.Fhir.Model.DataType
   {
     /// <summary>

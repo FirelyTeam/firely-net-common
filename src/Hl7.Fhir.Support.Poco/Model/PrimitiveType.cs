@@ -17,7 +17,7 @@ using System.Runtime.Serialization;
 namespace Hl7.Fhir.Model
 {
     [Serializable]
-    [FhirType("PrimitiveType")]
+    [FhirType("PrimitiveType", "http://hl7.org/fhir/StructureDefinition/PrimitiveType")]
     [DataContract]
     public abstract class PrimitiveType : DataType
     {

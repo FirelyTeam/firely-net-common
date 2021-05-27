@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
   [Serializable]
   [DataContract]
-  [FhirType("string")]
+  [FhirType("string","http://hl7.org/fhir/StructureDefinition/string")]
   public partial class FhirString : PrimitiveType, IValue<string>
   {
     /// <summary>

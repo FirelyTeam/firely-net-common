@@ -44,7 +44,7 @@ namespace Hl7.Fhir.Model
     /// </summary>
     [Serializable]
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value} Url={_Url}}")]
-    [FhirType("Extension")]
+    [FhirType("Extension", "http://hl7.org/fhir/StructureDefinition/Extension")]
     [DataContract]
     public class Extension : DataType
     {

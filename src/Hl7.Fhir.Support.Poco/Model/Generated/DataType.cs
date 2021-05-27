@@ -47,7 +47,7 @@ namespace Hl7.Fhir.Model
   /// </summary>
   [Serializable]
   [DataContract]
-  [FhirType("DataType")]
+  [FhirType("DataType","http://hl7.org/fhir/StructureDefinition/DataType")]
   public abstract partial class DataType : Hl7.Fhir.Model.Element
   {
     /// <summary>
