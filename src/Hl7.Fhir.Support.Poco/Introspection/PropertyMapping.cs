@@ -55,7 +55,7 @@ namespace Hl7.Fhir.Introspection
         /// The native type of the element.
         /// </summary>
         [Obsolete("This element had a different name in R3 and R4. Please use ImplementingType from now on.")]
-        public Type ElementType 
+        public Type ElementType
         {
             get => ImplementingType;
             set => ImplementingType = value;
@@ -72,11 +72,12 @@ namespace Hl7.Fhir.Introspection
         /// and allow a (possibly restricted) set of types to be used. These are reflected
         /// in the <see cref="FhirType"/> property.</remarks>
         public ChoiceType Choice { get; private set; }
-        
+
         /// <summary>
         /// This element is a polymorphic Resource, any resource is allowed here.
         /// </summary>
         /// <remarks>These are elements like DomainResource.contained, Parameters.resource etc.</remarks>
+        [Obsolete("This property is never initialized and its value will always be false.")]
         public bool IsResourceChoice { get; private set; }
 
         /// <summary>
@@ -175,7 +176,7 @@ namespace Hl7.Fhir.Introspection
                 return redirect?.Type != null ? redirect.Type : t;
             }
         }
-     
+
         private static bool isPrimitiveValueElement(FhirElementAttribute valueElementAttr, PropertyInfo prop)
         {
             var isValueElement = valueElementAttr != null && valueElementAttr.IsPrimitiveValue;
@@ -241,7 +242,7 @@ namespace Hl7.Fhir.Introspection
         bool IElementDefinitionSummary.IsResource => this.Choice == ChoiceType.ResourceChoice;
 
         string IElementDefinitionSummary.DefaultTypeName => null;
-            
+
         ITypeSerializationInfo[] IElementDefinitionSummary.Type
         {
             get
