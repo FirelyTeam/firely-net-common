@@ -49,7 +49,7 @@ namespace Hl7.Fhir.Utility
                 string s when s.StartsWith("4.1") => FhirRelease.R4B,
 
                 //R5 ballot versions
-                "4.2.0" or "4.4.0" or "4.5.0" => FhirRelease.R5,
+                "4.2.0" or "4.4.0" or "4.5.0" or "4.6.0" => FhirRelease.R5,
 
                 //Official R5 versions (and technical corrections) => 5.0.x
                 string s when s.StartsWith("5.0") => FhirRelease.R5,
@@ -75,7 +75,7 @@ namespace Hl7.Fhir.Utility
                 FhirRelease.STU3 => "3.0.2",
                 FhirRelease.R4 => "4.0.1",
                 FhirRelease.R4B => "4.1.0",
-                FhirRelease.R5 => "4.5.0",
+                FhirRelease.R5 => "4.6.0",
                 _ => throw new NotSupportedException($"Unknown FHIR version {fhirRelease}")
             };
         }
