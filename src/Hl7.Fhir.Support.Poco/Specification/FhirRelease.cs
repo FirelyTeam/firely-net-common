@@ -8,12 +8,17 @@
 
 namespace Hl7.Fhir.Specification
 {
+    /// <summary>
+    /// The major FHIR publication releases.
+    /// </summary>
+    /// <remarks>Note: this is set is ordered, so "older release" is less than "newer release".</remarks>
     public enum FhirRelease
     {
         DSTU1,
         DSTU2,
         STU3,
         R4,
+        R4B,
         R5,
     }
 }

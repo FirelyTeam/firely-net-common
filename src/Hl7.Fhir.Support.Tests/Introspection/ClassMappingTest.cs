@@ -23,12 +23,13 @@ namespace Hl7.Fhir.Tests.Introspection
         [TestMethod]
         public void TestReflectionCache()
         {
+#pragma warning disable CS0618 // Type or member is obsolete
             var way = ReflectionCache.Current.Get(typeof(Way));
             var way2 = ReflectionCache.Current.Get(typeof(Way2));
             var way3 = ReflectionCache.Current.Get(typeof(Way));
             _ = ReflectionCache.Current.Get(typeof(string));
             _ = ReflectionCache.Current.Get(typeof(int));
-
+#pragma warning restore CS0618 // Type or member is obsolete
             Assert.AreSame(way, way3, "Reflected types don't seem to be cached");
             Assert.AreNotSame(way, way2);
         }
@@ -36,7 +37,9 @@ namespace Hl7.Fhir.Tests.Introspection
         [TestMethod]
         public void Test‎‎‎ReflectedTypeCreation()
         {
+#pragma warning disable CS0618 // Type or member is obsolete
             var way = new ReflectedType(typeof(Way));
+#pragma warning restore CS0618 // Type or member is obsolete
             Assert.AreEqual(typeof(Way), way.Reflected);
             Assert.AreEqual(4, way.Attributes.Count);    // my 3 + 1 DebuggerDisplayAttribute
 

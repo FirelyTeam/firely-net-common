@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Hl7.Fhir.Introspection;
+using System;
 using System.Runtime.CompilerServices;
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 
 [assembly: CLSCompliant(true)]
+[assembly: FhirModelAssembly]
 
 #if DEBUG
 [assembly: InternalsVisibleTo("Hl7.Fhir.Core.Tests")]

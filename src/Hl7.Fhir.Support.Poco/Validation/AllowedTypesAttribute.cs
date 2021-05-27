@@ -6,14 +6,11 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Utility;
-using Hl7.Fhir.Validation;
 using System;
 using System.Collections;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Reflection;
 
 namespace Hl7.Fhir.Validation
 {
@@ -25,7 +22,7 @@ namespace Hl7.Fhir.Validation
         {
             Types = types;
         }
-       
+
         public Type[] Types { get; set; }
 
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
@@ -56,12 +53,13 @@ namespace Hl7.Fhir.Validation
         {
             if (item != null)
             {
-                if (!Types.Any(type => type.GetTypeInfo().IsAssignableFrom(item.GetType().GetTypeInfo())))
+                if (!IsAllowedType(item.GetType()))
                     return DotNetAttributeValidation.BuildResult(context, "Value is of type {0}, which is not an allowed choice", item.GetType());
             }
 
             return ValidationResult.Success;
         }
 
+        public bool IsAllowedType(Type t) => Types.Any(type => type.IsAssignableFrom(t));
     }
 }

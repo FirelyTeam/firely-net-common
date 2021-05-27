@@ -33,12 +33,21 @@ using System;
 
 namespace Hl7.Fhir.Introspection
 {
-    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
+    /// <summary>
+    /// This attribute is applied to classes that represent FHIR datatypes and resources.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
     public sealed class FhirTypeAttribute : InvokeIValidatableObjectAttribute
     {
         public FhirTypeAttribute(string name)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
+        }
+
+        public FhirTypeAttribute(string name, string canonical)
+        {
+            Name = name ?? throw new ArgumentNullException(nameof(name));
+            Canonical = canonical;
         }
 
         /// <summary>
@@ -55,5 +64,10 @@ namespace Hl7.Fhir.Introspection
         /// Indicates whether this class represents a Resource
         /// </summary>
         public bool IsResource { get; set; }
+
+        /// <summary>
+        /// The canonical of the StructureDefinition defining this type.
+        /// </summary>
+        public string Canonical { get; set; }
     }
 }
