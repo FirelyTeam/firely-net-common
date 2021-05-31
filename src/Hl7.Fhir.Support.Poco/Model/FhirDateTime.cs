@@ -29,6 +29,7 @@
 */
 
 using System;
+using System.Text.RegularExpressions;
 using Hl7.Fhir.Serialization;
 
 namespace Hl7.Fhir.Model
@@ -39,6 +40,15 @@ namespace Hl7.Fhir.Model
         public const string FMT_YEAR = "{0:D4}";
         public const string FMT_YEARMONTH = "{0:D4}-{1:D2}";
         public const string FMT_YEARMONTHDAY = "{0:D4}-{1:D2}-{2:D2}";
+
+        private static readonly string DATEFORMAT =
+          $"(?<year>[0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000) (?<month>-(0[1-9]|1[0-2]) (?<day>-(0[1-9]|[1-2][0-9]|3[0-1])";
+        private static readonly string TIMEFORMAT = 
+            $"(T(?<hours>[01][0-9]|2[0-3]) (?<minutes>:[0-5][0-9]) (?<seconds>:[0-5][0-9]|60)(?<fractions>\\.[0-9]+) ?(?<offset>Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?";
+   
+        private static readonly Regex DATETIMEREGEX =
+                new Regex("^" + DATEFORMAT + TIMEFORMAT + "$",
+                RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
 
         public FhirDateTime(DateTimeOffset dt) : this(PrimitiveTypeConverter.ConvertTo<string>(dt))
         {
@@ -135,16 +145,16 @@ namespace Hl7.Fhir.Model
         {
             ts = default;
 
-            if (this.containsTimeZone())
+            if (tryGetTimeZone(out var tz))
             {
-                if (this.Value.Substring(this.Value.Length - 1) == "Z")
+                if (tz == "Z")
                 {
                     ts = TimeSpan.Zero;
                     return true;
                 }
-                
+
                 //converts +07:00 to 07:00, and keeps -07:00 as is.
-                var tz = this.Value.Substring(this.Value.Length - 6).Replace("+", "");
+                tz = tz.Replace("+", "");
 
                 if (TimeSpan.TryParse(tz, out var timespan))
                 {
@@ -163,19 +173,11 @@ namespace Hl7.Fhir.Model
             }
         }
 
-        private bool containsTimeZone()
+        private bool tryGetTimeZone(out string timezone)
         {
-            //YYYY-MM-DDThh:mm:ss.sss+zz:zz // 
-            if (this.Value.IndexOf('+') == 23 || this.Value.LastIndexOf('-') == 23)
-                return true;
-            //YYYY-MM-DDThh:mm:ss+zz:zz
-            else if (this.Value.IndexOf('+') == 19 || this.Value.LastIndexOf('-') == 19)
-                return true;
-            //Ends with 'Z'
-            else if (this.Value.Substring(this.Value.Length - 1) == "Z")
-                return true;
-            else
-                return false;
+            var matches = DATETIMEREGEX.Match(this.Value);
+            timezone = matches.Groups["offset"]?.Value;
+            return !string.IsNullOrEmpty(timezone);                
         }
 
         [Obsolete("Use ToDateTimeOffset(TimeSpan zone) instead")]
