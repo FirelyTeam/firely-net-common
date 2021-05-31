@@ -38,6 +38,16 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public bool PermissiveParsing { get; set; } = true;
 
+        /// <summary>
+        /// Allow to parse a FHIR dateTime values into an element of type date.
+        /// </summary>
+        /// <remarks>
+        /// Needed for backward compatibility with old parser for resources which were saved and considered valid in the past.
+        /// </remarks>>
+        [Obsolete("Needed for backward compatibility with old parser for resources which were saved and considered valid in the past. " +
+            "Should not be used in new code.")]
+        public bool TruncateDateTimeToDate { get; set; } = false;
+
         /// <summary>Default constructor. Creates a new <see cref="ParserSettings"/> instance with default property values.</summary>
         public ParserSettings() { }
 
@@ -60,6 +70,9 @@ namespace Hl7.Fhir.Serialization
             other.AllowUnrecognizedEnums = AllowUnrecognizedEnums;
             other.AcceptUnknownMembers = AcceptUnknownMembers;
             other.PermissiveParsing = PermissiveParsing;
+#pragma warning disable CS0618 // Type or member is obsolete
+            other.TruncateDateTimeToDate = TruncateDateTimeToDate;
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         /// <summary>
@@ -72,6 +85,9 @@ namespace Hl7.Fhir.Serialization
 
             settings.AllowUnrecognizedEnums = AllowUnrecognizedEnums;
             settings.IgnoreUnknownMembers = AcceptUnknownMembers;
+#pragma warning disable CS0618 // Type or member is obsolete
+            settings.TruncateDateTimeToDate = TruncateDateTimeToDate;
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         /// <summary>Creates a new <see cref="ParserSettings"/> object that is a copy of the current instance.</summary>

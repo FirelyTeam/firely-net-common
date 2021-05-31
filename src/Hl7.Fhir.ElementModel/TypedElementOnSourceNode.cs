@@ -199,6 +199,23 @@ namespace Hl7.Fhir.ElementModel
                     return val;
                 else
                 {
+                    // Check for the exception we have made to allow 1.x behaviour
+                    // where datetime's were considered acceptable for date elements.
+                    // In addition the TruncateDateTimeToDate will also "correct" the
+                    // datetime values to correct just-date values while parsing here.
+#pragma warning disable CS0618 // Type or member is obsolete
+                    if (_settings.TruncateDateTimeToDate && ts == typeof(P.Date))
+#pragma warning restore CS0618 // Type or member is obsolete
+                    {
+                        if (P.Any.TryParse(sourceText, typeof(P.DateTime), out var dateTimeVal))
+                        {
+                            // TruncateToDate converts 1991-02-03T11:22:33Z to 1991-02-03+00:00 which is not a valid date! 
+                            var date = (dateTimeVal as P.DateTime).TruncateToDate();
+                            // so we cut off timezone by converting it to timeoffset and cast back to date.
+                            return P.Date.FromDateTimeOffset(date.ToDateTimeOffset(0, 0, 0, TimeSpan.Zero));
+                        }
+                    }
+
                     raiseTypeError($"Literal '{sourceText}' cannot be parsed as a {InstanceType}.", _source, location: _source.Location);
                     return sourceText;
                 }
