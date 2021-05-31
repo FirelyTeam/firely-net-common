@@ -27,12 +27,14 @@ namespace Hl7.Fhir.Serialization
         public bool IgnoreUnknownMembers { get; set; } // = false
 
         /// <summary>
-        /// Allow to parse DateTime values in Date field.
+        /// Allow to parse a FHIR dateTime values into an element of type date.
         /// </summary>
         /// <remarks>
         /// Needed for backward compatibility with old parser for resources which were saved and considered valid in the past.
         /// </remarks>>
-        public bool AllowDateTimeInDate { get; set; }
+        [Obsolete("Needed for backward compatibility with old parser for resources which were saved and considered valid in the past. " +
+            "Should not be used in new code.")]
+        public bool TruncateDateTimeToDate { get; set; }
 
         /// <summary>Default constructor. Creates a new <see cref="PocoBuilderSettings"/> instance with default property values.</summary>
         public PocoBuilderSettings() { }
@@ -54,7 +56,9 @@ namespace Hl7.Fhir.Serialization
 
             other.AllowUnrecognizedEnums = AllowUnrecognizedEnums;
             other.IgnoreUnknownMembers = IgnoreUnknownMembers;
-            other.AllowDateTimeInDate = AllowDateTimeInDate;
+#pragma warning disable CS0618 // Type or member is obsolete
+            other.TruncateDateTimeToDate = TruncateDateTimeToDate;
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         /// <summary>Creates a new <see cref="PocoBuilderSettings"/> object that is a copy of the current instance.</summary>

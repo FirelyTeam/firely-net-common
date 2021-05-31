@@ -78,7 +78,9 @@ namespace Hl7.Fhir.Serialization
                 ErrorMode = _settings.IgnoreUnknownMembers ?
                     TypedElementSettings.TypeErrorMode.Ignore
                     : TypedElementSettings.TypeErrorMode.Report,
-                AllowDateTimeInDate = _settings.AllowDateTimeInDate
+#pragma warning disable CS0618 // Type or member is obsolete
+                TruncateDateTimeToDate = _settings.TruncateDateTimeToDate
+#pragma warning restore CS0618 // Type or member is obsolete
             };
 
             string dataType;
