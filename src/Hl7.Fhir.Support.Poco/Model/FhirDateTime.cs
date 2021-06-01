@@ -103,7 +103,7 @@ namespace Hl7.Fhir.Model
         /// a FhirDateTime of "0001-01-01T00:00:00+01:00" could not be converted to a DateTimeOffset. In that case a 
         /// ArgumentOutOfRangeException will be thrown.</remarks>
         /// <returns>A DateTimeOffset filled out to midnight, january 1 (UTC) in case of a partial date/time. If the Fhir DateTime
-        /// does not specify a timezone, the existing timezone is assumed. Note that the zone parameter has no 
+        /// does not specify a timezone, the UTC (Coordinated Universal Time) is assumed. Note that the zone parameter has no
         /// effect on this, this merely converts the given Fhir datetime to the desired timezone</returns>
         public DateTimeOffset ToDateTimeOffset(TimeSpan zone)
         {
