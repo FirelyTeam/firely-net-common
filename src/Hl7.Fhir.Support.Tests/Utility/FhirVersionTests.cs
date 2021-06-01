@@ -1,5 +1,7 @@
-﻿using Hl7.Fhir.Specification;
+﻿using FluentAssertions;
+using Hl7.Fhir.Specification;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
 
 namespace Hl7.Fhir.Utility.Tests
 {
@@ -128,6 +130,20 @@ namespace Hl7.Fhir.Utility.Tests
             Assert.AreEqual(false, FhirReleaseParser.TryGetFhirReleaseFromCorePackageName("hl7.fhir.core.r3", out version));
             Assert.IsNull(version);
 
+        }
+
+        [TestMethod]
+        public void TestOrdeningOfFhirRelease()
+        {
+            IEnumerable<FhirRelease> listOfReleases = new[]
+            {
+                FhirRelease.DSTU1,
+                FhirRelease.DSTU2,
+                FhirRelease.R4,
+                FhirRelease.R4B,
+                FhirRelease.R5,
+            };
+            listOfReleases.Should().BeInAscendingOrder();
         }
 
 
