@@ -1,7 +1,7 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Hl7.Fhir.Utility;
+﻿using FluentAssertions;
 using Hl7.Fhir.Specification;
-using System;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
 
 namespace Hl7.Fhir.Utility.Tests
 {
@@ -10,7 +10,7 @@ namespace Hl7.Fhir.Utility.Tests
     {
         [TestMethod]
         public void TestFhirReleaseFromVersion()
-        {           
+        {
             Assert.AreEqual(FhirRelease.DSTU1, FhirReleaseParser.Parse("0.01"));
             Assert.AreEqual(FhirRelease.DSTU1, FhirReleaseParser.Parse("0.11"));
             Assert.AreEqual(FhirRelease.DSTU1, FhirReleaseParser.Parse("0.0.80"));
@@ -53,12 +53,12 @@ namespace Hl7.Fhir.Utility.Tests
 
         [TestMethod]
         public void TestsFhirVersionFromRelease()
-        {            
+        {
             Assert.AreEqual("0.0.82", FhirReleaseParser.FhirVersionFromRelease(FhirRelease.DSTU1));
             Assert.AreEqual("1.0.2", FhirReleaseParser.FhirVersionFromRelease(FhirRelease.DSTU2));
             Assert.AreEqual("3.0.2", FhirReleaseParser.FhirVersionFromRelease(FhirRelease.STU3));
             Assert.AreEqual("4.0.1", FhirReleaseParser.FhirVersionFromRelease(FhirRelease.R4));
-            Assert.AreEqual("4.5.0", FhirReleaseParser.FhirVersionFromRelease(FhirRelease.R5));
+            Assert.AreEqual("4.6.0", FhirReleaseParser.FhirVersionFromRelease(FhirRelease.R5));
         }
 
         [TestMethod]
@@ -69,7 +69,7 @@ namespace Hl7.Fhir.Utility.Tests
             Assert.AreEqual("3.0", FhirReleaseParser.MimeVersionFromFhirRelease(FhirRelease.STU3));
             Assert.AreEqual("4.0", FhirReleaseParser.MimeVersionFromFhirRelease(FhirRelease.R4));
             Assert.AreEqual("5.0", FhirReleaseParser.MimeVersionFromFhirRelease(FhirRelease.R5));
-        }       
+        }
 
         [TestMethod]
         public void TestsFhirVersionFromMimeVersion()
@@ -130,6 +130,20 @@ namespace Hl7.Fhir.Utility.Tests
             Assert.AreEqual(false, FhirReleaseParser.TryGetFhirReleaseFromCorePackageName("hl7.fhir.core.r3", out version));
             Assert.IsNull(version);
 
+        }
+
+        [TestMethod]
+        public void TestOrdeningOfFhirRelease()
+        {
+            IEnumerable<FhirRelease> listOfReleases = new[]
+            {
+                FhirRelease.DSTU1,
+                FhirRelease.DSTU2,
+                FhirRelease.R4,
+                FhirRelease.R4B,
+                FhirRelease.R5,
+            };
+            listOfReleases.Should().BeInAscendingOrder();
         }
 
 

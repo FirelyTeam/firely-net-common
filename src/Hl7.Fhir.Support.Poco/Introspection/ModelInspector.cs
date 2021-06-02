@@ -6,6 +6,9 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
+#nullable enable
+
+using Hl7.Fhir.Model;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using System;
@@ -19,28 +22,72 @@ namespace Hl7.Fhir.Introspection
     /// <summary>
     /// A cache of FHIR type mappings found on .NET classes.
     /// </summary>
-    /// <remarks>Holds the mappings for a specific version of FHIR, even though some POCO's can 
-    /// specify the definition of multiple versions of FHIR. 
+    /// <remarks>POCO's in the "common" assemblies
+    /// can reflect the definition of multiple releases of FHIR using <see cref="IFhirVersionDependent"/>
+    /// attributes. A <see cref="ModelInspector"/> will always capture the metadata for one such
+    /// <see cref="Specification.FhirRelease" /> which is passed to it in the constructor.
     /// </remarks>
     public class ModelInspector : IStructureDefinitionSummaryProvider
     {
+        private static readonly ConcurrentDictionary<string, ModelInspector> _inspectedAssemblies = new();
 
-        public ModelInspector(FhirRelease fhirVersion)
+        /// <summary>
+        /// Returns a fully configured <see cref="ModelInspector"/> with the
+        /// FHIR metadata contents of the given assembly. Calling this function repeatedly for
+        /// the same assembly will return the same inspector.
+        /// </summary>
+        /// <remarks>If the assembly given is FHIR Release specific, the returned inspector will contain
+        /// metadata for that release only. If the assembly is the common assembly, it will contain
+        /// metadata for the most recent release for those common classes.</remarks>
+        public static ModelInspector ForAssembly(Assembly a)
         {
-            _fhirVersion = fhirVersion;
+            return _inspectedAssemblies.GetOrAdd(a.FullName, _ => configureInspector(a));
+
+            static ModelInspector configureInspector(Assembly a)
+            {
+                if (a.GetCustomAttribute<FhirModelAssemblyAttribute>() is not FhirModelAssemblyAttribute modelAssemblyAttr)
+                    throw new InvalidOperationException($"Assembly {a.FullName} cannot be used to supply FHIR metadata," +
+                        $" as it is not marked with a {nameof(FhirModelAssemblyAttribute)} attribute.");
+
+                var newInspector = new ModelInspector(modelAssemblyAttr.Since);
+                newInspector.Import(a);
+
+                // Make sure we always include the common types too. 
+                var commonAssembly = typeof(Resource).GetTypeInfo().Assembly;
+                if (a.FullName != commonAssembly.FullName)
+                    newInspector.Import(commonAssembly);
+
+                // And finally, the System/CQL primitive types
+                foreach (var mapping in ClassMapping.CqlPrimitiveTypes)
+                    newInspector.RegisterTypeMapping(mapping.NativeType, mapping);
+
+                return newInspector;
+            }
         }
 
-        private readonly FhirRelease _fhirVersion;
+        /// <summary>
+        /// Constructs a ModelInspector that will reflect the FHIR metadata for the given FHIR release
+        /// </summary>
+        public ModelInspector(FhirRelease fhirRelease)
+        {
+            FhirRelease = fhirRelease;
+        }
 
-        // Index for easy lookup of datatypes, key is upper typenanme
+        public readonly FhirRelease FhirRelease;
+
+        // Index for easy lookup of datatypes.
         private readonly ConcurrentDictionary<string, ClassMapping> _classMappingsByName =
-            new ConcurrentDictionary<string, ClassMapping>();
+            new(StringComparer.OrdinalIgnoreCase);
 
-        // Primary index of classmappings, key is Type
-        private readonly ConcurrentDictionary<Type, ClassMapping> _classMappingsByType =
-             new ConcurrentDictionary<Type, ClassMapping>();
+        private readonly ConcurrentDictionary<Type, ClassMapping> _classMappingsByType = new();
 
-        public IReadOnlyList<IStructureDefinitionSummary> Import(Assembly assembly)
+        private readonly ConcurrentDictionary<string, ClassMapping> _classMappingsByCanonical = new();
+
+        /// <summary>
+        /// Locates all types in the assembly representing FHIR metadata and extracts
+        /// the data as <see cref="ClassMapping"/>s.
+        /// </summary>
+        public IReadOnlyList<ClassMapping> Import(Assembly assembly)
         {
             if (assembly == null) throw Error.ArgumentNull(nameof(assembly));
 
@@ -50,90 +97,58 @@ namespace Hl7.Fhir.Introspection
             IEnumerable<Type> exportedTypes = assembly.ExportedTypes;
 #endif
 
-            return exportedTypes.Select(t => ImportType(t)).ToList();
+            return exportedTypes.Select(t => ImportType(t))
+                .Where(cm => cm is not null)
+                .ToList()!;
         }
 
-        public IStructureDefinitionSummary Provide(string canonical)
+        /// <summary>
+        /// Extracts the FHIR metadata from a <see cref="Type"/> into a <see cref="ClassMapping"/>.
+        /// </summary>
+        public ClassMapping? ImportType(Type type)
         {
-            var isLocalType = !canonical.Contains("/");
-
-            if (!isLocalType)
-            {
-                // So, we have received a canonical url, not being a relative path
-                // (know resource/datatype), we -for now- only know how to get a ClassMapping
-                // for this, if it's a built-in T4 generated POCO, so there's no way
-                // to find a mapping for this.
-                return null;
-            }
-
-            return FindClassMapping(canonical);
-        }
-
-
-        public ClassMapping ImportType(Type type)
-        {
-            if (_classMappingsByType.TryGetValue(type, out var mapping))
-                return mapping;     // no need to import the same type twice
-
-            // Don't import types that aren't marked with [FhirType]
-            if (ClassMapping.GetAttribute<FhirTypeAttribute>(type.GetTypeInfo(), _fhirVersion) == null) return null;
-
             // When explicitly importing a (newer?) class mapping for the same
-            // model type name, overwrite the old entry.
-            return getOrAddClassMappingForTypeInternal(type, overwrite: true);
-        }
-
-        private ClassMapping createMapping(Type type, FhirRelease version)
-        {
-            if (!ClassMapping.TryCreate(type, out var mapping, version))
-            {
-                Message.Info("Skipped type {0} while doing inspection: not recognized as representing a FHIR type", type.Name);
+            // model type name, overwrite the old entry.            
+            if (!ClassMapping.TryGetMappingForType(type, FhirRelease, out var mapping))
                 return null;
-            }
-            else
-            {
-                Message.Info("Created Class mapping for newly encountered type {0} (FHIR type {1})", type.Name, mapping.Name);
-                return mapping;
-            }
+
+            RegisterTypeMapping(type, mapping!);
+            return mapping;
         }
 
-        private ClassMapping getOrAddClassMappingForTypeInternal(Type type, bool overwrite)
+        internal void RegisterTypeMapping(Type t, ClassMapping mapping)
         {
-            var typeMapping = _classMappingsByType.GetOrAdd(type, tp => createMapping(tp, _fhirVersion));
+            _classMappingsByName[mapping!.Name] = mapping;
+            _classMappingsByType[t] = mapping;
 
-            if (typeMapping == null) return null;
-
-            // Whether we are pre-empted here or not, resultMapping will always be "the" single instance
-            // with a mapping for this type, shared across all threads. Now we are going to add an entry by
-            // name for this mapping.
-
-            var key = typeMapping.Name;
-            // Add this mapping by name of the mapping, overriding any entry already present
-            if (overwrite)
-            {
-                _ = _classMappingsByName
-                            .AddOrUpdate(key, typeMapping, (_, __) => typeMapping);
-            }
-            else
-            {
-                var nameMapping = _classMappingsByName.GetOrAdd(key, typeMapping);
-
-                if (!object.ReferenceEquals(typeMapping, nameMapping))
-                {
-                    // ouch, there was already a mapping under this name, that does not correspond to the instance
-                    // for our type mapping -> there must be multiple types having a mapping for the same model type.
-                    throw new ArgumentException($"Type '{type.Name}' has a mapping for model type '{typeMapping.Name}', " +
-                        $"but type '{nameMapping.NativeType.Name}' was already registered for that model type.");
-                }
-            }
-
-            return typeMapping;
+            if (mapping.Canonical is not null)
+                _classMappingsByCanonical[mapping.Canonical] = mapping;
         }
 
-        public ClassMapping FindClassMapping(string name) =>
-            _classMappingsByName.TryGetValue(name, out var entry) ? entry : null;
+        /// <summary>
+        /// Retrieves an already imported <see cref="ClassMapping" /> given a FHIR type name.
+        /// </summary>
+        public ClassMapping? FindClassMapping(string fhirTypeName) =>
+            _classMappingsByName.TryGetValue(fhirTypeName, out var entry) ? entry : null;
 
-        public ClassMapping FindClassMapping(Type t) =>
+        /// <summary>
+        /// Retrieves an already imported <see cref="ClassMapping" /> given a Type.
+        /// </summary>
+        public ClassMapping? FindClassMapping(Type t) =>
             _classMappingsByType.TryGetValue(t, out var entry) ? entry : null;
+
+        /// <summary>
+        /// Retrieves an already imported <see cref="ClassMapping" /> given a canonical.
+        /// </summary>
+        public ClassMapping? FindClassMappingByCanonical(string canonical) =>
+            _classMappingsByCanonical.TryGetValue(canonical, out var entry) ? entry : null;
+
+        /// <inheritdoc cref="IStructureDefinitionSummaryProvider.Provide(string)"/>
+        public IStructureDefinitionSummary? Provide(string canonical) =>
+            canonical.Contains("/") ?
+                FindClassMappingByCanonical(canonical)
+                : FindClassMapping(canonical);
     }
 }
+
+#nullable restore

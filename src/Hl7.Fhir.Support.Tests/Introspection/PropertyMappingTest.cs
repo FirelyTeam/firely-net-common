@@ -6,17 +6,17 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Hl7.Fhir.Model;
 using Hl7.Fhir.Introspection;
-using System.Linq;
-using System.Diagnostics;
+using Hl7.Fhir.Model;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Diagnostics;
+using System.Linq;
 
 namespace Hl7.Fhir.Tests.Introspection
 {
     [TestClass]
-	public class ModelInspectorMembersTest
+    public class ModelInspectorMembersTest
     {
         [TestMethod]
         public void TestPrimitiveDataTypeMapping()
@@ -39,7 +39,7 @@ namespace Hl7.Fhir.Tests.Introspection
             Assert.IsNotNull(valueProp);
             Assert.IsFalse(valueProp.IsCollection);
             Assert.IsTrue(valueProp.RepresentsValueElement);
-            Assert.AreEqual(typeof(SomeEnum),valueProp.ImplementingType);
+            Assert.AreEqual(typeof(SomeEnum), valueProp.ImplementingType);
 
             Assert.IsTrue(ClassMapping.TryCreate(typeof(FhirUri), out mapping));
             Assert.AreEqual("uri", mapping.Name);
@@ -47,11 +47,11 @@ namespace Hl7.Fhir.Tests.Introspection
             Assert.AreEqual(3, mapping.PropertyMappings.Count); // id, extension, fhir_comments & value
             valueProp = mapping.PrimitiveValueProperty;
             Assert.IsNotNull(valueProp);
-            Assert.IsFalse(valueProp.IsCollection); 
+            Assert.IsFalse(valueProp.IsCollection);
             Assert.IsTrue(valueProp.RepresentsValueElement);
-            Assert.AreEqual(typeof(string),valueProp.ImplementingType);
+            Assert.AreEqual(typeof(string), valueProp.ImplementingType);
         }
-        
+
         [TestMethod]
         public void TestVersionSpecificMapping()
         {
@@ -76,10 +76,6 @@ namespace Hl7.Fhir.Tests.Introspection
             var propMapping = mapping.FindMappedElementByName("type1");
             Assert.AreEqual(typeof(Code<SomeEnum>), propMapping.ImplementingType);
             Assert.AreEqual(typeof(FhirString), propMapping.FhirType.Single());
-
-            propMapping = mapping.FindMappedElementByName("type2");
-            Assert.AreEqual(typeof(Code<SomeEnum>), propMapping.ImplementingType);
-            Assert.AreEqual(typeof(Code), propMapping.FhirType.Single());
         }
 
 
@@ -87,12 +83,8 @@ namespace Hl7.Fhir.Tests.Introspection
         public class TypeWithCodeOfT
         {
             [FhirElement("type1")]
-            [DeclaredType(Type=typeof(FhirString))]
+            [DeclaredType(Type = typeof(FhirString))]
             public Code<SomeEnum> Type1 { get; set; }
-
-            [FhirElement("type2")]
-            public Code<SomeEnum> Type2 { get; set; }
-
         }
 
         [TestMethod]
@@ -106,7 +98,7 @@ namespace Hl7.Fhir.Tests.Introspection
 
             var sw = new Stopwatch();
             sw.Start();
-            for(int i = 0; i < 1000; i++)
+            for (int i = 0; i < 1000; i++)
                 foreach (var testee in typesToTest)
                     createMapping(testee);
             sw.Stop();
@@ -115,7 +107,7 @@ namespace Hl7.Fhir.Tests.Introspection
             sw.Restart();
             for (int i = 0; i < 1000; i++)
                 foreach (var testee in typesToTest)
-                    createMapping(testee,touchProps: true);
+                    createMapping(testee, touchProps: true);
             sw.Stop();
             Console.WriteLine($"With props: {sw.ElapsedMilliseconds}");
 

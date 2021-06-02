@@ -44,7 +44,8 @@ namespace Hl7.Fhir.ElementModel
             Current = instance;
             _inspector = inspector;
 
-            var instanceType = determineInstanceType(instance.GetType(), definition);
+            var instanceType = definition.Choice != ChoiceType.None ?
+                        instance.GetType() : determineInstanceType(definition);
             _myClassMapping = _inspector.ImportType(instanceType);
             InstanceType = ((IStructureDefinitionSummary)_myClassMapping).TypeName;
             Definition = definition ?? throw Error.ArgumentNull(nameof(definition));
@@ -54,8 +55,21 @@ namespace Hl7.Fhir.ElementModel
             ShortPath = shortPath;
         }
 
-        private Type determineInstanceType(Type type, PropertyMapping definition)
-            => definition.Choice != ChoiceType.None ? type : definition.FhirType[0];
+        private Type determineInstanceType(PropertyMapping definition)
+        {
+            if (!definition.IsPrimitive) return definition.FhirType[0];
+
+            // Backwards compat hack: the primitives (since .value is never queried, this
+            // means Element.id, Narrative.div and Extension.url) should be returned as FHIR types, not
+            // system (CQL) type.
+            return definition.Name switch
+            {
+                "url" => typeof(FhirUri),
+                "id" => typeof(FhirString),
+                "div" => typeof(XHtml),
+                _ => throw new NotSupportedException($"Encountered unexpected primitive type {Name} in backward compat behaviour for PocoElementNode.InstanceType.")
+            };
+        }
 
         public IElementDefinitionSummary Definition { get; private set; }
 
@@ -104,7 +118,7 @@ namespace Hl7.Fhir.ElementModel
         /// to be able to read the values from the selected node (if a coding, so can get the value and system)
         /// </summary>
         /// <remarks>Will return null if on id, value, url (primitive attribute props in xml)</remarks>
-        public Base FhirValue => Current as Base;
+        public Base FhirValue => Current;
 
         public string Name => Definition.ElementName;
 

@@ -175,6 +175,5 @@ namespace Hl7.Fhir.Model
                 }
             }
         }
-
     }
 }
