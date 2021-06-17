@@ -78,7 +78,7 @@ namespace Hl7.Fhir.Model
         public static bool Matches<T>(this IEnumerable<T> source, IEnumerable<T> pattern)
                     where T : IDeepComparable
         {
-            if (pattern == null) return true;       // if not present in the pattern, there's a match
+            if (pattern == null || !pattern.Any()) return true;       // if not present in the pattern, there's a match
 
             return source.All(src => pattern.Any(patt => Matches(src, patt)));
         }
