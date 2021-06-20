@@ -190,7 +190,8 @@ namespace Hl7.Fhir.Utility
                 {
                     Encoding = new UTF8Encoding(false),
                     OmitXmlDeclaration = true,
-                    NewLineHandling = NewLineHandling.Entitize
+                    NewLineHandling = NewLineHandling.Entitize,
+                    Async = true,
                 };
 
                 using (XmlWriter xw = XmlWriter.Create(stream, settings))
@@ -258,6 +259,8 @@ namespace Hl7.Fhir.Utility
             return doc;
         }
 
+        /// <inheritdoc cref="WriteJsonToStringAsync(Func{JsonWriter, Task}, bool, bool)" />
+        [Obsolete("Use WriteJsonToStringAsync(Func<JsonWriter, Task>, bool, bool) instead.")]
         public static string WriteJsonToString(Action<JsonWriter> serializer, bool pretty = false, bool appendNewLine = false)
         {
             StringBuilder resultBuilder = new StringBuilder();
@@ -273,6 +276,23 @@ namespace Hl7.Fhir.Utility
             }
         }
 
+        public static async Task<string> WriteJsonToStringAsync(Func<JsonWriter, Task> serializer, bool pretty = false, bool appendNewLine = false)
+        {
+            StringBuilder resultBuilder = new StringBuilder();
+
+            // [WMR 20160421] Explicit disposal
+            using (StringWriter sw = new StringWriter(resultBuilder))
+            using (JsonWriter jw = SerializationUtil.CreateJsonTextWriter(sw))
+            {
+                jw.Formatting = pretty ? Newtonsoft.Json.Formatting.Indented : Newtonsoft.Json.Formatting.None;
+                await serializer(jw);
+                await jw.FlushAsync();
+                return appendNewLine ? resultBuilder.AppendLine().ToString() : resultBuilder.ToString();
+            }
+        }
+
+        /// <inheritdoc cref="WriteJsonToBytesAsync(Func{JsonWriter, Task})" />
+        [Obsolete("Use WriteJsonToBytesAsync(Func<JsonWriter, Task>) instead.")]
         public static byte[] WriteJsonToBytes(Action<JsonWriter> serializer)
         {
             // [WMR 20160421] Explicit disposal
@@ -284,6 +304,22 @@ namespace Hl7.Fhir.Utility
                     serializer(jw);
                     jw.Flush();
                     sw.Flush();
+                    return stream.ToArray();
+                }
+            }
+        }
+
+        public static async Task<byte[]> WriteJsonToBytesAsync(Func<JsonWriter, Task> serializer)
+        {
+            // [WMR 20160421] Explicit disposal
+            using (MemoryStream stream = new MemoryStream())
+            {
+                using (var sw = new StreamWriter(stream, new UTF8Encoding(false)))
+                using (JsonWriter jw = SerializationUtil.CreateJsonTextWriter(sw))
+                {
+                    await serializer(jw);
+                    await jw.FlushAsync();
+                    await sw.FlushAsync();
                     return stream.ToArray();
                 }
             }
