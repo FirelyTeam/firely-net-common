@@ -367,6 +367,31 @@ namespace Hl7.Fhir.Model
       }
     }
 
+    public override bool TryGetValue(string key, out object value)
+    {
+      value = key switch
+      {
+        "system" => SystemElement,
+        "value" => ValueElement,
+        "use" => UseElement,
+        "rank" => RankElement,
+        "period" => Period,
+        _ => default
+      };
+
+      return value is not null || base.TryGetValue(key, out value);
+    }
+
+    protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+    {
+      foreach (var kvp in base.GetElementPairs()) yield return kvp;
+      if (SystemElement is not null) yield return new KeyValuePair<string,object>("system",SystemElement);
+      if (ValueElement is not null) yield return new KeyValuePair<string,object>("value",ValueElement);
+      if (UseElement is not null) yield return new KeyValuePair<string,object>("use",UseElement);
+      if (RankElement is not null) yield return new KeyValuePair<string,object>("rank",RankElement);
+      if (Period is not null) yield return new KeyValuePair<string,object>("period",Period);
+    }
+
   }
 
 }

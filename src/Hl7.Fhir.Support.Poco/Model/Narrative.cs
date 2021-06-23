@@ -201,6 +201,25 @@ namespace Hl7.Fhir.Model
                 if (Div != null) yield return new ElementValue("div", new FhirString(Div));
             }
         }
+
+        public override bool TryGetValue(string key, out object value)
+        {
+            value = key switch
+            {
+                "status" => StatusElement,
+                "xhtml:div" => Div,
+                _ => default
+            };
+
+            return value is not null || base.TryGetValue(key, out value);
+        }
+
+        protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+        {
+            foreach (var kvp in base.GetElementPairs()) yield return kvp;
+            if (StatusElement is not null) yield return new KeyValuePair<string, object>("status", StatusElement);
+            if (Div is not null) yield return new KeyValuePair<string, object>("xhtml:div", Div);
+        }
     }
 
 }

@@ -295,6 +295,33 @@ namespace Hl7.Fhir.Model
       }
     }
 
+    public override bool TryGetValue(string key, out object value)
+    {
+      value = key switch
+      {
+        "versionId" => VersionIdElement,
+        "lastUpdated" => LastUpdatedElement,
+        "source" => SourceElement,
+        "profile" => ProfileElement,
+        "security" => Security,
+        "tag" => Tag,
+        _ => default
+      };
+
+      return value is not null || base.TryGetValue(key, out value);
+    }
+
+    protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+    {
+      foreach (var kvp in base.GetElementPairs()) yield return kvp;
+      if (VersionIdElement is not null) yield return new KeyValuePair<string,object>("versionId",VersionIdElement);
+      if (LastUpdatedElement is not null) yield return new KeyValuePair<string,object>("lastUpdated",LastUpdatedElement);
+      if (SourceElement is not null) yield return new KeyValuePair<string,object>("source",SourceElement);
+      if (ProfileElement is not null) yield return new KeyValuePair<string,object>("profile",ProfileElement);
+      if (Security is not null) yield return new KeyValuePair<string,object>("security",Security);
+      if (Tag is not null) yield return new KeyValuePair<string,object>("tag",Tag);
+    }
+
   }
 
 }

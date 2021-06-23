@@ -218,6 +218,29 @@ namespace Hl7.Fhir.Model
         }
       }
 
+      public override bool TryGetValue(string key, out object value)
+      {
+        value = key switch
+        {
+          "name" => NameElement,
+          "value" => Value,
+          "resource" => Resource,
+          "part" => Part,
+          _ => default
+        };
+
+        return value is not null || base.TryGetValue(key, out value);
+      }
+
+      protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+      {
+        foreach (var kvp in base.GetElementPairs()) yield return kvp;
+        if (NameElement is not null) yield return new KeyValuePair<string,object>("name",NameElement);
+        if (Value is not null) yield return new KeyValuePair<string,object>("value",Value);
+        if (Resource is not null) yield return new KeyValuePair<string,object>("resource",Resource);
+        if (Part is not null) yield return new KeyValuePair<string,object>("part",Part);
+      }
+
     }
 
     /// <summary>
@@ -293,6 +316,23 @@ namespace Hl7.Fhir.Model
         foreach (var item in base.NamedChildren) yield return item;
         foreach (var elem in Parameter) { if (elem != null) yield return new ElementValue("parameter", elem); }
       }
+    }
+
+    public override bool TryGetValue(string key, out object value)
+    {
+      value = key switch
+      {
+        "parameter" => Parameter,
+        _ => default
+      };
+
+      return value is not null || base.TryGetValue(key, out value);
+    }
+
+    protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+    {
+      foreach (var kvp in base.GetElementPairs()) yield return kvp;
+      if (Parameter is not null) yield return new KeyValuePair<string,object>("parameter",Parameter);
     }
 
   }

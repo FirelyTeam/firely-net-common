@@ -558,6 +558,33 @@ namespace Hl7.Fhir.Model
         }
       }
 
+      public override bool TryGetValue(string key, out object value)
+      {
+        value = key switch
+        {
+          "severity" => SeverityElement,
+          "code" => CodeElement,
+          "details" => Details,
+          "diagnostics" => DiagnosticsElement,
+          "location" => LocationElement,
+          "expression" => ExpressionElement,
+          _ => default
+        };
+
+        return value is not null || base.TryGetValue(key, out value);
+      }
+
+      protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+      {
+        foreach (var kvp in base.GetElementPairs()) yield return kvp;
+        if (SeverityElement is not null) yield return new KeyValuePair<string,object>("severity",SeverityElement);
+        if (CodeElement is not null) yield return new KeyValuePair<string,object>("code",CodeElement);
+        if (Details is not null) yield return new KeyValuePair<string,object>("details",Details);
+        if (DiagnosticsElement is not null) yield return new KeyValuePair<string,object>("diagnostics",DiagnosticsElement);
+        if (LocationElement is not null) yield return new KeyValuePair<string,object>("location",LocationElement);
+        if (ExpressionElement is not null) yield return new KeyValuePair<string,object>("expression",ExpressionElement);
+      }
+
     }
 
     /// <summary>
@@ -633,6 +660,23 @@ namespace Hl7.Fhir.Model
         foreach (var item in base.NamedChildren) yield return item;
         foreach (var elem in Issue) { if (elem != null) yield return new ElementValue("issue", elem); }
       }
+    }
+
+    public override bool TryGetValue(string key, out object value)
+    {
+      value = key switch
+      {
+        "issue" => Issue,
+        _ => default
+      };
+
+      return value is not null || base.TryGetValue(key, out value);
+    }
+
+    protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+    {
+      foreach (var kvp in base.GetElementPairs()) yield return kvp;
+      if (Issue is not null) yield return new KeyValuePair<string,object>("issue",Issue);
     }
 
   }
