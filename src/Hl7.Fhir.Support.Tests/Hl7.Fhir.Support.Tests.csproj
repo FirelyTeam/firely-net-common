@@ -1,25 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFrameworks>net5.0</TargetFrameworks>
-  </PropertyGroup>
-
+    <PropertyGroup>
+	    <TargetFrameworks>net5.0</TargetFrameworks>
+    </PropertyGroup>
+	
   <Import Project="..\firely-net-common.props" />
   <Import Project="..\firely-net-common.targets" />
+  <Import Project="..\firely-net-common-tests.props" />
 
   <PropertyGroup>
     <AssemblyName>Hl7.Fhir.Support.Tests</AssemblyName>
-    <ContainsTests>true</ContainsTests>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netcoreapp2.1|AnyCPU'">
-    <DefineConstants>DEBUG;TRACE;USE_CODE_GEN</DefineConstants>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='FullDebug|netcoreapp2.1|AnyCPU'">
-    <DefineConstants>DEBUG;TRACE;USE_CODE_GEN</DefineConstants>
-    <Optimize>false</Optimize>
-    <NoWarn>1591</NoWarn>
-  </PropertyGroup>
+  </PropertyGroup> 
 
   <ItemGroup>
     <ProjectReference Include="..\Hl7.Fhir.Serialization\Hl7.Fhir.Serialization.csproj" />
@@ -29,10 +19,6 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' != 'net40'">
-    <PackageReference Include="FluentAssertions" Version="5.10.3" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
-    <PackageReference Include="MSTest.TestAdapter" Version="2.2.4" />
-    <PackageReference Include="MSTest.TestFramework" Version="2.2.4" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="System.AppContext" Version="4.3.0" />
     <PackageReference Include="System.Threading.Tasks.Dataflow" Version="5.0.0" />
@@ -41,13 +27,7 @@
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net45' or '$(TargetFramework)' == 'net40' ">
     <Reference Include="System.ComponentModel.DataAnnotations" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
-    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\lib\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll</HintPath>
-    </Reference>
-  </ItemGroup>
+  </ItemGroup> 
 
   <ItemGroup>
     <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
