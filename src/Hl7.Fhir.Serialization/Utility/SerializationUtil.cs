@@ -53,7 +53,6 @@ namespace Hl7.Fhir.Utility
             => XDocumentFromReaderInternal(WrapXmlReader(reader, ignoreComments));
 
         /// <inheritdoc cref="JObjectFromReaderAsync(JsonReader)" />
-        [Obsolete("Use JObjectFromReaderAsync(JsonReader) instead.")]
         public static JObject JObjectFromReader(JsonReader reader)
         {
             // Override settings, sorry but this is vital
@@ -105,7 +104,6 @@ namespace Hl7.Fhir.Utility
         }
 
         /// <inheritdoc cref="JObjectFromJsonTextAsync(string)" />
-        [Obsolete("Use JObjectFromJsonTextAsync(string) instead.")]
         public static JObject JObjectFromJsonText(string json)
         {
             using (var reader = JsonReaderFromJsonText(json))
@@ -159,7 +157,6 @@ namespace Hl7.Fhir.Utility
         }
 
         /// <inheritdoc cref="WriteXmlToBytesAsync(Func{XmlWriter, Task})" />
-        [Obsolete("Use WriteXmlToBytesAsync(Func<XmlWriter, Task>) instead.")]
         public static byte[] WriteXmlToBytes(Action<XmlWriter> serializer)
         {
             // [WMR 20160421] Explicit disposal
@@ -204,7 +201,6 @@ namespace Hl7.Fhir.Utility
         }
 
         /// <inheritdoc cref="WriteXmlToStringAsync(Func{XmlWriter, Task}, bool, bool)" />
-        [Obsolete("Use WriteXmlToBytesAsync(Func<XmlWriter, Task>, bool, bool) instead.")]
         public static string WriteXmlToString(Action<XmlWriter> serializer, bool pretty = false, bool appendNewLine = false)
         {
             StringBuilder sb = new StringBuilder();
@@ -260,7 +256,6 @@ namespace Hl7.Fhir.Utility
         }
 
         /// <inheritdoc cref="WriteJsonToStringAsync(Func{JsonWriter, Task}, bool, bool)" />
-        [Obsolete("Use WriteJsonToStringAsync(Func<JsonWriter, Task>, bool, bool) instead.")]
         public static string WriteJsonToString(Action<JsonWriter> serializer, bool pretty = false, bool appendNewLine = false)
         {
             StringBuilder resultBuilder = new StringBuilder();
@@ -285,14 +280,13 @@ namespace Hl7.Fhir.Utility
             using (JsonWriter jw = SerializationUtil.CreateJsonTextWriter(sw))
             {
                 jw.Formatting = pretty ? Newtonsoft.Json.Formatting.Indented : Newtonsoft.Json.Formatting.None;
-                await serializer(jw);
-                await jw.FlushAsync();
+                await serializer(jw).ConfigureAwait(false);
+                await jw.FlushAsync().ConfigureAwait(false);
                 return appendNewLine ? resultBuilder.AppendLine().ToString() : resultBuilder.ToString();
             }
         }
 
         /// <inheritdoc cref="WriteJsonToBytesAsync(Func{JsonWriter, Task})" />
-        [Obsolete("Use WriteJsonToBytesAsync(Func<JsonWriter, Task>) instead.")]
         public static byte[] WriteJsonToBytes(Action<JsonWriter> serializer)
         {
             // [WMR 20160421] Explicit disposal
@@ -318,13 +312,14 @@ namespace Hl7.Fhir.Utility
                 using (JsonWriter jw = SerializationUtil.CreateJsonTextWriter(sw))
                 {
                     await serializer(jw);
-                    await jw.FlushAsync();
-                    await sw.FlushAsync();
+                    await jw.FlushAsync().ConfigureAwait(false);
+                    await sw.FlushAsync().ConfigureAwait(false);
                     return stream.ToArray();
                 }
             }
         }
 
+        /// <inheritdoc cref="WriteJsonToDocumentAsync(Func{JsonWriter, Task})" />
         public static JObject WriteJsonToDocument(Action<JsonWriter> serializer)
         {
             // [WMR 20180409] Triggers runtime exception "Can not add Newtonsoft.Json.Linq.JObject to Newtonsoft.Json.Linq.JObject."
@@ -340,7 +335,25 @@ namespace Hl7.Fhir.Utility
                 jw.Flush();
             }
 
-            //return doc;
+            System.Diagnostics.Debug.Assert(doc.Count == 1);
+            return doc.First as JObject;
+        }
+
+        public static async Task<JObject> WriteJsonToDocumentAsync(Func<JsonWriter, Task> serializer)
+        {
+            // [WMR 20180409] Triggers runtime exception "Can not add Newtonsoft.Json.Linq.JObject to Newtonsoft.Json.Linq.JObject."
+            // JsonDomFhirWriter.WriteEndProperty() => _root.WriteTo(jw) => jw.WriteStartObject() => exception...
+            //var doc = new JObject();
+
+            // JConstructor / JArray works, extract and return first child node
+            var doc = new JArray();
+
+            using (JsonWriter jw = doc.CreateWriter())
+            {
+                await serializer(jw).ConfigureAwait(false);
+                await jw.FlushAsync().ConfigureAwait(false);
+            }
+
             System.Diagnostics.Debug.Assert(doc.Count == 1);
             return doc.First as JObject;
         }

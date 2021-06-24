@@ -19,7 +19,6 @@ namespace Hl7.Fhir.Serialization
     public partial class FhirJsonNode
     {
         /// <inheritdoc cref="ReadAsync(JsonReader, string, FhirJsonParsingSettings)" />
-        [Obsolete("Use ReadAsync(JsonReader, string, FhirJsonParsingSettings) instead.")]
         public static ISourceNode Read(JsonReader reader, string rootName = null, FhirJsonParsingSettings settings = null)
         {
             if (reader == null) throw Error.ArgumentNull(nameof(reader));
@@ -37,7 +36,6 @@ namespace Hl7.Fhir.Serialization
         }
 
         /// <inheritdoc cref="ParseAsync(string, string, FhirJsonParsingSettings)" />
-        [Obsolete("Use ParseAsync(string, string, FhirJsonParsingSettings) instead.")]
         public static ISourceNode Parse(string json, string rootName = null, FhirJsonParsingSettings settings = null)
         {
             if (json == null) throw Error.ArgumentNull(nameof(json));

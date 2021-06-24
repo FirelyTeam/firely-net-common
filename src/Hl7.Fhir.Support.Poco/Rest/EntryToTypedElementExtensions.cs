@@ -10,7 +10,6 @@ namespace Hl7.Fhir.Rest
     public static class EntryToTypedEntryExtensions
     {
         /// <inheritdoc cref="ToTypedEntryResponseAsync(EntryResponse, IStructureDefinitionSummaryProvider)" />
-        [Obsolete("Use ToTypedEntryResponseAsync(EntryResponse, IStructureDefinitionSummaryProvider) instead.")]
         public static TypedEntryResponse ToTypedEntryResponse(this EntryResponse response, IStructureDefinitionSummaryProvider provider)
             => TaskHelper.Await(() => ToTypedEntryResponseAsync(response, provider));
 
