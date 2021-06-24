@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	
+	<Import Project="..\firely-net-common.props" />
+	<Import Project="..\firely-net-common.targets" />
+	<Import Project="..\firely-net-common-tests.props" />
+
+	<PropertyGroup>
+		<AssemblyName>Hl7.Fhir.Support.Poco.Tests</AssemblyName>
+	</PropertyGroup>
+
+	<ItemGroup>		
+		<ProjectReference Include="..\Hl7.Fhir.Support.Poco\Hl7.Fhir.Support.Poco.csproj" />		
+		<ProjectReference Include="..\Hl7.Fhir.Support\Hl7.Fhir.Support.csproj" />
+	</ItemGroup>
+</Project>
