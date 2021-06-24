@@ -51,6 +51,9 @@ namespace Hl7.Fhir.Utility
 
         public static XDocument XDocumentFromReader(XmlReader reader, bool ignoreComments = true)
             => XDocumentFromReaderInternal(WrapXmlReader(reader, ignoreComments));
+        
+        public static Task<XDocument> XDocumentFromReaderAsync(XmlReader reader, bool ignoreComments = true)
+            => Task.FromResult(XDocumentFromReaderInternal(WrapXmlReader(reader, ignoreComments, async:true)));
 
         /// <inheritdoc cref="JObjectFromReaderAsync(JsonReader)" />
         public static JObject JObjectFromReader(JsonReader reader)
@@ -122,6 +125,9 @@ namespace Hl7.Fhir.Utility
 
         public static XmlReader XmlReaderFromXmlText(string xml, bool ignoreComments = true)
             => WrapXmlReader(XmlReader.Create(new StringReader(SerializationUtil.SanitizeXml(xml))), ignoreComments);
+        
+        public static Task<XmlReader> XmlReaderFromXmlTextAsync(string xml, bool ignoreComments = true)
+            => Task.FromResult(WrapXmlReader(XmlReader.Create(new StringReader(SerializationUtil.SanitizeXml(xml))), ignoreComments, async:true));
 
         public static JsonReader JsonReaderFromJsonText(string json)
             => JsonReaderFromTextReader(new StringReader(json));
@@ -143,7 +149,7 @@ namespace Hl7.Fhir.Utility
         }
 
 
-        public static XmlReader WrapXmlReader(XmlReader xmlReader, bool ignoreComments = true)
+        public static XmlReader WrapXmlReader(XmlReader xmlReader, bool ignoreComments = true, bool async = false)
         {
             var settings = new XmlReaderSettings
             {
@@ -151,6 +157,7 @@ namespace Hl7.Fhir.Utility
                 IgnoreProcessingInstructions = true,
                 IgnoreWhitespace = true,
                 DtdProcessing = DtdProcessing.Prohibit,
+                Async = async,
             };
 
             return XmlReader.Create(xmlReader, settings);

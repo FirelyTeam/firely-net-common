@@ -56,7 +56,7 @@ namespace Hl7.Fhir.Rest
             {
                return (fhirType == ResourceFormat.Json)
                     ? (await FhirJsonNode.ParseAsync(bodyText).ConfigureAwait(false)).ToTypedElement(provider)
-                    : FhirXmlNode.Parse(bodyText).ToTypedElement(provider);
+                    : (await FhirXmlNode.ParseAsync(bodyText).ConfigureAwait(false)).ToTypedElement(provider);
             }
             catch (FormatException) when (!throwOnFormatException)
             {           
