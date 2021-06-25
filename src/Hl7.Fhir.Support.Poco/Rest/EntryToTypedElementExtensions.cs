@@ -11,7 +11,27 @@ namespace Hl7.Fhir.Rest
     {
         /// <inheritdoc cref="ToTypedEntryResponseAsync(EntryResponse, IStructureDefinitionSummaryProvider)" />
         public static TypedEntryResponse ToTypedEntryResponse(this EntryResponse response, IStructureDefinitionSummaryProvider provider)
-            => TaskHelper.Await(() => ToTypedEntryResponseAsync(response, provider));
+        {
+            var result = new TypedEntryResponse
+            {
+                ContentType = response.ContentType,
+                Body = response.Body,
+                Etag = response.Etag,
+                Headers = response.Headers,
+                LastModified = response.LastModified,
+                Location = response.Location,
+                ResponseUri = response.ResponseUri,
+                Status = response.Status
+            };
+
+            var body = response.GetBodyAsText();
+            if (!string.IsNullOrEmpty(body))
+            {
+                result.TypedElement = parseResource(body, response.ContentType, provider, response.IsSuccessful());
+            }
+
+            return result;
+        }
 
         public static async Task<TypedEntryResponse> ToTypedEntryResponseAsync(this EntryResponse response, IStructureDefinitionSummaryProvider provider)
         {
@@ -36,6 +56,34 @@ namespace Hl7.Fhir.Rest
             return result;
         }
         
+        private static ITypedElement parseResource(string bodyText, string contentType, IStructureDefinitionSummaryProvider provider, bool throwOnFormatException)
+        {
+            if (bodyText == null) throw Error.ArgumentNull(nameof(bodyText));
+            if (provider == null) throw Error.ArgumentNull(nameof(provider));
+
+            var fhirType = ContentType.GetResourceFormatFromContentType(contentType);
+
+            if (fhirType == ResourceFormat.Unknown)
+                throw new UnsupportedBodyTypeException(
+                    "Endpoint returned a body with contentType '{0}', while a valid FHIR xml/json body type was expected. Is this a FHIR endpoint?"
+                        .FormatWith(contentType), contentType, bodyText);
+
+            if (!SerializationUtil.ProbeIsJson(bodyText) && !SerializationUtil.ProbeIsXml(bodyText))
+                throw new UnsupportedBodyTypeException(
+                    "Endpoint said it returned '{0}', but the body is not recognized as either xml or json.".FormatWith(contentType), contentType, bodyText);
+
+            try
+            {
+                return (fhirType == ResourceFormat.Json)
+                    ? FhirJsonNode.Parse(bodyText).ToTypedElement(provider)
+                    : FhirXmlNode.Parse(bodyText).ToTypedElement(provider);
+            }
+            catch (FormatException) when (!throwOnFormatException)
+            {
+                return null;
+            }
+        }
+
         private static async Task<ITypedElement> parseResourceAsync(string bodyText, string contentType, IStructureDefinitionSummaryProvider provider, bool throwOnFormatException)
         {
             if (bodyText == null) throw Error.ArgumentNull(nameof(bodyText));
