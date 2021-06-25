@@ -38,7 +38,7 @@ namespace Hl7.Fhir.Serialization
 
         /// <inheritdoc cref="WriteToAsync(ISourceNode, XmlWriter, FhirXmlSerializationSettings)" />
         public static void WriteTo(this ISourceNode source, XmlWriter destination, FhirXmlSerializationSettings settings = null) => 
-            TaskHelper.Await(() => WriteToAsync(source, destination, settings));
+            new FhirXmlBuilder(settings).Build(source).writeTo(destination);
 
         public static async Task WriteToAsync(this ISourceNode source, XmlWriter destination, FhirXmlSerializationSettings settings = null) =>
             await new FhirXmlBuilder(settings).Build(source).writeToAsync(destination).ConfigureAwait(false);
