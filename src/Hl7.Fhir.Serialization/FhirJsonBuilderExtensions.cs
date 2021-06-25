@@ -56,20 +56,20 @@ namespace Hl7.Fhir.Serialization
             => SerializationUtil.WriteJsonToString(writer => source.WriteTo(writer, settings), settings?.Pretty ?? false, settings?.AppendNewLine ?? false);
 
         public static async Task<string> ToJsonAsync(this ITypedElement source, FhirJsonSerializationSettings settings = null)
-            => await SerializationUtil.WriteJsonToStringAsync(async writer => await source.WriteToAsync(writer, settings), settings?.Pretty ?? false, settings?.AppendNewLine ?? false).ConfigureAwait(false);
+            => await SerializationUtil.WriteJsonToStringAsync(async writer => await source.WriteToAsync(writer, settings).ConfigureAwait(false), settings?.Pretty ?? false, settings?.AppendNewLine ?? false).ConfigureAwait(false);
 
         /// <inheritdoc cref="ToJsonAsync(ISourceNode, FhirJsonSerializationSettings)" />
         public static string ToJson(this ISourceNode source, FhirJsonSerializationSettings settings = null)
             => SerializationUtil.WriteJsonToString(writer => source.WriteTo(writer, settings), settings?.Pretty ?? false, settings?.AppendNewLine ?? false);
 
         public static async Task<string> ToJsonAsync(this ISourceNode source, FhirJsonSerializationSettings settings = null)
-            => await SerializationUtil.WriteJsonToStringAsync(async writer => await source.WriteToAsync(writer, settings), settings?.Pretty ?? false, settings?.AppendNewLine ?? false).ConfigureAwait(false);
+            => await SerializationUtil.WriteJsonToStringAsync(async writer => await source.WriteToAsync(writer, settings).ConfigureAwait(false), settings?.Pretty ?? false, settings?.AppendNewLine ?? false).ConfigureAwait(false);
 
         /// <inheritdoc cref="ToJsonBytesAsync(ITypedElement, FhirJsonSerializationSettings)" />
         public static byte[] ToJsonBytes(this ITypedElement source, FhirJsonSerializationSettings settings = null)
                 => SerializationUtil.WriteJsonToBytes(writer => source.WriteTo(writer, settings));
 
         public static async Task<byte[]> ToJsonBytesAsync(this ITypedElement source, FhirJsonSerializationSettings settings = null)
-                => await SerializationUtil.WriteJsonToBytesAsync(async writer => await source.WriteToAsync(writer, settings)).ConfigureAwait(false);
+                => await SerializationUtil.WriteJsonToBytesAsync(async writer => await source.WriteToAsync(writer, settings).ConfigureAwait(false)).ConfigureAwait(false);
     }
 }
