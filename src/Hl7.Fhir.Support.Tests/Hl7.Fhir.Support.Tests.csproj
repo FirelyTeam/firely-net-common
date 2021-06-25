@@ -1,7 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
-	    <TargetFrameworks>net5.0</TargetFrameworks>
-    </PropertyGroup>
 	
   <Import Project="..\firely-net-common.props" />
   <Import Project="..\firely-net-common.targets" />
