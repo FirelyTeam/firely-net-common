@@ -249,6 +249,7 @@ namespace Hl7.Fhir.Utility
             }
         }
 
+        /// <inheritdoc cref="WriteXmlToDocumentAsync(Func{XmlWriter, Task})" />
         public static XDocument WriteXmlToDocument(Action<XmlWriter> serializer)
         {
             var doc = new XDocument();
@@ -257,6 +258,19 @@ namespace Hl7.Fhir.Utility
             {
                 serializer(xw);
                 xw.Flush();
+            }
+
+            return doc;
+        }
+        
+        public static async Task<XDocument> WriteXmlToDocumentAsync(Func<XmlWriter, Task> serializer)
+        {
+            var doc = new XDocument();
+
+            using (XmlWriter xw = doc.CreateWriter())
+            {
+                await serializer(xw).ConfigureAwait(false);
+                await xw.FlushAsync();
             }
 
             return doc;
