@@ -270,7 +270,7 @@ namespace Hl7.Fhir.Utility
             using (XmlWriter xw = doc.CreateWriter())
             {
                 await serializer(xw).ConfigureAwait(false);
-                await xw.FlushAsync();
+                await xw.FlushAsync().ConfigureAwait(false);
             }
 
             return doc;
