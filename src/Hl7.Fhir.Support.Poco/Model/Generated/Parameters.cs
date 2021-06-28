@@ -225,7 +225,7 @@ namespace Hl7.Fhir.Model
           "name" => NameElement,
           "value" => Value,
           "resource" => Resource,
-          "part" => Part,
+          "part" => Part?.Any() == true ? Part : null,
           _ => default
         };
 
@@ -236,9 +236,9 @@ namespace Hl7.Fhir.Model
       {
         foreach (var kvp in base.GetElementPairs()) yield return kvp;
         if (NameElement is not null) yield return new KeyValuePair<string,object>("name",NameElement);
-        if (Value is not null) yield return new KeyValuePair<string,object>("value",Value);
+        if (Value is not null) yield return new KeyValuePair<string,object>(PocoDictionary.ComposeChoiceElementName("value", Value),Value);
         if (Resource is not null) yield return new KeyValuePair<string,object>("resource",Resource);
-        if (Part is not null) yield return new KeyValuePair<string,object>("part",Part);
+        if (Part?.Any() == true) yield return new KeyValuePair<string,object>("part",Part);
       }
 
     }
@@ -322,7 +322,7 @@ namespace Hl7.Fhir.Model
     {
       value = key switch
       {
-        "parameter" => Parameter,
+        "parameter" => Parameter?.Any() == true ? Parameter : null,
         _ => default
       };
 
@@ -332,7 +332,7 @@ namespace Hl7.Fhir.Model
     protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
     {
       foreach (var kvp in base.GetElementPairs()) yield return kvp;
-      if (Parameter is not null) yield return new KeyValuePair<string,object>("parameter",Parameter);
+      if (Parameter?.Any() == true) yield return new KeyValuePair<string,object>("parameter",Parameter);
     }
 
   }

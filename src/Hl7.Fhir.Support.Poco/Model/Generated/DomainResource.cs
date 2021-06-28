@@ -188,9 +188,9 @@ namespace Hl7.Fhir.Model
       value = key switch
       {
         "text" => Text,
-        "contained" => Contained,
-        "extension" => Extension,
-        "modifierExtension" => ModifierExtension,
+        "contained" => Contained?.Any() == true ? Contained : null,
+        "extension" => Extension?.Any() == true ? Extension : null,
+        "modifierExtension" => ModifierExtension?.Any() == true ? ModifierExtension : null,
         _ => default
       };
 
@@ -201,9 +201,9 @@ namespace Hl7.Fhir.Model
     {
       foreach (var kvp in base.GetElementPairs()) yield return kvp;
       if (Text is not null) yield return new KeyValuePair<string,object>("text",Text);
-      if (Contained is not null) yield return new KeyValuePair<string,object>("contained",Contained);
-      if (Extension is not null) yield return new KeyValuePair<string,object>("extension",Extension);
-      if (ModifierExtension is not null) yield return new KeyValuePair<string,object>("modifierExtension",ModifierExtension);
+      if (Contained?.Any() == true) yield return new KeyValuePair<string,object>("contained",Contained);
+      if (Extension?.Any() == true) yield return new KeyValuePair<string,object>("extension",Extension);
+      if (ModifierExtension?.Any() == true) yield return new KeyValuePair<string,object>("modifierExtension",ModifierExtension);
     }
 
   }

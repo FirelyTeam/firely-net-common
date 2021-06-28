@@ -302,9 +302,9 @@ namespace Hl7.Fhir.Model
         "versionId" => VersionIdElement,
         "lastUpdated" => LastUpdatedElement,
         "source" => SourceElement,
-        "profile" => ProfileElement,
-        "security" => Security,
-        "tag" => Tag,
+        "profile" => ProfileElement?.Any() == true ? ProfileElement : null,
+        "security" => Security?.Any() == true ? Security : null,
+        "tag" => Tag?.Any() == true ? Tag : null,
         _ => default
       };
 
@@ -317,9 +317,9 @@ namespace Hl7.Fhir.Model
       if (VersionIdElement is not null) yield return new KeyValuePair<string,object>("versionId",VersionIdElement);
       if (LastUpdatedElement is not null) yield return new KeyValuePair<string,object>("lastUpdated",LastUpdatedElement);
       if (SourceElement is not null) yield return new KeyValuePair<string,object>("source",SourceElement);
-      if (ProfileElement is not null) yield return new KeyValuePair<string,object>("profile",ProfileElement);
-      if (Security is not null) yield return new KeyValuePair<string,object>("security",Security);
-      if (Tag is not null) yield return new KeyValuePair<string,object>("tag",Tag);
+      if (ProfileElement?.Any() == true) yield return new KeyValuePair<string,object>("profile",ProfileElement);
+      if (Security?.Any() == true) yield return new KeyValuePair<string,object>("security",Security);
+      if (Tag?.Any() == true) yield return new KeyValuePair<string,object>("tag",Tag);
     }
 
   }

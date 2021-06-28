@@ -170,7 +170,7 @@ namespace Hl7.Fhir.Model
     {
       value = key switch
       {
-        "coding" => Coding,
+        "coding" => Coding?.Any() == true ? Coding : null,
         "text" => TextElement,
         _ => default
       };
@@ -181,7 +181,7 @@ namespace Hl7.Fhir.Model
     protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
     {
       foreach (var kvp in base.GetElementPairs()) yield return kvp;
-      if (Coding is not null) yield return new KeyValuePair<string,object>("coding",Coding);
+      if (Coding?.Any() == true) yield return new KeyValuePair<string,object>("coding",Coding);
       if (TextElement is not null) yield return new KeyValuePair<string,object>("text",TextElement);
     }
 

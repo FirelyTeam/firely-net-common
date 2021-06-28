@@ -171,7 +171,7 @@ namespace Hl7.Fhir.Model
       value = key switch
       {
         "name" => NameElement,
-        "telecom" => Telecom,
+        "telecom" => Telecom?.Any() == true ? Telecom : null,
         _ => default
       };
 
@@ -182,7 +182,7 @@ namespace Hl7.Fhir.Model
     {
       foreach (var kvp in base.GetElementPairs()) yield return kvp;
       if (NameElement is not null) yield return new KeyValuePair<string,object>("name",NameElement);
-      if (Telecom is not null) yield return new KeyValuePair<string,object>("telecom",Telecom);
+      if (Telecom?.Any() == true) yield return new KeyValuePair<string,object>("telecom",Telecom);
     }
 
   }

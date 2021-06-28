@@ -129,7 +129,7 @@ namespace Hl7.Fhir.Model
     {
       value = key switch
       {
-        "modifierExtension" => ModifierExtension,
+        "modifierExtension" => ModifierExtension?.Any() == true ? ModifierExtension : null,
         _ => default
       };
 
@@ -139,7 +139,7 @@ namespace Hl7.Fhir.Model
     protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
     {
       foreach (var kvp in base.GetElementPairs()) yield return kvp;
-      if (ModifierExtension is not null) yield return new KeyValuePair<string,object>("modifierExtension",ModifierExtension);
+      if (ModifierExtension?.Any() == true) yield return new KeyValuePair<string,object>("modifierExtension",ModifierExtension);
     }
 
   }

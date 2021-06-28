@@ -32,6 +32,7 @@ using Hl7.Fhir.Specification;
 using Hl7.Fhir.Validation;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
 using SystemPrimitive = Hl7.Fhir.ElementModel.Types;
 
@@ -151,7 +152,7 @@ namespace Hl7.Fhir.Model
         {
             foreach (var kvp in base.GetElementPairs()) yield return kvp;
             if (ElementId is not null) yield return new KeyValuePair<string, object>("id", ElementId);
-            if (Extension is not null) yield return new KeyValuePair<string, object>("extension", Extension);
+            if (Extension?.Any() == true) yield return new KeyValuePair<string, object>("extension", Extension);
         }
     }
 
