@@ -19,10 +19,8 @@ namespace Hl7.Fhir.Tests
     {
         public static void AreSame(string filename, string expected, string actual, List<string> errors)
         {
-#pragma warning disable CS0618 // Type or member is obsolete
             var exp = SerializationUtil.JObjectFromJsonText(expected);
             var act = SerializationUtil.JObjectFromJsonText(actual);
-#pragma warning restore CS0618 // Type or member is obsolete
 
             AreSame(filename, exp, act, errors);
         }
