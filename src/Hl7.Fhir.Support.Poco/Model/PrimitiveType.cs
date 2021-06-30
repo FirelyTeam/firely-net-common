@@ -82,19 +82,18 @@ namespace Hl7.Fhir.Model
             get
             {
                 foreach (var item in base.NamedChildren) yield return item;
-
             }
         }
 
         public override bool TryGetValue(string key, out object value)
         {
-            value = key switch
+            if (key == "value")
             {
-                "value" => ObjectValue,
-                _ => default
-            };
-
-            return value is not null || base.TryGetValue(key, out value);
+                value = ObjectValue;
+                return value is not null;
+            }
+            else
+                return base.TryGetValue(key, out value);
         }
 
         protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()

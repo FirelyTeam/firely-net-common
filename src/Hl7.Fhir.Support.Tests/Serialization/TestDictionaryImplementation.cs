@@ -1,0 +1,132 @@
+﻿/* 
+ * Copyright (c) 2021, Firely (info@fire.ly) and contributors
+ * See the file CONTRIBUTORS for details.
+ * 
+ * This file is licensed under the BSD 3-Clause license
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
+ */
+
+using FluentAssertions;
+using Hl7.Fhir.Model;
+using Hl7.Fhir.Utility;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Hl7.Fhir.Support.Tests.Serialization
+{
+    [TestClass]
+    public class TestDictionaryImplementation
+    {
+        [TestMethod]
+        public void CanEnumerateFhirPrimitive()
+        {
+            IReadOnlyDictionary<string, object> b = new FhirBoolean(null);
+            b.Count.Should().Be(0);
+            b.Any().Should().Be(false);
+
+            b = new FhirBoolean(true);
+            b.Count.Should().Be(1);
+            b.First().Should().BeEquivalentTo(KeyValuePair.Create("value", true));
+
+            var nb = new FhirBoolean(true);
+            nb.SetStringExtension("http://nu.nl", "then");
+            nb.ElementId = "id1";
+            b = nb;
+            b.Count.Should().Be(3);
+            b.Keys.Should().BeEquivalentTo("id", "extension", "value");
+            b.Values.First().Should().BeOfType<string>();
+            b.Values.Skip(1).First().Should().BeAssignableTo<IEnumerable<Extension>>();
+
+            b.ToList()[1].Value.Should().BeAssignableTo<IEnumerable<Extension>>();
+
+            b.TryGetValue("id", out var v).Should().BeTrue();
+            v.Should().Be("id1");
+            b.TryGetValue("idX", out _).Should().BeFalse();
+        }
+
+        [TestMethod]
+        public void CanEnumerateCodedValue()
+        {
+            IReadOnlyDictionary<string, object> b = new Code<Narrative.NarrativeStatus>(Narrative.NarrativeStatus.Additional);
+            b.Should().BeEquivalentTo(KeyValuePair.Create("value", Narrative.NarrativeStatus.Additional.GetLiteral()));
+        }
+
+        [TestMethod]
+        public void CanEnumerateNarrative()
+        {
+            IReadOnlyDictionary<string, object> b = new Narrative("<p>bla</p>");
+            b.Count.Should().Be(2);
+            b.Should().BeEquivalentTo(
+                KeyValuePair.Create("div", new XHtml("<p>bla</p>")),
+                KeyValuePair.Create("status", new Code<Narrative.NarrativeStatus>(Narrative.NarrativeStatus.Generated)));
+        }
+
+        [TestMethod]
+        public void CanEnumerateExtension()
+        {
+            IReadOnlyDictionary<string, object> b = new Extension("http://nu.nl", new FhirBoolean(true));
+            b.Count.Should().Be(2);
+            b.Should().BeEquivalentTo(
+                KeyValuePair.Create("url", "http://nu.nl"),
+                KeyValuePair.Create("valueBoolean", new FhirBoolean(true)));
+
+            b.TryGetValue("valueString", out _).Should().BeFalse();
+            b.TryGetValue("valueBoolean", out var fb).Should().BeTrue();
+            fb.Should().BeOfType<FhirBoolean>().Which.Value.Should().BeTrue();
+
+            b["value"].Should().BeOfType<FhirBoolean>().Which.Value.Should().BeTrue();
+        }
+
+        [TestMethod]
+        public void CanEnumerateResource()
+        {
+            OperationOutcome oo = new OperationOutcome()
+            {
+                Id = "1",
+                Meta = new Meta { Profile = new[] { "http://simplifier.net/profiles/x" }, VersionId = "2" }
+            };
+
+            oo.Issue.Add(
+                new OperationOutcome.IssueComponent()
+                {
+                    Code = OperationOutcome.IssueType.BusinessRule,
+                    Details = new CodeableConcept("http://nu.nl", "then"),
+                    Diagnostics = "This has low level information",
+                    Expression = new[] { "Patient.x" },
+                    Severity = OperationOutcome.IssueSeverity.Error
+                });
+            oo.Id = "1";
+
+            IReadOnlyDictionary<string, object> b = oo;
+            b.Count.Should().Be(4);
+            b["resourceType"].Should().Be("OperationOutcome");
+
+            // Check a backbone
+            IReadOnlyDictionary<string, object> bb = b["issue"].Should().BeOfType<List<OperationOutcome.IssueComponent>>().Subject.Single();
+            bb.Keys.Should().BeEquivalentTo("code", "details", "diagnostics", "expression", "severity");
+        }
+
+        [TestMethod]
+        public void CanEnumerateContainedResources()
+        {
+            IReadOnlyDictionary<string, object> ps = new Parameters
+            {
+                { "aBool", new FhirBoolean(true) },
+                { "aResource", new OperationOutcome() }
+            };
+
+            var paramList = ps["parameter"].Should().BeOfType<List<Parameters.ParameterComponent>>().Subject;
+            paramList.Count.Should().Be(2);
+            paramList[0].Name.Should().Be("aBool");
+            paramList[1].Name.Should().Be("aResource");
+
+            ps = paramList[1];
+            ps.TryGetValue("value", out _).Should().BeFalse();
+            ps.TryGetValue("resource", out var r).Should().BeTrue();
+
+            var resource = ps["resource"].Should().BeAssignableTo<IReadOnlyDictionary<string, object>>().Subject;
+            resource["resourceType"].Should().Be("OperationOutcome");
+        }
+    }
+}

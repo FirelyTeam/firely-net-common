@@ -560,18 +560,30 @@ namespace Hl7.Fhir.Model
 
       public override bool TryGetValue(string key, out object value)
       {
-        value = key switch
+        switch (key)
         {
-          "severity" => SeverityElement,
-          "code" => CodeElement,
-          "details" => Details,
-          "diagnostics" => DiagnosticsElement,
-          "location" => LocationElement?.Any() == true ? LocationElement : null,
-          "expression" => ExpressionElement?.Any() == true ? ExpressionElement : null,
-          _ => default
+          case "severity":
+            value = SeverityElement;
+            return SeverityElement is not null;
+          case "code":
+            value = CodeElement;
+            return CodeElement is not null;
+          case "details":
+            value = Details;
+            return Details is not null;
+          case "diagnostics":
+            value = DiagnosticsElement;
+            return DiagnosticsElement is not null;
+          case "location":
+            value = LocationElement;
+            return LocationElement?.Any() == true;
+          case "expression":
+            value = ExpressionElement;
+            return ExpressionElement?.Any() == true;
+          default:
+            return base.TryGetValue(key, out value);
         };
 
-        return value is not null || base.TryGetValue(key, out value);
       }
 
       protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
@@ -664,13 +676,15 @@ namespace Hl7.Fhir.Model
 
     public override bool TryGetValue(string key, out object value)
     {
-      value = key switch
+      switch (key)
       {
-        "issue" => Issue?.Any() == true ? Issue : null,
-        _ => default
+        case "issue":
+          value = Issue;
+          return Issue?.Any() == true;
+        default:
+          return base.TryGetValue(key, out value);
       };
 
-      return value is not null || base.TryGetValue(key, out value);
     }
 
     protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()

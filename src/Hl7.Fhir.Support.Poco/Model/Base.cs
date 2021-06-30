@@ -36,6 +36,7 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Threading;
 
 namespace Hl7.Fhir.Model
 {
@@ -72,7 +73,7 @@ namespace Hl7.Fhir.Model
         {
             if (other is Base dest)
             {
-                if (_annotations.IsValueCreated)
+                if (_annotations is not null)
                     dest.annotations.AddRange(annotations);
 
                 return dest;
@@ -90,9 +91,9 @@ namespace Hl7.Fhir.Model
 
         #region << Annotations >>
         [NonSerialized]
-        private readonly Lazy<AnnotationList> _annotations = new Lazy<AnnotationList>(() => new AnnotationList());
+        private AnnotationList _annotations = null;
 
-        private AnnotationList annotations { get { return _annotations.Value; } }
+        private AnnotationList annotations => LazyInitializer.EnsureInitialized(ref _annotations);
 
         public IEnumerable<object> Annotations(Type type) => annotations.OfType(type);
 
@@ -139,20 +140,18 @@ namespace Hl7.Fhir.Model
 
         public object this[string key] => TryGetValue(key, out var value) ? value : throw new KeyNotFoundException();
 
+        public bool ContainsKey(string key) => TryGetValue(key, out _);
+
+        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => GetElementPairs().GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => GetElementPairs().GetEnumerator();
+
         public virtual bool TryGetValue(string key, out object value)
         {
             value = default;
             return false;
         }
 
-        protected virtual IEnumerable<KeyValuePair<string, object>> GetElementPairs()
-        {
-            yield break;
-        }
-
-        public bool ContainsKey(string key) => TryGetValue(key, out _);
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => GetElementPairs().GetEnumerator();
-
-        IEnumerator IEnumerable.GetEnumerator() => GetElementPairs().GetEnumerator();
+        protected virtual IEnumerable<KeyValuePair<string, object>> GetElementPairs() => Enumerable.Empty<KeyValuePair<string, object>>();
     }
 }

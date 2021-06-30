@@ -234,20 +234,32 @@ namespace Hl7.Fhir.Model
 
     public override bool TryGetValue(string key, out object value)
     {
-      value = key switch
+      switch (key)
       {
-        "id" => IdElement,
-        "meta" => Meta,
-        "implicitRules" => ImplicitRulesElement,
-        "language" => LanguageElement,
-        _ => default
+        case "resourceType":
+          value = TypeName;
+          return true;
+        case "id":
+          value = IdElement;
+          return IdElement is not null;
+        case "meta":
+          value = Meta;
+          return Meta is not null;
+        case "implicitRules":
+          value = ImplicitRulesElement;
+          return ImplicitRulesElement is not null;
+        case "language":
+          value = LanguageElement;
+          return LanguageElement is not null;
+        default:
+          return base.TryGetValue(key, out value);
       };
 
-      return value is not null || base.TryGetValue(key, out value);
     }
 
     protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
     {
+      yield return new KeyValuePair<string,object>("resourceType",TypeName);
       foreach (var kvp in base.GetElementPairs()) yield return kvp;
       if (IdElement is not null) yield return new KeyValuePair<string,object>("id",IdElement);
       if (Meta is not null) yield return new KeyValuePair<string,object>("meta",Meta);

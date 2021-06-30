@@ -185,16 +185,24 @@ namespace Hl7.Fhir.Model
 
     public override bool TryGetValue(string key, out object value)
     {
-      value = key switch
+      switch (key)
       {
-        "text" => Text,
-        "contained" => Contained?.Any() == true ? Contained : null,
-        "extension" => Extension?.Any() == true ? Extension : null,
-        "modifierExtension" => ModifierExtension?.Any() == true ? ModifierExtension : null,
-        _ => default
+        case "text":
+          value = Text;
+          return Text is not null;
+        case "contained":
+          value = Contained;
+          return Contained?.Any() == true;
+        case "extension":
+          value = Extension;
+          return Extension?.Any() == true;
+        case "modifierExtension":
+          value = ModifierExtension;
+          return ModifierExtension?.Any() == true;
+        default:
+          return base.TryGetValue(key, out value);
       };
 
-      return value is not null || base.TryGetValue(key, out value);
     }
 
     protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()

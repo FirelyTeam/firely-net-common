@@ -153,14 +153,28 @@ namespace Hl7.Fhir.Model
 
     public override bool TryGetValue(string key, out object value)
     {
-      value = key switch
+      switch (key)
       {
-        "code" => Code,
-        "value" => Value,
-        _ => default
+        case "code":
+          value = Code;
+          return Code is not null;
+        case "value":
+          value = Value;
+          return Value is not null;
+        default:
+          return choiceMatches(out value);
       };
 
-      return value is not null || base.TryGetValue(key, out value);
+      bool choiceMatches(out object value)
+      {
+        if (key.StartsWith("value"))
+        {
+          value = Value;
+          return Value is not null && key.EndsWith(Value.TypeName, StringComparison.OrdinalIgnoreCase);
+        }
+        return base.TryGetValue(key, out value);
+      }
+
     }
 
     protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()

@@ -239,16 +239,24 @@ namespace Hl7.Fhir.Model
 
     public override bool TryGetValue(string key, out object value)
     {
-      value = key switch
+      switch (key)
       {
-        "reference" => ReferenceElement,
-        "type" => TypeElement,
-        "identifier" => Identifier,
-        "display" => DisplayElement,
-        _ => default
+        case "reference":
+          value = ReferenceElement;
+          return ReferenceElement is not null;
+        case "type":
+          value = TypeElement;
+          return TypeElement is not null;
+        case "identifier":
+          value = Identifier;
+          return Identifier is not null;
+        case "display":
+          value = DisplayElement;
+          return DisplayElement is not null;
+        default:
+          return base.TryGetValue(key, out value);
       };
 
-      return value is not null || base.TryGetValue(key, out value);
     }
 
     protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
