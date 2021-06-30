@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="$(DefineConstants.Contains('USE_CODE_GEN')) AND '$(TargetFramework)' != 'net45' AND '$(TargetFramework)' != 'net40'">
-    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
-    <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
+    <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
   </ItemGroup>
 </Project>

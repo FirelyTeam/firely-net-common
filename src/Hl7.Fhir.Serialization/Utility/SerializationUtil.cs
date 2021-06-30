@@ -14,6 +14,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -50,7 +51,11 @@ namespace Hl7.Fhir.Utility
 
         public static XDocument XDocumentFromReader(XmlReader reader, bool ignoreComments = true)
             => XDocumentFromReaderInternal(WrapXmlReader(reader, ignoreComments));
+        
+        public static Task<XDocument> XDocumentFromReaderAsync(XmlReader reader, bool ignoreComments = true)
+            => Task.FromResult(XDocumentFromReaderInternal(WrapXmlReader(reader, ignoreComments, async:true)));
 
+        /// <inheritdoc cref="JObjectFromReaderAsync(JsonReader)" />
         public static JObject JObjectFromReader(JsonReader reader)
         {
             // Override settings, sorry but this is vital
@@ -72,6 +77,26 @@ namespace Hl7.Fhir.Utility
             }
         }
 
+        public static async Task<JObject> JObjectFromReaderAsync(JsonReader reader)
+        {
+            // Override settings, sorry but this is vital
+            reader.DateParseHandling = DateParseHandling.None;
+            reader.FloatParseHandling = FloatParseHandling.Decimal;
+
+            try
+            {
+                return await JObject.LoadAsync(reader,
+                    new JsonLoadSettings
+                    {
+                        CommentHandling = CommentHandling.Ignore,
+                        LineInfoHandling = LineInfoHandling.Load
+                    }).ConfigureAwait(false);
+            }
+            catch (JsonReaderException jre)
+            {
+                throw new FormatException($"Invalid Json encountered. Details: " + jre.Message, jre);
+            }
+        }
 
         public static XDocument XDocumentFromXmlText(string xml, bool ignoreComments = true)
         {
@@ -81,6 +106,7 @@ namespace Hl7.Fhir.Utility
             }
         }
 
+        /// <inheritdoc cref="JObjectFromJsonTextAsync(string)" />
         public static JObject JObjectFromJsonText(string json)
         {
             using (var reader = JsonReaderFromJsonText(json))
@@ -89,9 +115,19 @@ namespace Hl7.Fhir.Utility
             }
         }
 
+        public static async Task<JObject> JObjectFromJsonTextAsync(string json)
+        {
+            using (var reader = JsonReaderFromJsonText(json))
+            {
+                return await JObjectFromReaderAsync(reader).ConfigureAwait(false);
+            }
+        }
 
         public static XmlReader XmlReaderFromXmlText(string xml, bool ignoreComments = true)
             => WrapXmlReader(XmlReader.Create(new StringReader(SerializationUtil.SanitizeXml(xml))), ignoreComments);
+        
+        public static Task<XmlReader> XmlReaderFromXmlTextAsync(string xml, bool ignoreComments = true)
+            => Task.FromResult(WrapXmlReader(XmlReader.Create(new StringReader(SerializationUtil.SanitizeXml(xml))), ignoreComments, async:true));
 
         public static JsonReader JsonReaderFromJsonText(string json)
             => JsonReaderFromTextReader(new StringReader(json));
@@ -113,7 +149,7 @@ namespace Hl7.Fhir.Utility
         }
 
 
-        public static XmlReader WrapXmlReader(XmlReader xmlReader, bool ignoreComments = true)
+        public static XmlReader WrapXmlReader(XmlReader xmlReader, bool ignoreComments = true, bool async = false)
         {
             var settings = new XmlReaderSettings
             {
@@ -121,11 +157,13 @@ namespace Hl7.Fhir.Utility
                 IgnoreProcessingInstructions = true,
                 IgnoreWhitespace = true,
                 DtdProcessing = DtdProcessing.Prohibit,
+                Async = async,
             };
 
             return XmlReader.Create(xmlReader, settings);
         }
 
+        /// <inheritdoc cref="WriteXmlToBytesAsync(Func{XmlWriter, Task})" />
         public static byte[] WriteXmlToBytes(Action<XmlWriter> serializer)
         {
             // [WMR 20160421] Explicit disposal
@@ -147,6 +185,29 @@ namespace Hl7.Fhir.Utility
             }
         }
 
+        public static async Task<byte[]> WriteXmlToBytesAsync(Func<XmlWriter, Task> serializer)
+        {
+            // [WMR 20160421] Explicit disposal
+            using (MemoryStream stream = new MemoryStream())
+            {
+                XmlWriterSettings settings = new XmlWriterSettings
+                {
+                    Encoding = new UTF8Encoding(false),
+                    OmitXmlDeclaration = true,
+                    NewLineHandling = NewLineHandling.Entitize,
+                    Async = true,
+                };
+
+                using (XmlWriter xw = XmlWriter.Create(stream, settings))
+                {
+                    await serializer(xw).ConfigureAwait(false);
+                    await xw.FlushAsync().ConfigureAwait(false);
+                    return stream.ToArray();
+                }
+            }
+        }
+
+        /// <inheritdoc cref="WriteXmlToStringAsync(Func{XmlWriter, Task}, bool, bool)" />
         public static string WriteXmlToString(Action<XmlWriter> serializer, bool pretty = false, bool appendNewLine = false)
         {
             StringBuilder sb = new StringBuilder();
@@ -167,6 +228,28 @@ namespace Hl7.Fhir.Utility
             }
         }
 
+        public static async Task<string> WriteXmlToStringAsync(Func<XmlWriter, Task> serializer, bool pretty = false, bool appendNewLine = false)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            XmlWriterSettings settings = new XmlWriterSettings
+            {
+                OmitXmlDeclaration = true,
+                NewLineHandling = NewLineHandling.Entitize,
+                Indent = pretty,
+                Async = true,
+            };
+
+            // [WMR 20160421] Explicit disposal
+            using (XmlWriter xw = XmlWriter.Create(sb, settings))
+            {
+                await serializer(xw).ConfigureAwait(false);
+                await xw.FlushAsync().ConfigureAwait(false);
+                return appendNewLine ? sb.AppendLine().ToString() : sb.ToString();
+            }
+        }
+
+        /// <inheritdoc cref="WriteXmlToDocumentAsync(Func{XmlWriter, Task})" />
         public static XDocument WriteXmlToDocument(Action<XmlWriter> serializer)
         {
             var doc = new XDocument();
@@ -179,7 +262,21 @@ namespace Hl7.Fhir.Utility
 
             return doc;
         }
+        
+        public static async Task<XDocument> WriteXmlToDocumentAsync(Func<XmlWriter, Task> serializer)
+        {
+            var doc = new XDocument();
 
+            using (XmlWriter xw = doc.CreateWriter())
+            {
+                await serializer(xw).ConfigureAwait(false);
+                await xw.FlushAsync().ConfigureAwait(false);
+            }
+
+            return doc;
+        }
+
+        /// <inheritdoc cref="WriteJsonToStringAsync(Func{JsonWriter, Task}, bool, bool)" />
         public static string WriteJsonToString(Action<JsonWriter> serializer, bool pretty = false, bool appendNewLine = false)
         {
             StringBuilder resultBuilder = new StringBuilder();
@@ -195,6 +292,22 @@ namespace Hl7.Fhir.Utility
             }
         }
 
+        public static async Task<string> WriteJsonToStringAsync(Func<JsonWriter, Task> serializer, bool pretty = false, bool appendNewLine = false)
+        {
+            StringBuilder resultBuilder = new StringBuilder();
+
+            // [WMR 20160421] Explicit disposal
+            using (StringWriter sw = new StringWriter(resultBuilder))
+            using (JsonWriter jw = SerializationUtil.CreateJsonTextWriter(sw))
+            {
+                jw.Formatting = pretty ? Newtonsoft.Json.Formatting.Indented : Newtonsoft.Json.Formatting.None;
+                await serializer(jw).ConfigureAwait(false);
+                await jw.FlushAsync().ConfigureAwait(false);
+                return appendNewLine ? resultBuilder.AppendLine().ToString() : resultBuilder.ToString();
+            }
+        }
+
+        /// <inheritdoc cref="WriteJsonToBytesAsync(Func{JsonWriter, Task})" />
         public static byte[] WriteJsonToBytes(Action<JsonWriter> serializer)
         {
             // [WMR 20160421] Explicit disposal
@@ -211,6 +324,23 @@ namespace Hl7.Fhir.Utility
             }
         }
 
+        public static async Task<byte[]> WriteJsonToBytesAsync(Func<JsonWriter, Task> serializer)
+        {
+            // [WMR 20160421] Explicit disposal
+            using (MemoryStream stream = new MemoryStream())
+            {
+                using (var sw = new StreamWriter(stream, new UTF8Encoding(false)))
+                using (JsonWriter jw = SerializationUtil.CreateJsonTextWriter(sw))
+                {
+                    await serializer(jw);
+                    await jw.FlushAsync().ConfigureAwait(false);
+                    await sw.FlushAsync().ConfigureAwait(false);
+                    return stream.ToArray();
+                }
+            }
+        }
+
+        /// <inheritdoc cref="WriteJsonToDocumentAsync(Func{JsonWriter, Task})" />
         public static JObject WriteJsonToDocument(Action<JsonWriter> serializer)
         {
             // [WMR 20180409] Triggers runtime exception "Can not add Newtonsoft.Json.Linq.JObject to Newtonsoft.Json.Linq.JObject."
@@ -226,7 +356,25 @@ namespace Hl7.Fhir.Utility
                 jw.Flush();
             }
 
-            //return doc;
+            System.Diagnostics.Debug.Assert(doc.Count == 1);
+            return doc.First as JObject;
+        }
+
+        public static async Task<JObject> WriteJsonToDocumentAsync(Func<JsonWriter, Task> serializer)
+        {
+            // [WMR 20180409] Triggers runtime exception "Can not add Newtonsoft.Json.Linq.JObject to Newtonsoft.Json.Linq.JObject."
+            // JsonDomFhirWriter.WriteEndProperty() => _root.WriteTo(jw) => jw.WriteStartObject() => exception...
+            //var doc = new JObject();
+
+            // JConstructor / JArray works, extract and return first child node
+            var doc = new JArray();
+
+            using (JsonWriter jw = doc.CreateWriter())
+            {
+                await serializer(jw).ConfigureAwait(false);
+                await jw.FlushAsync().ConfigureAwait(false);
+            }
+
             System.Diagnostics.Debug.Assert(doc.Count == 1);
             return doc.First as JObject;
         }
