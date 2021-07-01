@@ -1,41 +1,44 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net45;netstandard1.6</TargetFrameworks>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0;net45;netstandard1.6</TargetFrameworks>
+	</PropertyGroup>
 
-  <Import Project="..\firely-net-common.props" />
-  <Import Project="..\firely-net-common.targets" />
+	<Import Project="..\firely-net-common.props" />
+	<Import Project="..\firely-net-common.targets" />
 
-  <PropertyGroup>
-    <PackageId>Hl7.Fhir.Serialization</PackageId>
-    <Title>HL7 FHIR serialization functionality</Title>
-    <Summary>Version-independent parsering and serialization functionality</Summary>
-    <Description>Contains general interfaces and classes for working with FHIR data, regardless of FHIR version or POCO's</Description>
-    <PackageTags>HL7;FHIR;xml;json;parsing;serialization;Firely;SDK</PackageTags>
-    <AssemblyName>Hl7.Fhir.Serialization</AssemblyName>
-  </PropertyGroup>
+	<PropertyGroup>
+		<PackageId>Hl7.Fhir.Serialization</PackageId>
+		<Title>HL7 FHIR serialization functionality</Title>
+		<Summary>Version-independent parsering and serialization functionality</Summary>
+		<Description>Contains general interfaces and classes for working with FHIR data, regardless of FHIR version or POCO's</Description>
+		<PackageTags>HL7;FHIR;xml;json;parsing;serialization;Firely;SDK</PackageTags>
+		<AssemblyName>Hl7.Fhir.Serialization</AssemblyName>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="xhtml\fhir-xhtml.xsd">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="xhtml\xml.xsd">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
+	<ItemGroup>
+		<EmbeddedResource Include="xhtml\fhir-xhtml.xsd">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</EmbeddedResource>
+		<EmbeddedResource Include="xhtml\xml.xsd">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</EmbeddedResource>
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Remove="xhtml\fhir-xhtml.xsd" />
-    <None Remove="xhtml\xml.xsd" />
-  </ItemGroup>
+	<ItemGroup>
+		<None Remove="xhtml\fhir-xhtml.xsd" />
+		<None Remove="xhtml\xml.xsd" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Hl7.Fhir.ElementModel\Hl7.Fhir.ElementModel.csproj" />
-    <ProjectReference Include="..\Hl7.Fhir.Support\Hl7.Fhir.Support.csproj" />
-  </ItemGroup>
+	<ItemGroup Condition=" '$(TargetFramework)' == 'net45' or '$(TargetFramework)' == 'netstandard1.6'">
+		<PackageReference Include="System.ValueTuple" Version="4.5.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Hl7.Fhir.ElementModel\Hl7.Fhir.ElementModel.csproj" />
+		<ProjectReference Include="..\Hl7.Fhir.Support\Hl7.Fhir.Support.csproj" />
+	</ItemGroup>
 </Project>
