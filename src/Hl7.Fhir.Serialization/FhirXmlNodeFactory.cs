@@ -7,9 +7,8 @@
  */
 
 using Hl7.Fhir.ElementModel;
-using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
-using System;
+using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -17,6 +16,7 @@ namespace Hl7.Fhir.Serialization
 {
     public partial class FhirXmlNode
     {
+        /// <inheritdoc cref="ReadAsync(XmlReader, FhirXmlParsingSettings)" />
         public static ISourceNode Read(XmlReader reader, FhirXmlParsingSettings settings = null)
         {
             if (reader == null) throw Error.ArgumentNull(nameof(reader));
@@ -24,7 +24,16 @@ namespace Hl7.Fhir.Serialization
             var doc = SerializationUtil.XDocumentFromReader(reader, ignoreComments: false);
             return new FhirXmlNode(doc.Root, settings);
         }
+        
+        public static async Task<ISourceNode> ReadAsync(XmlReader reader, FhirXmlParsingSettings settings = null)
+        {
+            if (reader == null) throw Error.ArgumentNull(nameof(reader));
 
+            var doc = await SerializationUtil.XDocumentFromReaderAsync(reader, ignoreComments: false).ConfigureAwait(false);
+            return new FhirXmlNode(doc.Root, settings);
+        }
+
+        /// <inheritdoc cref="ParseAsync(string, FhirXmlParsingSettings)" />
         public static ISourceNode Parse(string xml, FhirXmlParsingSettings settings = null)
         {
             if (xml == null) throw Error.ArgumentNull(nameof(xml));
@@ -32,6 +41,16 @@ namespace Hl7.Fhir.Serialization
             using (var reader = SerializationUtil.XmlReaderFromXmlText(xml, ignoreComments: false))
             {
                 return Read(reader, settings);
+            }
+        }
+        
+        public static async Task<ISourceNode> ParseAsync(string xml, FhirXmlParsingSettings settings = null)
+        {
+            if (xml == null) throw Error.ArgumentNull(nameof(xml));
+
+            using (var reader = await SerializationUtil.XmlReaderFromXmlTextAsync(xml, ignoreComments: false))
+            {
+                return await ReadAsync(reader, settings).ConfigureAwait(false);
             }
         }
 
