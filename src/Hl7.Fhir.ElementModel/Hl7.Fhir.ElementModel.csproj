@@ -15,11 +15,7 @@
 		<AssemblyName>Hl7.Fhir.ElementModel</AssemblyName>
 	</PropertyGroup>
 
-	<ItemGroup Condition=" '$(TargetFramework)' == 'net45'">
-		<PackageReference Include="System.ValueTuple" Version="4.5.0" />
-	</ItemGroup>
-
-	<ItemGroup Condition=" '$(TargetFramework)' == 'netstandard16'">
+	<ItemGroup Condition=" '$(TargetFramework)' == 'net45' or '$(TargetFramework)' == 'netstandard16'">
 		<PackageReference Include="System.ValueTuple" Version="4.5.0" />
 	</ItemGroup>
 
