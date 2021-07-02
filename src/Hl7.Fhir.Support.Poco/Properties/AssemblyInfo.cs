@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 [assembly: CLSCompliant(true)]
 [assembly: FhirModelAssembly]
 
-#if DEBUG
+#if DEBUG || PROFILE_RELEASE
 [assembly: InternalsVisibleTo("Hl7.Fhir.Core.Tests")]
 [assembly: InternalsVisibleTo("Hl7.Fhir.STU3.Core")]
 [assembly: InternalsVisibleTo("Hl7.Fhir.R4.Core")]

@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 [assembly: CLSCompliant(true)]
 
-#if DEBUG
+#if DEBUG || PROFILE_RELEASE
 [assembly: InternalsVisibleTo("Hl7.FhirPath.Tests")]
 [assembly: InternalsVisibleTo("Hl7.FhirPath.R4.Tests")]
 [assembly: InternalsVisibleTo("Hl7.Fhir.Core.Tests")]
