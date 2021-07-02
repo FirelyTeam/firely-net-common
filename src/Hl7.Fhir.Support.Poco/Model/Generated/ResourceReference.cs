@@ -268,6 +268,15 @@ namespace Hl7.Fhir.Model
       if (DisplayElement is not null) yield return new KeyValuePair<string,object>("display",DisplayElement);
     }
 
+    public override void EnumerateElements(Action<string,object> callback)
+    {
+      base.EnumerateElements(callback);
+      if (ReferenceElement is not null) callback("reference",ReferenceElement);
+      if (TypeElement is not null) callback("type",TypeElement);
+      if (Identifier is not null) callback("identifier",Identifier);
+      if (DisplayElement is not null) callback("display",DisplayElement);
+    }
+
   }
 
 }

@@ -242,6 +242,16 @@ namespace Hl7.Fhir.Model
             // can recognize this "primitive" and render it appropriately.
             if (Div is not null) yield return new KeyValuePair<string, object>("div", new XHtml(Div));
         }
+
+        public override void EnumerateElements(Action<string, object> callback)
+        {
+            base.EnumerateElements(callback);
+            if (StatusElement is not null) callback("status", StatusElement);
+
+            // Exception: wrap this value with XHtml so the XML serializer
+            // can recognize this "primitive" and render it appropriately.
+            if (Div is not null) callback("div", new XHtml(Div));
+        }
     }
 
 }

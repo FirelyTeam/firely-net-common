@@ -402,6 +402,16 @@ namespace Hl7.Fhir.Model
       if (Period is not null) yield return new KeyValuePair<string,object>("period",Period);
     }
 
+    public override void EnumerateElements(Action<string,object> callback)
+    {
+      base.EnumerateElements(callback);
+      if (SystemElement is not null) callback("system",SystemElement);
+      if (ValueElement is not null) callback("value",ValueElement);
+      if (UseElement is not null) callback("use",UseElement);
+      if (RankElement is not null) callback("rank",RankElement);
+      if (Period is not null) callback("period",Period);
+    }
+
   }
 
 }

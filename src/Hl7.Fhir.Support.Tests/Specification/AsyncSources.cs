@@ -1,10 +1,8 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Hl7.Fhir.Specification.Source;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Linq;
-using Hl7.Fhir.Utility;
-using Hl7.Fhir.Specification.Source;
-using Hl7.Fhir.Model;
 using System.Threading.Tasks;
+using M = Hl7.Fhir.Model;
 
 namespace Hl7.Fhir.Utility.Tests
 {
@@ -33,7 +31,7 @@ namespace Hl7.Fhir.Utility.Tests
         public async Task TestAsyncSyncMultiResolver()
         {
             var (sr, ar, sar) = (new SyncResolver(), new AsyncResolver(), new SyncAsyncResolver());
-            var multi = new MultiResolver(sr,ar,sar);
+            var multi = new MultiResolver(sr, ar, sar);
 
             // calling *any* kind of resolve will involve all child resolvers, since they all return null.
             _ = await multi.ResolveByUriAsync("");
@@ -88,7 +86,7 @@ namespace Hl7.Fhir.Utility.Tests
                 Assert.AreEqual(1, result.Data);
             }
         }
-      
+
     }
 
 
@@ -96,22 +94,22 @@ namespace Hl7.Fhir.Utility.Tests
     {
         public int ByCanonical;
         public int ByUri;
-        public Resource Data;
+        public M.Resource Data;
 
         public SyncResolver() { }
 
-        public SyncResolver(Resource data)
+        public SyncResolver(M.Resource data)
         {
             Data = data;
         }
 
-        public Resource ResolveByCanonicalUri(string uri)
+        public M.Resource ResolveByCanonicalUri(string uri)
         {
             ByCanonical += 1;
             return Data;
         }
 
-        public Resource ResolveByUri(string uri)
+        public M.Resource ResolveByUri(string uri)
         {
             ByUri += 1;
             return Data;
@@ -122,23 +120,23 @@ namespace Hl7.Fhir.Utility.Tests
     {
         public int ByCanonicalAsync;
         public int ByUriAsync;
-        public Resource Data;
+        public M.Resource Data;
 
         public AsyncResolver() { }
 
-        public AsyncResolver(Resource data)
+        public AsyncResolver(M.Resource data)
         {
             Data = data;
         }
 
 
-        public Task<Resource> ResolveByCanonicalUriAsync(string uri)
+        public Task<M.Resource> ResolveByCanonicalUriAsync(string uri)
         {
             ByCanonicalAsync += 1;
             return Task.FromResult(Data);
         }
 
-        public Task<Resource> ResolveByUriAsync(string uri)
+        public Task<M.Resource> ResolveByUriAsync(string uri)
         {
             ByUriAsync += 1;
             return Task.FromResult(Data);
@@ -153,44 +151,44 @@ namespace Hl7.Fhir.Utility.Tests
         public int ByCanonicalAsync;
         public int ByUriAsync;
 
-        public Resource Data;
+        public M.Resource Data;
 
         public SyncAsyncResolver() { }
 
-        public SyncAsyncResolver(Resource data)
+        public SyncAsyncResolver(M.Resource data)
         {
             Data = data;
         }
 
-        public Resource ResolveByCanonicalUri(string uri)
+        public M.Resource ResolveByCanonicalUri(string uri)
         {
             ByCanonical += 1;
             return Data;
         }
 
-        public Resource ResolveByUri(string uri)
+        public M.Resource ResolveByUri(string uri)
         {
             ByUri += 1;
             return Data;
         }
 
-        public Task<Resource> ResolveByCanonicalUriAsync(string uri)
+        public Task<M.Resource> ResolveByCanonicalUriAsync(string uri)
         {
             ByCanonicalAsync += 1;
             return Task.FromResult(Data);
         }
 
-        public Task<Resource> ResolveByUriAsync(string uri)
+        public Task<M.Resource> ResolveByUriAsync(string uri)
         {
             ByUriAsync += 1;
             return Task.FromResult(Data);
         }
     }
 
-    internal class AResource : Resource
+    internal class AResource : M.Resource
     {
         public int Data;
 
-        public override IDeepCopyable DeepCopy() => throw new NotImplementedException();
+        public override M.IDeepCopyable DeepCopy() => throw new NotImplementedException();
     }
 }

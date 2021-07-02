@@ -101,5 +101,14 @@ namespace Hl7.Fhir.Model
             foreach (var kvp in base.GetElementPairs()) yield return kvp;
             if (ObjectValue is not null) yield return new KeyValuePair<string, object>("value", ObjectValue);
         }
+
+        public override void EnumerateElements(Action<string, object> callback)
+        {
+            base.EnumerateElements(callback);
+            if (ObjectValue is not null) callback("value", ObjectValue);
+        }
+
+        public bool HasElements => ElementId is not null || Extension?.Any() == true;
     }
+
 }

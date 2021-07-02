@@ -267,6 +267,16 @@ namespace Hl7.Fhir.Model
       if (LanguageElement is not null) yield return new KeyValuePair<string,object>("language",LanguageElement);
     }
 
+    public override void EnumerateElements(Action<string,object> callback)
+    {
+      callback("resourceType",TypeName);
+      base.EnumerateElements(callback);
+      if (IdElement is not null) callback("id",IdElement);
+      if (Meta is not null) callback("meta",Meta);
+      if (ImplicitRulesElement is not null) callback("implicitRules",ImplicitRulesElement);
+      if (LanguageElement is not null) callback("language",LanguageElement);
+    }
+
   }
 
 }

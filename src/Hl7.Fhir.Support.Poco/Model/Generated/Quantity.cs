@@ -367,6 +367,16 @@ namespace Hl7.Fhir.Model
       if (CodeElement is not null) yield return new KeyValuePair<string,object>("code",CodeElement);
     }
 
+    public override void EnumerateElements(Action<string,object> callback)
+    {
+      base.EnumerateElements(callback);
+      if (ValueElement is not null) callback("value",ValueElement);
+      if (ComparatorElement is not null) callback("comparator",ComparatorElement);
+      if (UnitElement is not null) callback("unit",UnitElement);
+      if (SystemElement is not null) callback("system",SystemElement);
+      if (CodeElement is not null) callback("code",CodeElement);
+    }
+
   }
 
 }

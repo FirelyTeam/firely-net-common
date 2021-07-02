@@ -597,6 +597,17 @@ namespace Hl7.Fhir.Model
         if (ExpressionElement?.Any() == true) yield return new KeyValuePair<string,object>("expression",ExpressionElement);
       }
 
+      public override void EnumerateElements(Action<string,object> callback)
+      {
+        base.EnumerateElements(callback);
+        if (SeverityElement is not null) callback("severity",SeverityElement);
+        if (CodeElement is not null) callback("code",CodeElement);
+        if (Details is not null) callback("details",Details);
+        if (DiagnosticsElement is not null) callback("diagnostics",DiagnosticsElement);
+        if (LocationElement?.Any() == true) callback("location",LocationElement);
+        if (ExpressionElement?.Any() == true) callback("expression",ExpressionElement);
+      }
+
     }
 
     /// <summary>
@@ -691,6 +702,12 @@ namespace Hl7.Fhir.Model
     {
       foreach (var kvp in base.GetElementPairs()) yield return kvp;
       if (Issue?.Any() == true) yield return new KeyValuePair<string,object>("issue",Issue);
+    }
+
+    public override void EnumerateElements(Action<string,object> callback)
+    {
+      base.EnumerateElements(callback);
+      if (Issue?.Any() == true) callback("issue",Issue);
     }
 
   }

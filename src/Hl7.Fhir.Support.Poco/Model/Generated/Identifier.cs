@@ -353,6 +353,17 @@ namespace Hl7.Fhir.Model
       if (Assigner is not null) yield return new KeyValuePair<string,object>("assigner",Assigner);
     }
 
+    public override void EnumerateElements(Action<string,object> callback)
+    {
+      base.EnumerateElements(callback);
+      if (UseElement is not null) callback("use",UseElement);
+      if (Type is not null) callback("type",Type);
+      if (SystemElement is not null) callback("system",SystemElement);
+      if (ValueElement is not null) callback("value",ValueElement);
+      if (Period is not null) callback("period",Period);
+      if (Assigner is not null) callback("assigner",Assigner);
+    }
+
   }
 
 }

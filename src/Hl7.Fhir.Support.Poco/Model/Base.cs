@@ -153,5 +153,10 @@ namespace Hl7.Fhir.Model
         }
 
         protected virtual IEnumerable<KeyValuePair<string, object>> GetElementPairs() => Enumerable.Empty<KeyValuePair<string, object>>();
+
+        public virtual void EnumerateElements(Action<string, object> callback)
+        {
+            // no elements to call back on
+        }
     }
 }

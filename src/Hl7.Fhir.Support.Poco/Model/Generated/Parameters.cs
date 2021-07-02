@@ -259,6 +259,15 @@ namespace Hl7.Fhir.Model
         if (Part?.Any() == true) yield return new KeyValuePair<string,object>("part",Part);
       }
 
+      public override void EnumerateElements(Action<string,object> callback)
+      {
+        base.EnumerateElements(callback);
+        if (NameElement is not null) callback("name",NameElement);
+        if (Value is not null) callback(PocoDictionary.ComposeChoiceElementName("value", Value),Value);
+        if (Resource is not null) callback("resource",Resource);
+        if (Part?.Any() == true) callback("part",Part);
+      }
+
     }
 
     /// <summary>
@@ -353,6 +362,12 @@ namespace Hl7.Fhir.Model
     {
       foreach (var kvp in base.GetElementPairs()) yield return kvp;
       if (Parameter?.Any() == true) yield return new KeyValuePair<string,object>("parameter",Parameter);
+    }
+
+    public override void EnumerateElements(Action<string,object> callback)
+    {
+      base.EnumerateElements(callback);
+      if (Parameter?.Any() == true) callback("parameter",Parameter);
     }
 
   }

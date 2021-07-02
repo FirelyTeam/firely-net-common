@@ -157,6 +157,13 @@ namespace Hl7.Fhir.Model
             if (ElementId is not null) yield return new KeyValuePair<string, object>("id", ElementId);
             if (Extension?.Any() == true) yield return new KeyValuePair<string, object>("extension", Extension);
         }
+
+        public override void EnumerateElements(Action<string, object> callback)
+        {
+            base.EnumerateElements(callback);
+            if (ElementId is not null) callback("id", ElementId);
+            if (Extension?.Any() == true) callback("extension", Extension);
+        }
     }
 
 }

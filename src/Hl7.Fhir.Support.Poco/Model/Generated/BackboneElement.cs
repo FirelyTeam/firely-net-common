@@ -144,6 +144,12 @@ namespace Hl7.Fhir.Model
       if (ModifierExtension?.Any() == true) yield return new KeyValuePair<string,object>("modifierExtension",ModifierExtension);
     }
 
+    public override void EnumerateElements(Action<string,object> callback)
+    {
+      base.EnumerateElements(callback);
+      if (ModifierExtension?.Any() == true) callback("modifierExtension",ModifierExtension);
+    }
+
   }
 
 }

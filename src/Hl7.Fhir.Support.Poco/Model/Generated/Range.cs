@@ -170,6 +170,13 @@ namespace Hl7.Fhir.Model
       if (High is not null) yield return new KeyValuePair<string,object>("high",High);
     }
 
+    public override void EnumerateElements(Action<string,object> callback)
+    {
+      base.EnumerateElements(callback);
+      if (Low is not null) callback("low",Low);
+      if (High is not null) callback("high",High);
+    }
+
   }
 
 }

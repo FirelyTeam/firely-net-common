@@ -334,6 +334,17 @@ namespace Hl7.Fhir.Model
       if (Tag?.Any() == true) yield return new KeyValuePair<string,object>("tag",Tag);
     }
 
+    public override void EnumerateElements(Action<string,object> callback)
+    {
+      base.EnumerateElements(callback);
+      if (VersionIdElement is not null) callback("versionId",VersionIdElement);
+      if (LastUpdatedElement is not null) callback("lastUpdated",LastUpdatedElement);
+      if (SourceElement is not null) callback("source",SourceElement);
+      if (ProfileElement?.Any() == true) callback("profile",ProfileElement);
+      if (Security?.Any() == true) callback("security",Security);
+      if (Tag?.Any() == true) callback("tag",Tag);
+    }
+
   }
 
 }

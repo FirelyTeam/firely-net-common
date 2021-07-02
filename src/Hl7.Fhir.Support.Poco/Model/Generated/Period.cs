@@ -206,6 +206,13 @@ namespace Hl7.Fhir.Model
       if (EndElement is not null) yield return new KeyValuePair<string,object>("end",EndElement);
     }
 
+    public override void EnumerateElements(Action<string,object> callback)
+    {
+      base.EnumerateElements(callback);
+      if (StartElement is not null) callback("start",StartElement);
+      if (EndElement is not null) callback("end",EndElement);
+    }
+
   }
 
 }

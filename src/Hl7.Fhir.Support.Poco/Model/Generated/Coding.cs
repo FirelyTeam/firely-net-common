@@ -326,6 +326,16 @@ namespace Hl7.Fhir.Model
       if (UserSelectedElement is not null) yield return new KeyValuePair<string,object>("userSelected",UserSelectedElement);
     }
 
+    public override void EnumerateElements(Action<string,object> callback)
+    {
+      base.EnumerateElements(callback);
+      if (SystemElement is not null) callback("system",SystemElement);
+      if (VersionElement is not null) callback("version",VersionElement);
+      if (CodeElement is not null) callback("code",CodeElement);
+      if (DisplayElement is not null) callback("display",DisplayElement);
+      if (UserSelectedElement is not null) callback("userSelected",UserSelectedElement);
+    }
+
   }
 
 }

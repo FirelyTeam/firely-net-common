@@ -189,6 +189,13 @@ namespace Hl7.Fhir.Model
       if (Telecom?.Any() == true) yield return new KeyValuePair<string,object>("telecom",Telecom);
     }
 
+    public override void EnumerateElements(Action<string,object> callback)
+    {
+      base.EnumerateElements(callback);
+      if (NameElement is not null) callback("name",NameElement);
+      if (Telecom?.Any() == true) callback("telecom",Telecom);
+    }
+
   }
 
 }

@@ -184,6 +184,13 @@ namespace Hl7.Fhir.Model
       if (Value is not null) yield return new KeyValuePair<string,object>(PocoDictionary.ComposeChoiceElementName("value", Value),Value);
     }
 
+    public override void EnumerateElements(Action<string,object> callback)
+    {
+      base.EnumerateElements(callback);
+      if (Code is not null) callback("code",Code);
+      if (Value is not null) callback(PocoDictionary.ComposeChoiceElementName("value", Value),Value);
+    }
+
   }
 
 }

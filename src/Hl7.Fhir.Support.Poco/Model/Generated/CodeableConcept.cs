@@ -189,6 +189,13 @@ namespace Hl7.Fhir.Model
       if (TextElement is not null) yield return new KeyValuePair<string,object>("text",TextElement);
     }
 
+    public override void EnumerateElements(Action<string,object> callback)
+    {
+      base.EnumerateElements(callback);
+      if (Coding?.Any() == true) callback("coding",Coding);
+      if (TextElement is not null) callback("text",TextElement);
+    }
+
   }
 
 }

@@ -78,14 +78,18 @@ namespace Hl7.Fhir.Support.Tests.Serialization
             b["value"].Should().BeOfType<FhirBoolean>().Which.Value.Should().BeTrue();
         }
 
-        [TestMethod]
-        public void CanEnumerateResource()
+        private OperationOutcome setupOutcome()
         {
             OperationOutcome oo = new OperationOutcome()
             {
                 Id = "1",
                 Meta = new Meta { Profile = new[] { "http://simplifier.net/profiles/x" }, VersionId = "2" }
             };
+
+            var fu = new FhirUri();
+            fu.SetStringExtension("http://ha.nl", "hi");
+            oo.Meta.ProfileElement.Add(fu);
+
 
             oo.Issue.Add(
                 new OperationOutcome.IssueComponent()
@@ -98,7 +102,13 @@ namespace Hl7.Fhir.Support.Tests.Serialization
                 });
             oo.Id = "1";
 
-            IReadOnlyDictionary<string, object> b = oo;
+            return oo;
+        }
+
+        [TestMethod]
+        public void CanEnumerateResource()
+        {
+            IReadOnlyDictionary<string, object> b = setupOutcome();
             b.Count.Should().Be(4);
             b["resourceType"].Should().Be("OperationOutcome");
 
