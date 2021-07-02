@@ -33,6 +33,87 @@ namespace Hl7.Fhir.Serialization
                  _ => true
              };
 
+        //// TODO: calling function should have figured out how to create the target, i.e. at root by finding the resourceType or simply
+        //// because the caller of the SDK passes in an instance since the type is known beforehand (i.e. when parsing a subtree).
+        //// TODO: Assumes the reader is configured to either skip or refuse comments:
+        ////             reader.CurrentState.Options.CommentHandling is Skip or Disallow
+        //public static void DeserializeObject(Base target, ref Utf8JsonReader reader)
+        //{
+        //    // Are these json exceptions of some kind of our own (existing) format/type exceptions?
+        //    // There's formally nothing wrong with the json, so throwing JsonException seems wrong.
+        //    // I think these need to be StructuralTypeExceptions - to align with the current parser.
+        //    // And probably use the same error text too.
+        //    if (reader.TokenType != JsonTokenType.StartObject)
+        //        throw new JsonException($"Expected start of object since '{target.TypeName}' is not a primitive, but found {reader.TokenType}.");
+
+        //    // read past start of object into first property or end of object
+        //    reader.Read();
+
+        //    while (reader.TokenType != JsonTokenType.EndObject)
+        //    {
+        //        var propertyName = reader.GetString()!;
+        //        var elementName = propertyName[0] == '_' ? propertyName.Substring(1) : propertyName;
+
+        //        // TODO: call overload with "createMemberIfMissing: true"
+        //        if (!target.TryGetValue(elementName, out var memberTarget))
+        //            throw new JsonException($"Unknown property {propertyName}.");
+
+        //        // read past the property name into the value
+        //        reader.Read();
+
+        //        deserializeMember(memberTarget, propertyName, ref reader);
+        //    }
+
+        //    // read past object
+        //    reader.Read();
+        //}
+
+
+
+        // Reads the content of a json property. Expects the reader to be positioned on the property value.
+        // Reader will be on the first token after the property value upon return.
+        //private static void deserializeMember(object memberTarget, string propertyName, ref Utf8JsonReader reader)
+        //{
+        //    if (memberTarget is PrimitiveType pt)
+        //        DeserializeFhirPrimitive(memberTarget, propertyName, reader);
+        //    else if (memberTarget is IEnumerable<PrimitiveType> pts)
+        //        DeserializeFhirPrimitiveList(memberTarget, propertyName, reader);
+        //    else
+        //    {
+        //        if (memberTarget is ICollection && !(memberTarget is byte[]))
+        //        {
+        //            if (reader.TokenType != JsonTokenType.StartArray)
+        //                // TODO: need the element name here
+        //                throw new JsonException($"Expected start of array since '{propertyName}' is a repeating element.");
+
+        //            // Read past start of array
+        //            reader.Read();
+
+        //            while (reader.TokenType != JsonTokenType.EndArray)
+        //            {
+        //                // TODO: cannot "set" primitive values - need some way to call setter
+        //                deserializeMemberValue(memberTarget, ref reader);
+        //            }
+
+        //            // Read past end of array
+        //            reader.Read();
+        //        }
+        //        else
+        //            deserializeMemberValue(memberTarget, ref reader);
+        //    }
+        //}
+
+        //private static void DeserializeFhirPrimitiveList(object memberTarget, string propertyName, Utf8JsonReader reader) => throw new NotImplementedException();
+        //private static void DeserializeFhirPrimitive(object memberTarget, string propertyName, Utf8JsonReader reader) => throw new NotImplementedException();
+
+        //private static void deserializeMemberValue(object target, ref Utf8JsonReader reader)
+        //{
+        //    if (target is Base complex)
+        //        DeserializeObject(complex, ref reader);
+        //    else
+        //        DeserializePrimitiveValue(ref reader);
+        //}
+
         public static void SerializeObject(IEnumerable<KeyValuePair<string, object>> members, Utf8JsonWriter writer)
         {
             writer.WriteStartObject();
@@ -181,6 +262,7 @@ namespace Hl7.Fhir.Serialization
                 SerializeObject(children, writer);
             }
         }
+
 
         public static void SerializePrimitiveValue(object value, Utf8JsonWriter writer)
         {
