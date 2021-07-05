@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>netstandard2.0;net45;netstandard1.6</TargetFrameworks>
+		<TargetFrameworks>netstandard2.1;net45;netstandard1.6</TargetFrameworks>
 	</PropertyGroup>
 
 	<Import Project="..\firely-net-common.props" />
@@ -19,7 +19,7 @@
 		<PackageReference Include="System.ValueTuple" Version="4.5.0" />
 	</ItemGroup>
 
-	<ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.6' or '$(TargetFramework)' == 'netstandard2.0'">
+	<ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.6' or '$(TargetFramework)' == 'netstandard2.1'">
 		<PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
 	</ItemGroup>
 </Project>
