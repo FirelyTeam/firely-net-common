@@ -16,10 +16,6 @@
 		<AssemblyName>Hl7.Fhir.Support.Poco</AssemblyName>
 	</PropertyGroup>
 
-	<ItemGroup Condition=" '$(TargetFramework)' == 'net45' or '$(TargetFramework)' == 'netstandard1.6'">
-		<PackageReference Include="System.ValueTuple" Version="4.5.0" />
-	</ItemGroup>
-
 	<ItemGroup Condition=" '$(TargetFramework)' != 'net45'">
 		<PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
 	</ItemGroup>

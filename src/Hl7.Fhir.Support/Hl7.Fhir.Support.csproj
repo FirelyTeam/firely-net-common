@@ -15,10 +15,6 @@
 		<AssemblyName>Hl7.Fhir.Support</AssemblyName>
 	</PropertyGroup>
 
-	<ItemGroup Condition=" '$(TargetFramework)' == 'net45' or '$(TargetFramework)' == 'netstandard1.6'">
-		<PackageReference Include="System.ValueTuple" Version="4.5.0" />
-	</ItemGroup>
-
 	<ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.6' or '$(TargetFramework)' == 'netstandard2.1'">
 		<PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
 	</ItemGroup>
