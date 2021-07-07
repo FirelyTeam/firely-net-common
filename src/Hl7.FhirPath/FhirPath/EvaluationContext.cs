@@ -26,8 +26,10 @@ namespace Hl7.FhirPath
         /// <param name="rootResource">The data that will be represented by <c>%rootResource</c>.</param>
         public EvaluationContext(ITypedElement resource, ITypedElement rootResource)
         {
-            Resource = resource;
-            RootResource = rootResource ?? resource;
+            Resource = (resource is ScopedNode sn) ? toNearestParentResource(sn) : resource;
+            RootResource = (rootResource is null && Resource is ScopedNode node) ? node.ResourceContext : resource;
+
+            static ITypedElement toNearestParentResource(ScopedNode node) => node.AtResource ? node : node.ParentResource;
         }
 
         /// <summary>
