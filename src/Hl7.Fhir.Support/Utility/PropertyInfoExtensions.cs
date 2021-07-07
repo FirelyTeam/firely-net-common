@@ -9,13 +9,54 @@
 #if USE_CODE_GEN
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+
+#nullable enable
 
 namespace Hl7.Fhir.Utility
 {
     public static class PropertyInfoExtensions
     {
+        public static Func<object> BuildFactoryMethod(this Type type)
+        {
+            var ti = type.GetTypeInfo();
+
+            if (!ti.IsClass) throw new NotSupportedException($"Can only create factory methods for classes (which {type} is not).");
+
+            var constructor = ti.GetConstructor(Type.EmptyTypes);
+            if (constructor is null) throw new NotSupportedException($"Cannot generate factory method for type {type}: there is no default constructor.");
+
+            DynamicMethod getter = new($"{type.Name}_new", typeof(object), Type.EmptyTypes);
+            ILGenerator il = getter.GetILGenerator();
+
+            il.Emit(OpCodes.Newobj, constructor);
+            if (ti.IsValueType)
+                il.Emit(OpCodes.Box, type);
+
+            il.Emit(OpCodes.Ret);
+
+            return (Func<object>)getter.CreateDelegate(typeof(Func<object>));
+        }
+
+        public static Func<IList> BuildListFactoryMethod(this Type type)
+        {
+            // Note that MakeGenericType() will return the same Type instance for the same List<T> type instantiations,
+            // so we don't have to cache the result.
+            var constructor = typeof(List<>).MakeGenericType(type).GetTypeInfo().GetConstructor(Type.EmptyTypes);
+
+            DynamicMethod getter = new($"new_list_of_{type.Name}", typeof(IList), Type.EmptyTypes);
+            ILGenerator il = getter.GetILGenerator();
+
+            il.Emit(OpCodes.Newobj, constructor);
+            il.Emit(OpCodes.Ret);
+
+            return (Func<IList>)getter.CreateDelegate(typeof(Func<IList>));
+        }
+
+
         public static Func<T, object> GetValueGetter<T>(this PropertyInfo propertyInfo)
         {
 #if NET40
@@ -86,11 +127,10 @@ namespace Hl7.Fhir.Utility
             return actionDelegate;
         }
 
-        public static Action<object, object> GetValueSetter(this PropertyInfo propertyInfo)
-        {
-            return GetValueSetter<object>(propertyInfo);
-        }
+        public static Action<object, object> GetValueSetter(this PropertyInfo propertyInfo) => GetValueSetter<object>(propertyInfo);
     }
 }
+
+#nullable restore
 
 #endif

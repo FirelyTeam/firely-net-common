@@ -259,6 +259,10 @@ namespace Hl7.FhirPath.Tests
             AssertParser.SucceedsMatch(parser, @"'single \' quotes'", @"single ' quotes");
             succeedsDelimitedString(parser, @"''");
 
+            succeedsDelimitedString(parser, "'⊢⊥⊨⊫⊮'");
+            succeedsDelimitedString(parser, "'⊢'");
+            succeedsDelimitedString(parser, "'-'");
+
             AssertParser.SucceedsMatch(parser, @"'xxx \u0040 yyy \\\/\f\n\r\t zzz !@#$%^&*()_-=+[]{}|;:,.<>?`~'",
                             "xxx @ yyy \\/\f\n\r\t zzz " + @"!@#$%^&*()_-=+[]{}|;:,.<>?`~");
             AssertParser.SucceedsMatch(parser, @"'\\b(?<month>\\d{1,2})/(?<day>\\d{1,2})/(?<year>\\d{2,4})\\b'",

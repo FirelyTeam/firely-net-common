@@ -12,6 +12,7 @@ using Hl7.Fhir.Model;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -72,6 +73,17 @@ namespace Hl7.Fhir.Introspection
         /// Is <c>true</c> when this class represents a Resource datatype.
         /// </summary>
         public bool IsResource { get; private set; } = false;
+
+        /// <summary>
+        /// Is <c>true</c> when this class represents a FHIR primitive
+        /// </summary>
+        /// <remarks>This is different from a .NET primitive, as FHIR primitives are complex types with a primitive value.</remarks>
+        public bool IsFhirPrimitive { get; private set; } = false;
+
+        /// <summary>
+        /// The element is of an atomic .NET type, not a FHIR generated POCO.
+        /// </summary>
+        public bool IsPrimitive { get; private set; } = false;
 
         /// <summary>
         /// Is <c>true</c> when this class represents a code with a required binding.
@@ -178,6 +190,10 @@ namespace Hl7.Fhir.Introspection
         /// Returns the mapping for an element of this class by a name that
         /// might be suffixed by a type name (e.g. for choice elements).
         /// </summary>
+        /// <remarks>Will also return properties for which the name is exactly the same,
+        /// so for where there is no suffix. In this case, however, <see cref="FindMappedElementByName(string)"/>
+        /// is faster.
+        /// </remarks>
         public PropertyMapping? FindMappedElementByChoiceName(string name)
         {
             if (name == null) throw Error.ArgumentNull(nameof(name));
@@ -207,6 +223,14 @@ namespace Hl7.Fhir.Introspection
             result = CqlPrimitiveTypes.SingleOrDefault(m => m.NativeType == type);
             if (result is not null) return true;
 
+            // We could (and maybe should) be able to reflect on any type - turning these mappings into general
+            // System.Reflection caching classes. I have not done that, but we do need the mappings for the
+            // primitive .NET types used in the POCOs (for Element.id etc) too to make the code using the
+            // classmappings more consistent in handling both FHIR and .NET datatypes.
+            result = DotNetPrimitiveTypes.SingleOrDefault(m => m.NativeType == type);
+            if (result is not null) return true;
+
+            // Now continue with the normal algorithm, types adorned with the [FhirTypeAttribute]
             var typeAttribute = GetAttribute<FhirTypeAttribute>(type.GetTypeInfo(), fhirVersion);
             if (typeAttribute == null) return false;
 
@@ -221,6 +245,7 @@ namespace Hl7.Fhir.Introspection
                 IsResource = typeAttribute.IsResource || type.CanBeTreatedAsType(typeof(Resource)),
                 IsCodeOfT = ReflectionHelper.IsClosedGenericType(type) &&
                                 ReflectionHelper.IsConstructedFromGenericTypeDefinition(type, typeof(Code<>)),
+                IsFhirPrimitive = typeof(PrimitiveType).IsAssignableFrom(type),
                 IsNestedType = typeAttribute.IsNestedType,
                 _mappingInitializer = () => inspectProperties(type, fhirVersion),
                 Canonical = typeAttribute.Canonical
@@ -228,6 +253,36 @@ namespace Hl7.Fhir.Introspection
 
             return true;
         }
+
+
+        public Func<object> Factory
+        {
+            get
+            {
+#if USE_CODE_GEN
+                return LazyInitializer.EnsureInitialized(ref _factory, () => NativeType.BuildFactoryMethod())!;
+#else
+                return LazyInitializer.EnsureInitialized(ref _factory, () => ()=>Activator.CreateInstance(NativeType))!;
+#endif
+            }
+        }
+
+        private Func<object>? _factory;
+
+        public Func<IList> ListFactory
+        {
+            get
+            {
+#if USE_CODE_GEN
+                return LazyInitializer.EnsureInitialized(ref _listFactory, () => NativeType.BuildListFactoryMethod())!;
+#else
+                var listType = typeof(List<>).MakeGenericType(NativeType);
+                return LazyInitializer.EnsureInitialized(ref _listFactory, () => ()=>(IList)Activator.CreateInstance(listType))!;
+#endif
+            }
+        }
+
+        private Func<IList>? _listFactory;
 
 
         [Obsolete("Create is obsolete, call TryCreate instead, passing in a fhirVersion")]
@@ -291,6 +346,24 @@ namespace Hl7.Fhir.Introspection
             new ClassMapping("System.Time", typeof(P.Time)),
             new ClassMapping("System.Quantity", typeof(P.Quantity))
         };
+
+        internal static ClassMapping[] DotNetPrimitiveTypes = new[]
+        {
+            buildNetPrimitiveClassMapping(typeof(int)),
+            buildNetPrimitiveClassMapping(typeof(uint)),
+            buildNetPrimitiveClassMapping(typeof(long)),
+            buildNetPrimitiveClassMapping(typeof(ulong)),
+            buildNetPrimitiveClassMapping(typeof(float)),
+            buildNetPrimitiveClassMapping(typeof(double)),
+            buildNetPrimitiveClassMapping(typeof(decimal)),
+            buildNetPrimitiveClassMapping(typeof(string)),
+            buildNetPrimitiveClassMapping(typeof(bool)),
+            buildNetPrimitiveClassMapping(typeof(DateTimeOffset)),
+            buildNetPrimitiveClassMapping(typeof(byte[])),
+        };
+
+        private static ClassMapping buildNetPrimitiveClassMapping(Type t) =>
+            new("Net." + t.FullName, t) { IsPrimitive = true };
     }
 }
 

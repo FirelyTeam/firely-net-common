@@ -214,7 +214,10 @@ namespace Hl7.Fhir.Introspection
                     PrimitiveTypeConverter.CanConvert(type);
         }
 
-        internal Func<object, object> Getter
+        /// <summary>
+        /// Given an instance of the parent class, gets the value for this property.
+        /// </summary>
+        public Func<object, object> GetValue
         {
             get
             {
@@ -229,7 +232,10 @@ namespace Hl7.Fhir.Introspection
 
         private Func<object, object>? _getter;
 
-        internal Action<object, object> Setter
+        /// <summary>
+        /// Given an instance of the parent class, sets the value for this property.
+        /// </summary>
+        public Action<object, object> SetValue
         {
             get
             {
@@ -276,17 +282,6 @@ namespace Hl7.Fhir.Introspection
             SerializationHint : XmlRepresentation.XmlElement;
 
         int IElementDefinitionSummary.Order => Order;
-
-        /// <summary>
-        /// Given an instance of the parent class, gets the value for this property.
-        /// </summary>
-        public object GetValue(object instance) => Getter(instance);
-
-
-        /// <summary>
-        /// Given an instance of the parent class, sets the value for this property.
-        /// </summary>
-        public void SetValue(object instance, object value) => Setter(instance, value);
 
         private ITypeSerializationInfo[] buildTypes()
         {

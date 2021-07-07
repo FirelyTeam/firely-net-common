@@ -251,7 +251,7 @@ namespace Hl7.Fhir.Serialization
 
             // TODO: Should the POCO types explicitly or implicitly implement these interfaces?
             // TODO: Implicitly and then have a AsDictionary() and AsEnumerable()?
-            // Calling ToList() here since SerializeObject will need to go over
+            // Calling ToArray() here since SerializeObject will need to go over
             // all children anyway, and in .NET Core (at leats) ToArray is faster then ToList
             // See https://stackoverflow.com/a/60103725/2370163.
             var children = value.Where(kvp => kvp.Key != "value").ToArray();

@@ -128,6 +128,7 @@ namespace Hl7.Fhir.Introspection
         /// <summary>
         /// Retrieves an already imported <see cref="ClassMapping" /> given a FHIR type name.
         /// </summary>
+        /// <remarks>The search for the mapping by namem is case-insensitive.</remarks>
         public ClassMapping? FindClassMapping(string fhirTypeName) =>
             _classMappingsByName.TryGetValue(fhirTypeName, out var entry) ? entry : null;
 
@@ -142,7 +143,7 @@ namespace Hl7.Fhir.Introspection
         /// </summary>
         public ClassMapping? FindClassMappingByCanonical(string canonical) =>
             _classMappingsByCanonical.TryGetValue(canonical, out var entry) ? entry : null;
-
+          
         /// <inheritdoc cref="IStructureDefinitionSummaryProvider.Provide(string)"/>
         public IStructureDefinitionSummary? Provide(string canonical) =>
             canonical.Contains("/") ?
