@@ -21,7 +21,7 @@ using System;
 
 namespace Hl7.Fhir.Serialization
 {
-#if NETSTANDARD2_0_OR_GREATER
+#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
     public class JsonDynamicDeserializer
     {
         public JsonDynamicDeserializer(Assembly assembly)
@@ -45,7 +45,7 @@ namespace Hl7.Fhir.Serialization
 
             if (resourceMapping.Factory() is Resource resource)
             {
-                DeserializeObjectInto(resource, resourceMapping, ref reader);
+                DeserializeObjectInto(resource, resourceMapping, ref reader, allowNull: false);
                 return resource;
             }
             else
@@ -60,9 +60,9 @@ namespace Hl7.Fhir.Serialization
                 throw new ArgumentException($"Type '{targetType}' could not be located in model assembly '{Assembly}' and can therefore not be used for deserialization.", nameof(targetType));
 
             // Create a new instance of the object to read the members into.
-            if( mapping.Factory() is Base b)
+            if(mapping.Factory() is Base b)
             {
-                DeserializeObjectInto(b, mapping, ref reader);
+                DeserializeObjectInto(b, mapping, ref reader, allowNull: false);
                 return b;
             }
             else                
@@ -75,14 +75,26 @@ namespace Hl7.Fhir.Serialization
             var mapping = SerializationUtilities.FindClassMapping(_inspector,targetType) ??
                 throw new ArgumentException($"Type '{targetType}' could not be located in model assembly '{Assembly}' and can therefore not be used for deserialization.", nameof(targetType));
 
-            DeserializeObjectInto(target, mapping, ref reader);
+            DeserializeObjectInto(target, mapping, ref reader, allowNull: false);
         }
 
         // TODO: Assumes the reader is configured to either skip or refuse comments:
         //             reader.CurrentState.Options.CommentHandling is Skip or Disallow
-        internal void DeserializeObjectInto(object target, ClassMapping mapping, ref Utf8JsonReader reader)
+        internal void DeserializeObjectInto(object target, ClassMapping mapping, ref Utf8JsonReader reader, bool allowNull)
         {
+            // Read() will either work, or throw an exception that the json string is empty - which is fine.
             if (reader.TokenType == JsonTokenType.None) reader.Read();
+
+            if(reader.TokenType == JsonTokenType.Null)
+            {
+                if (allowNull)
+                {
+                    reader.Read();
+                    return;
+                }                    
+                else
+                    throw new JsonException("Null is not a valid value for an object here.");
+            }
 
             // TODO: Are these json exceptions of some kind of our own (existing) format/type exceptions?
             // There's formally nothing wrong with the json, so throwing JsonException seems wrong.
@@ -104,6 +116,7 @@ namespace Hl7.Fhir.Serialization
                     continue;
                 }
 
+                // determine the expected type of the value for this property
                 var (propMapping, propValueMapping) = SerializationUtilities.GetMappedElementMetadata(_inspector, mapping, currentPropertyName);
 
                 // read past the property name into the value
@@ -180,15 +193,14 @@ namespace Hl7.Fhir.Serialization
             else if (propertyValueMapping.IsPrimitive)
             {
                 // FHIR serialization does not allow `null` to be used in normal property values.
-                return deserializePrimitiveValue(ref reader, propertyValueMapping.NativeType)
-                    ?? throw new JsonException("Null cannot be used here.");
+                return deserializePrimitiveValue(ref reader, propertyValueMapping.NativeType, allowNull: false)!;
             }
 
             // "normal" complex types & backbones
             else
             {                
                 var target = propertyValueMapping.Factory();
-                DeserializeObjectInto(target, propertyValueMapping, ref reader);
+                DeserializeObjectInto(target, propertyValueMapping, ref reader, allowNull: false);
                 return target;
             }
         }
@@ -229,7 +241,7 @@ namespace Hl7.Fhir.Serialization
         }
 
 
-        private object? deserializePrimitiveValue(ref Utf8JsonReader reader, Type requiredType)
+        private object? deserializePrimitiveValue(ref Utf8JsonReader reader, Type requiredType, bool allowNull)
         {
             var result = reader.TokenType switch
             {
@@ -250,7 +262,8 @@ namespace Hl7.Fhir.Serialization
                 JsonTokenType.True or JsonTokenType.False => requiredType == typeof(object) || requiredType == typeof(bool)
                     ? reader.GetBoolean()
                     : throw new JsonException($"Expecting a {requiredType}, but found a boolean."),
-                JsonTokenType.Null => null,
+                JsonTokenType.Null when allowNull => null,
+                JsonTokenType.Null => throw new JsonException("Null cannot be used as a primitive value here."),
                 _ =>
                     // This would be an internal logic error, since our callers should have made sure we're
                     // on the value after the property name (and the Utf8JsonReader would have complained about any
@@ -310,6 +323,8 @@ namespace Hl7.Fhir.Serialization
             {
                 if (elementIndex >= resultList.Count)
                 {
+                    //TODO: not an empty array
+                    //TODO: not an array with just nulls
                     //if (existed)
                     //{
                     //    // check, if the property already existed, whether the # of new items
@@ -324,9 +339,9 @@ namespace Hl7.Fhir.Serialization
                 var targetPrimitive = (PrimitiveType)resultList[elementIndex];
 
                 if (propertyName[0] != '_')
-                    targetPrimitive.ObjectValue = deserializePrimitiveValue(ref reader, typeof(object));
+                    targetPrimitive.ObjectValue = deserializePrimitiveValue(ref reader, typeof(object), allowNull: true);
                 else
-                    DeserializeObjectInto(targetPrimitive, propertyValueMapping, ref reader);
+                    DeserializeObjectInto(targetPrimitive, propertyValueMapping, ref reader, allowNull: true);
 
                 elementIndex += 1;
             }
@@ -344,9 +359,9 @@ namespace Hl7.Fhir.Serialization
                 throw new ArgumentException($"Type of property '{propertyName}' should be a subtype of PrimitiveType.", nameof(propertyValueMapping));
 
             if (propertyName[0] != '_')
-                resultPrimitive.ObjectValue = deserializePrimitiveValue(ref reader, typeof(object));
+                resultPrimitive.ObjectValue = deserializePrimitiveValue(ref reader, typeof(object), allowNull: false);
             else
-                DeserializeObjectInto(resultPrimitive, propertyValueMapping, ref reader);
+                DeserializeObjectInto(resultPrimitive, propertyValueMapping, ref reader, allowNull: false);
 
             return resultPrimitive;
         }                                   
