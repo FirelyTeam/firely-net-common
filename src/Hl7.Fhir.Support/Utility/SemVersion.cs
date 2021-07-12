@@ -14,7 +14,7 @@ namespace Hl7.Fhir.Utility
     /// A semantic version implementation.
     /// Conforms with v2.0.0 of http://semver.org
     /// </summary>
-#if NETSTANDARD
+#if !NET45
     public sealed class SemVersion : IComparable<SemVersion>, IComparable
 #else
     [Serializable]
@@ -27,14 +27,14 @@ namespace Hl7.Fhir.Utility
                 @"(?>\.(?<patch>\d+))?" +
                 @"(?>\-(?<pre>[0-9A-Za-z\-\.]+))?" +
                 @"(?>\+(?<build>[0-9A-Za-z\-\.]+))?$",
-#if NETSTANDARD
+#if !NET45
                 RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture
 #else
                 RegexOptions.CultureInvariant | RegexOptions.Compiled | RegexOptions.ExplicitCapture
 #endif
                 );
 
-#if !NETSTANDARD
+#if NET45
 #pragma warning disable CA1801 // Parameter unused
         /// <summary>
         /// Deserialize a <see cref="SemVersion"/>.
@@ -479,7 +479,7 @@ namespace Hl7.Fhir.Utility
             }
         }
 
-#if !NETSTANDARD
+#if NET45
         /// <summary>
         /// Populates a <see cref="SerializationInfo"/> with the data needed to serialize the target object.
         /// </summary>

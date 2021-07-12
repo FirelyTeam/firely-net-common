@@ -15,7 +15,9 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 
-#nullable enable
+#nullable enable annotations
+#nullable disable warnings
+
 
 namespace Hl7.Fhir.Introspection
 {
