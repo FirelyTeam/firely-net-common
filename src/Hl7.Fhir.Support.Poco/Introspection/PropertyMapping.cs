@@ -15,8 +15,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 
-#nullable enable annotations
-#nullable disable warnings
+#nullable enable
 
 
 namespace Hl7.Fhir.Introspection
@@ -204,7 +203,7 @@ namespace Hl7.Fhir.Introspection
 
         }
 
-        private static string buildQualifiedPropName(PropertyInfo p) => p.DeclaringType.Name + "." + p.Name;
+        private static string buildQualifiedPropName(PropertyInfo p) => p.DeclaringType?.Name + "." + p.Name;
 
         private static bool isAllowedNativeTypeForDataTypeValue(Type type)
         {

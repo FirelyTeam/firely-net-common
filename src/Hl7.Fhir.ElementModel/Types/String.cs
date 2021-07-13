@@ -6,9 +6,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-#nullable enable annotations
-#nullable disable warnings
-
+#nullable enable
 
 using Hl7.Fhir.Utility;
 using System;
@@ -38,7 +36,7 @@ namespace Hl7.Fhir.ElementModel.Types
             return true;
         }
 
-        public override bool Equals(object obj) => obj is Any other && Equals(other, CQL_EQUALS_COMPARISON);
+        public override bool Equals(object? obj) => obj is Any other && Equals(other, CQL_EQUALS_COMPARISON);
         public static bool operator ==(String a, String b) => Equals(a, b);
         public static bool operator !=(String a, String b) => !Equals(a, b);
 
@@ -83,7 +81,7 @@ namespace Hl7.Fhir.ElementModel.Types
         }
 
 
-        public int CompareTo(object obj)
+        public int CompareTo(object? obj)
         {
             return obj switch
             {

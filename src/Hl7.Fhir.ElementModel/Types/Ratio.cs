@@ -6,8 +6,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-#nullable enable annotations
-#nullable disable warnings
+#nullable enable
 
 using Hl7.Fhir.Utility;
 using System;
@@ -46,7 +45,7 @@ namespace Hl7.Fhir.ElementModel.Types
             return true;
         }
 
-        public override bool Equals(object obj) => obj is Ratio r && Numerator == r.Numerator && Denominator == r.Denominator;
+        public override bool Equals(object? obj) => obj is Ratio r && Numerator == r.Numerator && Denominator == r.Denominator;
 
         public override int GetHashCode() => (Numerator, Denominator).GetHashCode();
         public override string ToString() => $"{Numerator}:{Denominator}";
