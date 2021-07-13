@@ -6,8 +6,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-#nullable enable annotations
-#nullable disable warnings
+#nullable enable
 
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Specification;
@@ -42,7 +41,7 @@ namespace Hl7.Fhir.Introspection
         /// metadata for the most recent release for those common classes.</remarks>
         public static ModelInspector ForAssembly(Assembly a)
         {
-            return _inspectedAssemblies.GetOrAdd(a.FullName, _ => configureInspector(a));
+            return _inspectedAssemblies.GetOrAdd(a.GetName().FullName, _ => configureInspector(a));
 
             static ModelInspector configureInspector(Assembly a)
             {

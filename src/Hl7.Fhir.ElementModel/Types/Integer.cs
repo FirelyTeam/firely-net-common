@@ -6,9 +6,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-#nullable enable annotations
-#nullable disable warnings
-
+#nullable enable
 
 using Hl7.Fhir.Utility;
 using System;
@@ -42,7 +40,7 @@ namespace Hl7.Fhir.ElementModel.Types
         /// </summary>
         /// <remarks>For integers, CQL and .NET equality rules are aligned.
         /// </remarks>
-        public override bool Equals(object obj) => obj is Integer i && Value == i.Value;
+        public override bool Equals(object? obj) => obj is Integer i && Value == i.Value;
 
         public static bool operator ==(Integer a, Integer b) => Equals(a, b);
         public static bool operator !=(Integer a, Integer b) => !Equals(a, b);
@@ -53,7 +51,7 @@ namespace Hl7.Fhir.ElementModel.Types
         /// <param name="obj"></param>
         /// <returns></returns>
         /// <remarks>For integers, CQL and .NET comparison rules are aligned.</remarks>
-        public int CompareTo(object obj)
+        public int CompareTo(object? obj)
         {
             return obj switch
             {
