@@ -332,6 +332,41 @@ namespace Hl7.Fhir.Model
       }
     }
 
+    protected override bool TryGetValue(string key, out object value)
+    {
+      switch (key)
+      {
+        case "value":
+          value = ValueElement;
+          return ValueElement is not null;
+        case "comparator":
+          value = ComparatorElement;
+          return ComparatorElement is not null;
+        case "unit":
+          value = UnitElement;
+          return UnitElement is not null;
+        case "system":
+          value = SystemElement;
+          return SystemElement is not null;
+        case "code":
+          value = CodeElement;
+          return CodeElement is not null;
+        default:
+          return base.TryGetValue(key, out value);
+      };
+
+    }
+
+    protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+    {
+      foreach (var kvp in base.GetElementPairs()) yield return kvp;
+      if (ValueElement is not null) yield return new KeyValuePair<string,object>("value",ValueElement);
+      if (ComparatorElement is not null) yield return new KeyValuePair<string,object>("comparator",ComparatorElement);
+      if (UnitElement is not null) yield return new KeyValuePair<string,object>("unit",UnitElement);
+      if (SystemElement is not null) yield return new KeyValuePair<string,object>("system",SystemElement);
+      if (CodeElement is not null) yield return new KeyValuePair<string,object>("code",CodeElement);
+    }
+
   }
 
 }

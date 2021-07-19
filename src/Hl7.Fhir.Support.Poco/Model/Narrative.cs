@@ -47,6 +47,20 @@ namespace Hl7.Fhir.Model
     [DataContract]
     public class Narrative : Hl7.Fhir.Model.DataType
     {
+        public Narrative()
+        {
+            // nothing
+        }
+
+        /// <summary>
+        /// Initializes the html portion of the narrative and sets the status to <see cref="NarrativeStatus.Generated"/>.
+        /// </summary>
+        public Narrative(string html)
+        {
+            Div = html;
+            Status = NarrativeStatus.Generated;
+        }
+
         /// <summary>
         /// FHIR Type Name
         /// </summary>
@@ -200,6 +214,33 @@ namespace Hl7.Fhir.Model
                 if (StatusElement != null) yield return new ElementValue("status", StatusElement);
                 if (Div != null) yield return new ElementValue("div", new FhirString(Div));
             }
+        }
+
+        protected override bool TryGetValue(string key, out object value)
+        {
+            switch (key)
+            {
+                case "status":
+                    value = StatusElement;
+                    return StatusElement is not null;
+                case "div":
+                    // Exception: wrap this value with XHtml so the XML serializer
+                    // can recognize this "primitive" and render it appropriately.
+                    value = Div is not null ? new XHtml(Div) : null;
+                    return Div is not null;
+                default:
+                    return base.TryGetValue(key, out value);
+            };
+        }
+
+        protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+        {
+            foreach (var kvp in base.GetElementPairs()) yield return kvp;
+            if (StatusElement is not null) yield return new KeyValuePair<string, object>("status", StatusElement);
+
+            // Exception: wrap this value with XHtml so the XML serializer
+            // can recognize this "primitive" and render it appropriately.
+            if (Div is not null) yield return new KeyValuePair<string, object>("div", new XHtml(Div));
         }
     }
 

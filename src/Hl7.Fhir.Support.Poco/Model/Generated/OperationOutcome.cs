@@ -558,6 +558,45 @@ namespace Hl7.Fhir.Model
         }
       }
 
+      protected override bool TryGetValue(string key, out object value)
+      {
+        switch (key)
+        {
+          case "severity":
+            value = SeverityElement;
+            return SeverityElement is not null;
+          case "code":
+            value = CodeElement;
+            return CodeElement is not null;
+          case "details":
+            value = Details;
+            return Details is not null;
+          case "diagnostics":
+            value = DiagnosticsElement;
+            return DiagnosticsElement is not null;
+          case "location":
+            value = LocationElement;
+            return LocationElement?.Any() == true;
+          case "expression":
+            value = ExpressionElement;
+            return ExpressionElement?.Any() == true;
+          default:
+            return base.TryGetValue(key, out value);
+        };
+
+      }
+
+      protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+      {
+        foreach (var kvp in base.GetElementPairs()) yield return kvp;
+        if (SeverityElement is not null) yield return new KeyValuePair<string,object>("severity",SeverityElement);
+        if (CodeElement is not null) yield return new KeyValuePair<string,object>("code",CodeElement);
+        if (Details is not null) yield return new KeyValuePair<string,object>("details",Details);
+        if (DiagnosticsElement is not null) yield return new KeyValuePair<string,object>("diagnostics",DiagnosticsElement);
+        if (LocationElement?.Any() == true) yield return new KeyValuePair<string,object>("location",LocationElement);
+        if (ExpressionElement?.Any() == true) yield return new KeyValuePair<string,object>("expression",ExpressionElement);
+      }
+
     }
 
     /// <summary>
@@ -633,6 +672,25 @@ namespace Hl7.Fhir.Model
         foreach (var item in base.NamedChildren) yield return item;
         foreach (var elem in Issue) { if (elem != null) yield return new ElementValue("issue", elem); }
       }
+    }
+
+    protected override bool TryGetValue(string key, out object value)
+    {
+      switch (key)
+      {
+        case "issue":
+          value = Issue;
+          return Issue?.Any() == true;
+        default:
+          return base.TryGetValue(key, out value);
+      };
+
+    }
+
+    protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+    {
+      foreach (var kvp in base.GetElementPairs()) yield return kvp;
+      if (Issue?.Any() == true) yield return new KeyValuePair<string,object>("issue",Issue);
     }
 
   }
