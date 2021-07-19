@@ -29,11 +29,10 @@ namespace Hl7.Fhir.Validation
         {
             if (value == null) return ValidationResult.Success;
 
-            var list = value as IEnumerable;
             ValidationResult result = ValidationResult.Success;
 
             // Avoid interpreting this as a collection just because string is IEnumerable<char>.
-            if (list != null && !(value is string))
+            if (value is ICollection list && value is not string)
             {
                 foreach (var item in list)
                 {
