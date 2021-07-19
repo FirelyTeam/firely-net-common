@@ -203,7 +203,8 @@ namespace Hl7.Fhir.Introspection
 
         }
 
-        private static string buildQualifiedPropName(PropertyInfo p) => p.DeclaringType?.Name + "." + p.Name;
+        private static string buildQualifiedPropName(PropertyInfo p)
+            => $"{p.DeclaringType?.Name ?? throw Error.ArgumentNull(nameof(p.DeclaringType))}.{p.Name}";
 
         private static bool isAllowedNativeTypeForDataTypeValue(Type type)
         {

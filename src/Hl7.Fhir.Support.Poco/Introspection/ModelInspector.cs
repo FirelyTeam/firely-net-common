@@ -41,7 +41,7 @@ namespace Hl7.Fhir.Introspection
         /// metadata for the most recent release for those common classes.</remarks>
         public static ModelInspector ForAssembly(Assembly a)
         {
-            return _inspectedAssemblies.GetOrAdd(a.GetName().FullName, _ => configureInspector(a));
+            return _inspectedAssemblies.GetOrAdd(a.FullName ?? throw Error.ArgumentNull(nameof(a.FullName)), _ => configureInspector(a));
 
             static ModelInspector configureInspector(Assembly a)
             {
