@@ -33,12 +33,12 @@ namespace Hl7.Fhir.FhirPath
         }
 
         public FhirEvaluationContext(ScopedNode resource)
-            : base(toNearestParentResource(resource))
+            : this(toNearestParentResource(resource))
         {
             RootResource = Resource is ScopedNode node ? node.ResourceContext : resource;
         }
 
-        private static ScopedNode toNearestParentResource(ScopedNode node) => node.AtResource ? node : node.ParentResource;
+        private static ITypedElement toNearestParentResource(ScopedNode node) => node.AtResource ? node : node.ResourceContext;
 
         private Func<string, ITypedElement> _elementResolver;
 
