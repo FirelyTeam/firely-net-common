@@ -10,7 +10,6 @@ using Hl7.Fhir.Model;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 
 #if NETSTANDARD2_0_OR_GREATER
 using System.Text.Json;
@@ -22,7 +21,7 @@ using System.Text.Json;
 namespace Hl7.Fhir.Serialization
 {
 #if NETSTANDARD2_0_OR_GREATER
-    public static class JsonSerializationExtensions
+    public class JsonDictionarySerializer
     {
         public static bool HasValue(object? value) =>
              value switch
@@ -33,96 +32,18 @@ namespace Hl7.Fhir.Serialization
                  _ => true
              };
 
-        //// TODO: calling function should have figured out how to create the target, i.e. at root by finding the resourceType or simply
-        //// because the caller of the SDK passes in an instance since the type is known beforehand (i.e. when parsing a subtree).
-        //// TODO: Assumes the reader is configured to either skip or refuse comments:
-        ////             reader.CurrentState.Options.CommentHandling is Skip or Disallow
-        //public static void DeserializeObject(Base target, ref Utf8JsonReader reader)
-        //{
-        //    // Are these json exceptions of some kind of our own (existing) format/type exceptions?
-        //    // There's formally nothing wrong with the json, so throwing JsonException seems wrong.
-        //    // I think these need to be StructuralTypeExceptions - to align with the current parser.
-        //    // And probably use the same error text too.
-        //    if (reader.TokenType != JsonTokenType.StartObject)
-        //        throw new JsonException($"Expected start of object since '{target.TypeName}' is not a primitive, but found {reader.TokenType}.");
-
-        //    // read past start of object into first property or end of object
-        //    reader.Read();
-
-        //    while (reader.TokenType != JsonTokenType.EndObject)
-        //    {
-        //        var propertyName = reader.GetString()!;
-        //        var elementName = propertyName[0] == '_' ? propertyName.Substring(1) : propertyName;
-
-        //        // TODO: call overload with "createMemberIfMissing: true"
-        //        if (!target.TryGetValue(elementName, out var memberTarget))
-        //            throw new JsonException($"Unknown property {propertyName}.");
-
-        //        // read past the property name into the value
-        //        reader.Read();
-
-        //        deserializeMember(memberTarget, propertyName, ref reader);
-        //    }
-
-        //    // read past object
-        //    reader.Read();
-        //}
-
-
-
-        // Reads the content of a json property. Expects the reader to be positioned on the property value.
-        // Reader will be on the first token after the property value upon return.
-        //private static void deserializeMember(object memberTarget, string propertyName, ref Utf8JsonReader reader)
-        //{
-        //    if (memberTarget is PrimitiveType pt)
-        //        DeserializeFhirPrimitive(memberTarget, propertyName, reader);
-        //    else if (memberTarget is IEnumerable<PrimitiveType> pts)
-        //        DeserializeFhirPrimitiveList(memberTarget, propertyName, reader);
-        //    else
-        //    {
-        //        if (memberTarget is ICollection && !(memberTarget is byte[]))
-        //        {
-        //            if (reader.TokenType != JsonTokenType.StartArray)
-        //                // TODO: need the element name here
-        //                throw new JsonException($"Expected start of array since '{propertyName}' is a repeating element.");
-
-        //            // Read past start of array
-        //            reader.Read();
-
-        //            while (reader.TokenType != JsonTokenType.EndArray)
-        //            {
-        //                // TODO: cannot "set" primitive values - need some way to call setter
-        //                deserializeMemberValue(memberTarget, ref reader);
-        //            }
-
-        //            // Read past end of array
-        //            reader.Read();
-        //        }
-        //        else
-        //            deserializeMemberValue(memberTarget, ref reader);
-        //    }
-        //}
-
-        //private static void DeserializeFhirPrimitiveList(object memberTarget, string propertyName, Utf8JsonReader reader) => throw new NotImplementedException();
-        //private static void DeserializeFhirPrimitive(object memberTarget, string propertyName, Utf8JsonReader reader) => throw new NotImplementedException();
-
-        //private static void deserializeMemberValue(object target, ref Utf8JsonReader reader)
-        //{
-        //    if (target is Base complex)
-        //        DeserializeObject(complex, ref reader);
-        //    else
-        //        DeserializePrimitiveValue(ref reader);
-        //}
-
-        public static void SerializeObject(IEnumerable<KeyValuePair<string, object>> members, Utf8JsonWriter writer)
+        // TODO: prune empty subtrees
+        internal void SerializeObject(IReadOnlyDictionary<string, object> members, bool skipValue, Utf8JsonWriter writer)
         {
             writer.WriteStartObject();
 
             foreach (var member in members)
             {
+                if (skipValue && member.Key == "value") continue;
+
                 if (member.Value is PrimitiveType pt)
                     SerializeFhirPrimitive(member.Key, pt, writer);
-                else if (member.Value is IEnumerable<PrimitiveType> pts)
+                else if (member.Value is IReadOnlyCollection<PrimitiveType> pts)
                     SerializeFhirPrimitiveList(member.Key, pts, writer);
                 else
                 {
@@ -143,12 +64,13 @@ namespace Hl7.Fhir.Serialization
             }
 
             writer.WriteEndObject();
-
         }
 
-        private static void serializeMemberValue(object value, Utf8JsonWriter writer)
+        public void SerializeObject(IReadOnlyDictionary<string, object> members, Utf8JsonWriter writer) => SerializeObject(members, skipValue: false, writer);
+
+        private void serializeMemberValue(object value, Utf8JsonWriter writer)
         {
-            if (value is IEnumerable<KeyValuePair<string, object>> complex)
+            if (value is IReadOnlyDictionary<string, object> complex)
                 SerializeObject(complex, writer);
             else
                 SerializePrimitiveValue(value, writer);
@@ -159,12 +81,12 @@ namespace Hl7.Fhir.Serialization
         // the IDictionary implementation on POCOs worry about the special cases (empty strings etc), and this serialize
         // be more generic - just not serializing nulls, but follow the IDictionary otherwise (even it that returns empty
         // strings?).
-        public static void SerializeFhirPrimitiveList(string elementName, IEnumerable<PrimitiveType> values, Utf8JsonWriter writer)
+        public void SerializeFhirPrimitiveList(string elementName, IReadOnlyCollection<PrimitiveType> values, Utf8JsonWriter writer)
         {
             if (values is null) throw new ArgumentNullException(nameof(values));
 
             // Don't serialize empty collections.
-            if (values?.Any() != true) return;
+            if (values.Count == 0) return;
 
             // We should not write a "elementName" property until we encounter an actual
             // value. If we do, we should "catch up", by creating the property starting 
@@ -205,9 +127,7 @@ namespace Hl7.Fhir.Serialization
 
             foreach (var value in values)
             {
-                var children = value?.Where(kvp => kvp.Key != "value").ToArray();
-
-                if (children?.Any() == true)
+                if (value.HasElements)
                 {
                     if (!wroteStartArray)
                     {
@@ -215,7 +135,7 @@ namespace Hl7.Fhir.Serialization
                         writeStartArray("_" + elementName, numNullsMissed, writer);
                     }
 
-                    SerializeObject(children, writer);
+                    SerializeObject(value, skipValue: true, writer);
                 }
                 else
                 {
@@ -229,7 +149,7 @@ namespace Hl7.Fhir.Serialization
             if (wroteStartArray) writer.WriteEndArray();
         }
 
-        private static void writeStartArray(string propName, int numNulls, Utf8JsonWriter writer)
+        private void writeStartArray(string propName, int numNulls, Utf8JsonWriter writer)
         {
             writer.WriteStartArray(propName);
 
@@ -238,7 +158,7 @@ namespace Hl7.Fhir.Serialization
         }
 
 
-        public static void SerializeFhirPrimitive(string elementName, PrimitiveType value, Utf8JsonWriter writer)
+        public void SerializeFhirPrimitive(string elementName, PrimitiveType value, Utf8JsonWriter writer)
         {
             if (value is null) throw new ArgumentNullException(nameof(value));
 
@@ -251,23 +171,17 @@ namespace Hl7.Fhir.Serialization
 
             // TODO: Should the POCO types explicitly or implicitly implement these interfaces?
             // TODO: Implicitly and then have a AsDictionary() and AsEnumerable()?
-            // Calling ToArray() here since SerializeObject will need to go over
-            // all children anyway, and in .NET Core (at leats) ToArray is faster then ToList
-            // See https://stackoverflow.com/a/60103725/2370163.
-            var children = value.Where(kvp => kvp.Key != "value").ToArray();
-            if (children.Any())
+
+            if (value.HasElements)
             {
                 // Write a property with '_elementName'
                 writer.WritePropertyName("_" + elementName);
-                SerializeObject(children, writer);
+                SerializeObject(value, skipValue: true, writer);
             }
         }
 
-
-        public static void SerializePrimitiveValue(object value, Utf8JsonWriter writer)
+        public void SerializePrimitiveValue(object value, Utf8JsonWriter writer)
         {
-            if (value is null) throw new ArgumentNullException(nameof(value));
-
             switch (value)
             {
                 //TODO: Include support for Any subclasses (CQL types)?
@@ -296,6 +210,7 @@ namespace Hl7.Fhir.Serialization
                 // wouldn't we need to be able to store "treu" or "flase" for real roundtrippability?
                 case DateTimeOffset dto: writer.WriteStringValue(ElementModel.Types.DateTime.FormatDateTimeOffset(dto)); break;
                 case byte[] bytes: writer.WriteStringValue(Convert.ToBase64String(bytes)); break;
+                case null: writer.WriteNullValue(); break;
                 default:
                     throw new FormatException($"There is no know serialization for type {value.GetType()} into Json.");
             }

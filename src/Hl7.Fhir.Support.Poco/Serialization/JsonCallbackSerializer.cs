@@ -28,7 +28,7 @@ namespace Hl7.Fhir.Serialization
 
         public JsonCallbackSerializer(Utf8JsonWriter writer)
         {
-            Writer = writer;
+            Writer = writer ?? throw new ArgumentNullException(nameof(writer));
         }
 
         public static bool HasValue(object? value) =>

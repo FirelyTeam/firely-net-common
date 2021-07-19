@@ -183,6 +183,8 @@ namespace Hl7.Fhir.Introspection
         {
             if (name == null) throw Error.ArgumentNull(nameof(name));
 
+            if (name == "valueString") name = "value";
+
             return Mappings.ByName.TryGetValue(name, out var mapping) ? mapping : null;
         }
 
@@ -260,7 +262,7 @@ namespace Hl7.Fhir.Introspection
             get
             {
 #if USE_CODE_GEN
-                return LazyInitializer.EnsureInitialized(ref _factory, () => NativeType.BuildFactoryMethod())!;
+                return LazyInitializer.EnsureInitialized(ref _factory, NativeType.BuildFactoryMethod)!;
 #else
                 return LazyInitializer.EnsureInitialized(ref _factory, () => ()=>Activator.CreateInstance(NativeType))!;
 #endif
@@ -274,7 +276,7 @@ namespace Hl7.Fhir.Introspection
             get
             {
 #if USE_CODE_GEN
-                return LazyInitializer.EnsureInitialized(ref _listFactory, () => NativeType.BuildListFactoryMethod())!;
+                return LazyInitializer.EnsureInitialized(ref _listFactory, NativeType.BuildListFactoryMethod)!;
 #else
                 var listType = typeof(List<>).MakeGenericType(NativeType);
                 return LazyInitializer.EnsureInitialized(ref _listFactory, () => ()=>(IList)Activator.CreateInstance(listType))!;
@@ -315,7 +317,18 @@ namespace Hl7.Fhir.Introspection
             }
 
             var ordered = byName.Values.OrderBy(pm => pm.Order).ToList();
+            // var expanded = byName.Values.SelectMany(pm => expand(pm));
             return new PropertyMappingCollection(byName, ordered);
+
+            //IEnumerable<(string,PropertyMapping)> expand(PropertyMapping pm)
+            //{
+            //    if (pm.Choice != ChoiceType.DatatypeChoice) yield return (pm.Name,pm);
+
+            //    foreach(var ts in pm.FhirType)
+            //    {
+            //        var td = 
+            //    }
+            //}
         }
 
         private static string collectTypeName(FhirTypeAttribute attr, Type type)

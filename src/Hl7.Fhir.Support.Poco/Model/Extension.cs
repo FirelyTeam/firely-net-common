@@ -173,6 +173,7 @@ namespace Hl7.Fhir.Model
                 if (key.StartsWith("value"))
                 {
                     value = Value;
+                    //TODO: Matches ValueBladieBlaString
                     return Value is not null && key.EndsWith(Value.TypeName, StringComparison.OrdinalIgnoreCase);
                 }
 

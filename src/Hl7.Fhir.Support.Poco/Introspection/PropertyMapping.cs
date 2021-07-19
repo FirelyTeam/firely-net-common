@@ -240,7 +240,7 @@ namespace Hl7.Fhir.Introspection
             get
             {
 #if USE_CODE_GEN
-                LazyInitializer.EnsureInitialized(ref _setter, () => _propInfo.GetValueSetter());
+                LazyInitializer.EnsureInitialized(ref _setter, _propInfo.GetValueSetter);
 #else
                 LazyInitializer.EnsureInitialized(ref _setter, () => (instance, value) => _propInfo.SetValue(instance, value, null));
 #endif
