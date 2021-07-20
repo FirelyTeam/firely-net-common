@@ -105,9 +105,22 @@ namespace Hl7.Fhir.Model
         public bool HasElements => ElementId is not null || Extension?.Any() == true;
     }
 
+
+    /// <summary>
+    /// A instance representing a FhirPrimitive.
+    /// </summary>
     public interface IFhirPrimitive
     {
-        bool HasElements { get; }
+        /// <summary>
+        /// The underlying value for the primitive, usually the same as
+        /// the <c>Value</c> element of a <see cref="PrimitiveType"/>.
+        /// </summary>
         object ObjectValue { get; set; }
+
+        /// <summary>
+        /// Whether the FhirPrimitive contains additional elements to the
+        /// value, i.e. the <c>id</c> or <c>extension</c>.
+        /// </summary>
+        bool HasElements { get; }
     }
 }
