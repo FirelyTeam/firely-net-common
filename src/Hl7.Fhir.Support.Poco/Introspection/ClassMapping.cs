@@ -6,9 +6,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-#nullable enable annotations
-#nullable disable warnings
-
+#nullable enable
 
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Specification;
@@ -145,7 +143,7 @@ namespace Hl7.Fhir.Introspection
         /// property will also be present in the PropertyMappings collection. If this class has 
         /// no such property, it is null. 
         /// </summary>
-        public PropertyMapping PrimitiveValueProperty => PropertyMappings.SingleOrDefault(pm => pm.RepresentsValueElement);
+        public PropertyMapping? PrimitiveValueProperty => PropertyMappings.SingleOrDefault(pm => pm.RepresentsValueElement);
 
         public bool HasPrimitiveValueMember => PropertyMappings.Any(pm => pm.RepresentsValueElement);
 
