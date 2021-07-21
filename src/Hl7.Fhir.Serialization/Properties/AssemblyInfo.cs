@@ -7,6 +7,6 @@ using System.Runtime.InteropServices;
 
 [assembly: CLSCompliant(true)]
 
-#if DEBUG
+#if DEBUG || PROFILE_RELEASE
 [assembly: InternalsVisibleTo("Hl7.Fhir.Serialization.Tests")]
 #endif
