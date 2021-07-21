@@ -32,6 +32,28 @@ namespace Hl7.Fhir.FhirPath
         {
         }
 
+        /// <summary>
+        /// Create a FhirEvaluationContext and also set the variables <c>%resource</c> and <c>%rootResource</c> to their correct values.
+        /// </summary>
+        /// <param name="node">input for determining the variables <c>%resource</c> and <c>%rootResource</c></param>
+        public FhirEvaluationContext(ScopedNode node)
+            : this(toNearestResource(node))
+        {
+            RootResource = Resource is ScopedNode sn ? sn.ResourceContext : node;
+        }
+
+        private static ITypedElement toNearestResource(ScopedNode node)
+        {
+            var scan = node;
+
+            while (scan.AtResource == false && scan.ParentResource is not null)
+            {
+                scan = scan.ParentResource;
+            }
+
+            return scan;
+        }
+
         private Func<string, ITypedElement> _elementResolver;
 
         public Func<string, ITypedElement> ElementResolver
