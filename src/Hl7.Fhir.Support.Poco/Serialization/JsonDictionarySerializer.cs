@@ -18,16 +18,17 @@ using System.Text.Json;
 
 namespace Hl7.Fhir.Serialization
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class JsonDictionarySerializer
     {
-        public static bool HasValue(object? value) =>
-             value switch
-             {
-                 null => false,
-                 string s => !string.IsNullOrWhiteSpace(s),
-                 byte[] bs => bs.Length > 0,
-                 _ => true
-             };
+        /// <summary>
+        /// Serializes the given dictionary with FHIR data into Json.
+        /// </summary>
+        /// <remarks>The serializer uses the format documented in https://www.hl7.org/fhir/json.html.
+        /// </remarks>
+        public void SerializeObject(IReadOnlyDictionary<string, object> members, Utf8JsonWriter writer) => SerializeObject(members, skipValue: false, writer);
 
         // TODO: prune empty subtrees
         internal void SerializeObject(IReadOnlyDictionary<string, object> members, bool skipValue, Utf8JsonWriter writer)
@@ -63,7 +64,14 @@ namespace Hl7.Fhir.Serialization
             writer.WriteEndObject();
         }
 
-        public void SerializeObject(IReadOnlyDictionary<string, object> members, Utf8JsonWriter writer) => SerializeObject(members, skipValue: false, writer);
+        internal static bool HasValue(object? value) =>
+             value switch
+             {
+                 null => false,
+                 string s => !string.IsNullOrWhiteSpace(s),
+                 byte[] bs => bs.Length > 0,
+                 _ => true
+             };
 
         private void serializeMemberValue(object value, Utf8JsonWriter writer)
         {
@@ -73,12 +81,7 @@ namespace Hl7.Fhir.Serialization
                 SerializePrimitiveValue(value, writer);
         }
 
-        // TODO: There's lots of HasValue() everywhere..... can we make the IDictionary implementation promise not to
-        // return kvp's unless there is actually a value?  What if the IDictionary is constructed by hand?  Should
-        // the IDictionary implementation on POCOs worry about the special cases (empty strings etc), and this serialize
-        // be more generic - just not serializing nulls, but follow the IDictionary otherwise (even it that returns empty
-        // strings?).
-        public void SerializeFhirPrimitiveList(string elementName, IReadOnlyCollection<PrimitiveType> values, Utf8JsonWriter writer)
+        internal void SerializeFhirPrimitiveList(string elementName, IReadOnlyCollection<PrimitiveType> values, Utf8JsonWriter writer)
         {
             if (values is null) throw new ArgumentNullException(nameof(values));
 
@@ -155,7 +158,7 @@ namespace Hl7.Fhir.Serialization
         }
 
 
-        public void SerializeFhirPrimitive(string elementName, PrimitiveType value, Utf8JsonWriter writer)
+        internal void SerializeFhirPrimitive(string elementName, PrimitiveType value, Utf8JsonWriter writer)
         {
             if (value is null) throw new ArgumentNullException(nameof(value));
 
@@ -166,9 +169,6 @@ namespace Hl7.Fhir.Serialization
                 SerializePrimitiveValue(value.ObjectValue, writer);
             }
 
-            // TODO: Should the POCO types explicitly or implicitly implement these interfaces?
-            // TODO: Implicitly and then have a AsDictionary() and AsEnumerable()?
-
             if (value.HasElements)
             {
                 // Write a property with '_elementName'
@@ -177,12 +177,24 @@ namespace Hl7.Fhir.Serialization
             }
         }
 
+        /// <summary>
+        /// Serialize a primitive .NET value that may occur in the POCOs into Json.
+        /// </summary>
+        /// <remarks>      
+        /// To allow for future additions to the POCOs the list of primitives supported here
+        /// is larger than the set used by the current POCOs. Note that <c>DateTimeOffset</c>c> and 
+        /// <c>byte[]</c> are considered to be "primitive" values here (used as the value in
+        /// <see cref="Instant"/> and <see cref="Base64Binary"/>).
+        /// 
+        /// Note that the current version of System.Text.Json only allows numbers
+        /// to be written that fit in .NET's <see cref="decimal"/> type, which may be less 
+        /// precision than required by the FHIR specification (http://hl7.org/fhir/json.html#primitive).
+        /// </remarks>
         public void SerializePrimitiveValue(object value, Utf8JsonWriter writer)
         {
             switch (value)
             {
                 //TODO: Include support for Any subclasses (CQL types)?
-                //TODO: precision loss in WriteNumber/ParseNumber (http://hl7.org/fhir/json.html#primitive)?
                 case int i32: writer.WriteNumberValue(i32); break;
                 case uint ui32: writer.WriteNumberValue(ui32); break;
                 case long i64: writer.WriteNumberValue(i64); break;
@@ -190,26 +202,21 @@ namespace Hl7.Fhir.Serialization
                 case float si: writer.WriteNumberValue(si); break;
                 case double dbl: writer.WriteNumberValue(dbl); break;
                 case decimal dec: writer.WriteNumberValue(dec); break;
-                // So, no trim here. string-based types (like code) should make sure their values are valid,
-                // so do not have trailing spaces. Not something the serializer should worry about? And strings
-                // are allowed to have trailing spaces:
-                // "According to XML schema, leading and trailing whitespace in the value attribute is ignored for the
-                // types boolean, integer, decimal, base64Binary, instant, uri, date, dateTime, oid, and uri. Note that
-                // this means that the schema aware XML libraries give different attribute values to non-schema aware libraries
-                // when reading the XML instances. For this reason, the value attribute for these types SHOULD not have leading
-                // and trailing spaces. String values should only have leading and trailing spaces if they are part of the content
-                // of the value. In JSON and Turtle whitespace in string values is always significant. Primitive types other than
+                // A little note about trimming and whitespaces. The spec says:
+                // "(...) In JSON and Turtle whitespace in string values is always significant. Primitive types other than
                 // string SHALL NOT have leading or trailing whitespace."
+                // Based on this, we are not trimming whitespace here. Validation is not a part of the responsibilities of
+                // the serializer, and string-based types (like code and uri) should make sure their values are valid,
+                // so should not have trailing spaces to begin with. strings are allowed to have trailing spaces, but should
+                // not just be spaces. The serializer will, however, not serialize an element with only whitespace
+                // (or an empty byte[]).
                 case string s: writer.WriteStringValue(s); break;
                 case bool b: writer.WriteBooleanValue(b); break;
-                //TODO: only two types that do not support 100% roundtrippability. Currently necessary for Instant.cs
-                // change Instant to have an ObjectValue of type string?  But then again, why is 'bool' good enough for Boolean,
-                // wouldn't we need to be able to store "treu" or "flase" for real roundtrippability?
                 case DateTimeOffset dto: writer.WriteStringValue(ElementModel.Types.DateTime.FormatDateTimeOffset(dto)); break;
                 case byte[] bytes: writer.WriteStringValue(Convert.ToBase64String(bytes)); break;
                 case null: writer.WriteNullValue(); break;
                 default:
-                    throw new FormatException($"There is no know serialization for type {value.GetType()} into Json.");
+                    throw new FormatException($"There is no know serialization for type {value.GetType()} into a Json primitive property value.");
             }
         }
     }
