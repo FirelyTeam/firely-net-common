@@ -12,7 +12,7 @@ using System.Text.Json;
 namespace Hl7.Fhir.Support.Poco.Tests
 {
     [TestClass]
-    public class SystemTextJsonSerializationTests
+    public class JsonFhirSerializationTests
     {
         private (TestPatient, string) getEdgecases()
         {
@@ -54,6 +54,22 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
             // much more whitespace, in fact...
             Assert.IsTrue(prettyWS > compactWS * 2);
+        }
+
+        [TestMethod]
+        public void SerializesInvalidData()
+        {
+            var options = new JsonSerializerOptions().ForFhirCompact(typeof(TestPatient).Assembly);
+
+            FhirBoolean b = new() { ObjectValue = "treu" };
+            var jdoc = JsonDocument.Parse(JsonSerializer.Serialize(b, options));
+            Assert.AreEqual("treu", jdoc.RootElement.GetProperty("value").GetString());
+
+            TestPatient p = new() { Contact = new() { new TestPatient.ContactComponent() } };
+            jdoc = JsonDocument.Parse(JsonSerializer.Serialize(p, options));
+            var contactArray = jdoc.RootElement.GetProperty("contact");
+            Assert.AreEqual(1, contactArray.GetArrayLength());
+            Assert.IsFalse(contactArray[0].EnumerateObject().Any());
         }
     }
 

@@ -19,19 +19,24 @@ using System.Text.Json;
 namespace Hl7.Fhir.Serialization
 {
     /// <summary>
-    /// 
+    /// Serializes the contents of an IReadOnlyDictionary[string,object] according to the rules of FHIR Json serialization.
     /// </summary>
-    public class JsonDictionarySerializer
+    /// <remarks>The serializer uses the format documented in https://www.hl7.org/fhir/json.html. Since all POCOs included
+    /// in the SDK implement IReadOnlyDictionary, these methods can be used to serialize POCOs to Json.
+    /// </remarks>
+    public static class JsonFhirDictionarySerializer
     {
         /// <summary>
         /// Serializes the given dictionary with FHIR data into Json.
         /// </summary>
-        /// <remarks>The serializer uses the format documented in https://www.hl7.org/fhir/json.html.
-        /// </remarks>
-        public void SerializeObject(IReadOnlyDictionary<string, object> members, Utf8JsonWriter writer) => SerializeObject(members, skipValue: false, writer);
+        public static void SerializeToFhirJson(this IReadOnlyDictionary<string, object> members, Utf8JsonWriter writer) => SerializeToFhirJson(members, writer, skipValue: false);
 
-        // TODO: prune empty subtrees
-        internal void SerializeObject(IReadOnlyDictionary<string, object> members, bool skipValue, Utf8JsonWriter writer)
+        /// <summary>
+        /// Serializes the given dictionary with FHIR data into Json, optionally skipping the "value" element.
+        /// </summary>
+        /// <remarks>Not serializing the "value" element is useful when serializing FHIR primitives into two properties, one
+        /// with just the value, and one with the id/extensions.</remarks>
+        internal static void SerializeToFhirJson(this IReadOnlyDictionary<string, object> members, Utf8JsonWriter writer, bool skipValue)
         {
             writer.WriteStartObject();
 
@@ -64,24 +69,33 @@ namespace Hl7.Fhir.Serialization
             writer.WriteEndObject();
         }
 
-        internal static bool HasValue(object? value) =>
-             value switch
-             {
-                 null => false,
-                 string s => !string.IsNullOrWhiteSpace(s),
-                 byte[] bs => bs.Length > 0,
-                 _ => true
-             };
+        /// <summary>
+        /// Determines wether the given .NET primitive value actually contains data
+        /// </summary>
+        //internal static bool HasValue(object? value) =>
+        //     value switch
+        //     {
+        //         null => false,
+        //         string s => !string.IsNullOrWhiteSpace(s),
+        //         byte[] bs => bs.Length > 0,
+        //         _ => true
+        //     };
 
-        private void serializeMemberValue(object value, Utf8JsonWriter writer)
+        private static void serializeMemberValue(object value, Utf8JsonWriter writer)
         {
             if (value is IReadOnlyDictionary<string, object> complex)
-                SerializeObject(complex, writer);
+                complex.SerializeToFhirJson(writer);
             else
                 SerializePrimitiveValue(value, writer);
         }
 
-        internal void SerializeFhirPrimitiveList(string elementName, IReadOnlyCollection<PrimitiveType> values, Utf8JsonWriter writer)
+        /// <summary>
+        /// Serializes a list of FHIR primitives into an array element with the given name
+        /// </summary>
+        /// <remarks>FHIR primitives are handled separately here since they may require
+        /// serialization into two Json properties called "elementName" and "_elementName" and
+        /// may use Json <c>null</c>s as placeholders.</remarks>
+        internal static void SerializeFhirPrimitiveList(string elementName, IReadOnlyCollection<PrimitiveType> values, Utf8JsonWriter writer)
         {
             if (values is null) throw new ArgumentNullException(nameof(values));
 
@@ -97,7 +111,7 @@ namespace Hl7.Fhir.Serialization
 
             foreach (var value in values)
             {
-                if (HasValue(value?.ObjectValue))
+                if (value.ObjectValue is not null)
                 {
                     if (!wroteStartArray)
                     {
@@ -135,7 +149,7 @@ namespace Hl7.Fhir.Serialization
                         writeStartArray("_" + elementName, numNullsMissed, writer);
                     }
 
-                    SerializeObject(value, skipValue: true, writer);
+                    value.SerializeToFhirJson(writer, skipValue: true);
                 }
                 else
                 {
@@ -149,7 +163,7 @@ namespace Hl7.Fhir.Serialization
             if (wroteStartArray) writer.WriteEndArray();
         }
 
-        private void writeStartArray(string propName, int numNulls, Utf8JsonWriter writer)
+        private static void writeStartArray(string propName, int numNulls, Utf8JsonWriter writer)
         {
             writer.WriteStartArray(propName);
 
@@ -158,11 +172,16 @@ namespace Hl7.Fhir.Serialization
         }
 
 
-        internal void SerializeFhirPrimitive(string elementName, PrimitiveType value, Utf8JsonWriter writer)
+        /// <summary>
+        /// Serializes a FHIR primitive into an element with the given name
+        /// </summary>
+        /// <remarks>FHIR primitives are handled separately here since they may require
+        /// serialization into two Json properties called "elementName" and "_elementName".</remarks>
+        internal static void SerializeFhirPrimitive(string elementName, PrimitiveType value, Utf8JsonWriter writer)
         {
             if (value is null) throw new ArgumentNullException(nameof(value));
 
-            if (HasValue(value.ObjectValue))
+            if (value.ObjectValue is not null)
             {
                 // Write a property with 'elementName'
                 writer.WritePropertyName(elementName);
@@ -173,7 +192,7 @@ namespace Hl7.Fhir.Serialization
             {
                 // Write a property with '_elementName'
                 writer.WritePropertyName("_" + elementName);
-                SerializeObject(value, skipValue: true, writer);
+                value.SerializeToFhirJson(writer, skipValue: true);
             }
         }
 
@@ -190,7 +209,7 @@ namespace Hl7.Fhir.Serialization
         /// to be written that fit in .NET's <see cref="decimal"/> type, which may be less 
         /// precision than required by the FHIR specification (http://hl7.org/fhir/json.html#primitive).
         /// </remarks>
-        public void SerializePrimitiveValue(object value, Utf8JsonWriter writer)
+        internal static void SerializePrimitiveValue(object value, Utf8JsonWriter writer)
         {
             switch (value)
             {

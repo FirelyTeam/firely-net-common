@@ -32,7 +32,6 @@ namespace Hl7.Fhir.Serialization
 #pragma warning restore IDE0060 // Remove unused parameter
         {
             // _deserializer = new JsonDynamicDeserializer(assembly);
-            _serializer = new JsonDictionarySerializer();
         }
 
         /// <summary>
@@ -41,14 +40,13 @@ namespace Hl7.Fhir.Serialization
         public override bool CanConvert(Type objectType) => typeof(Base).IsAssignableFrom(objectType);
 
         //private readonly JsonDynamicDeserializer _deserializer;
-        private readonly JsonDictionarySerializer _serializer;
 
         /// <summary>
         /// Writes a specified value as JSON.
         /// </summary>
         public override void Write(Utf8JsonWriter writer, Base poco, JsonSerializerOptions options)
         {
-            _serializer.SerializeObject(poco, writer);
+            poco.SerializeToFhirJson(writer);
         }
 
         /// <summary>
