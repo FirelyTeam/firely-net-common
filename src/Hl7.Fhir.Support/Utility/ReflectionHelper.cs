@@ -233,19 +233,12 @@ namespace Hl7.Fhir.Utility
             var type = enumVal.GetType();
             var memInfo = type.GetTypeInfo().GetDeclaredField(enumVal.ToString());
             var attributes = memInfo.GetCustomAttributes(typeof(T), false);
-            return (attributes.Count() > 0) ? (T)attributes.First() : null;
+
+            return (T)attributes.FirstOrDefault();
         }
 
-
-        public static PropertyInfo FindProperty(Type t, string name)
-        {
-#if NETSTANDARD1_6
-            return t.GetRuntimeProperties().FirstOrDefault(rtp => rtp.Name == name);
-#else
-            return t.GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-#endif
-
-        }
+        public static PropertyInfo FindProperty(Type t, string name) =>
+            t.GetTypeInfo().GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
         /// <summary>
         /// Returns all public, non-static properties for the given type.
@@ -274,45 +267,21 @@ namespace Hl7.Fhir.Utility
 #endif
         }
 
-        public static bool HasDefaultPublicConstructor(Type t)
-        {
-            if (t == null) throw Error.ArgumentNull("t");
-
-            if (t.GetTypeInfo().IsValueType)
-                return true;
-
-            return (GetDefaultPublicConstructor(t) != null);
-        }
+        public static bool HasDefaultPublicConstructor(Type t) =>
+            t.GetTypeInfo().IsValueType || GetDefaultPublicConstructor(t) != null;
 
         internal static ConstructorInfo GetDefaultPublicConstructor(Type t)
         {
-#if NETSTANDARD1_6
-            return t.GetTypeInfo().DeclaredConstructors.FirstOrDefault(s => s.GetParameters().Length == 0 && s.IsPublic && !s.IsStatic);
-#else
             BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Public;
-
-            return t.GetConstructors(bindingFlags).SingleOrDefault(c => !c.GetParameters().Any());
-#endif
+            return t.GetTypeInfo().GetConstructors(bindingFlags).SingleOrDefault(c => !c.GetParameters().Any());
         }
 
-        public static bool IsNullableType(Type type)
-        {
-            if (type == null) throw Error.ArgumentNull("type");
+        public static bool IsNullableType(Type type) => type.GetTypeInfo().IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
 
-            return (type.GetTypeInfo().IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>));
-        }
-
-        public static Type GetNullableArgument(Type type)
-        {
-            if (type == null) throw Error.ArgumentNull("type");
-
-            if (IsNullableType(type))
-            {
-                return type.GetTypeInfo().GenericTypeArguments[0];
-            }
-            else
-                throw Error.Argument("type", "Type {0} is not a Nullable<T>".FormatWith(type.Name));
-        }
+        public static Type GetNullableArgument(Type type) =>
+            IsNullableType(type)
+                ? type.GetTypeInfo().GenericTypeArguments[0]
+                : throw Error.Argument("type", "Type {0} is not a Nullable<T>".FormatWith(type.Name));
 
         public static bool IsTypedCollection(Type type)
         {
@@ -422,23 +391,13 @@ namespace Hl7.Fhir.Utility
 
         public static IEnumerable<Attribute> GetAttributes(Type type) => type.GetTypeInfo().GetCustomAttributes();
 
-        public static IEnumerable<T> GetAttributes<T>(MemberInfo member) where T : Attribute 
+        public static IEnumerable<T> GetAttributes<T>(MemberInfo member) where T : Attribute
             => member.GetCustomAttributes<T>();
 
 
-        internal static IEnumerable<FieldInfo> FindEnumFields(Type t)
-        {
-            if (t == null) throw Error.ArgumentNull("t");
+        internal static IEnumerable<FieldInfo> FindEnumFields(Type t) => t.GetTypeInfo().DeclaredFields.Where(a => a.IsPublic && a.IsStatic);
 
-            return t.GetTypeInfo().DeclaredFields.Where(a => a.IsPublic && a.IsStatic);
-        }
-
-        public static bool IsArray(object value)
-        {
-            if (value == null) throw Error.ArgumentNull("value");
-
-            return value.GetType().IsArray;
-        }
+        public static bool IsArray(object value) => value.GetType().IsArray;
 
         public static string PrettyTypeName(Type t)
         {

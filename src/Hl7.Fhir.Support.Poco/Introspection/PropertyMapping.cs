@@ -6,7 +6,6 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation;
@@ -195,12 +194,10 @@ namespace Hl7.Fhir.Introspection
         {
             var isValueElement = valueElementAttr != null && valueElementAttr.IsPrimitiveValue;
 
-            if (isValueElement && !isAllowedNativeTypeForDataTypeValue(prop.PropertyType))
-                throw Error.Argument(nameof(prop), "Property {0} is marked for use as a primitive element value, but its .NET type ({1}) " +
+            return !isValueElement || isAllowedNativeTypeForDataTypeValue(prop.PropertyType)
+                ? isValueElement
+                : throw Error.Argument(nameof(prop), "Property {0} is marked for use as a primitive element value, but its .NET type ({1}) " +
                     "is not supported by the serializer.".FormatWith(buildQualifiedPropName(prop), prop.PropertyType.Name));
-
-            return isValueElement;
-
         }
 
         private static string buildQualifiedPropName(PropertyInfo p)
@@ -212,11 +209,13 @@ namespace Hl7.Fhir.Introspection
             if (ReflectionHelper.IsNullableType(type))
                 type = ReflectionHelper.GetNullableArgument(type);
 
-            return type.IsEnum() ||
-                    PrimitiveTypeConverter.CanConvert(type);
+            return type.IsEnum() || ClassMapping.SupportedDotNetPrimitiveTypes.Contains(type);
         }
 
-        internal Func<object, object> Getter
+        /// <summary>
+        /// Given an instance of the parent class, gets the value for this property.
+        /// </summary>
+        public Func<object, object> GetValue
         {
             get
             {
@@ -231,12 +230,15 @@ namespace Hl7.Fhir.Introspection
 
         private Func<object, object>? _getter;
 
-        internal Action<object, object> Setter
+        /// <summary>
+        /// Given an instance of the parent class, sets the value for this property.
+        /// </summary>
+        public Action<object, object> SetValue
         {
             get
             {
 #if USE_CODE_GEN
-                LazyInitializer.EnsureInitialized(ref _setter, () => _propInfo.GetValueSetter());
+                LazyInitializer.EnsureInitialized(ref _setter, _propInfo.GetValueSetter);
 #else
                 LazyInitializer.EnsureInitialized(ref _setter, () => (instance, value) => _propInfo.SetValue(instance, value, null));
 #endif
@@ -279,17 +281,6 @@ namespace Hl7.Fhir.Introspection
 
         int IElementDefinitionSummary.Order => Order;
 
-        /// <summary>
-        /// Given an instance of the parent class, gets the value for this property.
-        /// </summary>
-        public object GetValue(object instance) => Getter(instance);
-
-
-        /// <summary>
-        /// Given an instance of the parent class, sets the value for this property.
-        /// </summary>
-        public void SetValue(object instance, object value) => Setter(instance, value);
-
         private ITypeSerializationInfo[] buildTypes()
         {
             if (!ClassMapping.TryGetMappingForType(FhirType[0], _createdVersion, out var elementTypeMapping))
@@ -325,10 +316,9 @@ namespace Hl7.Fhir.Introspection
             {
                 // The special case where the mapping name is a backbone element name can safely
                 // be ignored here, since that is handled by the first case in the if statement above.
-                if (ClassMapping.TryGetMappingForType(ft, _createdVersion, out var tm))
-                    return ((IStructureDefinitionSummary)tm!).TypeName;
-                else
-                    throw new NotSupportedException($"Type '{ft.Name}' is listed as an allowed type for property " +
+                return ClassMapping.TryGetMappingForType(ft, _createdVersion, out var tm)
+                    ? ((IStructureDefinitionSummary)tm!).TypeName
+                    : throw new NotSupportedException($"Type '{ft.Name}' is listed as an allowed type for property " +
                         $"'{buildQualifiedPropName(_propInfo)}', but it does not seem to" +
                         $"be a valid FHIR type POCO.");
             }

@@ -58,10 +58,16 @@ namespace Hl7.Fhir.Introspection
                     newInspector.Import(commonAssembly);
 
                 // And finally, the System/CQL primitive types
-                foreach (var mapping in ClassMapping.CqlPrimitiveTypes)
-                    newInspector.RegisterTypeMapping(mapping.NativeType, mapping);
+                foreach (var cqlType in getCqlTypes())
+                    newInspector.ImportType(cqlType);
 
                 return newInspector;
+
+                static IEnumerable<Type> getCqlTypes()
+                {
+                    return typeof(ElementModel.Types.Any).GetTypeInfo().Assembly.GetExportedTypes().
+                        Where(typ => typeof(ElementModel.Types.Any).IsAssignableFrom(typ));
+                }
             }
         }
 
@@ -128,6 +134,7 @@ namespace Hl7.Fhir.Introspection
         /// <summary>
         /// Retrieves an already imported <see cref="ClassMapping" /> given a FHIR type name.
         /// </summary>
+        /// <remarks>The search for the mapping by namem is case-insensitive.</remarks>
         public ClassMapping? FindClassMapping(string fhirTypeName) =>
             _classMappingsByName.TryGetValue(fhirTypeName, out var entry) ? entry : null;
 
