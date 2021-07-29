@@ -6,6 +6,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
+using FluentAssertions;
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -66,6 +67,20 @@ namespace Hl7.Fhir.Tests.Introspection
             profile = mapping.FindMappedElementByName("profile");
             Assert.IsNotNull(profile);
             Assert.AreEqual(typeof(Canonical), profile.FhirType.Single());
+        }
+
+        [TestMethod]
+        public void TestGetByName()
+        {
+            var cm = ClassMapping.TryCreate(typeof(Extension), out var mapping);
+            mapping.FindMappedElementByName("url").Should().NotBeNull();
+            mapping.FindMappedElementByName("urlx").Should().BeNull();
+            mapping.FindMappedElementByName("ur").Should().BeNull();
+            mapping.FindMappedElementByName("value").Should().NotBeNull();
+
+            mapping.FindMappedElementByChoiceName("value").Should().NotBeNull();
+            mapping.FindMappedElementByChoiceName("valu").Should().BeNull();
+            mapping.FindMappedElementByChoiceName("valueString").Should().NotBeNull();
         }
 
         [TestMethod]

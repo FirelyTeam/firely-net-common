@@ -77,7 +77,7 @@ namespace Hl7.Fhir.Serialization
             if (existing == null)
             {
                 var fac = new DefaultModelFactory();
-                existing = (Base)DefaultModelFactory.Create(mappingToUse.NativeType);
+                existing = (Base)fac.Create(mappingToUse.NativeType);
             }
             else
             {

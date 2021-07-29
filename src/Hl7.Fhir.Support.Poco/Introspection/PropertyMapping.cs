@@ -19,6 +19,9 @@ using System.Threading;
 
 namespace Hl7.Fhir.Introspection
 {
+    /// <summary>
+    /// A container for the metadata of an element of a FHIR datatype as present on a property of a (generated) .NET POCO class.
+    /// </summary>
     [System.Diagnostics.DebuggerDisplay(@"\{Name={Name} ElementType={ElementType.Name}}")]
     public class PropertyMapping : IElementDefinitionSummary
     {
@@ -31,8 +34,8 @@ namespace Hl7.Fhir.Introspection
             FhirRelease version)
         {
             Name = name;
-            _propInfo = pi;
-            _createdVersion = version;
+            NativeProperty = pi;
+            Release = version;
             ImplementingType = implementingType;
             FhirType = fhirTypes;
         }
@@ -115,7 +118,9 @@ namespace Hl7.Fhir.Introspection
         public bool IsResourceChoice { get; private set; }
 
         /// <summary>
-        /// The list of possible FHIR types for this element, represented as native types.
+        /// The list of possible FHIR types for this element, listed as the representative .NET types. 
+        /// For non-choice types this is a single Type, for choices this is either a list of Types or 
+        /// just <see cref="Hl7.Fhir.Model.DataType"/>.
         /// </summary>
         /// <remark>These are the defined (choice) types for this element as specified in the
         /// FHIR data definitions. It is derived from the actual property type,
@@ -125,13 +130,25 @@ namespace Hl7.Fhir.Introspection
         /// </remark>
         public Type[] FhirType { get; private set; }
 
-        private readonly PropertyInfo _propInfo;
-        private readonly FhirRelease _createdVersion;
+        /// <summary>
+        /// The original <see cref="PropertyInfo"/> the metadata was obtained from.
+        /// </summary>
+        public readonly PropertyInfo NativeProperty;
+
+        /// <summary>
+        /// The release of FHIR for which the metadata was extracted from the property.
+        /// </summary>
+        public readonly FhirRelease Release;
 
         [Obsolete("Use TryCreate() instead.")]
         public static PropertyMapping? Create(PropertyInfo prop, FhirRelease version = (FhirRelease)int.MaxValue)
             => TryCreate(prop, out var mapping, version) ? mapping : null;
 
+        /// <summary>
+        /// Inspects the given PropertyInfo, extracting metadata from its attributes and creating a new <see cref="PropertyMapping"/>.
+        /// </summary>
+        /// <remarks>There should generally be no reason to call this method, as you can easily get the required PropertyMapping via
+        /// a ClassMapping - which will cache this information as well. This constructor is public for historical reasons only.</remarks>
         public static bool TryCreate(PropertyInfo prop, out PropertyMapping? result, FhirRelease version)
         {
             if (prop == null) throw Error.ArgumentNull(nameof(prop));
@@ -220,7 +237,7 @@ namespace Hl7.Fhir.Introspection
             get
             {
 #if USE_CODE_GEN
-                LazyInitializer.EnsureInitialized(ref _getter, () => _propInfo.GetValueGetter());
+                LazyInitializer.EnsureInitialized(ref _getter, () => NativeProperty.GetValueGetter());
 #else
                 LazyInitializer.EnsureInitialized(ref _getter, () => instance => _propInfo.GetValue(instance, null));
 #endif
@@ -238,7 +255,7 @@ namespace Hl7.Fhir.Introspection
             get
             {
 #if USE_CODE_GEN
-                LazyInitializer.EnsureInitialized(ref _setter, _propInfo.GetValueSetter);
+                LazyInitializer.EnsureInitialized(ref _setter, NativeProperty.GetValueSetter);
 #else
                 LazyInitializer.EnsureInitialized(ref _setter, () => (instance, value) => _propInfo.SetValue(instance, value, null));
 #endif
@@ -248,6 +265,7 @@ namespace Hl7.Fhir.Introspection
 
         private Action<object, object>? _setter;
 
+        #region IElementDefinitionSummary members
         string IElementDefinitionSummary.ElementName => this.Name;
 
         bool IElementDefinitionSummary.IsCollection => this.IsCollection;
@@ -283,7 +301,7 @@ namespace Hl7.Fhir.Introspection
 
         private ITypeSerializationInfo[] buildTypes()
         {
-            if (!ClassMapping.TryGetMappingForType(FhirType[0], _createdVersion, out var elementTypeMapping))
+            if (!ClassMapping.TryGetMappingForType(FhirType[0], Release, out var elementTypeMapping))
                 throw new InvalidOperationException($"Cannot reflect FHIR metadata from .NET type {FhirType[0].Name}.");
 
             if (elementTypeMapping!.IsNestedType)
@@ -316,10 +334,10 @@ namespace Hl7.Fhir.Introspection
             {
                 // The special case where the mapping name is a backbone element name can safely
                 // be ignored here, since that is handled by the first case in the if statement above.
-                return ClassMapping.TryGetMappingForType(ft, _createdVersion, out var tm)
+                return ClassMapping.TryGetMappingForType(ft, Release, out var tm)
                     ? ((IStructureDefinitionSummary)tm!).TypeName
                     : throw new NotSupportedException($"Type '{ft.Name}' is listed as an allowed type for property " +
-                        $"'{buildQualifiedPropName(_propInfo)}', but it does not seem to" +
+                        $"'{buildQualifiedPropName(NativeProperty)}', but it does not seem to" +
                         $"be a valid FHIR type POCO.");
             }
         }
@@ -333,6 +351,8 @@ namespace Hl7.Fhir.Introspection
 
             public string ReferredType { get; private set; }
         }
+
+        #endregion
     }
 }
 

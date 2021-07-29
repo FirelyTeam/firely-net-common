@@ -21,7 +21,10 @@ using System.Threading;
 
 namespace Hl7.Fhir.Introspection
 {
-    public partial class ClassMapping : IStructureDefinitionSummary
+    /// <summary>
+    /// A container for the metadata of a FHIR datatype as present on the (generated) .NET POCO class.
+    /// </summary>
+    public class ClassMapping : IStructureDefinitionSummary
     {
         private static readonly ConcurrentDictionary<(Type, FhirRelease), ClassMapping?> _mappedClasses = new();
 
@@ -202,27 +205,6 @@ namespace Hl7.Fhir.Introspection
         /// </summary>
         public bool HasPrimitiveValueMember => PropertyMappings.Any(pm => pm.RepresentsValueElement);
 
-        /// <inheritdoc />
-        string IStructureDefinitionSummary.TypeName =>
-            this switch
-            {
-                { IsCodeOfT: true } => "code",
-                { IsNestedType: true } => NativeType.CanBeTreatedAsType(typeof(BackboneElement)) ?
-                            "BackboneElement"
-                            : "Element",
-                _ => Name
-            };
-
-        /// <inheritdoc />
-        bool IStructureDefinitionSummary.IsAbstract => NativeType.GetTypeInfo().IsAbstract;
-
-        /// <inheritdoc />
-        bool IStructureDefinitionSummary.IsResource => IsResource;
-
-        /// <inheritdoc />
-        IReadOnlyCollection<IElementDefinitionSummary> IStructureDefinitionSummary.GetElements() =>
-            PropertyMappings.Where(pm => !pm.RepresentsValueElement).ToList();
-
         /// <summary>
         /// Returns the mapping for an element of this class by its name.
         /// </summary>
@@ -258,6 +240,30 @@ namespace Hl7.Fhir.Introspection
 
             bool isRelevant(Attribute a) => a is not IFhirVersionDependent vd || a.AppliesToRelease(version);
         }
+
+        #region IStructureDefinitionSummary members
+        /// <inheritdoc />
+        string IStructureDefinitionSummary.TypeName =>
+            this switch
+            {
+                { IsCodeOfT: true } => "code",
+                { IsNestedType: true } => NativeType.CanBeTreatedAsType(typeof(BackboneElement)) ?
+                            "BackboneElement"
+                            : "Element",
+                _ => Name
+            };
+
+        /// <inheritdoc />
+        bool IStructureDefinitionSummary.IsAbstract => NativeType.GetTypeInfo().IsAbstract;
+
+        /// <inheritdoc />
+        bool IStructureDefinitionSummary.IsResource => IsResource;
+
+        /// <inheritdoc />
+        IReadOnlyCollection<IElementDefinitionSummary> IStructureDefinitionSummary.GetElements() =>
+            PropertyMappings.Where(pm => !pm.RepresentsValueElement).ToList();
+
+        #endregion
 
         /// <summary>
         /// Gets a delegate that, when called, creates an instance for the <see cref="NativeType"/> represented by this mapping.
