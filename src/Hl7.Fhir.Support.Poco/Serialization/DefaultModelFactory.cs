@@ -18,7 +18,7 @@ namespace Hl7.Fhir.Serialization
         }
 
 
-        public static bool CanCreate(Type type)
+        public bool CanCreate(Type type)
         {
             if (type == null) throw Error.ArgumentNull(nameof(type));
 
@@ -30,7 +30,7 @@ namespace Hl7.Fhir.Serialization
         }
 
 
-        public static object Create(Type type)
+        public object Create(Type type)
         {
             if (type == null) throw Error.ArgumentNull(nameof(type));
             //   if (!type.CanBeTreatedAsType(typeof(Base))) throw Error.Argument(nameof(type), "type argument must be a subclass of Base");
