@@ -75,8 +75,8 @@ namespace Hl7.Fhir.Introspection
 
             _attributes = new Lazy<IReadOnlyCollection<Attribute>>(getAttributes);
 
-            _getter = new Lazy<Func<object, object>>(() => Reflected.GetValueGetter());
-            _setter = new Lazy<Action<object, object>>(() => Reflected.GetValueSetter());
+            _getter = new Lazy<Func<object, object>>(Reflected.GetValueGetter);
+            _setter = new Lazy<Action<object, object>>(Reflected.GetValueSetter);
 
             List<Attribute> getAttributes() => ReflectionHelper.GetAttributes(Reflected).ToList();
         }

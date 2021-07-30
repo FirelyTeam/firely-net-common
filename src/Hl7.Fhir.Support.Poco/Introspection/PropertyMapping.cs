@@ -246,7 +246,7 @@ namespace Hl7.Fhir.Introspection
         /// <summary>
         /// Given an instance of the parent class, gets the value for this property.
         /// </summary>
-        public Func<object, object> GetValue => LazyInitializer.EnsureInitialized(ref _getter, () => NativeProperty.GetValueGetter())!;
+        public Func<object, object> GetValue => LazyInitializer.EnsureInitialized(ref _getter, NativeProperty.GetValueGetter)!;
 
         private Func<object, object>? _getter;
 
