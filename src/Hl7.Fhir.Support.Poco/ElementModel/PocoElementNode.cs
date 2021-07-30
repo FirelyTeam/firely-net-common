@@ -57,7 +57,7 @@ namespace Hl7.Fhir.ElementModel
 
         private Type determineInstanceType(PropertyMapping definition)
         {
-            if (!definition.IsPrimitive) return definition.FhirType[0];
+            if (!definition.IsPrimitive) return definition.PropertyTypeMapping.NativeType;
 
             // Backwards compat hack: the primitives (since .value is never queried, this
             // means Element.id, Narrative.div and Extension.url) should be returned as FHIR types, not

@@ -6,8 +6,6 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-#if USE_CODE_GEN
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -18,8 +16,18 @@ using System.Reflection.Emit;
 
 namespace Hl7.Fhir.Utility
 {
+    /// <summary>
+    /// Utility methods for generating delegates to support the deserializer.
+    /// </summary>
     public static class PropertyInfoExtensions
     {
+        // Will be set to true when we detect the platform has no codegen support.
+        // This happens the first time we catch a PlatformNotSupportedException.
+        public static bool NoCodeGenSupport { get; set; } = false;
+
+        /// <summary>
+        /// Generates a function that creates an instance of the given type.
+        /// </summary>
         public static Func<object> BuildFactoryMethod(this Type type)
         {
             var ti = type.GetTypeInfo();
@@ -29,110 +37,158 @@ namespace Hl7.Fhir.Utility
             var constructor = ti.GetConstructor(Type.EmptyTypes);
             if (constructor is null) throw new NotSupportedException($"Cannot generate factory method for type {type}: there is no default constructor.");
 
-            DynamicMethod getter = new($"{type.Name}_new", typeof(object), Type.EmptyTypes);
-            ILGenerator il = getter.GetILGenerator();
+            try
+            {
+                if (NoCodeGenSupport) return createInstance;
 
-            il.Emit(OpCodes.Newobj, constructor);
-            if (ti.IsValueType)
-                il.Emit(OpCodes.Box, type);
+                DynamicMethod getter = new($"{type.Name}_new", typeof(object), Type.EmptyTypes);
+                ILGenerator il = getter.GetILGenerator();
 
-            il.Emit(OpCodes.Ret);
+                il.Emit(OpCodes.Newobj, constructor);
+                if (ti.IsValueType)
+                    il.Emit(OpCodes.Box, type);
 
-            return (Func<object>)getter.CreateDelegate(typeof(Func<object>));
+                il.Emit(OpCodes.Ret);
+
+                return (Func<object>)getter.CreateDelegate(typeof(Func<object>));
+            }
+            catch (PlatformNotSupportedException)
+            {
+                NoCodeGenSupport = true;
+                return createInstance;
+            }
+
+            object createInstance() => Activator.CreateInstance(type)!;
         }
 
+        /// <summary>
+        /// Generates a function that creates an instance of a list of the given type.
+        /// </summary>
+        /// <remarks>The returned instance will actually be of type <see cref="List{T}"/> where T is the given type.</remarks>
         public static Func<IList> BuildListFactoryMethod(this Type type)
         {
             // Note that MakeGenericType() will return the same Type instance for the same List<T> type instantiations,
             // so we don't have to cache the result.
-            var constructor = typeof(List<>).MakeGenericType(type).GetTypeInfo().GetConstructor(Type.EmptyTypes)
+            var listType = typeof(List<>).MakeGenericType(type);
+            var constructor = listType.GetTypeInfo().GetConstructor(Type.EmptyTypes)
                 ?? throw new ArgumentException($"Type {type.Name} does not have a parameterless constructor.");
 
-            DynamicMethod getter = new($"new_list_of_{type.Name}", typeof(IList), Type.EmptyTypes);
-            ILGenerator il = getter.GetILGenerator();
+            try
+            {
+                if (NoCodeGenSupport) return createList;
 
-            il.Emit(OpCodes.Newobj, constructor);
-            il.Emit(OpCodes.Ret);
+                DynamicMethod getter = new($"new_list_of_{type.Name}", typeof(IList), Type.EmptyTypes);
+                ILGenerator il = getter.GetILGenerator();
 
-            return (Func<IList>)getter.CreateDelegate(typeof(Func<IList>));
+                il.Emit(OpCodes.Newobj, constructor);
+                il.Emit(OpCodes.Ret);
+
+                return (Func<IList>)getter.CreateDelegate(typeof(Func<IList>));
+            }
+            catch (PlatformNotSupportedException)
+            {
+                NoCodeGenSupport = true;
+                return createList;
+            }
+
+            IList createList() => (IList)Activator.CreateInstance(listType)!;
         }
 
-
+        /// <summary>
+        /// Generates a function that, when passed an instance, gets the value of the given property.
+        /// </summary>
         public static Func<T, object> GetValueGetter<T>(this PropertyInfo propertyInfo)
         {
-#if NET40
-            MethodInfo getMethod = propertyInfo.GetGetMethod();
-#else
             MethodInfo getMethod = propertyInfo.GetMethod ?? throw new InvalidOperationException($"Property {propertyInfo.Name} does not have a getter.");
-#endif
-
-            if (getMethod == null)
-                throw new InvalidOperationException("Property has no get method.");
 
             if (typeof(T) != propertyInfo.DeclaringType && typeof(T) != typeof(object))
                 throw new ArgumentException("Generic param T should be the type of property's declaring class.", nameof(propertyInfo));
 
-            DynamicMethod getter = new($"{propertyInfo.Name}_get", typeof(object), new Type[] { typeof(object) },
-                propertyInfo.DeclaringType!);
+            try
+            {
+                if (NoCodeGenSupport) return getValue;
 
-            ILGenerator il = getter.GetILGenerator();
-            il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Castclass, propertyInfo.DeclaringType!);
-            il.EmitCall(OpCodes.Callvirt, getMethod, null);
+                DynamicMethod getter = new($"{propertyInfo.Name}_get", typeof(object), new Type[] { typeof(object) },
+                    propertyInfo.DeclaringType!);
 
-            if (propertyInfo.PropertyType.GetTypeInfo().IsValueType)
-                il.Emit(OpCodes.Box, propertyInfo.PropertyType);
+                ILGenerator il = getter.GetILGenerator();
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Castclass, propertyInfo.DeclaringType!);
+                il.EmitCall(OpCodes.Callvirt, getMethod, null);
 
-            il.Emit(OpCodes.Ret);
+                if (propertyInfo.PropertyType.GetTypeInfo().IsValueType)
+                    il.Emit(OpCodes.Box, propertyInfo.PropertyType);
 
-            return (Func<T, object>)getter.CreateDelegate(typeof(Func<T, object>));
+                il.Emit(OpCodes.Ret);
+
+                return (Func<T, object>)getter.CreateDelegate(typeof(Func<T, object>));
+            }
+            catch (PlatformNotSupportedException)
+            {
+                NoCodeGenSupport = true;
+                return getValue;
+            }
+
+            object getValue(T instance) => propertyInfo.GetValue(instance, null)!;
         }
 
+        /// <summary>
+        /// Generates a function that, when passed an object instance, gets the value of the given property.
+        /// </summary>   
         public static Func<object, object> GetValueGetter(this PropertyInfo propertyInfo) =>
             GetValueGetter<object>(propertyInfo);
 
+        /// <summary>
+        /// Generates a function that, when passed an instance and a value, sets the value of the given property.
+        /// </summary>
         public static Action<T, object> GetValueSetter<T>(this PropertyInfo propertyInfo)
         {
-#if NET40
-            MethodInfo setMethod = propertyInfo.GetSetMethod();
-#else
             MethodInfo setMethod = propertyInfo.SetMethod ?? throw new InvalidOperationException($"Property {propertyInfo.Name} does not have a setter."); ;
-#endif
-
-            if (setMethod == null)
-                throw new InvalidOperationException("Property has no set method.");
 
             if (typeof(T) != propertyInfo.DeclaringType && typeof(T) != typeof(object))
                 throw new ArgumentException("Generic param T should be the type of property's declaring class.", nameof(propertyInfo));
 
-            Type[] arguments = new Type[] { typeof(object), typeof(object) };
-            DynamicMethod setter = new($"{propertyInfo.Name}_set", typeof(object), arguments, propertyInfo.DeclaringType!, true);
-            ILGenerator il = setter.GetILGenerator();
+            try
+            {
+                if (NoCodeGenSupport) return setValue;
 
-            il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Castclass, propertyInfo.DeclaringType!);
-            il.Emit(OpCodes.Ldarg_1);
+                Type[] arguments = new Type[] { typeof(object), typeof(object) };
+                DynamicMethod setter = new($"{propertyInfo.Name}_set", typeof(object), arguments, propertyInfo.DeclaringType!, true);
+                ILGenerator il = setter.GetILGenerator();
 
-            if (propertyInfo.PropertyType.GetTypeInfo().IsClass)
-                il.Emit(OpCodes.Castclass, propertyInfo.PropertyType);
-            else
-                il.Emit(OpCodes.Unbox_Any, propertyInfo.PropertyType);
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Castclass, propertyInfo.DeclaringType!);
+                il.Emit(OpCodes.Ldarg_1);
 
-            il.EmitCall(OpCodes.Callvirt, setMethod, null);
-            il.Emit(OpCodes.Ldarg_0);
+                if (propertyInfo.PropertyType.GetTypeInfo().IsClass)
+                    il.Emit(OpCodes.Castclass, propertyInfo.PropertyType);
+                else
+                    il.Emit(OpCodes.Unbox_Any, propertyInfo.PropertyType);
 
-            il.Emit(OpCodes.Ret);
+                il.EmitCall(OpCodes.Callvirt, setMethod, null);
+                il.Emit(OpCodes.Ldarg_0);
 
-            var del = (Func<T, object, object>)setter.CreateDelegate(typeof(Func<T, object, object>));
-            void actionDelegate(T obj, object val) => del(obj, val);
+                il.Emit(OpCodes.Ret);
 
-            return actionDelegate;
+                var del = (Func<T, object, object>)setter.CreateDelegate(typeof(Func<T, object, object>));
+                void actionDelegate(T obj, object val) => del(obj, val);
+
+                return actionDelegate;
+            }
+            catch (PlatformNotSupportedException)
+            {
+                NoCodeGenSupport = true;
+                return setValue;
+            }
+
+            void setValue(T instance, object value) => propertyInfo.SetValue(instance, value, null);
         }
 
+        /// <summary>
+        /// Generates a function that, when passed an object instance and a value, sets the value of the given property.
+        /// </summary>
         public static Action<object, object> GetValueSetter(this PropertyInfo propertyInfo) => GetValueSetter<object>(propertyInfo);
     }
 }
 
 #nullable restore
-
-#endif

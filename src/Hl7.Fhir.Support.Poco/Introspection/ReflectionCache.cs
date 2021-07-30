@@ -75,16 +75,9 @@ namespace Hl7.Fhir.Introspection
 
             _attributes = new Lazy<IReadOnlyCollection<Attribute>>(getAttributes);
 
-#if USE_CODE_GEN
             _getter = new Lazy<Func<object, object>>(() => Reflected.GetValueGetter());
             _setter = new Lazy<Action<object, object>>(() => Reflected.GetValueSetter());
-#else
-            _getter = new Lazy<Func<object, object>>(() => instance => Reflected.GetValue(instance, null));
-            _setter = new Lazy<Action<object, object>>(() => (instance, value) => Reflected.SetValue(instance, value, null));
 
-            // This is slow, but there is an alternative: we can avoid codegen (voor iOS) when not dealing with netstandard 1.1
-            // using (Func<object,object>)Delegate.CreateDelegate(typeof(Func<object,object>), Reflected.GetGetMethod())
-#endif
             List<Attribute> getAttributes() => ReflectionHelper.GetAttributes(Reflected).ToList();
         }
 

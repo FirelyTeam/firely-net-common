@@ -28,6 +28,8 @@ namespace Hl7.Fhir.Introspection
     {
         private static readonly ConcurrentDictionary<(Type, FhirRelease), ClassMapping?> _mappedClasses = new();
 
+        public static void Clear() => _mappedClasses.Clear();
+
         /// <summary>
         /// Gets the <see cref="ClassMapping"/> for the given <see cref="Type"/>. Calling this function multiple
         /// times for the same type and release will return the same ClassMapping.
@@ -268,17 +270,7 @@ namespace Hl7.Fhir.Introspection
         /// <summary>
         /// Gets a delegate that, when called, creates an instance for the <see cref="NativeType"/> represented by this mapping.
         /// </summary>
-        public Func<object> Factory
-        {
-            get
-            {
-#if USE_CODE_GEN
-                return LazyInitializer.EnsureInitialized(ref _factory, NativeType.BuildFactoryMethod)!;
-#else
-                return LazyInitializer.EnsureInitialized(ref _factory, () => ()=>Activator.CreateInstance(NativeType))!;
-#endif
-            }
-        }
+        public Func<object> Factory => LazyInitializer.EnsureInitialized(ref _factory, NativeType.BuildFactoryMethod)!;
 
         private Func<object>? _factory;
 
@@ -286,18 +278,7 @@ namespace Hl7.Fhir.Introspection
         /// <summary>
         /// Gets a delegate that, when called, creates an instance of a List of the <see cref="NativeType"/> represented by this mapping.
         /// </summary>
-        public Func<IList> ListFactory
-        {
-            get
-            {
-#if USE_CODE_GEN
-                return LazyInitializer.EnsureInitialized(ref _listFactory, NativeType.BuildListFactoryMethod)!;
-#else
-                var listType = typeof(List<>).MakeGenericType(NativeType);
-                return LazyInitializer.EnsureInitialized(ref _listFactory, () => ()=>(IList)Activator.CreateInstance(listType))!;
-#endif
-            }
-        }
+        public Func<IList> ListFactory => LazyInitializer.EnsureInitialized(ref _listFactory, NativeType.BuildListFactoryMethod)!;
 
         private Func<IList>? _listFactory;
 
@@ -355,6 +336,7 @@ namespace Hl7.Fhir.Introspection
             typeof(bool),
             typeof(DateTimeOffset),
             typeof(byte[]),
+            typeof(Enum)
         };
 
         private static ClassMapping buildCqlClassMapping(Type t, FhirRelease release) =>

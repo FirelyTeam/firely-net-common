@@ -31,6 +31,8 @@ namespace Hl7.Fhir.Introspection
     {
         private static readonly ConcurrentDictionary<string, ModelInspector> _inspectedAssemblies = new();
 
+        public static void Clear() => _inspectedAssemblies.Clear();
+
         /// <summary>
         /// Returns a fully configured <see cref="ModelInspector"/> with the
         /// FHIR metadata contents of the given assembly. Calling this function repeatedly for
@@ -149,6 +151,11 @@ namespace Hl7.Fhir.Introspection
         /// </summary>
         public ClassMapping? FindClassMappingByCanonical(string canonical) =>
             _classMappingsByCanonical.TryGetValue(canonical, out var entry) ? entry : null;
+
+        /// <summary>
+        /// List of PropertyMappings for this class, in the order of listing in the FHIR specification.
+        /// </summary>
+        public ICollection<ClassMapping> ClassMappings => _classMappingsByName.Values;
 
         /// <inheritdoc cref="IStructureDefinitionSummaryProvider.Provide(string)"/>
         public IStructureDefinitionSummary? Provide(string canonical) =>
