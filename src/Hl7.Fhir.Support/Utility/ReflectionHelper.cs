@@ -267,6 +267,9 @@ namespace Hl7.Fhir.Utility
 #endif
         }
 
+        /// <summary>
+        /// Returns true if the type is a primitive value type that has a parameterless public constructor.
+        /// </summary>
         public static bool HasDefaultPublicConstructor(Type t) =>
             t.GetTypeInfo().IsValueType || GetDefaultPublicConstructor(t) != null;
 
@@ -276,13 +279,22 @@ namespace Hl7.Fhir.Utility
             return t.GetTypeInfo().GetConstructors(bindingFlags).SingleOrDefault(c => !c.GetParameters().Any());
         }
 
+        /// <summary>
+        /// Returns true if the type is a <see cref="Nullable{T}"/>.
+        /// </summary>
         public static bool IsNullableType(Type type) => type.GetTypeInfo().IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
 
+        /// <summary>
+        /// If the given type is a <see cref="Nullable{T}"/>, this function will return T.
+        /// </summary>
         public static Type GetNullableArgument(Type type) =>
             IsNullableType(type)
                 ? type.GetTypeInfo().GenericTypeArguments[0]
                 : throw Error.Argument("type", "Type {0} is not a Nullable<T>".FormatWith(type.Name));
 
+        /// <summary>
+        /// Returns true if the given type is a .NET2.0+ typed collection.
+        /// </summary>
         public static bool IsTypedCollection(Type type)
         {
             return type.IsArray || ImplementsGenericDefinition(type, typeof(ICollection<>));
