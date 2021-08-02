@@ -1,9 +1,9 @@
+using FluentAssertions;
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Tests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -35,7 +35,6 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
             var errors = new List<string>();
             JsonAssert.AreSame("edgecases", expected, actual, errors);
-            Console.WriteLine(string.Join("\r\n", errors));
             Assert.AreEqual(0, errors.Count, "Errors were encountered comparing converted content");
         }
 
@@ -68,8 +67,8 @@ namespace Hl7.Fhir.Support.Poco.Tests
             TestPatient p = new() { Contact = new() { new TestPatient.ContactComponent() } };
             jdoc = JsonDocument.Parse(JsonSerializer.Serialize(p, options));
             var contactArray = jdoc.RootElement.GetProperty("contact");
-            Assert.AreEqual(1, contactArray.GetArrayLength());
-            Assert.IsFalse(contactArray[0].EnumerateObject().Any());
+            contactArray.GetArrayLength().Should().Be(1);
+            contactArray[0].EnumerateObject().Should().BeEmpty();
         }
     }
 

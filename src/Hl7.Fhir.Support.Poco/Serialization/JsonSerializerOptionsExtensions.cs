@@ -15,8 +15,15 @@ using System.Text.Json;
 
 namespace Hl7.Fhir.Serialization
 {
+    /// <summary>
+    /// Utility extension method to initialize the <see cref="JsonSerializerOptions"/> to use the System.Text.Json
+    /// based (de)serializers.
+    /// </summary>
     public static class JsonSerializerOptionsExtensions
     {
+        /// <summary>
+        /// Initialize the options to serialize using the JsonFhirConverter, producing compact output without whitespace.
+        /// </summary>
         public static JsonSerializerOptions ForFhirCompact(this JsonSerializerOptions options, Assembly modelAssembly)
         {
             options.Converters.Add(new JsonFhirConverter(modelAssembly));
@@ -26,6 +33,9 @@ namespace Hl7.Fhir.Serialization
             return options;
         }
 
+        /// <summary>
+        /// Initialize the options to serialize using the JsonFhirConverter, producing pretty output.
+        /// </summary>
         public static JsonSerializerOptions ForFhirPretty(this JsonSerializerOptions options, Assembly modelAssembly)
         {
             options.Converters.Add(new JsonFhirConverter(modelAssembly));
@@ -35,6 +45,9 @@ namespace Hl7.Fhir.Serialization
             return options;
         }
 
+        /// <summary>
+        /// Initialize JsonWriterOptions to produce compact output without whitespace.
+        /// </summary>
         public static JsonWriterOptions ForFhirCompact(this JsonWriterOptions options)
         {
             options.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
@@ -43,6 +56,9 @@ namespace Hl7.Fhir.Serialization
             return options;
         }
 
+        /// <summary>
+        /// Initialize JsonWriterOptions to produce pretty output.
+        /// </summary>
         public static JsonWriterOptions ForFhirPretty(this JsonWriterOptions options)
         {
             options.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
@@ -50,7 +66,6 @@ namespace Hl7.Fhir.Serialization
 
             return options;
         }
-
     }
 }
 
