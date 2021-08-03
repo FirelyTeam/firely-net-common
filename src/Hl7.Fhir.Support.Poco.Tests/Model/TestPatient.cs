@@ -1288,24 +1288,8 @@ namespace Hl7.Fhir.Model
                     value = Link;
                     return Link?.Any() == true;
                 default:
-                    return choiceMatches(out value);
+                    return base.TryGetValue(key, out value);
             };
-
-            bool choiceMatches(out object value)
-            {
-                if (key.StartsWith("deceased"))
-                {
-                    value = Deceased;
-                    return Deceased is not null && ElementName.HasCorrectSuffix(key, "deceased", Deceased.TypeName);
-                }
-                else if (key.StartsWith("multipleBirth"))
-                {
-                    value = MultipleBirth;
-                    return MultipleBirth is not null && ElementName.HasCorrectSuffix(key, "multipleBirth", MultipleBirth.TypeName);
-                }
-                return base.TryGetValue(key, out value);
-            }
-
         }
 
         protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
@@ -1317,10 +1301,10 @@ namespace Hl7.Fhir.Model
             if (Telecom?.Any() == true) yield return new KeyValuePair<string, object>("telecom", Telecom);
             if (GenderElement is not null) yield return new KeyValuePair<string, object>("gender", GenderElement);
             if (BirthDateElement is not null) yield return new KeyValuePair<string, object>("birthDate", BirthDateElement);
-            if (Deceased is not null) yield return new KeyValuePair<string, object>(ElementName.AddSuffixToElementName("deceased", Deceased), Deceased);
+            if (Deceased is not null) yield return new KeyValuePair<string, object>("deceased", Deceased);
             if (Address?.Any() == true) yield return new KeyValuePair<string, object>("address", Address);
             if (MaritalStatus is not null) yield return new KeyValuePair<string, object>("maritalStatus", MaritalStatus);
-            if (MultipleBirth is not null) yield return new KeyValuePair<string, object>(ElementName.AddSuffixToElementName("multipleBirth", MultipleBirth), MultipleBirth);
+            if (MultipleBirth is not null) yield return new KeyValuePair<string, object>("multipleBirth", MultipleBirth);
             if (Photo?.Any() == true) yield return new KeyValuePair<string, object>("photo", Photo);
             if (Contact?.Any() == true) yield return new KeyValuePair<string, object>("contact", Contact);
             if (Animal is not null) yield return new KeyValuePair<string, object>("animal", Animal);

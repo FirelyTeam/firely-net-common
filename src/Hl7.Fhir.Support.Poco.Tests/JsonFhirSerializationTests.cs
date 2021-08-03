@@ -30,7 +30,6 @@ namespace Hl7.Fhir.Support.Poco.Tests
             var (poco, expected) = getEdgecases();
 
             var options = new JsonSerializerOptions().ForFhirCompact(typeof(TestPatient).Assembly);
-            //Resource poco = JsonSerializer.Deserialize<Resource>(expected, options);
             string actual = JsonSerializer.Serialize(poco, options);
 
             var errors = new List<string>();
