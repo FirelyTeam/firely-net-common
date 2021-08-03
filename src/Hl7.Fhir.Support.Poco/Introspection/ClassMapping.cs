@@ -256,7 +256,8 @@ namespace Hl7.Fhir.Introspection
             };
 
         /// <inheritdoc />
-        bool IStructureDefinitionSummary.IsAbstract => NativeType.GetTypeInfo().IsAbstract;
+        bool IStructureDefinitionSummary.IsAbstract =>
+           ((IStructureDefinitionSummary)this).TypeName == "BackboneElement" || NativeType.GetTypeInfo().IsAbstract;
 
         /// <inheritdoc />
         bool IStructureDefinitionSummary.IsResource => IsResource;
