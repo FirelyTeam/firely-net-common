@@ -6,8 +6,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-#nullable enable annotations
-#nullable disable warnings
+#nullable enable
 
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Specification;
@@ -32,6 +31,8 @@ namespace Hl7.Fhir.Introspection
     {
         private static readonly ConcurrentDictionary<string, ModelInspector> _inspectedAssemblies = new();
 
+        public static void Clear() => _inspectedAssemblies.Clear();
+
         /// <summary>
         /// Returns a fully configured <see cref="ModelInspector"/> with the
         /// FHIR metadata contents of the given assembly. Calling this function repeatedly for
@@ -42,7 +43,7 @@ namespace Hl7.Fhir.Introspection
         /// metadata for the most recent release for those common classes.</remarks>
         public static ModelInspector ForAssembly(Assembly a)
         {
-            return _inspectedAssemblies.GetOrAdd(a.FullName, _ => configureInspector(a));
+            return _inspectedAssemblies.GetOrAdd(a.FullName ?? throw Error.ArgumentNull(nameof(a.FullName)), _ => configureInspector(a));
 
             static ModelInspector configureInspector(Assembly a)
             {
@@ -59,10 +60,16 @@ namespace Hl7.Fhir.Introspection
                     newInspector.Import(commonAssembly);
 
                 // And finally, the System/CQL primitive types
-                foreach (var mapping in ClassMapping.CqlPrimitiveTypes)
-                    newInspector.RegisterTypeMapping(mapping.NativeType, mapping);
+                foreach (var cqlType in getCqlTypes())
+                    newInspector.ImportType(cqlType);
 
                 return newInspector;
+
+                static IEnumerable<Type> getCqlTypes()
+                {
+                    return typeof(ElementModel.Types.Any).GetTypeInfo().Assembly.GetExportedTypes().
+                        Where(typ => typeof(ElementModel.Types.Any).IsAssignableFrom(typ));
+                }
             }
         }
 
@@ -129,6 +136,7 @@ namespace Hl7.Fhir.Introspection
         /// <summary>
         /// Retrieves an already imported <see cref="ClassMapping" /> given a FHIR type name.
         /// </summary>
+        /// <remarks>The search for the mapping by namem is case-insensitive.</remarks>
         public ClassMapping? FindClassMapping(string fhirTypeName) =>
             _classMappingsByName.TryGetValue(fhirTypeName, out var entry) ? entry : null;
 
@@ -143,6 +151,11 @@ namespace Hl7.Fhir.Introspection
         /// </summary>
         public ClassMapping? FindClassMappingByCanonical(string canonical) =>
             _classMappingsByCanonical.TryGetValue(canonical, out var entry) ? entry : null;
+
+        /// <summary>
+        /// List of PropertyMappings for this class, in the order of listing in the FHIR specification.
+        /// </summary>
+        public ICollection<ClassMapping> ClassMappings => _classMappingsByName.Values;
 
         /// <inheritdoc cref="IStructureDefinitionSummaryProvider.Provide(string)"/>
         public IStructureDefinitionSummary? Provide(string canonical) =>

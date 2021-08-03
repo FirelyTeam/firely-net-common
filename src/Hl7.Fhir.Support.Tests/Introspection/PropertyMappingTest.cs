@@ -6,12 +6,12 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
+using FluentAssertions;
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Diagnostics;
-using System.Linq;
 
 namespace Hl7.Fhir.Tests.Introspection
 {
@@ -59,13 +59,27 @@ namespace Hl7.Fhir.Tests.Introspection
             Assert.IsNull(mapping.FindMappedElementByName("source"));
             var profile = mapping.FindMappedElementByName("profile");
             Assert.IsNotNull(profile);
-            Assert.AreEqual(typeof(FhirUri), profile.FhirType.Single());
+            Assert.AreEqual(typeof(FhirUri), profile.PropertyTypeMapping.NativeType);
 
             Assert.IsTrue(ClassMapping.TryCreate(typeof(Meta), out mapping, Specification.FhirRelease.R4));
             Assert.IsNotNull(mapping.FindMappedElementByName("source"));
             profile = mapping.FindMappedElementByName("profile");
             Assert.IsNotNull(profile);
-            Assert.AreEqual(typeof(Canonical), profile.FhirType.Single());
+            Assert.AreEqual(typeof(Canonical), profile.PropertyTypeMapping.NativeType);
+        }
+
+        [TestMethod]
+        public void TestGetByName()
+        {
+            var cm = ClassMapping.TryCreate(typeof(Extension), out var mapping);
+            mapping.FindMappedElementByName("url").Should().NotBeNull();
+            mapping.FindMappedElementByName("urlx").Should().BeNull();
+            mapping.FindMappedElementByName("ur").Should().BeNull();
+            mapping.FindMappedElementByName("value").Should().NotBeNull();
+
+            mapping.FindMappedElementByChoiceName("value").Should().NotBeNull();
+            mapping.FindMappedElementByChoiceName("valu").Should().BeNull();
+            mapping.FindMappedElementByChoiceName("valueString").Should().NotBeNull();
         }
 
         [TestMethod]
@@ -75,9 +89,38 @@ namespace Hl7.Fhir.Tests.Introspection
 
             var propMapping = mapping.FindMappedElementByName("type1");
             Assert.AreEqual(typeof(Code<SomeEnum>), propMapping.ImplementingType);
-            Assert.AreEqual(typeof(FhirString), propMapping.FhirType.Single());
+            Assert.AreEqual(typeof(FhirString), propMapping.PropertyTypeMapping.NativeType);
         }
 
+
+        [TestMethod]
+        public void GetClassMappingForProperty()
+        {
+            // Canonical.Value - a system primitive
+            ClassMapping.TryCreate(typeof(Canonical), out var canonicalMapping);
+            canonicalMapping.FindMappedElementByName("value").PropertyTypeMapping.Name.Should().Be("System.String");
+
+            // ConcactPoint.System - a Code<T> -> Code
+            ClassMapping.TryCreate(typeof(ContactPoint), out var contactPointMapping);
+            contactPointMapping.FindMappedElementByName("system").PropertyTypeMapping.Name.Should().Be("code");
+
+            // ContactPoint.Value - a FhirString
+            contactPointMapping.FindMappedElementByName("value").PropertyTypeMapping.Name.Should().Be("string");
+
+            // Extension.Url - a system primitive
+            ClassMapping.TryCreate(typeof(Extension), out var extensionMapping);
+            extensionMapping.FindMappedElementByName("url").PropertyTypeMapping.Name.Should().Be("System.String");
+
+            // Extension.Value - an abstract DataType
+            extensionMapping.FindMappedElementByName("value").PropertyTypeMapping.Name.Should().Be("DataType");
+
+            // Parameters.Parameter - a backbone
+            ClassMapping.TryCreate(typeof(Parameters), out var parametersMapping);
+            var parameterComponentMapping = parametersMapping.FindMappedElementByName("parameter").PropertyTypeMapping;
+
+            parameterComponentMapping.Name.Should().Be("Parameters#Parameter");
+            parameterComponentMapping.FindMappedElementByName("resource").PropertyTypeMapping.Name.Should().Be("Resource");
+        }
 
         [FhirType("TypeWithCodeOfT")]
         public class TypeWithCodeOfT
