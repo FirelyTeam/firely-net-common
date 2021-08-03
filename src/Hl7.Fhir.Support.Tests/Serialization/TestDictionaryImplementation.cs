@@ -65,15 +65,18 @@ namespace Hl7.Fhir.Support.Tests.Serialization
         [TestMethod]
         public void CanEnumerateExtension()
         {
+            // Explicitly test hand-written IROD implementation.
             IReadOnlyDictionary<string, object> b = new Extension("http://nu.nl", new FhirBoolean(true));
             b.Count.Should().Be(2);
             b.Should().BeEquivalentTo(
                 KeyValuePair.Create("url", "http://nu.nl"),
-                KeyValuePair.Create("valueBoolean", new FhirBoolean(true)));
+                KeyValuePair.Create("value", new FhirBoolean(true)));
 
             b.TryGetValue("valueString", out _).Should().BeFalse();
-            b.TryGetValue("valueBoolean", out var fb).Should().BeTrue();
+            b.TryGetValue("valueBoolean", out _).Should().BeFalse();
             b.TryGetValue("valueXXXXBoolean", out _).Should().BeFalse();
+            b.TryGetValue("value", out var fb).Should().BeTrue();
+
             fb.Should().BeOfType<FhirBoolean>().Which.Value.Should().BeTrue();
 
             b["value"].Should().BeOfType<FhirBoolean>().Which.Value.Should().BeTrue();
@@ -85,8 +88,8 @@ namespace Hl7.Fhir.Support.Tests.Serialization
             IReadOnlyDictionary<string, object> b = new Parameters.ParameterComponent() { Name = "test1", Value = new FhirBoolean(true) };
 
             b.TryGetValue("valueString", out _).Should().BeFalse();
-            b.TryGetValue("valueBoolean", out var fb).Should().BeTrue();
-            b.TryGetValue("value", out _).Should().BeTrue();
+            b.TryGetValue("valueBoolean", out _).Should().BeFalse();
+            b.TryGetValue("value", out var fb).Should().BeTrue();
             b.TryGetValue("valueXXXXBoolean", out _).Should().BeFalse();
             fb.Should().BeOfType<FhirBoolean>().Which.Value.Should().BeTrue();
 
@@ -150,7 +153,7 @@ namespace Hl7.Fhir.Support.Tests.Serialization
             ps.TryGetValue("resource", out var r).Should().BeTrue();
 
             var resource = ps["resource"].Should().BeAssignableTo<IReadOnlyDictionary<string, object>>().Subject;
-            resource["resourceType"].Should().Be("OperationOutcome");
+            Assert.ThrowsException<KeyNotFoundException>(() => resource["resourceType"]);
         }
     }
 }

@@ -31,7 +31,6 @@
 
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Specification;
-using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation;
 using System;
 using System.Collections.Generic;
@@ -166,26 +165,15 @@ namespace Hl7.Fhir.Model
                     value = Value;
                     return Value is not null;
                 default:
-                    return choiceMatches(out value);
+                    return base.TryGetValue(key, out value);
             };
-
-            bool choiceMatches(out object value)
-            {
-                if (key.StartsWith("value"))
-                {
-                    value = Value;
-                    return Value is not null && ElementName.HasCorrectSuffix(key, "value", Value.TypeName);
-                }
-
-                return base.TryGetValue(key, out value);
-            }
         }
 
         protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
         {
             foreach (var kvp in base.GetElementPairs()) yield return kvp;
             if (Url is not null) yield return new KeyValuePair<string, object>("url", Url);
-            if (Value is not null) yield return new KeyValuePair<string, object>(ElementName.AddSuffixToElementName("value", Value), Value);
+            if (Value is not null) yield return new KeyValuePair<string, object>("value", Value);
         }
     }
 }
