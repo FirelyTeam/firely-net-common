@@ -236,9 +236,6 @@ namespace Hl7.Fhir.Model
     {
       switch (key)
       {
-        case "resourceType":
-          value = TypeName;
-          return true;
         case "id":
           value = IdElement;
           return IdElement is not null;
@@ -259,7 +256,6 @@ namespace Hl7.Fhir.Model
 
     protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
     {
-      yield return new KeyValuePair<string,object>("resourceType",TypeName);
       foreach (var kvp in base.GetElementPairs()) yield return kvp;
       if (IdElement is not null) yield return new KeyValuePair<string,object>("id",IdElement);
       if (Meta is not null) yield return new KeyValuePair<string,object>("meta",Meta);

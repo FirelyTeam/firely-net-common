@@ -123,8 +123,8 @@ namespace Hl7.Fhir.Support.Tests.Serialization
         public void CanEnumerateResource()
         {
             IReadOnlyDictionary<string, object> b = setupOutcome();
-            b.Count.Should().Be(4);
-            b["resourceType"].Should().Be("OperationOutcome");
+            b.Count.Should().Be(3);
+            b.TryGetValue("resourceType", out _).Should().BeFalse();  // we do not generate "resourceType" anymore
 
             // Check a backbone
             IReadOnlyDictionary<string, object> bb = b["issue"].Should().BeOfType<List<OperationOutcome.IssueComponent>>().Subject.Single();
