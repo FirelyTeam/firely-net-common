@@ -74,6 +74,11 @@ namespace Hl7.Fhir.Introspection
 
         public bool InSummary { get; set; }
 
+        /// <summary>
+        /// If this modifies the meaning of other elements
+        /// </summary>
+        public bool IsModifier { get; set; }
+
         // This attribute is a subclass of ValidationAttribute so that IsValid() is called on every 
         // FhirElement while validating. This allows us to extend validation into each FhirElement,
         // while normally, the .NET validation will only validate one level, but will not recurse

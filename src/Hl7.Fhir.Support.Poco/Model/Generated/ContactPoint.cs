@@ -213,7 +213,7 @@ namespace Hl7.Fhir.Model
     /// <summary>
     /// home | work | temp | old | mobile - purpose of this contact point
     /// </summary>
-    [FhirElement("use", InSummary=true, Order=50)]
+    [FhirElement("use", InSummary=true, IsModifier=true, Order=50)]
     [DeclaredType(Type = typeof(Code))]
     [DataMember]
     public Code<Hl7.Fhir.Model.ContactPoint.ContactPointUse> UseElement

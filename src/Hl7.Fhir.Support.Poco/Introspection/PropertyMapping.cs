@@ -67,6 +67,13 @@ namespace Hl7.Fhir.Introspection
         public bool InSummary { get; private set; }
 
         /// <summary>
+        /// If this modifies the meaning of other elements
+        /// (see https://www.hl7.org/fhir/conformance-rules.html#isModifier)
+        /// </summary>
+        public bool IsModifier { get; private set; }
+
+
+        /// <summary>
         /// Whether the element has a cardinality higher than 0.
         /// </summary>
         public bool IsMandatoryElement { get; private set; }
@@ -180,6 +187,7 @@ namespace Hl7.Fhir.Introspection
             result = new PropertyMapping(elementAttr.Name, prop, implementingType, fhirTypes, version)
             {
                 InSummary = elementAttr.InSummary,
+                IsModifier = elementAttr.IsModifier,
                 Choice = elementAttr.Choice,
                 SerializationHint = elementAttr.XmlSerialization,
                 Order = elementAttr.Order,
@@ -253,6 +261,9 @@ namespace Hl7.Fhir.Introspection
         bool IElementDefinitionSummary.IsRequired => this.IsMandatoryElement;
 
         bool IElementDefinitionSummary.InSummary => this.InSummary;
+
+        /// <inheritdoc/>
+        bool IElementDefinitionSummary.IsModifier => this.IsModifier;
 
         bool IElementDefinitionSummary.IsChoiceElement => this.Choice == ChoiceType.DatatypeChoice;
 

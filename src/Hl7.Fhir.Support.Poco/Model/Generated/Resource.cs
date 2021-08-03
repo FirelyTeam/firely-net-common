@@ -102,7 +102,7 @@ namespace Hl7.Fhir.Model
     /// <summary>
     /// A set of rules under which this content was created
     /// </summary>
-    [FhirElement("implicitRules", InSummary=true, Order=30)]
+    [FhirElement("implicitRules", InSummary=true, IsModifier=true, Order=30)]
     [DataMember]
     public Hl7.Fhir.Model.FhirUri ImplicitRulesElement
     {
