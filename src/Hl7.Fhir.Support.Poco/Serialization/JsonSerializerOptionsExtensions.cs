@@ -24,9 +24,9 @@ namespace Hl7.Fhir.Serialization
         /// <summary>
         /// Initialize the options to serialize using the JsonFhirConverter, producing compact output without whitespace.
         /// </summary>
-        public static JsonSerializerOptions ForFhirCompact(this JsonSerializerOptions options, Assembly modelAssembly)
+        public static JsonSerializerOptions ForFhirCompact(this JsonSerializerOptions options, Assembly modelAssembly, ElementFilter? filter = default)
         {
-            options.Converters.Add(new JsonFhirConverter(modelAssembly));
+            options.Converters.Add(new JsonFhirConverter(modelAssembly, filter));
             options.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
             options.WriteIndented = false;
 
@@ -36,33 +36,11 @@ namespace Hl7.Fhir.Serialization
         /// <summary>
         /// Initialize the options to serialize using the JsonFhirConverter, producing pretty output.
         /// </summary>
-        public static JsonSerializerOptions ForFhirPretty(this JsonSerializerOptions options, Assembly modelAssembly)
+        public static JsonSerializerOptions ForFhirPretty(this JsonSerializerOptions options, Assembly modelAssembly, ElementFilter? filter = default)
         {
-            options.Converters.Add(new JsonFhirConverter(modelAssembly));
+            options.Converters.Add(new JsonFhirConverter(modelAssembly, filter));
             options.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
             options.WriteIndented = true;
-
-            return options;
-        }
-
-        /// <summary>
-        /// Initialize JsonWriterOptions to produce compact output without whitespace.
-        /// </summary>
-        public static JsonWriterOptions ForFhirCompact(this JsonWriterOptions options)
-        {
-            options.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
-            options.Indented = false;
-
-            return options;
-        }
-
-        /// <summary>
-        /// Initialize JsonWriterOptions to produce pretty output.
-        /// </summary>
-        public static JsonWriterOptions ForFhirPretty(this JsonWriterOptions options)
-        {
-            options.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
-            options.Indented = true;
 
             return options;
         }

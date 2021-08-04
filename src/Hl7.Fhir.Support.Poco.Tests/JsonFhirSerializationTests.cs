@@ -25,6 +25,21 @@ namespace Hl7.Fhir.Support.Poco.Tests
         }
 
         [TestMethod]
+        public void CanSerializeEdgeCasesFiltered()
+        {
+            var (poco, expected) = getEdgecases();
+
+            ElementFilter filter = (_, _, path, _) => path.EndsWith(".identifier") ? ElementFilterOperation.IncludeTree : ElementFilterOperation.Exclude;
+
+            var options = new JsonSerializerOptions().ForFhirPretty(typeof(TestPatient).Assembly, filter);
+            string actual = JsonSerializer.Serialize(poco, options);
+
+            var errors = new List<string>();
+            JsonAssert.AreSame("edgecases", expected, actual, errors);
+            Assert.AreEqual(0, errors.Count, "Errors were encountered comparing converted content");
+        }
+
+        [TestMethod]
         public void CanSerializeEdgeCases()
         {
             var (poco, expected) = getEdgecases();
@@ -36,6 +51,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             JsonAssert.AreSame("edgecases", expected, actual, errors);
             Assert.AreEqual(0, errors.Count, "Errors were encountered comparing converted content");
         }
+
 
         [TestMethod]
         public void PrintsPretty()
