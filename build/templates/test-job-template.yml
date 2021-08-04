@@ -1,0 +1,23 @@
+# Repo: FirelyTeam/firely-net-common
+# File: build/templates/test-job-template.yml
+parameters:
+- name: testRunTitle
+  default: 'Test'
+- name: buildConfiguration
+  default: 'Debug'
+- name: projects
+
+steps:
+- task: DownloadPipelineArtifact@2
+  inputs:
+    displayName: Download Build artifacts
+    artifact: 'TestBuild'
+    path: $(System.DefaultWorkingDirectory)/TestBuild
+    
+- task: DotNetCoreCLI@2
+  displayName: Running unit tests
+  inputs:
+    command: test
+    projects: ${{ parameters.projects }}
+    arguments: '--configuration ${{ parameters.buildConfiguration }} --no-build -f $(TEST_TARGETFRAMEWORK) --filter TestCategory!=IntegrationTest&TestCategory!=FhirClient --collect "Code coverage"'
+    testRunTitle: ${{ parameters.testRunTitle }}
