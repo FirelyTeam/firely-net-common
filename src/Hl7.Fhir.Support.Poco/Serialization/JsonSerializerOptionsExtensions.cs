@@ -24,24 +24,39 @@ namespace Hl7.Fhir.Serialization
         /// <summary>
         /// Initialize the options to serialize using the JsonFhirConverter, producing compact output without whitespace.
         /// </summary>
-        public static JsonSerializerOptions ForFhirCompact(this JsonSerializerOptions options, Assembly modelAssembly, ElementFilter? filter = default)
+        public static JsonSerializerOptions ForFhir(this JsonSerializerOptions options, Assembly modelAssembly, SerializationFilter? filter = default)
         {
-            options.Converters.Add(new JsonFhirConverter(modelAssembly, filter));
             options.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
-            options.WriteIndented = false;
-
+            options.Converters.Add(new JsonFhirConverter(modelAssembly, filter));
             return options;
         }
 
         /// <summary>
+        /// Initialize the options to serialize using the JsonFhirConverter, producing compact output without whitespace.
+        /// </summary>
+        public static JsonSerializerOptions ForFhir(this JsonSerializerOptions options, JsonFhirConverter converter)
+        {
+            options.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
+            options.Converters.Add(converter);
+            return options;
+        }
+
+        /// <summary>
+        /// Initialize the options to serialize using the JsonFhirConverter, producing compact output without whitespace.
+        /// </summary>
+        public static JsonSerializerOptions Compact(this JsonSerializerOptions options)
+        {
+            options.WriteIndented = false;
+            return options;
+        }
+
+
+        /// <summary>
         /// Initialize the options to serialize using the JsonFhirConverter, producing pretty output.
         /// </summary>
-        public static JsonSerializerOptions ForFhirPretty(this JsonSerializerOptions options, Assembly modelAssembly, ElementFilter? filter = default)
+        public static JsonSerializerOptions Pretty(this JsonSerializerOptions options)
         {
-            options.Converters.Add(new JsonFhirConverter(modelAssembly, filter));
-            options.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
             options.WriteIndented = true;
-
             return options;
         }
     }

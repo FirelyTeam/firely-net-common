@@ -28,13 +28,14 @@ namespace Hl7.Fhir.Serialization
     public class JsonFhirConverter : JsonConverter<Base>
     {
 #pragma warning disable IDE0060 // Will become used when we add deserialization.
-        public JsonFhirConverter(Assembly assembly, ElementFilter? filter = default)
+        public JsonFhirConverter(Assembly assembly, SerializationFilter? filter = default)
 #pragma warning restore IDE0060 // Remove unused parameter
         {
             ModelInspector inspector = ModelInspector.ForAssembly(assembly);
 
             // _deserializer = new JsonDynamicDeserializer(assembly);
-            _serializer = new JsonFhirDictionarySerializer(inspector.FhirRelease, filter);
+            _serializer = new JsonFhirDictionarySerializer(inspector.FhirRelease);
+            Filter = filter;
         }
 
         /// <summary>
@@ -45,12 +46,14 @@ namespace Hl7.Fhir.Serialization
         //private readonly JsonDynamicDeserializer _deserializer;
         private readonly JsonFhirDictionarySerializer _serializer;
 
+        public SerializationFilter? Filter { get; }
+
         /// <summary>
         /// Writes a specified value as JSON.
         /// </summary>
         public override void Write(Utf8JsonWriter writer, Base poco, JsonSerializerOptions options)
         {
-            _serializer.Serialize(poco, writer);
+            _serializer.Serialize(poco, writer, Filter);
         }
 
         /// <summary>

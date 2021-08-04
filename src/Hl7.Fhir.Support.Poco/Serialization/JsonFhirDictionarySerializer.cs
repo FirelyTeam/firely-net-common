@@ -30,50 +30,27 @@ namespace Hl7.Fhir.Serialization
     /// </remarks>
     public class JsonFhirDictionarySerializer
     {
-        private readonly struct SerializationState
-        {
-            readonly int NestingDepth;
-            readonly string? LocalPath;
-            readonly bool IncludeTree;
-
-            public SerializationState(int nestingDepth, string? localPath, bool includeTree)
-            {
-                NestingDepth = nestingDepth;
-                LocalPath = localPath;
-                IncludeTree = includeTree;
-            }
-
-            public void Deconstruct(out int nestingDepth, out string? localPath, out bool includeTree)
-                => (nestingDepth, localPath, includeTree) = (NestingDepth, LocalPath, IncludeTree);
-
-            public override string ToString() => $"{LocalPath}/{NestingDepth}{(IncludeTree ? " (include)" : "")}";
-        }
-
         public static JsonFhirDictionarySerializer Default => LazyInitializer.EnsureInitialized(ref _default);
 
         public FhirRelease Release { get; }
 
-        public ElementFilter? Filter { get; }
-
         private static JsonFhirDictionarySerializer? _default;
 
-        public JsonFhirDictionarySerializer(ElementFilter? filter = default)
+        public JsonFhirDictionarySerializer()
         {
             Release = (FhirRelease)Enum.GetValues(typeof(FhirRelease)).Cast<int>().OrderBy(t => t).Last();
-            Filter = filter;
         }
 
-        public JsonFhirDictionarySerializer(FhirRelease release, ElementFilter? filter = default)
+        public JsonFhirDictionarySerializer(FhirRelease release)
         {
             Release = release;
-            Filter = filter;
         }
 
         /// <summary>
         /// Serializes the given dictionary with FHIR data into Json.
         /// </summary>
-        public void Serialize(IReadOnlyDictionary<string, object> members, Utf8JsonWriter writer) =>
-            serializeInternal(members, writer, skipValue: false, new SerializationState());
+        public void Serialize(IReadOnlyDictionary<string, object> members, Utf8JsonWriter writer, SerializationFilter? filter = default) =>
+            serializeInternal(members, writer, skipValue: false, filter);
 
         /// <summary>
         /// Serializes the given dictionary with FHIR data into Json, optionally skipping the "value" element.
@@ -84,46 +61,36 @@ namespace Hl7.Fhir.Serialization
             IReadOnlyDictionary<string, object> members,
             Utf8JsonWriter writer,
             bool skipValue,
-            in SerializationState state)
+            SerializationFilter? filter)
         {
             writer.WriteStartObject();
 
-            var (nesting, path, includeAll) = state;
-
             if (members is Resource r)
-            {
-                if (path is not null) nesting += 1;
                 writer.WriteString("resourceType", r.TypeName);
-            }
 
-            var hasMapping = ClassMapping.TryGetMappingForType(members.GetType(), Release, out var mapping);
+            // Only throw if we don't have a mapping where we are expected to: when this is a subclass of Base.
+            if (!ClassMapping.TryGetMappingForType(members.GetType(), Release, out var mapping) && members is Base)
+                throw new InvalidOperationException($"Encountered type {members.GetType()}, which is a support POCO for FHIR, but does not " +
+                    $"have sufficient metadata to be used by the serializer.");
+
+            filter?.EnterObject(members, mapping);
 
             foreach (var member in members)
             {
                 if (skipValue && member.Key == "value") continue;
 
-                var propertyMapping = hasMapping ? mapping!.FindMappedElementByName(member.Key) : null;
+                var propertyMapping = mapping?.FindMappedElementByName(member.Key);
 
-                var basePath = path ?? (members is Base b ? b.TypeName : members.GetType().Name);
-                var childPath = $"{basePath}.{member.Key}";
-                var newIncludeAll = false;
-
-                if (!includeAll && Filter is not null)
-                {
-                    var filterResult = Filter(propertyMapping, nesting, childPath, member.Value);
-                    if (filterResult == ElementFilterOperation.Exclude) continue;
-                    if (filterResult == ElementFilterOperation.IncludeTree) newIncludeAll = true;
-                }
+                if (filter?.TryEnterMember(member.Key, member.Value, propertyMapping) == false)
+                    continue;
 
                 var propertyName = propertyMapping?.Choice == ChoiceType.DatatypeChoice ?
                             addSuffixToElementName(member.Key, member.Value) : member.Key;
-                var newState = new SerializationState(nesting, childPath, newIncludeAll);
-                Console.WriteLine(newState.ToString());
 
                 if (member.Value is PrimitiveType pt)
-                    serializeFhirPrimitive(propertyName, pt, writer, in newState);
+                    serializeFhirPrimitive(propertyName, pt, writer, filter);
                 else if (member.Value is IReadOnlyCollection<PrimitiveType> pts)
-                    serializeFhirPrimitiveList(propertyName, pts, writer, in newState);
+                    serializeFhirPrimitiveList(propertyName, pts, writer, filter);
                 else
                 {
                     writer.WritePropertyName(propertyName);
@@ -133,15 +100,18 @@ namespace Hl7.Fhir.Serialization
                         writer.WriteStartArray();
 
                         foreach (var value in coll)
-                            serializeMemberValue(value, writer, newState);
+                            serializeMemberValue(value, writer, filter);
 
                         writer.WriteEndArray();
                     }
                     else
-                        serializeMemberValue(member.Value, writer, in newState);
+                        serializeMemberValue(member.Value, writer, filter);
                 }
+
+                filter?.LeaveMember(member.Key, member.Value, propertyMapping);
             }
 
+            filter?.LeaveObject(members, mapping);
             writer.WriteEndObject();
         }
 
@@ -158,10 +128,10 @@ namespace Hl7.Fhir.Serialization
         }
 
 
-        private void serializeMemberValue(object value, Utf8JsonWriter writer, in SerializationState state)
+        private void serializeMemberValue(object value, Utf8JsonWriter writer, SerializationFilter? filter)
         {
             if (value is IReadOnlyDictionary<string, object> complex)
-                serializeInternal(complex, writer, skipValue: false, in state);
+                serializeInternal(complex, writer, skipValue: false, filter);
             else
                 SerializePrimitiveValue(value, writer);
         }
@@ -176,7 +146,7 @@ namespace Hl7.Fhir.Serialization
             string elementName,
             IReadOnlyCollection<PrimitiveType> values,
             Utf8JsonWriter writer,
-            in SerializationState state)
+            SerializationFilter? filter)
         {
             if (values is null) throw new ArgumentNullException(nameof(values));
 
@@ -230,7 +200,7 @@ namespace Hl7.Fhir.Serialization
                         writeStartArray("_" + elementName, numNullsMissed, writer);
                     }
 
-                    serializeInternal(value, writer, skipValue: true, in state);
+                    serializeInternal(value, writer, skipValue: true, filter);
                 }
                 else
                 {
@@ -258,7 +228,7 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         /// <remarks>FHIR primitives are handled separately here since they may require
         /// serialization into two Json properties called "elementName" and "_elementName".</remarks>
-        private void serializeFhirPrimitive(string elementName, PrimitiveType value, Utf8JsonWriter writer, in SerializationState state)
+        private void serializeFhirPrimitive(string elementName, PrimitiveType value, Utf8JsonWriter writer, SerializationFilter? filter)
         {
             if (value is null) throw new ArgumentNullException(nameof(value));
 
@@ -273,7 +243,7 @@ namespace Hl7.Fhir.Serialization
             {
                 // Write a property with '_elementName'
                 writer.WritePropertyName("_" + elementName);
-                serializeInternal(value, writer, skipValue: true, in state);
+                serializeInternal(value, writer, skipValue: true, filter);
             }
         }
 

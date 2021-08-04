@@ -29,9 +29,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         {
             var (poco, expected) = getEdgecases();
 
-            ElementFilter filter = (_, _, path, _) => path.EndsWith(".identifier") ? ElementFilterOperation.IncludeTree : ElementFilterOperation.Exclude;
-
-            var options = new JsonSerializerOptions().ForFhirPretty(typeof(TestPatient).Assembly, filter);
+            var options = new JsonSerializerOptions().ForFhir(typeof(TestPatient).Assembly).Pretty();
             string actual = JsonSerializer.Serialize(poco, options);
 
             var errors = new List<string>();
@@ -44,7 +42,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         {
             var (poco, expected) = getEdgecases();
 
-            var options = new JsonSerializerOptions().ForFhirCompact(typeof(TestPatient).Assembly);
+            var options = new JsonSerializerOptions().ForFhir(typeof(TestPatient).Assembly).Pretty();
             string actual = JsonSerializer.Serialize(poco, options);
 
             var errors = new List<string>();
@@ -58,11 +56,11 @@ namespace Hl7.Fhir.Support.Poco.Tests
         {
             var (poco, _) = getEdgecases();
 
-            var optionsCompact = new JsonSerializerOptions().ForFhirCompact(typeof(TestPatient).Assembly);
+            var optionsCompact = new JsonSerializerOptions().ForFhir(typeof(TestPatient).Assembly);
             string compact = JsonSerializer.Serialize(poco, optionsCompact);
             var compactWS = compact.Where(c => char.IsWhiteSpace(c)).Count();
 
-            var optionsPretty = new JsonSerializerOptions().ForFhirPretty(typeof(TestPatient).Assembly);
+            var optionsPretty = new JsonSerializerOptions().ForFhir(typeof(TestPatient).Assembly).Pretty();
             string pretty = JsonSerializer.Serialize(poco, optionsPretty);
             var prettyWS = pretty.Where(c => char.IsWhiteSpace(c)).Count();
 
@@ -73,7 +71,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [TestMethod]
         public void SerializesInvalidData()
         {
-            var options = new JsonSerializerOptions().ForFhirCompact(typeof(TestPatient).Assembly);
+            var options = new JsonSerializerOptions().ForFhir(typeof(TestPatient).Assembly);
 
             FhirBoolean b = new() { ObjectValue = "treu" };
             var jdoc = JsonDocument.Parse(JsonSerializer.Serialize(b, options));
