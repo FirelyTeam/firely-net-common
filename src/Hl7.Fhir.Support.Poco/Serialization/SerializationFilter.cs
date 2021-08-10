@@ -45,7 +45,7 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public abstract void LeaveObject(object value, ClassMapping? mapping);
 
-        public static SerializationFilter ForSummary => new BundleFilter(new ElementMetadataFilter() { IncludeInSummary = true });
+        public static SerializationFilter ForSummary() => new BundleFilter(new ElementMetadataFilter() { IncludeInSummary = true });
 
         public static SerializationFilter ForText() => new BundleFilter(new TopLevelFilter(
             new ElementMetadataFilter()
@@ -59,6 +59,13 @@ namespace Hl7.Fhir.Serialization
           {
               IncludeNames = elements,
               IncludeMandatory = true
+          }));
+
+        public static SerializationFilter ForData() => new BundleFilter(new TopLevelFilter(
+          new ElementMetadataFilter()
+          {
+              IncludeNames = new[] { "text" },
+              Invert = true
           }));
     }
 }

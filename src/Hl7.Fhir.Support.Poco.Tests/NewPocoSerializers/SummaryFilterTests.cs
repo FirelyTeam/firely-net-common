@@ -1,14 +1,12 @@
 using FluentAssertions;
-using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Linq;
-using System.Text.Json;
 
 namespace Hl7.Fhir.Support.Poco.Tests
 {
+
     [TestClass]
     public class SummaryFilterTests
     {
@@ -147,89 +145,6 @@ namespace Hl7.Fhir.Support.Poco.Tests
             f2.EnteredObjects.Should().Be(0);
         }
 
-
-        [TestMethod]
-        public void FilterIntegrationTest()
-        {
-            // This bundle should get through unfiltered
-            TestBundle b = new()
-            {
-                Identifier = new Identifier("http://nu.nl", "abc"),
-                Type = TestBundle.BundleType.Batch,
-                Total = 1000
-            };
-
-            // This organization will have only its "identifier" pass the filter
-            TestPatient p = new()
-            {
-                Active = true,
-                MaritalStatus = new CodeableConcept("http://nu.nl", "123"),
-            };
-
-            p.Identifier.Add(new Identifier("http://nu.nl", "abc"));
-            p.Communication.Add(new TestPatient.CommunicationComponent { Language = new CodeableConcept("x", "nl-nl"), Preferred = true });
-
-            // This nested bundle also will have only its "identifier" pass the filter
-            TestBundle nestedB = new()
-            {
-                Identifier = new Identifier("http://nu.nl", "abc"),
-                Type = TestBundle.BundleType.Collection
-            };
-
-            b.Entry.Add(new TestBundle.EntryComponent { Resource = p });
-            b.Entry.Add(new TestBundle.EntryComponent { Resource = nestedB });
-
-            var filter = new BundleFilter(new TopLevelFilter(
-                new ElementMetadataFilter
-                {
-                    IncludeNames = new[] { "communication", "type" },
-                },
-                new ElementMetadataFilter
-                {
-                    IncludeMandatory = true,
-                    IncludeInSummary = true,
-                }
-                ));
-            var options = new JsonSerializerOptions().ForFhir(typeof(TestPatient).Assembly, filter).Pretty();
-            string actual = JsonSerializer.Serialize(b, options);
-
-            // Root bundle should not have been filtered at all
-            var bp = TypedSerialization.ToPoco<TestBundle>(FhirJsonNode.Parse(actual));
-            assertIdentifier(bp.Identifier);
-            bp.Type.Value.Should().Be(TestBundle.BundleType.Batch);
-            bp.Count().Should().Be(4);
-
-            // The nested Patient should only its "communication" element included
-            var pat = bp.Entry[0].Resource as TestPatient;
-            pat.Count().Should().Be(1);
-            pat.Communication.Should().NotBeNull();
-            var communication = pat.Communication.Single();
-
-            // Communication should just have its mandatory "language" set.
-            communication.Count().Should().Be(1);
-
-            // Communication.language is a CodeableConcept, all of its field are in summary...
-            communication.Language.Should().BeEquivalentTo(new CodeableConcept("x", "nl-nl"));
-
-            // The nested Bundle should only its "type" present
-            var nb = bp.Entry[1].Resource as TestBundle;
-            nb.Count().Should().Be(1);
-            nb.Type.Should().NotBeNull();
-
-            // Non-bundle root resources should be filtered normally too 
-            actual = JsonSerializer.Serialize(p, options);
-            pat = TypedSerialization.ToPoco<TestPatient>(FhirJsonNode.Parse(actual));
-            pat.Count().Should().Be(1);
-            pat.Communication.Should().NotBeNull();
-
-            static void assertIdentifier(Identifier ide)
-            {
-                ide.Should().NotBeNull();
-                ide.System.Should().Be("http://nu.nl");
-                ide.Value.Should().Be("abc");
-                ide.Count().Should().Be(2);
-            }
-        }
 
 
         internal class ElementPrefixFilter : SerializationFilter

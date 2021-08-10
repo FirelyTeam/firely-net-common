@@ -26,7 +26,7 @@ namespace Hl7.Fhir.Serialization
     {
         public IReadOnlyCollection<string>? IncludeNames { get; set; }
 
-        public IReadOnlyCollection<string>? ExcludeNames { get; set; }
+        public bool Invert { get; set; }
 
         /// <summary>
         /// Include top-level mandatory elements, including all their children
@@ -69,10 +69,11 @@ namespace Hl7.Fhir.Serialization
 
             if (mapping is null) return true;
 
-            return IncludeInSummary && mapping.InSummary ||
+            var included = IncludeInSummary && mapping.InSummary ||
                 IncludeMandatory && mapping.IsMandatoryElement ||
-                IncludeNames?.Contains(mapping.Name) == true
-                ;
+                IncludeNames?.Contains(mapping.Name) == true;
+
+            return Invert ? !included : included;
         }
     }
 }
