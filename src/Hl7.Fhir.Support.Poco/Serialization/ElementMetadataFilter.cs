@@ -20,13 +20,19 @@ namespace Hl7.Fhir.Serialization
 {
     /// <summary>
     /// Filters elements of a resource so its serialization will only contain elements that are
-    /// mandatory, "in summary" or modifiers.
+    /// selected by this filter.
     /// </summary>
     public class ElementMetadataFilter : SerializationFilter
     {
-        public IReadOnlyCollection<string>? IncludeNames { get; set; }
-
+        /// <summary>
+        /// Inverts the logic of the filter: all elements are included, except those matching the filter.
+        /// </summary>
         public bool Invert { get; set; }
+
+        /// <summary>
+        /// The list of top-level elements that the filter will include.
+        /// </summary>
+        public IReadOnlyCollection<string>? IncludeNames { get; set; }
 
         /// <summary>
         /// Include top-level mandatory elements, including all their children

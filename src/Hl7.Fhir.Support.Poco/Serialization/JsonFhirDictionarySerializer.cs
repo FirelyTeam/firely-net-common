@@ -30,17 +30,30 @@ namespace Hl7.Fhir.Serialization
     /// </remarks>
     public class JsonFhirDictionarySerializer
     {
+        /// <summary>
+        /// A serializer configured to serialize according to the latest version of FHIR.
+        /// </summary>
         public static JsonFhirDictionarySerializer Default => LazyInitializer.EnsureInitialized(ref _default);
-
-        public FhirRelease Release { get; }
 
         private static JsonFhirDictionarySerializer? _default;
 
+        /// <summary>
+        /// The release of FHIR for which this serializer is configured.
+        /// </summary>
+        public FhirRelease Release { get; } = LATEST;
+
+        private static readonly FhirRelease LATEST = (FhirRelease)Enum.GetValues(typeof(FhirRelease)).Cast<int>().OrderBy(t => t).Last();
+
+        /// <summary>
+        /// Construct a new serializer for the latest release of FHIR.
+        /// </summary>
         public JsonFhirDictionarySerializer()
         {
-            Release = (FhirRelease)Enum.GetValues(typeof(FhirRelease)).Cast<int>().OrderBy(t => t).Last();
         }
 
+        /// <summary>
+        /// Construct a new serializer for a specific release of FHIR.
+        /// </summary>
         public JsonFhirDictionarySerializer(FhirRelease release)
         {
             Release = release;
@@ -49,8 +62,8 @@ namespace Hl7.Fhir.Serialization
         /// <summary>
         /// Serializes the given dictionary with FHIR data into Json.
         /// </summary>
-        public void Serialize(IReadOnlyDictionary<string, object> members, Utf8JsonWriter writer, SerializationFilter? filter = default) =>
-            serializeInternal(members, writer, skipValue: false, filter);
+        public void Serialize(IReadOnlyDictionary<string, object> members, Utf8JsonWriter writer, SerializationFilter? summary = default) =>
+            serializeInternal(members, writer, skipValue: false, summary);
 
         /// <summary>
         /// Serializes the given dictionary with FHIR data into Json, optionally skipping the "value" element.
@@ -260,7 +273,7 @@ namespace Hl7.Fhir.Serialization
         /// to be written that fit in .NET's <see cref="decimal"/> type, which may be less 
         /// precision than required by the FHIR specification (http://hl7.org/fhir/json.html#primitive).
         /// </remarks>
-        internal virtual void SerializePrimitiveValue(object value, Utf8JsonWriter writer)
+        protected virtual void SerializePrimitiveValue(object value, Utf8JsonWriter writer)
         {
             switch (value)
             {

@@ -20,8 +20,8 @@ namespace Hl7.Fhir.Serialization
         /// <summary>
         /// Serializes the given dictionary with FHIR data into Json.
         /// </summary>
-        public static void SerializeToFhirJson(this IReadOnlyDictionary<string, object> members, Utf8JsonWriter writer) =>
-            JsonFhirDictionarySerializer.Default.Serialize(members, writer);
+        public static void SerializeToFhirJson(this IReadOnlyDictionary<string, object> members, Utf8JsonWriter writer, SerializationFilter? summary = default) =>
+            JsonFhirDictionarySerializer.Default.Serialize(members, writer, summary);
     }
 }
 

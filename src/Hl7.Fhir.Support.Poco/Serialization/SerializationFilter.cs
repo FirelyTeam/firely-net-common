@@ -45,8 +45,14 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public abstract void LeaveObject(object value, ClassMapping? mapping);
 
+        /// <summary>
+        /// Construct a new filter that conforms to the `_summary=true` summarized form.
+        /// </summary>
         public static SerializationFilter ForSummary() => new BundleFilter(new ElementMetadataFilter() { IncludeInSummary = true });
 
+        /// <summary>
+        /// Construct a new filter that conforms to the `_summary=text` summarized form.
+        /// </summary>
         public static SerializationFilter ForText() => new BundleFilter(new TopLevelFilter(
             new ElementMetadataFilter()
             {
@@ -54,18 +60,24 @@ namespace Hl7.Fhir.Serialization
                 IncludeMandatory = true
             }));
 
-        public static SerializationFilter ForElements(string[] elements) => new BundleFilter(new TopLevelFilter(
-          new ElementMetadataFilter()
-          {
-              IncludeNames = elements,
-              IncludeMandatory = true
-          }));
-
+        /// <summary>
+        /// Construct a new filter that conforms to the `_summary=data` summarized form.
+        /// </summary>
         public static SerializationFilter ForData() => new BundleFilter(new TopLevelFilter(
           new ElementMetadataFilter()
           {
               IncludeNames = new[] { "text" },
               Invert = true
+          }));
+
+        /// <summary>
+        /// Construct a new filter that conforms to the `_elements=...` summarized form.
+        /// </summary>
+        public static SerializationFilter ForElements(string[] elements) => new BundleFilter(new TopLevelFilter(
+          new ElementMetadataFilter()
+          {
+              IncludeNames = elements,
+              IncludeMandatory = true
           }));
     }
 }

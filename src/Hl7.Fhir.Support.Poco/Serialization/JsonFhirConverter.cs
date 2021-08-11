@@ -27,6 +27,12 @@ namespace Hl7.Fhir.Serialization
     /// </summary>
     public class JsonFhirConverter : JsonConverter<Base>
     {
+        /// <summary>
+        /// Constructs a <see cref="JsonConverter{T}"/> that (de)serializes FHIR json for the 
+        /// POCOs in a given assembly.
+        /// </summary>
+        /// <param name="assembly">The assembly containing classes to be used for deserialization.</param>
+        /// <param name="filter">A filter that determines which elements to include when serializing a summary.</param>
 #pragma warning disable IDE0060 // Will become used when we add deserialization.
         public JsonFhirConverter(Assembly assembly, SerializationFilter? filter = default)
 #pragma warning restore IDE0060 // Remove unused parameter
@@ -46,6 +52,9 @@ namespace Hl7.Fhir.Serialization
         //private readonly JsonDynamicDeserializer _deserializer;
         private readonly JsonFhirDictionarySerializer _serializer;
 
+        /// <summary>
+        /// The filter used to serialize a summary of the resource.
+        /// </summary>
         public SerializationFilter? Filter { get; }
 
         /// <summary>
