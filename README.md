@@ -1,9 +1,17 @@
-|develop|Released|
+|Branch||
 |---|---|
-|[![Build status](https://dev.azure.com/firely/fhir-net-common/_apis/build/status/Continuous%20Build?branchName=develop)](https://dev.azure.com/firely/fhir-net-common/_build?view=buildsHistory&definitionId=14)|[![Release status](https://vsrm.dev.azure.com/firely/_apis/public/Release/badge/d27985be-1c61-41fd-82e7-23e7a2f06dc3/1/2)](https://dev.azure.com/firely/fhir-net-common/_releaseDefinition?definitionId=1&_a=definition-pipeline)|
+|develop|[![Build Status](https://dev.azure.com/firely/firely-net-sdk/_apis/build/status/Common/FirelyTeam.firely-net-common?branchName=develop)](https://dev.azure.com/firely/firely-net-sdk/_build/latest?definitionId=83&branchName=develop)|
+
+|NuGet Package||
+|---|---|
+|Hl7.Fhir.ElementModel|[![Nuget](https://img.shields.io/nuget/dt/Hl7.Fhir.ElementModel)](https://www.nuget.org/packages/Hl7.Fhir.ElementModel) |
+|Hl7.Fhir.Serialization|[![Nuget](https://img.shields.io/nuget/dt/Hl7.Fhir.Serialization)](https://www.nuget.org/packages/Hl7.Fhir.Serialization)|
+|Hl7.FhirPath|[![Nuget](https://img.shields.io/nuget/dt/Hl7.FhirPath)](https://www.nuget.org/packages/Hl7.FhirPath)|
+|Hl7.Fhir.Support | [![Nuget](https://img.shields.io/nuget/dt/Hl7.Fhir.Support)](https://www.nuget.org/packages/Hl7.Fhir.Support)|
+|Hl7.Fhir.Support.Poco|[![Nuget](https://img.shields.io/nuget/dt/Hl7.Fhir.Support.Poco)](https://www.nuget.org/packages/Hl7.Fhir.Support.Poco) |
 
 ## Introduction ##
-This repository is a submodule-repository for the parent [.NET FHIR API](https://github.com/FirelyTeam/fhir-net-api). It contains code that works across all FHIR versions (e.g. DSTU2, R4, etc) and thus is shared by the branches of the parent repository. Although it contains functionality that can be used independently (e.g. the FhirPath evaluator), all issues should be reported to the parent repo.
+This repository is a submodule-repository for the parent [Firely .NET SDK](https://github.com/FirelyTeam/firely-net-sdk). It contains code that works across all FHIR versions (e.g. DSTU2, R4, etc) and thus is shared by the branches of the parent repository. Although it contains functionality that can be used independently (e.g. the FhirPath evaluator), all issues should be reported to the parent repo.
 
 
 
