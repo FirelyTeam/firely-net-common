@@ -8,9 +8,6 @@
 
 #nullable enable
 
-#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
-
-
 using Hl7.Fhir.Introspection;
 using System;
 using System.Collections.Generic;
@@ -84,5 +81,4 @@ namespace Hl7.Fhir.Serialization
     }
 }
 
-#endif
 #nullable restore
