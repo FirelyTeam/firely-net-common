@@ -31,25 +31,9 @@ namespace Hl7.Fhir.Serialization
     public class JsonFhirDictionarySerializer
     {
         /// <summary>
-        /// A serializer configured to serialize according to the latest version of FHIR.
-        /// </summary>
-        public static JsonFhirDictionarySerializer Default => LazyInitializer.EnsureInitialized(ref _default);
-
-        private static JsonFhirDictionarySerializer? _default;
-
-        /// <summary>
         /// The release of FHIR for which this serializer is configured.
         /// </summary>
-        public FhirRelease Release { get; } = LATEST;
-
-        private static readonly FhirRelease LATEST = (FhirRelease)Enum.GetValues(typeof(FhirRelease)).Cast<int>().OrderBy(t => t).Last();
-
-        /// <summary>
-        /// Construct a new serializer for the latest release of FHIR.
-        /// </summary>
-        public JsonFhirDictionarySerializer()
-        {
-        }
+        public FhirRelease Release { get; }
 
         /// <summary>
         /// Construct a new serializer for a specific release of FHIR.
