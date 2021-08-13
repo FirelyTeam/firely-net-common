@@ -98,8 +98,8 @@ namespace Hl7.Fhir.Model
 
         protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
         {
-            foreach (var kvp in base.GetElementPairs()) yield return kvp;
             if (ObjectValue is not null) yield return new KeyValuePair<string, object>("value", ObjectValue);
+            foreach (var kvp in base.GetElementPairs()) yield return kvp;
         }
 
         public bool HasElements => ElementId is not null || Extension?.Any() == true;

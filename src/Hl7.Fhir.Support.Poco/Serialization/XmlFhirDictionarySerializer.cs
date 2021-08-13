@@ -8,7 +8,6 @@
 
 #nullable enable
 
-using Hl7.Fhir.ElementModel.Types;
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Specification;
@@ -64,7 +63,6 @@ namespace Hl7.Fhir.Serialization
             writer.WriteEndDocument();
         }
 
-
         /// <summary>
         /// Serializes the given dictionary with FHIR data into Json, optionally skipping the "value" element.
         /// </summary>
@@ -85,22 +83,18 @@ namespace Hl7.Fhir.Serialization
 
             filter?.EnterObject(members, mapping);
 
-            serializeElement(members, writer, filter, mapping, true);
-            serializeElement(members, writer, filter, mapping, false);
+            serializeElement(members, writer, filter, mapping);
 
             filter?.LeaveObject(members, mapping);
 
             if (members is Resource) writer.WriteEndElement();
         }
 
-        private void serializeElement(IReadOnlyDictionary<string, object> members, XmlWriter writer, SerializationFilter? filter, ClassMapping? mapping, bool serializeAttributes)
+        private void serializeElement(IReadOnlyDictionary<string, object> members, XmlWriter writer, SerializationFilter? filter, ClassMapping? mapping)
         {
             foreach (var member in members)
             {
                 var propertyMapping = mapping?.FindMappedElementByName(member.Key);
-
-                if (propertyMapping is not null && propertyMapping.SerializationHint == XmlRepresentation.XmlAttr != serializeAttributes)
-                    continue;
 
                 if (filter?.TryEnterMember(member.Key, member.Value, propertyMapping) == false)
                     continue;
@@ -157,17 +151,32 @@ namespace Hl7.Fhir.Serialization
         /// is larger than the set used by the current POCOs. Note that <c>DateTimeOffset</c>c> and 
         /// <c>byte[]</c> are considered to be "primitive" values here (used as the value in
         /// <see cref="Instant"/> and <see cref="Base64Binary"/>).
-        /// 
-        /// Note that the current version of System.Text.Json only allows numbers
-        /// to be written that fit in .NET's <see cref="decimal"/> type, which may be less 
-        /// precision than required by the FHIR specification (http://hl7.org/fhir/json.html#primitive).
         /// </remarks>
         protected virtual void SerializePrimitiveValue(string elementName, object value, XmlWriter writer)
         {
-            if (!Any.TryConvert(value, out var systemPrimitiveValue))
-                throw new FormatException($"There is no know serialization for type {value.GetType()} into a Xml attribute string value.");
+            if (value is null) return;  // Don't write a null property
 
-            writer.WriteAttributeString(elementName, ns: null, value: systemPrimitiveValue!.ToString());
+            var literal = value switch
+            {
+                //TODO: Include support for Any subclasses (CQL types)?
+                int i32 => XmlConvert.ToString(i32),
+                uint ui32 => XmlConvert.ToString(ui32),
+                long i64 => XmlConvert.ToString(i64),
+                ulong ui64 => XmlConvert.ToString(ui64),
+                float si => XmlConvert.ToString(si),
+                double dbl => XmlConvert.ToString(dbl),
+                decimal dec => XmlConvert.ToString(dec),
+                // A little note about trimming and whitespaces. The spec says:
+                // "Implementers SHOULD trim leading and trailing whitespace before writing and SHOULD trim leading
+                // and trailing whitespace when reading attribute values (for XML schema conformance)"
+                string s => s.Trim(),
+                bool b => XmlConvert.ToString(b),
+                DateTimeOffset dto => ElementModel.Types.DateTime.FormatDateTimeOffset(dto),
+                byte[] bytes => Convert.ToBase64String(bytes),
+                _ => throw new FormatException($"There is no know serialization for type {value.GetType()} into a Json primitive property value.")
+            };
+
+            writer.WriteAttributeString(elementName, ns: null, value: literal);
         }
     }
 }
