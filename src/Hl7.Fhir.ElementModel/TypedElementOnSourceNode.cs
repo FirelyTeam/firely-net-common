@@ -341,13 +341,20 @@ namespace Hl7.Fhir.ElementModel
                 return true;
 
             // Now, check the choice elements for a match          
-            var matches = dis.Where(kvp => name.StartsWith(kvp.Key) && kvp.Value.IsChoiceElement);
+            var matches = dis.Where(kvp => name.StartsWith(kvp.Key) && kvp.Value.IsChoiceElement).ToList();
 
             // this will loop over all matches and return the longest match.
             if (matches.Any())
-             info = matches.Aggregate((l, r) => l.Key.Length > r.Key.Length ? l : r).Value;               
-
-            return info != null;
+            {
+                info = (matches.Count == 1)
+                        ? matches[0].Value 
+                        : matches.Aggregate((l, r) => l.Key.Length > r.Key.Length ? l : r).Value;
+                return true;
+            }          
+            else
+            {
+                return false;
+            }          
         }
 
         private IEnumerable<TypedElementOnSourceNode> enumerateElements(Dictionary<string, IElementDefinitionSummary> dis, ISourceNode parent, string name)
