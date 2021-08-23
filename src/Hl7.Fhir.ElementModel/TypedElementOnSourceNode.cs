@@ -340,13 +340,21 @@ namespace Hl7.Fhir.ElementModel
             if (dis.TryGetValue(name, out info))
                 return true;
 
-            // Now, check the choice elements for a match
-            // (this should actually be the longest match, but that's kind of expensive,
-            // so as long as we don't add stupid ambiguous choices to a single type, this will work.
-            info = dis.Where(kvp => name.StartsWith(kvp.Key) && kvp.Value.IsChoiceElement)
-                .Select(kvp => kvp.Value).FirstOrDefault();
+            // Now, check the choice elements for a match          
+            var matches = dis.Where(kvp => name.StartsWith(kvp.Key) && kvp.Value.IsChoiceElement).ToList();
 
-            return info != null;
+            // this will loop over all matches and return the longest match.
+            if (matches.Any())
+            {
+                info = (matches.Count == 1)
+                        ? matches[0].Value 
+                        : matches.Aggregate((l, r) => l.Key.Length > r.Key.Length ? l : r).Value;
+                return true;
+            }          
+            else
+            {
+                return false;
+            }          
         }
 
         private IEnumerable<TypedElementOnSourceNode> enumerateElements(Dictionary<string, IElementDefinitionSummary> dis, ISourceNode parent, string name)
