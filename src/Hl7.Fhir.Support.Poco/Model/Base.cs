@@ -35,6 +35,7 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Threading;
 
 namespace Hl7.Fhir.Model
 {
@@ -51,7 +52,7 @@ namespace Hl7.Fhir.Model
             return true;
         }
 
-        
+
         /// <summary>
         /// Checks whether the element is matched by pattern ("other"). If the checked pattern has a value, the element must have that value as well. A pattern of "null" will always return true.
         /// </summary>
@@ -75,7 +76,7 @@ namespace Hl7.Fhir.Model
         {
             if (other is Base dest)
             {
-                if (_annotations.IsValueCreated)
+                if (_annotations is not null)
                     dest.annotations.AddRange(annotations);
 
                 return dest;
@@ -93,9 +94,9 @@ namespace Hl7.Fhir.Model
 
         #region << Annotations >>
         [NonSerialized]
-        private readonly Lazy<AnnotationList> _annotations = new Lazy<AnnotationList>(() => new AnnotationList());
+        private AnnotationList _annotations = null;
 
-        private AnnotationList annotations { get { return _annotations.Value; } }
+        private AnnotationList annotations => LazyInitializer.EnsureInitialized(ref _annotations);
 
         public IEnumerable<object> Annotations(Type type) => annotations.OfType(type);
 
