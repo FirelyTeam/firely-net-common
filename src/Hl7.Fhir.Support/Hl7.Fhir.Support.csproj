@@ -15,7 +15,7 @@
 		<AssemblyName>Hl7.Fhir.Support</AssemblyName>
 	</PropertyGroup>
 
-	<ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' != 'net45'">
 		<PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
 	</ItemGroup>
 </Project>
