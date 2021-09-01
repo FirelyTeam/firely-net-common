@@ -52,7 +52,7 @@ namespace Hl7.Fhir.ElementModel.Types
 
         public override int GetHashCode() => Value.GetHashCode();
         public override string ToString() => Value ? TRUE_LITERAL : FALSE_LITERAL;
-        public override bool Equals(object obj) => obj is Boolean b && Value == b.Value;
+        public override bool Equals(object? obj) => obj is Boolean b && Value == b.Value;
 
         public static bool operator ==(Boolean a, Boolean b) => Equals(a, b);
         public static bool operator !=(Boolean a, Boolean b) => !Equals(a, b);
@@ -67,10 +67,10 @@ namespace Hl7.Fhir.ElementModel.Types
 
         bool? ICqlEquatable.IsEqualTo(Any other) => other is { } ? (bool?)Equals(other) : null;
         bool ICqlEquatable.IsEquivalentTo(Any other) => Equals(other);
-        
+
         Result<Boolean> ICqlConvertible.TryConvertToBoolean() => Ok(this);
 
-        Result<Decimal> ICqlConvertible.TryConvertToDecimal() => 
+        Result<Decimal> ICqlConvertible.TryConvertToDecimal() =>
             Value switch
             {
                 true => Ok(new Decimal(1m)),

@@ -143,7 +143,7 @@ namespace Hl7.Fhir.ElementModel.Types
         /// <returns>returns true if the values are both dates, have the same precision and each date component is exactly the same. 
         /// Dates with timezones are normalized to zulu before comparison is done.</returns>
         /// <remarks>See <see cref="TryCompareTo(Any)"/> for more details.</remarks>
-        public override bool Equals(object obj) => obj is Any other && TryEquals(other).ValueOrDefault(false);
+        public override bool Equals(object? obj) => obj is Any other && TryEquals(other).ValueOrDefault(false);
 
         public Result<bool> TryEquals(Any other) => other is Date ? TryCompareTo(other).Select(i => i == 0) : false;
 
@@ -154,7 +154,7 @@ namespace Hl7.Fhir.ElementModel.Types
         /// Compare two dates according to CQL equality rules
         /// </summary>
         /// <remarks>See <see cref="TryCompareTo(Any)"/> for more details.</remarks>
-        public int CompareTo(object obj) => obj is Date p ?
+        public int CompareTo(object? obj) => obj is Date p ?
             TryCompareTo(p).ValueOrThrow() : throw NotSameTypeComparison(this, obj);
 
         /// <summary>

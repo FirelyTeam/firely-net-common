@@ -242,10 +242,10 @@ namespace Hl7.FhirPath.Functions
 
         internal class ValueProviderEqualityComparer : IEqualityComparer<ITypedElement>
         {
-            public bool Equals(ITypedElement x, ITypedElement y)
+            public bool Equals(ITypedElement? x, ITypedElement? y)
             {
-                if (x == null && y == null) return true;
-                if (x == null || y == null) return false;
+                if (x is null && y is null) return true;
+                if (x is null || y is null) return false;
 
                 // TODO: this is not completely correct behaviour
                 // The functions Union /Contains/Distinct etc that use

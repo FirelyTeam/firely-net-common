@@ -34,7 +34,7 @@ namespace Hl7.Fhir.ElementModel.Types
 
         public override int GetHashCode() => (System, Value, Display, Version).GetHashCode();
         public override string ToString() => $"{Value}@{System} " + Display ?? "";
-        public override bool Equals(object obj) => obj is Code c 
+        public override bool Equals(object? obj) => obj is Code c
             && System == c.System && Value == c.Value && Display == c.Display && Version == c.Version;
 
         public static implicit operator Concept(Code c) => ((ICqlConvertible)c).TryConvertToConcept().ValueOrThrow();

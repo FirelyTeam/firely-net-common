@@ -233,6 +233,7 @@ namespace Hl7.Fhir.Model
       return CopyTo(new Meta());
     }
 
+    ///<inheritdoc />
     public override bool Matches(IDeepComparable other)
     {
       var otherT = other as Meta;

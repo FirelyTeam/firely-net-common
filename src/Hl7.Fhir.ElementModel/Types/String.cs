@@ -36,7 +36,7 @@ namespace Hl7.Fhir.ElementModel.Types
             return true;
         }
 
-        public override bool Equals(object obj) => obj is Any other && Equals(other, CQL_EQUALS_COMPARISON);
+        public override bool Equals(object? obj) => obj is Any other && Equals(other, CQL_EQUALS_COMPARISON);
         public static bool operator ==(String a, String b) => Equals(a, b);
         public static bool operator !=(String a, String b) => !Equals(a, b);
 
@@ -81,7 +81,7 @@ namespace Hl7.Fhir.ElementModel.Types
         }
 
 
-        public int CompareTo(object obj)
+        public int CompareTo(object? obj)
         {
             return obj switch
             {

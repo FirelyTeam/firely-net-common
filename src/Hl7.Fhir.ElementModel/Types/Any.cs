@@ -168,8 +168,8 @@ namespace Hl7.Fhir.ElementModel.Types
 
         // some utility methods shared by the subclasses
 
-        protected static ArgumentException NotSameTypeComparison(object me, object them) =>
-            new ArgumentException($"Cannot compare {me} (of type {me.GetType()}) to {them} (of type {them.GetType()}), because the types differ.");
+        protected static ArgumentException NotSameTypeComparison(object me, object? them) =>
+            new ArgumentException($"Cannot compare {me} (of type {me.GetType()}) to {them} (of type {them?.GetType()}), because the types differ.");
 
         protected static readonly ArgumentNullException ArgNullException = new ArgumentNullException();
 

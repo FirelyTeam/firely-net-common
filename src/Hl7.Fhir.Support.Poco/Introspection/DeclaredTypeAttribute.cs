@@ -10,6 +10,11 @@ using System;
 
 namespace Hl7.Fhir.Introspection
 {
+    /// <summary>
+    /// Used to indicate that the type for this property in the POCO
+    /// does not represent the type in the FHIR specification, but rather the type given
+    /// in the constructor to this attribute.
+    /// </summary>
     [CLSCompliant(false)]
     [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
     public class DeclaredTypeAttribute : VersionedAttribute

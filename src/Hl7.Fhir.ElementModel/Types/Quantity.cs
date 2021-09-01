@@ -8,6 +8,7 @@
 
 #nullable enable
 
+
 using Hl7.Fhir.Utility;
 using System;
 using System.Globalization;
@@ -183,7 +184,7 @@ namespace Hl7.Fhir.ElementModel.Types
         /// According to the .NET documentation Equals(object obj) cannot throw
         /// an exception. That is why we make sure that a bool is always returned. See 
         /// <see href="https://docs.microsoft.com/en-us/dotnet/api/system.object.equals"/></remarks>
-        public override bool Equals(object obj) => obj is Any other && Equals(other, CQL_EQUALS_COMPARISON);
+        public override bool Equals(object? obj) => obj is Any other && Equals(other, CQL_EQUALS_COMPARISON);
 
         public bool Equals(Any other, QuantityComparison comparisonType) =>
             other is Quantity q && TryEquals(q, comparisonType).ValueOrDefault(false);
@@ -216,7 +217,7 @@ namespace Hl7.Fhir.ElementModel.Types
         /// Compare two datetimes based on CQL equivalence rules
         /// </summary>
         /// <remarks>See <see cref="TryCompareTo(Any)"/> for more details.</remarks>
-        public int CompareTo(object obj) => obj is Quantity q ?
+        public int CompareTo(object? obj) => obj is Quantity q ?
             TryCompareTo(q).ValueOrThrow() : throw NotSameTypeComparison(this, obj);
 
         public static bool operator <(Quantity a, Quantity b) => a.CompareTo(b) < 0;

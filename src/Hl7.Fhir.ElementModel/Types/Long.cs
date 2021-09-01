@@ -8,10 +8,10 @@
 
 #nullable enable
 
+using Hl7.Fhir.Utility;
 using System;
 using System.Xml;
 using static Hl7.Fhir.Utility.Result;
-using Hl7.Fhir.Utility;
 
 namespace Hl7.Fhir.ElementModel.Types
 {
@@ -40,7 +40,7 @@ namespace Hl7.Fhir.ElementModel.Types
         /// </summary>
         /// <remarks>For 64-bits integers, CQL and .NET equality rules are aligned.
         /// </remarks>
-        public override bool Equals(object obj) => obj is Long i && Value == i.Value;
+        public override bool Equals(object? obj) => obj is Long i && Value == i.Value;
         public static bool operator ==(Long a, Long b) => Equals(a, b);
         public static bool operator !=(Long a, Long b) => !Equals(a, b);
 
@@ -50,7 +50,7 @@ namespace Hl7.Fhir.ElementModel.Types
         /// <param name="obj"></param>
         /// <returns></returns>
         /// <remarks>For 64-bit integers, CQL and .NET comparison rules are aligned.</remarks>
-        public int CompareTo(object obj)
+        public int CompareTo(object? obj)
         {
             return obj switch
             {
