@@ -10,8 +10,6 @@ using Hl7.Fhir.Utility;
 using System;
 using System.IO;
 
-#if !NETSTANDARD1_6
-
 namespace Hl7.Fhir.Serialization
 {
     /// <summary>Delegate to create an <see cref="INavigatorStream"/> instance for the specified file path specification.</summary>
@@ -216,5 +214,3 @@ namespace Hl7.Fhir.Serialization
     }
 
 }
-
-#endif
