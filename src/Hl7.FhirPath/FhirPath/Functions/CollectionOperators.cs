@@ -81,8 +81,11 @@ namespace Hl7.FhirPath.Functions
                     return new List<ITypedElement>() { element };
                 }
             }
-            
-            return element.Children(name);
+
+            return filter(element.Children(name), name);
+
+            static IEnumerable<ITypedElement> filter(IEnumerable<ITypedElement> children, string name) =>
+                name == null ? children : children.Where(c => c.Name == name);
         }
 
         public static string FpJoin(this IEnumerable<ITypedElement> collection, string separator)
