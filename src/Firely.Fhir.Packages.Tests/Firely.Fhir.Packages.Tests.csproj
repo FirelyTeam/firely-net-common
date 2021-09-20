@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+<PropertyGroup>
+	<TargetFrameworks>net5.0;net452;netstandard1.6</TargetFrameworks>
+	<Nullable>annotations</Nullable>
+</PropertyGroup>		
+
+<Import Project="..\firely-net-common.props" />
+<Import Project="..\firely-net-common.targets" />
+<Import Project="..\firely-net-common-tests.props" />
+
+<ItemGroup>
+	<ProjectReference Include="..\Firely.Fhir.Packages\Firely.Fhir.Packages.csproj" />
+</ItemGroup>
+
+</Project>
