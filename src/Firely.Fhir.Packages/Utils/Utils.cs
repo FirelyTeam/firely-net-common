@@ -5,6 +5,11 @@ namespace Firely.Fhir.Packages
 {
     public static class Helpers
     {
+#if NETSTANDARD1_6
+        private const string HTTP_SCHEME = "http";
+        private const string HTTPS_SCHEME = "https";
+#endif
+
         // Missing in netstandard.
         public static string[] Split(this string s, string separator)
         {
@@ -32,7 +37,7 @@ namespace Firely.Fhir.Packages
 #if !NETSTANDARD1_6
             return Uri.TryCreate(source, UriKind.Absolute, out var uriResult) && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 #else
-            throw new NotImplementedException();
+            return Uri.TryCreate(source, UriKind.Absolute, out var uriResult) && (uriResult.Scheme == HTTP_SCHEME || uriResult.Scheme == HTTPS_SCHEME);
 #endif
         }
 

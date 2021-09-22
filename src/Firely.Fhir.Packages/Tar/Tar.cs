@@ -25,7 +25,7 @@ namespace Firely.Fhir.Packages
 
             return packagefile;
 #else
-            return "";
+            throw new NotImplementedException();
 #endif
 
         }
