@@ -115,3 +115,4 @@ stages:
             **/publish/Hl7.Fhir.Support.Tests.dll
             **/publish/HL7.FhirPath.Tests.dll
             **/publish/Hl7.Fhir.Support.Poco.Tests.dll
+            **/publish/Firely.Fhir.Packages.Tests.dll
