@@ -10,18 +10,19 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 
 namespace Hl7.Fhir.Utility
 {
     public static class ObjectListExtensions
     {
+        [Obsolete("This method is obsolete and will be removed in the next major release. Obsolete since 2021-09-22")]
         public static IEnumerable<object> OfType(this IEnumerable<object> me, Type t)
         {
             return me.Where(e => e.GetType() == t);
         }
 
+        [Obsolete("This method is obsolete and will be removed in the next major release. Obsolete since 2021-09-22")]
         public static void RemoveOfType(this IList<object> me, Type t)
         {
             var annotations = me.OfType(t).ToArray();
