@@ -62,6 +62,7 @@ stages:
       inputs:
         command: publish
         projects: |
+         **/Firely.Fhir.*Tests.csproj
          **/Hl7.Fhir*Tests.csproj
         publishWebProjects: false
         zipAfterPublish: false
