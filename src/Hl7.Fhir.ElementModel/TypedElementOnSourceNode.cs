@@ -20,6 +20,9 @@ namespace Hl7.Fhir.ElementModel
         private const string XHTML_INSTANCETYPE = "xhtml";
         private const string XHTML_DIV_TAG_NAME = "div";
 
+        private readonly Lazy<object> _value;
+        private readonly Lazy<IEnumerable<ITypedElement>> _children;
+
         public TypedElementOnSourceNode(ISourceNode source, string type, IStructureDefinitionSummaryProvider provider, TypedElementSettings settings = null)
         {
             if (source == null) throw Error.ArgumentNull(nameof(source));
@@ -32,6 +35,8 @@ namespace Hl7.Fhir.ElementModel
 
             ShortPath = source.Name;
             _source = source;
+            _value = new Lazy<object>(valueFactory);
+            _children = new Lazy<IEnumerable<ITypedElement>>(childrenFactory);
             (InstanceType, Definition) = buildRootPosition(type);
         }
 
@@ -74,6 +79,8 @@ namespace Hl7.Fhir.ElementModel
             Definition = definition;
             InstanceType = instanceType;
             _settings = parent._settings;
+            _value = new Lazy<object>(valueFactory);
+            _children = new Lazy<IEnumerable<ITypedElement>>(childrenFactory);
         }
 
         public ExceptionNotificationHandler ExceptionHandler { get; set; }
@@ -157,70 +164,69 @@ namespace Hl7.Fhir.ElementModel
             }
         }
 
-        public object Value
+        private object valueFactory()
         {
-            get
+            string sourceText = _source.Text;
+
+            if (sourceText == null) return null;
+
+            // If we don't have type information (no definition was found
+            // for current node), all we can do is return the underlying string value
+            if (InstanceType == null) return sourceText;
+
+            // For performance reasons, let's try the normal case first - a non logical type
+            var ts = tryMapFhirPrimitiveTypeToSystemType(InstanceType);
+
+            // If that failed, the type might still be a custom "primitive" type for logical models
+            if (ts is null && Uri.IsWellFormedUriString(InstanceType, UriKind.Absolute))
             {
-                string sourceText = _source.Text;
+                // Get the definition of the logical type
+                var summary = Provider.Provide(InstanceType);
 
-                if (sourceText == null) return null;
+                // And find the `value` attribute, which all primitives should have, even in logical models
+                var valueType = summary?.GetElements().FirstOrDefault(e => e.ElementName.Equals("value"))?.Type.FirstOrDefault()?.GetTypeName();
+                ts = valueType is { } ? tryMapFhirPrimitiveTypeToSystemType(valueType) : null;
 
-                // If we don't have type information (no definition was found
-                // for current node), all we can do is return the underlying string value
-                if (InstanceType == null) return sourceText;
+                // Still, even this failed, we need to bail out.
+                if (ts is null)
+                    throw new InvalidOperationException($"Cannot figure out what the primitive type is for the value of logical type '{InstanceType}'.");
+            }
 
-                // For performance reasons, let's try the normal case first - a non logical type
-                var ts = tryMapFhirPrimitiveTypeToSystemType(InstanceType);
+            if (ts == null)
+            {
+                raiseTypeError($"Since type {InstanceType} is not a primitive, it cannot have a value", _source, location: _source.Location);
+                return null;
+            }
 
-                // If that failed, the type might still be a custom "primitive" type for logical models
-                if (ts is null && Uri.IsWellFormedUriString(InstanceType, UriKind.Absolute))
-                {
-                    // Get the definition of the logical type
-                    var summary = Provider.Provide(InstanceType);
-
-                    // And find the `value` attribute, which all primitives should have, even in logical models
-                    var valueType = summary?.GetElements().FirstOrDefault(e => e.ElementName.Equals("value"))?.Type.FirstOrDefault()?.GetTypeName();
-                    ts = valueType is { } ? tryMapFhirPrimitiveTypeToSystemType(valueType) : null;
-
-                    // Still, even this failed, we need to bail out.
-                    if (ts is null)
-                        throw new InvalidOperationException($"Cannot figure out what the primitive type is for the value of logical type '{InstanceType}'.");
-                }
-
-                if (ts == null)
-                {
-                    raiseTypeError($"Since type {InstanceType} is not a primitive, it cannot have a value", _source, location: _source.Location);
-                    return null;
-                }
-
-                // Finally, we have a (potentially) unparsed string + type info
-                // parse this primitive into the desired type
-                if (P.Any.TryParse(sourceText, ts, out var val))
-                    return val;
-                else
-                {
-                    // Check for the exception we have made to allow 1.x behaviour
-                    // where datetime's were considered acceptable for date elements.
-                    // In addition the TruncateDateTimeToDate will also "correct" the
-                    // datetime values to correct just-date values while parsing here.
+            // Finally, we have a (potentially) unparsed string + type info
+            // parse this primitive into the desired type
+            if (P.Any.TryParse(sourceText, ts, out var val))
+                return val;
+            else
+            {
+                // Check for the exception we have made to allow 1.x behaviour
+                // where datetime's were considered acceptable for date elements.
+                // In addition the TruncateDateTimeToDate will also "correct" the
+                // datetime values to correct just-date values while parsing here.
 #pragma warning disable CS0618 // Type or member is obsolete
-                    if (_settings.TruncateDateTimeToDate && ts == typeof(P.Date))
+                if (_settings.TruncateDateTimeToDate && ts == typeof(P.Date))
 #pragma warning restore CS0618 // Type or member is obsolete
+                {
+                    if (P.Any.TryParse(sourceText, typeof(P.DateTime), out var dateTimeVal))
                     {
-                        if (P.Any.TryParse(sourceText, typeof(P.DateTime), out var dateTimeVal))
-                        {
-                            // TruncateToDate converts 1991-02-03T11:22:33Z to 1991-02-03+00:00 which is not a valid date! 
-                            var date = (dateTimeVal as P.DateTime).TruncateToDate();
-                            // so we cut off timezone by converting it to timeoffset and cast back to date.
-                            return P.Date.FromDateTimeOffset(date.ToDateTimeOffset(0, 0, 0, TimeSpan.Zero));
-                        }
+                        // TruncateToDate converts 1991-02-03T11:22:33Z to 1991-02-03+00:00 which is not a valid date! 
+                        var date = (dateTimeVal as P.DateTime).TruncateToDate();
+                        // so we cut off timezone by converting it to timeoffset and cast back to date.
+                        return P.Date.FromDateTimeOffset(date.ToDateTimeOffset(0, 0, 0, TimeSpan.Zero));
                     }
-
-                    raiseTypeError($"Literal '{sourceText}' cannot be parsed as a {InstanceType}.", _source, location: _source.Location);
-                    return sourceText;
                 }
+
+                raiseTypeError($"Literal '{sourceText}' cannot be parsed as a {InstanceType}.", _source, location: _source.Location);
+                return sourceText;
             }
         }
+
+        public object Value => _value.Value;
 
         private string deriveInstanceType(ISourceNode current, IElementDefinitionSummary info)
         {
@@ -347,14 +353,14 @@ namespace Hl7.Fhir.ElementModel
             if (matches.Any())
             {
                 info = (matches.Count == 1)
-                        ? matches[0].Value 
+                        ? matches[0].Value
                         : matches.Aggregate((l, r) => l.Key.Length > r.Key.Length ? l : r).Value;
                 return true;
-            }          
+            }
             else
             {
                 return false;
-            }          
+            }
         }
 
         private IEnumerable<TypedElementOnSourceNode> enumerateElements(Dictionary<string, IElementDefinitionSummary> dis, ISourceNode parent, string name)
@@ -425,33 +431,43 @@ namespace Hl7.Fhir.ElementModel
 
         public IEnumerable<ITypedElement> Children(string name = null)
         {
-            // If we have an xhtml typed node and there is not a div tag around the content
-            // then we will not enumerate through the children of this node, since there will be no types
-            // matching the html tags.
-            if (this.InstanceType == XHTML_INSTANCETYPE && Name != XHTML_DIV_TAG_NAME)
+            return name is not null ? _children.Value.Where(c => c.Name == name) : _children.Value;
+        }
+
+        private IEnumerable<ITypedElement> childrenFactory()
+        {
+            return getChildren().ToList(); // force immediate query evaluation 
+
+            IEnumerable<ITypedElement> getChildren(string name = null)
             {
-                return Enumerable.Empty<ITypedElement>();
-            }
-
-            var childElementDefs = this.ChildDefinitions(Provider).ToDictionary(c => c.ElementName);
-
-            if (Definition != null && !childElementDefs.Any())
-            {
-                // No type information available for the type representing the children....
-
-                if (InstanceType != null && _settings.ErrorMode == TypedElementSettings.TypeErrorMode.Report)
-                    raiseTypeError($"Encountered unknown type '{InstanceType}'", _source, location: _source.Location);
-
-                // Don't go on with the (untyped) children, unless explicitly told to do so
-                if (_settings.ErrorMode != TypedElementSettings.TypeErrorMode.Passthrough)
+                // If we have an xhtml typed node and there is not a div tag around the content
+                // then we will not enumerate through the children of this node, since there will be no types
+                // matching the html tags.
+                if (this.InstanceType == XHTML_INSTANCETYPE && Name != XHTML_DIV_TAG_NAME)
+                {
                     return Enumerable.Empty<ITypedElement>();
+                }
+
+                var childElementDefs = this.ChildDefinitions(Provider).ToDictionary(c => c.ElementName);
+
+                if (Definition != null && !childElementDefs.Any())
+                {
+                    // No type information available for the type representing the children....
+
+                    if (InstanceType != null && _settings.ErrorMode == TypedElementSettings.TypeErrorMode.Report)
+                        raiseTypeError($"Encountered unknown type '{InstanceType}'", _source, location: _source.Location);
+
+                    // Don't go on with the (untyped) children, unless explicitly told to do so
+                    if (_settings.ErrorMode != TypedElementSettings.TypeErrorMode.Passthrough)
+                        return Enumerable.Empty<ITypedElement>();
+                    else
+                        // Ok, pass through the untyped members, but since there is no type information, 
+                        // don't bother to run the additional rules
+                        return enumerateElements(childElementDefs, _source, name);
+                }
                 else
-                    // Ok, pass through the untyped members, but since there is no type information, 
-                    // don't bother to run the additional rules
-                    return enumerateElements(childElementDefs, _source, name);
+                    return runAdditionalRules(enumerateElements(childElementDefs, _source, name));
             }
-            else
-                return runAdditionalRules(enumerateElements(childElementDefs, _source, name));
         }
 
         private IEnumerable<ITypedElement> runAdditionalRules(IEnumerable<ITypedElement> children)
