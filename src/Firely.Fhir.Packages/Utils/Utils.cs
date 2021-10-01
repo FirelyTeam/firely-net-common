@@ -16,7 +16,7 @@ namespace Firely.Fhir.Packages
             return s.Split(new string[] { separator }, StringSplitOptions.None);
         }
 
-        public static (string? left, string? right) Splice(this string s, char separator)
+        public static (string left, string right) Splice(this string s, char separator)
         {
             var splice = s.Split(new char[] { separator }, count: 2);
             var left = splice.Length >= 1 ? splice[0] : null;

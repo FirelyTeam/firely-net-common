@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Firely.Fhir.Packages
@@ -78,12 +79,12 @@ namespace Firely.Fhir.Packages
             await scope.Project.WriteManifest(manifest);
         }
 
-      
-        
+
+
         public class InstallResult
         {
             public PackageClosure Closure;
-            public PackageReference Reference; 
+            public PackageReference Reference;
         }
 
         public static async Task<InstallResult> Install(this PackageContext scope, PackageDependency dependency)
@@ -101,6 +102,21 @@ namespace Firely.Fhir.Packages
 
             var closure = await scope.Restore();
             return new InstallResult { Closure = closure, Reference = reference };
+        }
+
+        private static PackageFileReference getFileReference(this PackageContext scope, string resourceType, string id)
+        {
+            return scope.Index.Where(i => i.ResourceType == resourceType && i.Id == id).FirstOrDefault();
+
+        }
+
+        public static async Task<string> GetFileContentById(this PackageContext scope, string resourceType, string id)
+        {
+            var reference = scope.getFileReference(resourceType, id);
+            if (reference is null) return null;
+
+            var content = await scope.GetFileContent(reference);
+            return content;
         }
 
     }

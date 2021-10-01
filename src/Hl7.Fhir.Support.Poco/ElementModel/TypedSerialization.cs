@@ -16,6 +16,10 @@ namespace Hl7.Fhir.ElementModel
 {
     public static class TypedSerialization
     {
+        public static Base ToPoco(ISourceNode source, ModelInspector inspector, PocoBuilderSettings settings = null) =>
+            new PocoBuilder(inspector, settings)
+            .BuildFrom(source, (Type)null);
+
         public static Base ToPoco(ISourceNode source, Type pocoType, PocoBuilderSettings settings = null) =>
             new PocoBuilder(ModelInspector.ForAssembly(pocoType.GetTypeInfo().Assembly), settings)
             .BuildFrom(source, pocoType ?? throw new ArgumentNullException(nameof(pocoType)));
