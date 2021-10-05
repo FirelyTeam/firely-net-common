@@ -11,6 +11,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -51,9 +52,9 @@ namespace Hl7.Fhir.Utility
 
         public static XDocument XDocumentFromReader(XmlReader reader, bool ignoreComments = true)
             => XDocumentFromReaderInternal(WrapXmlReader(reader, ignoreComments));
-        
+
         public static Task<XDocument> XDocumentFromReaderAsync(XmlReader reader, bool ignoreComments = true)
-            => Task.FromResult(XDocumentFromReaderInternal(WrapXmlReader(reader, ignoreComments, async:true)));
+            => Task.FromResult(XDocumentFromReaderInternal(WrapXmlReader(reader, ignoreComments, async: true)));
 
         /// <inheritdoc cref="JObjectFromReaderAsync(JsonReader)" />
         public static JObject JObjectFromReader(JsonReader reader)
@@ -125,9 +126,9 @@ namespace Hl7.Fhir.Utility
 
         public static XmlReader XmlReaderFromXmlText(string xml, bool ignoreComments = true)
             => WrapXmlReader(XmlReader.Create(new StringReader(SerializationUtil.SanitizeXml(xml))), ignoreComments);
-        
+
         public static Task<XmlReader> XmlReaderFromXmlTextAsync(string xml, bool ignoreComments = true)
-            => Task.FromResult(WrapXmlReader(XmlReader.Create(new StringReader(SerializationUtil.SanitizeXml(xml))), ignoreComments, async:true));
+            => Task.FromResult(WrapXmlReader(XmlReader.Create(new StringReader(SerializationUtil.SanitizeXml(xml))), ignoreComments, async: true));
 
         public static JsonReader JsonReaderFromJsonText(string json)
             => JsonReaderFromTextReader(new StringReader(json));
@@ -262,7 +263,7 @@ namespace Hl7.Fhir.Utility
 
             return doc;
         }
-        
+
         public static async Task<XDocument> WriteXmlToDocumentAsync(Func<XmlWriter, Task> serializer)
         {
             var doc = new XDocument();
@@ -472,8 +473,15 @@ namespace Hl7.Fhir.Utility
             if (!doc.Root.AtXhtmlDiv())
                 return new[] { $"Root element of XHTML is not a <div> from the XHTML namespace ({XmlNs.XHTML})." };
 
+            if (!hasContent(doc.Root))
+                return new[] { $"The narrative SHALL have some non-whitespace content." };
+
             doc.Validate(_xhtmlSchemaSet.Value, (s, a) => result.Add(a.Message));
             return result.ToArray();
+
+            // content consist of xml elements with non-whitespace content (text or an image)
+            static bool hasContent(XElement el)
+                => el.DescendantsAndSelf().Any(e => !string.IsNullOrWhiteSpace(e.Value) || e.Name.LocalName == "img");
         }
 
         private static Lazy<XmlSchemaSet> _xhtmlSchemaSet = new Lazy<XmlSchemaSet>(compileXhtmlSchema, true);
