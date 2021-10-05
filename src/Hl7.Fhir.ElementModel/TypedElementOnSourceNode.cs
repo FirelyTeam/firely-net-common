@@ -21,7 +21,6 @@ namespace Hl7.Fhir.ElementModel
         private const string XHTML_DIV_TAG_NAME = "div";
 
         private readonly Lazy<object> _value;
-        private readonly Lazy<IEnumerable<ITypedElement>> _children;
 
         public TypedElementOnSourceNode(ISourceNode source, string type, IStructureDefinitionSummaryProvider provider, TypedElementSettings settings = null)
         {
@@ -36,7 +35,6 @@ namespace Hl7.Fhir.ElementModel
             ShortPath = source.Name;
             _source = source;
             _value = new Lazy<object>(valueFactory);
-            _children = new Lazy<IEnumerable<ITypedElement>>(childrenFactory);
             (InstanceType, Definition) = buildRootPosition(type);
         }
 
@@ -80,7 +78,6 @@ namespace Hl7.Fhir.ElementModel
             InstanceType = instanceType;
             _settings = parent._settings;
             _value = new Lazy<object>(valueFactory);
-            _children = new Lazy<IEnumerable<ITypedElement>>(childrenFactory);
         }
 
         public ExceptionNotificationHandler ExceptionHandler { get; set; }
@@ -431,43 +428,33 @@ namespace Hl7.Fhir.ElementModel
 
         public IEnumerable<ITypedElement> Children(string name = null)
         {
-            return name is not null ? _children.Value.Where(c => c.Name == name) : _children.Value;
-        }
-
-        private IEnumerable<ITypedElement> childrenFactory()
-        {
-            return getChildren().ToList(); // force immediate query evaluation 
-
-            IEnumerable<ITypedElement> getChildren(string name = null)
+            // If we have an xhtml typed node and there is not a div tag around the content
+            // then we will not enumerate through the children of this node, since there will be no types
+            // matching the html tags.
+            if (this.InstanceType == XHTML_INSTANCETYPE && Name != XHTML_DIV_TAG_NAME)
             {
-                // If we have an xhtml typed node and there is not a div tag around the content
-                // then we will not enumerate through the children of this node, since there will be no types
-                // matching the html tags.
-                if (this.InstanceType == XHTML_INSTANCETYPE && Name != XHTML_DIV_TAG_NAME)
-                {
-                    return Enumerable.Empty<ITypedElement>();
-                }
-
-                var childElementDefs = this.ChildDefinitions(Provider).ToDictionary(c => c.ElementName);
-
-                if (Definition != null && !childElementDefs.Any())
-                {
-                    // No type information available for the type representing the children....
-
-                    if (InstanceType != null && _settings.ErrorMode == TypedElementSettings.TypeErrorMode.Report)
-                        raiseTypeError($"Encountered unknown type '{InstanceType}'", _source, location: _source.Location);
-
-                    // Don't go on with the (untyped) children, unless explicitly told to do so
-                    if (_settings.ErrorMode != TypedElementSettings.TypeErrorMode.Passthrough)
-                        return Enumerable.Empty<ITypedElement>();
-                    else
-                        // Ok, pass through the untyped members, but since there is no type information, 
-                        // don't bother to run the additional rules
-                        return enumerateElements(childElementDefs, _source, name);
-                }
-                else
-                    return runAdditionalRules(enumerateElements(childElementDefs, _source, name));
+                return Enumerable.Empty<ITypedElement>();
             }
+
+            var childElementDefs = this.ChildDefinitions(Provider).ToDictionary(c => c.ElementName);
+
+            if (Definition != null && !childElementDefs.Any())
+            {
+                // No type information available for the type representing the children....
+
+                if (InstanceType != null && _settings.ErrorMode == TypedElementSettings.TypeErrorMode.Report)
+                    raiseTypeError($"Encountered unknown type '{InstanceType}'", _source, location: _source.Location);
+
+                // Don't go on with the (untyped) children, unless explicitly told to do so
+                if (_settings.ErrorMode != TypedElementSettings.TypeErrorMode.Passthrough)
+                    return Enumerable.Empty<ITypedElement>();
+                else
+                    // Ok, pass through the untyped members, but since there is no type information, 
+                    // don't bother to run the additional rules
+                    return enumerateElements(childElementDefs, _source, name);
+            }
+            else
+                return runAdditionalRules(enumerateElements(childElementDefs, _source, name));
         }
 
         private IEnumerable<ITypedElement> runAdditionalRules(IEnumerable<ITypedElement> children)
