@@ -82,10 +82,7 @@ namespace Hl7.FhirPath.Functions
                 }
             }
 
-            return filter(element.Children(name), name);
-
-            static IEnumerable<ITypedElement> filter(IEnumerable<ITypedElement> children, string name) =>
-                name == null ? children : children.Where(c => c.Name == name);
+            return element.Children(name);
         }
 
         public static string FpJoin(this IEnumerable<ITypedElement> collection, string separator)
