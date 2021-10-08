@@ -47,6 +47,7 @@
     <IncludeSymbols>True</IncludeSymbols>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
 	<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	<NoWarn>1591</NoWarn>
   </PropertyGroup>
   
   <PropertyGroup>
