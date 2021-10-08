@@ -11,6 +11,7 @@ using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.ElementModel
@@ -20,7 +21,7 @@ namespace Hl7.Fhir.ElementModel
         private const string XHTML_INSTANCETYPE = "xhtml";
         private const string XHTML_DIV_TAG_NAME = "div";
 
-        private readonly Lazy<object> _value;
+        private object _value;
 
         public TypedElementOnSourceNode(ISourceNode source, string type, IStructureDefinitionSummaryProvider provider, TypedElementSettings settings = null)
         {
@@ -34,7 +35,6 @@ namespace Hl7.Fhir.ElementModel
 
             ShortPath = source.Name;
             _source = source;
-            _value = new Lazy<object>(valueFactory);
             (InstanceType, Definition) = buildRootPosition(type);
         }
 
@@ -223,7 +223,7 @@ namespace Hl7.Fhir.ElementModel
             }
         }
 
-        public object Value => _value.Value;
+        public object Value => LazyInitializer.EnsureInitialized(ref _value, valueFactory);
 
         private string deriveInstanceType(ISourceNode current, IElementDefinitionSummary info)
         {
