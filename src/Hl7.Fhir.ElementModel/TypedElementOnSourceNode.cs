@@ -77,7 +77,6 @@ namespace Hl7.Fhir.ElementModel
             Definition = definition;
             InstanceType = instanceType;
             _settings = parent._settings;
-            _value = new Lazy<object>(valueFactory);
         }
 
         public ExceptionNotificationHandler ExceptionHandler { get; set; }
