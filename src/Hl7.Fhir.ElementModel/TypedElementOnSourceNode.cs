@@ -21,8 +21,6 @@ namespace Hl7.Fhir.ElementModel
         private const string XHTML_INSTANCETYPE = "xhtml";
         private const string XHTML_DIV_TAG_NAME = "div";
 
-        private object _value;
-
         public TypedElementOnSourceNode(ISourceNode source, string type, IStructureDefinitionSummaryProvider provider, TypedElementSettings settings = null)
         {
             if (source == null) throw Error.ArgumentNull(nameof(source));
@@ -222,7 +220,11 @@ namespace Hl7.Fhir.ElementModel
             }
         }
 
-        public object Value => LazyInitializer.EnsureInitialized(ref _value, valueFactory);
+        private object _value;
+        private bool _valueInitialized = false;
+        private static object _initializationLock = new();
+
+        public object Value => LazyInitializer.EnsureInitialized(ref _value, ref _valueInitialized, ref _initializationLock, valueFactory);
 
         private string deriveInstanceType(ISourceNode current, IElementDefinitionSummary info)
         {
