@@ -8,7 +8,7 @@
 
   <PropertyGroup>
     <PackageId>Hl7.Fhir.DSTU2.ElementModel</PackageId>
-    <Title>HL7 FHIR library for the base ElementModel classes</Title>
+    <Title>HL7 FHIR library for the base ElementModel DSTU2 classes</Title>
     <Summary>Interfaces and classes to work with FHIR data without using POCOs. Special made for DSTU2</Summary>
     <Description>Interfaces and classes to work with FHIR data without using POCOs, in concert with the Hl7.Fhir.Serialization assembly.</Description>
     <PackageTags>HL7;FHIR;Elements;DSTU2</PackageTags>

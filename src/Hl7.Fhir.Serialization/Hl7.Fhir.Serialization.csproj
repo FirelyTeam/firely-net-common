@@ -8,7 +8,7 @@
 
   <PropertyGroup>
     <PackageId>Hl7.Fhir.DSTU2.Serialization</PackageId>
-    <Title>HL7 FHIR serialization functionality</Title>
+    <Title>HL7 FHIR serialization functionality for DSTU2</Title>
     <Summary>Version-independent parsering and serialization functionality</Summary>
     <Description>Contains general interfaces and classes for working with FHIR data, regardless of FHIR version or POCO's. Special made for DSTU2</Description>
     <PackageTags>HL7;FHIR;DSTU2;xml;json;parsing;serialization</PackageTags>
