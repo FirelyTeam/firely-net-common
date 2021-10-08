@@ -1,0 +1,117 @@
+# Repo: FirelyTeam/firely-net-common
+# File: build/azure-pipelines.yml
+
+name: $(date:yyyyMMdd)$(rev:.r)
+
+variables:
+- template: build-variables.yml
+- template: pipeline-variables.yml
+  
+pool:
+  vmImage: 'windows-latest'
+
+resources:
+  repositories:
+  - repository: self
+    type: git
+    ref: develop
+
+trigger:
+  branches:
+    include:
+    - develop
+    - release/*
+    - hotfix/*
+    - refs/tags/v*
+
+stages:
+- stage: build
+  displayName: Build
+  jobs:
+  - job: restoreAndBuild
+    displayName: 'Build Artifacts'
+    steps:
+    - checkout: self
+      clean: true
+      fetchDepth: 1
+
+    - template: templates/apply-versioning-steps-template.yml
+
+    - task: UseDotNet@2
+      displayName: 'Use .NET Core sdk $(NET_CORE_SDK)'
+      inputs:
+        version: $(NET_CORE_SDK)
+
+    - task: DotNetCoreCLI@2
+      displayName: Restore
+      inputs:
+        command: restore
+        projects: ./Hl7.Fhir.Common.sln
+        verbosityRestore: Minimal
+        arguments: --configuration $(buildConfiguration)
+
+    - task: DotNetCoreCLI@2
+      displayName: Build
+      inputs:
+        command: build
+        projects: ./Hl7.Fhir.Common.sln
+        arguments: --configuration $(buildConfiguration) --no-restore
+
+    - task: DotNetCoreCLI@2
+      displayName: Create Test artifacts
+      inputs:
+        command: publish
+        projects: |
+         **/Hl7.Fhir*Tests.csproj
+        publishWebProjects: false
+        zipAfterPublish: false
+        arguments: --configuration $(buildConfiguration) --no-build -f $(TEST_TARGETFRAMEWORK)
+
+    - task: CopyFiles@2
+      displayName: 'Copy Test artifacts to $(System.DefaultWorkingDirectory)/bin'
+      inputs:
+        sourceFolder: $(System.DefaultWorkingDirectory)
+        Contents: '**/bin/$(buildConfiguration)/*/publish/**'
+        flattenFolders: false
+        TargetFolder: '$(System.DefaultWorkingDirectory)/bin'   
+
+    - task: PublishPipelineArtifact@1
+      displayName: Publish Test artifacts
+      inputs:
+        targetPath: $(System.DefaultWorkingDirectory)/bin
+        artifactName: TestBuild
+    
+    - template: templates/sign-dlls-template.yml
+
+
+    - task: DotNetCoreCLI@2
+      displayName: Pack
+      inputs:
+        command: pack
+        searchPatternPack: '**/*.csproj;!**/*.Tests.csproj;!**/Sprache.csproj'
+        configurationToPack: $(buildConfiguration)
+        nobuild: true
+        verbosityPack: Normal
+
+    - task: PublishBuildArtifacts@1
+      displayName: Publish Artifact
+      inputs:
+        pathToPublish: $(Build.ArtifactStagingDirectory)
+        ArtifactName: NuGetPackages
+
+
+- stage: test
+  displayName: Test
+  dependsOn: build
+  jobs:
+  - job: test
+    displayName: Tests common test projects
+    steps:
+      - checkout: none
+      - template: templates/test-job-template.yml
+        parameters:
+          testRunTitle: Tests common test projects
+          projects: |
+            **/publish/Hl7.Fhir.Support.Tests.dll
+            **/publish/HL7.FhirPath.Tests.dll
+            **/publish/Hl7.Fhir.Support.Poco.Tests.dll
