@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Reflection;
 
 namespace Hl7.FhirPath.Expressions
 {
@@ -201,6 +202,9 @@ namespace Hl7.FhirPath.Expressions
             t.Add(new CallSignature("repeat", typeof(IEnumerable<ITypedElement>), typeof(object), typeof(Invokee)), runRepeat);
             t.Add(new CallSignature("trace", typeof(IEnumerable<ITypedElement>), typeof(string), typeof(object), typeof(Invokee)), Trace);
 
+            t.Add(new CallSignature("aggregate", typeof(IEnumerable<ITypedElement>), typeof(Invokee), typeof(Invokee)), Aggregate);
+            t.Add(new CallSignature("aggregate", typeof(IEnumerable<ITypedElement>), typeof(Invokee), typeof(Invokee), typeof(Invokee)), Aggregate);
+
             t.AddVar("sct", "http://snomed.info/sct");
             t.AddVar("loinc", "http://loinc.org");
             t.AddVar("ucum", "http://unitsofmeasure.org");
@@ -220,6 +224,30 @@ namespace Hl7.FhirPath.Expressions
         private static string getCoreValueSetUrl(string id)
         {
             return "http://hl7.org/fhir/ValueSet/" + id;
+        }
+
+        private static IEnumerable<ITypedElement> Aggregate(Closure ctx, IEnumerable<Invokee> arguments)
+        {
+            var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
+            var incrExpre = arguments.Skip(1).First();
+            IEnumerable<ITypedElement> initialValue = ElementNode.EmptyList;
+            if (arguments.Count() > 2)
+            {
+                var initialValueExpr = arguments.Skip(2).First();
+                initialValue = initialValueExpr(ctx, InvokeeFactory.EmptyArgs);
+            }
+            var totalContext = ctx.Nest();
+            totalContext.SetTotal(initialValue);
+            foreach (ITypedElement element in focus)
+            {
+                var newFocus = ElementNode.CreateList(element);
+                var newContext = totalContext.Nest(newFocus);
+                newContext.SetThis(newFocus);
+                newContext.SetTotal(totalContext.GetTotal());
+                var newTotalResult = incrExpre(newContext, InvokeeFactory.EmptyArgs);
+                totalContext.SetTotal(newTotalResult);
+            }
+            return ElementNode.CreateList(totalContext.GetTotal());
         }
 
         private static IEnumerable<ITypedElement> Trace(Closure ctx, IEnumerable<Invokee> arguments)
