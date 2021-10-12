@@ -347,14 +347,14 @@ namespace Hl7.Fhir.ElementModel
             if (matches.Any())
             {
                 info = (matches.Count == 1)
-                        ? matches[0].Value 
+                        ? matches[0].Value
                         : matches.Aggregate((l, r) => l.Key.Length > r.Key.Length ? l : r).Value;
                 return true;
-            }          
+            }
             else
             {
                 return false;
-            }          
+            }
         }
 
         private IEnumerable<TypedElementOnSourceNode> enumerateElements(Dictionary<string, IElementDefinitionSummary> dis, ISourceNode parent, string name)
@@ -366,10 +366,10 @@ namespace Hl7.Fhir.ElementModel
                 childSet = parent.Children();
             else
             {
-                var hit = tryGetBySuffixedName(dis, name, out var info);
-                childSet = hit && info.IsChoiceElement ?
-                    parent.Children(name + "*") :
-                    parent.Children(name);
+                var hit = dis.TryGetValue(name, out var info);
+                childSet = hit
+                    ? (info.IsChoiceElement ? parent.Children(name + "*") : parent.Children(name))
+                    : Enumerable.Empty<ISourceNode>();
             }
 
             string lastName = null;
