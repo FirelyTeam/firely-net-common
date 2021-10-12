@@ -202,8 +202,8 @@ namespace Hl7.FhirPath.Expressions
             t.Add(new CallSignature("repeat", typeof(IEnumerable<ITypedElement>), typeof(object), typeof(Invokee)), runRepeat);
             t.Add(new CallSignature("trace", typeof(IEnumerable<ITypedElement>), typeof(string), typeof(object), typeof(Invokee)), Trace);
 
-            t.Add(new CallSignature("aggregate", typeof(IEnumerable<ITypedElement>), typeof(Invokee), typeof(Invokee)), Aggregate);
-            t.Add(new CallSignature("aggregate", typeof(IEnumerable<ITypedElement>), typeof(Invokee), typeof(Invokee), typeof(Invokee)), Aggregate);
+            t.Add(new CallSignature("aggregate", typeof(IEnumerable<ITypedElement>), typeof(Invokee), typeof(Invokee)), runAggregate);
+            t.Add(new CallSignature("aggregate", typeof(IEnumerable<ITypedElement>), typeof(Invokee), typeof(Invokee), typeof(Invokee)), runAggregate);
 
             t.AddVar("sct", "http://snomed.info/sct");
             t.AddVar("loinc", "http://loinc.org");
@@ -226,7 +226,7 @@ namespace Hl7.FhirPath.Expressions
             return "http://hl7.org/fhir/ValueSet/" + id;
         }
 
-        private static IEnumerable<ITypedElement> Aggregate(Closure ctx, IEnumerable<Invokee> arguments)
+        private static IEnumerable<ITypedElement> runAggregate(Closure ctx, IEnumerable<Invokee> arguments)
         {
             var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
             var incrExpre = arguments.Skip(1).First();
