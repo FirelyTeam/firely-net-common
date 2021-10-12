@@ -35,11 +35,6 @@ namespace Hl7.Fhir.Model
 {
     public partial class XHtml
     {
-#if NETSTANDARD1_6
-        public static bool IsValidValue(string _) => true;
-#else
         public static bool IsValidValue(string value) => !SerializationUtil.RunFhirXhtmlSchemaValidation(value).Any();
-#endif
-
     }
 }
