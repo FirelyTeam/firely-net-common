@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net5.0;net452;netstandard1.6;netstandard2.0</TargetFrameworks>
+		<TargetFrameworks>net5.0;net452;netstandard2.0</TargetFrameworks>
 	</PropertyGroup>
 
 	<Import Project="..\firely-net-common.props" />
@@ -25,10 +25,6 @@
     <Reference Include="System.Net.Http"/>
   </ItemGroup>
 
-	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.6'">
-		<PackageReference Include="System.Net.Requests" Version="4.3.0" />
-	</ItemGroup>
-	
 	<ItemGroup>
 		<ProjectReference Include="..\Hl7.Fhir.ElementModel\Hl7.Fhir.ElementModel.csproj" />
 		<ProjectReference Include="..\Hl7.Fhir.Support\Hl7.Fhir.Support.csproj" />

@@ -18,10 +18,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
-
-#if !NETSTANDARD1_6
 using System.Xml.Schema;
-#endif
 
 namespace Hl7.Fhir.Utility
 {
@@ -452,7 +449,6 @@ namespace Hl7.Fhir.Utility
             return resultRE;
         }
 
-#if !NETSTANDARD1_6
         public static string[] RunFhirXhtmlSchemaValidation(string xmlText)
         {
             try
@@ -522,8 +518,6 @@ namespace Hl7.Fhir.Utility
                 }
             }
         }
-#endif
-
 
         private static Regex _re = new Regex("(&[a-zA-Z0-9]+;)", RegexOptions.Compiled | RegexOptions.CultureInvariant);
         private static Dictionary<string, string> _xmlReplacements;
