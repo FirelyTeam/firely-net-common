@@ -39,7 +39,7 @@ namespace Hl7.Fhir.Serialization
         {
             ModelInspector inspector = ModelInspector.ForAssembly(assembly);
 
-            // _deserializer = new JsonDynamicDeserializer(assembly);
+             _deserializer = new JsonDynamicDeserializer(assembly);
             _serializer = new JsonFhirDictionarySerializer(inspector.FhirRelease);
             Filter = filter;
         }
@@ -49,7 +49,7 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public override bool CanConvert(Type objectType) => typeof(Base).IsAssignableFrom(objectType);
 
-        //private readonly JsonDynamicDeserializer _deserializer;
+        private readonly JsonDynamicDeserializer _deserializer;
         private readonly JsonFhirDictionarySerializer _serializer;
 
         /// <summary>
@@ -70,11 +70,10 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public override Base Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            throw new NotImplementedException();
-            //if (typeof(Resource).IsAssignableFrom(typeToConvert))
-            //    return _deserializer.DeserializeResource(ref reader);
-            //else
-            //    return _deserializer.DeserializeObject(typeToConvert, ref reader);
+            if (typeof(Resource).IsAssignableFrom(typeToConvert))
+                return _deserializer.DeserializeResource(ref reader);
+            else
+                return _deserializer.DeserializeObject(typeToConvert, ref reader);
         }
     }
 }

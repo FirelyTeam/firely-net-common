@@ -46,6 +46,8 @@
 
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>Full</DebugType>
+    <DebugSymbols>True</DebugSymbols>
     <SignAssembly>True</SignAssembly>
     <DelaySign>true</DelaySign>
     <AssemblyOriginatorKeyFile>..\FhirNetApi.publickey</AssemblyOriginatorKeyFile>
