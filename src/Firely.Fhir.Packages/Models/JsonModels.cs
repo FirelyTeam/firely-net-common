@@ -249,6 +249,12 @@ namespace Firely.Fhir.Packages
         [JsonProperty("fhirVersion")]
         public string? FhirVersion;
 
+        [JsonProperty("hasSnapshot")]
+        public bool HasSnapshot;
+
+        [JsonProperty("hasExpansion")]
+        public bool HasExpansion;
+
         public void CopyTo(ResourceMetadata other)
         {
             other.FileName = FileName;
@@ -259,6 +265,8 @@ namespace Firely.Fhir.Packages
             other.Kind = Kind;
             other.Type = Type;
             other.FhirVersion = FhirVersion;
+            other.HasExpansion = HasExpansion;
+            other.HasSnapshot = HasSnapshot;
         }
     }
 

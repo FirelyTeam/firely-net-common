@@ -7,18 +7,11 @@ namespace Firely.Fhir.Packages
 {
     public static class PackageScopeExtensions
     {
-        public static async Task<string> GetFileContentByCanonical(this PackageContext scope, string uri)
+        public static async Task<string> GetFileContentByCanonical(this PackageContext scope, string uri, string version = null)
         {
             var reference = scope.Index.ResolveCanonical(uri);
 
-            if (reference is object)
-            {
-                return await scope.GetFileContent(reference);
-            }
-            else
-            {
-                return null;
-            }
+            return reference is not null ? await scope.GetFileContent(reference) : null;
         }
 
         public static async Task<PackageReference> Install(this PackageContext scope, string name, string range)
@@ -35,14 +28,9 @@ namespace Firely.Fhir.Packages
 
         public static async Task<string> GetFileContent(this PackageContext scope, PackageFileReference reference)
         {
-            if (!reference.Package.Found) // this is a hack, because we cannot reference the project itself with a PackageReference
-            {
-                return await scope.Project.GetFileContent(reference.FileName);
-            }
-            else
-            {
-                return await scope.Cache.GetFileContent(reference);
-            }
+            return !reference.Package.Found
+                ? await scope.Project.GetFileContent(reference.FileName)
+                : await scope.Cache.GetFileContent(reference);
         }
 
         public static IEnumerable<string> ReadAllFiles(this PackageContext scope)

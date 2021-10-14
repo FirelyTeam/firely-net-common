@@ -14,16 +14,21 @@ namespace Hl7.Fhir.Specification.Source
         private PackageContext _context;
         private ModelInspector _provider;
 
-        public NpmPackageResolver(string filePath, ModelInspector provider)
+        public NpmPackageResolver(ModelInspector provider, params string[] filePaths)
         {
-            _context = createPackageContextAsync(filePath).Result;
+            _context = createPackageContextAsync(filePaths).Result;
             _provider = provider;
         }
 
-        private async Task<PackageContext> createPackageContextAsync(string path)
+
+
+        private async Task<PackageContext> createPackageContextAsync(params string[] paths)
         {
-            if (!File.Exists(path))
-                throw new FileNotFoundException($"File was not found: '{path}'.");
+            foreach (var path in paths)
+            {
+                if (!File.Exists(path))
+                    throw new FileNotFoundException($"File was not found: '{path}'.");
+            }
 
             var scopePath = Path.Combine(Directory.GetCurrentDirectory(), "package-" + Path.GetRandomFileName());
             if (!Directory.Exists(scopePath))
@@ -33,6 +38,16 @@ namespace Hl7.Fhir.Specification.Source
 
             var scope = createContext(scopePath);
 
+            foreach (var path in paths)
+            {
+                await intstallPackageFromPath(scope, path);
+            }
+
+            return scope;
+        }
+
+        private static async Task intstallPackageFromPath(PackageContext scope, string path)
+        {
             var packageManifest = Packaging.ExtractManifestFromPackageFile(path);
             var reference = packageManifest.GetPackageReference();
             await scope.Cache.Install(reference, path);
@@ -40,7 +55,6 @@ namespace Hl7.Fhir.Specification.Source
             var dependency = new PackageDependency(reference.Name, reference.Version);
             if (reference.Found)
             {
-
                 var manifest = await scope.Project.ReadManifest();
                 manifest ??= ManifestFile.Create("temp", packageManifest.GetFhirVersion());
                 if (manifest.Name == reference.Name)
@@ -54,14 +68,12 @@ namespace Hl7.Fhir.Specification.Source
                     await scope.Restore();
                 }
             }
-
-            return scope;
         }
 
         public async Task<Resource?> ResolveByCanonicalUriAsync(string uri)
         {
             (var url, var version) = splitCanonical(uri);
-            var content = await _context.GetFileContentByCanonical(url);
+            var content = await _context.GetFileContentByCanonical(url, version);
             return toResource(content);
         }
 

@@ -44,7 +44,9 @@ namespace Firely.Fhir.Packages
                     Version = node.GetString("version"),
                     Kind = node.GetString("kind"),
                     Type = node.GetString("type"),
-                    FhirVersion = node.GetString("fhirVersion")
+                    FhirVersion = node.GetString("fhirVersion"),
+                    HasSnapshot = node.checkForSnapshot(),
+                    HasExpansion = node.checkForExpansion()
                 };
             }
             catch (Exception)
@@ -57,15 +59,8 @@ namespace Firely.Fhir.Packages
         public static string GetString(this ISourceNode node, string expression)
         {
             if (node is null) return null;
-
-            var parts = expression.Split('.');
-
-            foreach (var part in parts)
-            {
-                node = node.Children(part).FirstOrDefault();
-                if (node is null) return null;
-            }
-            return node.Text;
+            node = node.findDescendant(expression);
+            return node?.Text;
         }
 
         public static IEnumerable<string> GetRelativePaths(string folder, IEnumerable<string> paths)
@@ -74,18 +69,31 @@ namespace Firely.Fhir.Packages
                 yield return GetRelativePath(folder, path);
         }
 
+        private static ISourceNode findDescendant(this ISourceNode node, string expression)
+        {
+            var parts = expression.Split('.');
+
+            foreach (var part in parts)
+            {
+                node = node.Children(part).FirstOrDefault();
+                if (node is null) return null;
+            }
+
+            return node;
+        }
+
         private static string DirectorySeparatorString = $"{Path.DirectorySeparatorChar}";
 
         public static string GetRelativePath(string relativeTo, string path)
         {
-          
+
             // Require trailing backslash for path
-            if (!relativeTo.EndsWith(DirectorySeparatorString)) 
+            if (!relativeTo.EndsWith(DirectorySeparatorString))
                 relativeTo += DirectorySeparatorString;
 
             Uri baseUri = new Uri(relativeTo);
             Uri fullUri = new Uri(path);
-            
+
             Uri relativeUri = baseUri.MakeRelativeUri(fullUri);
 
             // Uri's use forward slashes so convert back to backward slashes
@@ -93,6 +101,17 @@ namespace Firely.Fhir.Packages
             return result;
 
         }
+
+        private static bool checkForSnapshot(this ISourceNode node)
+        {
+            return node.Name == "StructureDefinition" && node.Children("snapshot") is not null;
+        }
+
+        private static bool checkForExpansion(this ISourceNode node)
+        {
+            return node.Name == "ValueSet" ? node.findDescendant("expansion.contains") is not null : false;
+        }
+
     }
 }
 

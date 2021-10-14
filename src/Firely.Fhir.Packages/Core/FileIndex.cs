@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Hl7.Fhir.Support;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -11,9 +13,13 @@ namespace Firely.Fhir.Packages
         {
         }
 
-        public PackageFileReference ResolveCanonical(string canonical)
+        public PackageFileReference ResolveCanonical(string canonical, string version = null)
         {
-            return this.FirstOrDefault(r => r.Canonical == canonical);
+            var candidates = !string.IsNullOrEmpty(version)
+                ? this.Where(r => r.Canonical == canonical && r.Version == version)
+                : this.Where(r => r.Canonical == canonical);
+
+            return candidates.Count() > 1 ? candidates.ResolveFromMultipleCandidates(canonical) : candidates.SingleOrDefault();
         }
 
         public void Add(PackageReference package, ResourceMetadata metadata)
@@ -32,6 +38,15 @@ namespace Firely.Fhir.Packages
             {
                 await index.Index(cache, reference);
             }
+        }
+
+        internal static PackageFileReference ResolveFromMultipleCandidates(this IEnumerable<PackageFileReference> candidates, string canonical)
+        {
+            candidates = candidates.Where(c => c.HasSnapshot || c.HasExpansion);
+            if (candidates.Count() == 1)
+                return candidates.First();
+            else
+                throw new InvalidOperationException("Found multiple conflicting conformance resources with the same canonical url identifier.");
         }
 
         internal static async Task Index(this FileIndex index, IPackageCache cache, PackageReference reference)
