@@ -11,6 +11,7 @@ using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.ElementModel
@@ -157,70 +158,73 @@ namespace Hl7.Fhir.ElementModel
             }
         }
 
-        public object Value
+        private object valueFactory()
         {
-            get
+            string sourceText = _source.Text;
+
+            if (sourceText == null) return null;
+
+            // If we don't have type information (no definition was found
+            // for current node), all we can do is return the underlying string value
+            if (InstanceType == null) return sourceText;
+
+            // For performance reasons, let's try the normal case first - a non logical type
+            var ts = tryMapFhirPrimitiveTypeToSystemType(InstanceType);
+
+            // If that failed, the type might still be a custom "primitive" type for logical models
+            if (ts is null && Uri.IsWellFormedUriString(InstanceType, UriKind.Absolute))
             {
-                string sourceText = _source.Text;
+                // Get the definition of the logical type
+                var summary = Provider.Provide(InstanceType);
 
-                if (sourceText == null) return null;
+                // And find the `value` attribute, which all primitives should have, even in logical models
+                var valueType = summary?.GetElements().FirstOrDefault(e => e.ElementName.Equals("value"))?.Type.FirstOrDefault()?.GetTypeName();
+                ts = valueType is { } ? tryMapFhirPrimitiveTypeToSystemType(valueType) : null;
 
-                // If we don't have type information (no definition was found
-                // for current node), all we can do is return the underlying string value
-                if (InstanceType == null) return sourceText;
+                // Still, even this failed, we need to bail out.
+                if (ts is null)
+                    throw new InvalidOperationException($"Cannot figure out what the primitive type is for the value of logical type '{InstanceType}'.");
+            }
 
-                // For performance reasons, let's try the normal case first - a non logical type
-                var ts = tryMapFhirPrimitiveTypeToSystemType(InstanceType);
+            if (ts == null)
+            {
+                raiseTypeError($"Since type {InstanceType} is not a primitive, it cannot have a value", _source, location: _source.Location);
+                return null;
+            }
 
-                // If that failed, the type might still be a custom "primitive" type for logical models
-                if (ts is null && Uri.IsWellFormedUriString(InstanceType, UriKind.Absolute))
-                {
-                    // Get the definition of the logical type
-                    var summary = Provider.Provide(InstanceType);
-
-                    // And find the `value` attribute, which all primitives should have, even in logical models
-                    var valueType = summary?.GetElements().FirstOrDefault(e => e.ElementName.Equals("value"))?.Type.FirstOrDefault()?.GetTypeName();
-                    ts = valueType is { } ? tryMapFhirPrimitiveTypeToSystemType(valueType) : null;
-
-                    // Still, even this failed, we need to bail out.
-                    if (ts is null)
-                        throw new InvalidOperationException($"Cannot figure out what the primitive type is for the value of logical type '{InstanceType}'.");
-                }
-
-                if (ts == null)
-                {
-                    raiseTypeError($"Since type {InstanceType} is not a primitive, it cannot have a value", _source, location: _source.Location);
-                    return null;
-                }
-
-                // Finally, we have a (potentially) unparsed string + type info
-                // parse this primitive into the desired type
-                if (P.Any.TryParse(sourceText, ts, out var val))
-                    return val;
-                else
-                {
-                    // Check for the exception we have made to allow 1.x behaviour
-                    // where datetime's were considered acceptable for date elements.
-                    // In addition the TruncateDateTimeToDate will also "correct" the
-                    // datetime values to correct just-date values while parsing here.
+            // Finally, we have a (potentially) unparsed string + type info
+            // parse this primitive into the desired type
+            if (P.Any.TryParse(sourceText, ts, out var val))
+                return val;
+            else
+            {
+                // Check for the exception we have made to allow 1.x behaviour
+                // where datetime's were considered acceptable for date elements.
+                // In addition the TruncateDateTimeToDate will also "correct" the
+                // datetime values to correct just-date values while parsing here.
 #pragma warning disable CS0618 // Type or member is obsolete
-                    if (_settings.TruncateDateTimeToDate && ts == typeof(P.Date))
+                if (_settings.TruncateDateTimeToDate && ts == typeof(P.Date))
 #pragma warning restore CS0618 // Type or member is obsolete
+                {
+                    if (P.Any.TryParse(sourceText, typeof(P.DateTime), out var dateTimeVal))
                     {
-                        if (P.Any.TryParse(sourceText, typeof(P.DateTime), out var dateTimeVal))
-                        {
-                            // TruncateToDate converts 1991-02-03T11:22:33Z to 1991-02-03+00:00 which is not a valid date! 
-                            var date = (dateTimeVal as P.DateTime).TruncateToDate();
-                            // so we cut off timezone by converting it to timeoffset and cast back to date.
-                            return P.Date.FromDateTimeOffset(date.ToDateTimeOffset(0, 0, 0, TimeSpan.Zero));
-                        }
+                        // TruncateToDate converts 1991-02-03T11:22:33Z to 1991-02-03+00:00 which is not a valid date! 
+                        var date = (dateTimeVal as P.DateTime).TruncateToDate();
+                        // so we cut off timezone by converting it to timeoffset and cast back to date.
+                        return P.Date.FromDateTimeOffset(date.ToDateTimeOffset(0, 0, 0, TimeSpan.Zero));
                     }
-
-                    raiseTypeError($"Literal '{sourceText}' cannot be parsed as a {InstanceType}.", _source, location: _source.Location);
-                    return sourceText;
                 }
+
+                raiseTypeError($"Literal '{sourceText}' cannot be parsed as a {InstanceType}.", _source, location: _source.Location);
+                return sourceText;
             }
         }
+
+        private object _value;
+        private bool _valueInitialized = false;
+        private static object _initializationLock = new();
+
+        public object Value => LazyInitializer.EnsureInitialized(ref _value, ref _valueInitialized, ref _initializationLock, valueFactory);
 
         private string deriveInstanceType(ISourceNode current, IElementDefinitionSummary info)
         {
