@@ -52,6 +52,10 @@ namespace Hl7.FhirPath.Expressions
             if (expression.Name == "builtin.that")
                 return InvokeeFactory.GetThat;
 
+            // HACK, for now, $total is special, and we handle in run-time, not compile time...
+            if (expression.Name == "builtin.total")
+                return InvokeeFactory.GetTotal;
+
             // HACK, for now, $index is special, and we handle in run-time, not compile time...
             if (expression.Name == "builtin.index")
                 return InvokeeFactory.GetIndex;
