@@ -9,7 +9,7 @@ namespace Firely.Fhir.Packages
     {
         public static async Task<string> GetFileContentByCanonical(this PackageContext scope, string uri, string version = null)
         {
-            var reference = scope.Index.ResolveCanonical(uri);
+            var reference = scope.Index.ResolveCanonical(uri, version);
 
             return reference is not null ? await scope.GetFileContent(reference) : null;
         }
