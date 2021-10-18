@@ -34,11 +34,7 @@ namespace Firely.Fhir.Packages
 
         public static bool IsValidUrl(string source)
         {
-#if !NETSTANDARD1_6
             return Uri.TryCreate(source, UriKind.Absolute, out var uriResult) && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
-#else
-            return Uri.TryCreate(source, UriKind.Absolute, out var uriResult) && (uriResult.Scheme == HTTP_SCHEME || uriResult.Scheme == HTTPS_SCHEME);
-#endif
         }
 
         public static bool IsUrl(string pattern)
