@@ -148,12 +148,7 @@ namespace Hl7.Fhir.Rest
 
             if (entry.Headers.IfMatch != null) request.Headers["If-Match"] = entry.Headers.IfMatch;
             if (entry.Headers.IfNoneMatch != null) request.Headers["If-None-Match"] = entry.Headers.IfNoneMatch;
-#if NETSTANDARD1_6
-            if (entry.Headers.IfModifiedSince != null) request.Headers["If-Modified-Since"] = entry.Headers.IfModifiedSince.Value.UtcDateTime.ToString();
-#else
             if (entry.Headers.IfModifiedSince != null) request.IfModifiedSince = entry.Headers.IfModifiedSince.Value.UtcDateTime;
-
-#endif
             if (entry.Headers.IfNoneExist != null) request.Headers["If-None-Exist"] = entry.Headers.IfNoneExist;
 
             if (canHaveReturnPreference() && settings.PreferredReturn.HasValue)
@@ -180,10 +175,8 @@ namespace Hl7.Fhir.Rest
                  entry.Type == InteractionType.Patch;
 
             // PCL doesn't support setting the length (and in this case will be empty anyway)
-#if !NETSTANDARD1_6
             if (entry.RequestBodyContent == null)
                 request.ContentLength = 0;
-#endif
             return request;
         }
 
@@ -217,11 +210,7 @@ namespace Hl7.Fhir.Rest
                 // platform does not support UserAgent property...too bad
                 try
                 {
-#if NETSTANDARD1_6
-                    request.Headers[HttpRequestHeader.UserAgent] = agent;
-#else
                     request.UserAgent = agent;
-#endif
                 }
                 catch (ArgumentException)
                 {

@@ -1,8 +1,7 @@
 ﻿
-#if !NETSTANDARD1_6
+
 using ICSharpCode.SharpZipLib.GZip;
 using ICSharpCode.SharpZipLib.Tar;
-#endif
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,7 +13,7 @@ namespace Firely.Fhir.Packages
     {
         public static string PackToDisk(string path, IEnumerable<FileEntry> entries)
         {
-#if !NETSTANDARD1_6
+
             var packagefile = Path.ChangeExtension(path, ".tgz");
 
             using var file = File.Create(packagefile);
@@ -24,15 +23,11 @@ namespace Firely.Fhir.Packages
             Write(tar, entries);
 
             return packagefile;
-#else
-            throw new NotImplementedException();
-#endif
-
         }
 
         public static string PackToDisk(string path, FileEntry single, IEnumerable<FileEntry> entries)
         {
-#if !NETSTANDARD1_6
+
             var packagefile = Path.ChangeExtension(path, ".tgz");
 
             using (var file = File.Create(packagefile))
@@ -43,14 +38,10 @@ namespace Firely.Fhir.Packages
                 Write(tar, entries);
             }
             return packagefile;
-#else
-            throw new NotImplementedException();
-#endif
         }
 
         public static byte[] Pack(FileEntry single, IEnumerable<FileEntry> entries)
         {
-#if !NETSTANDARD1_6
             var stream = new LateDisposalMemoryStream();
             using (var gzip = new GZipOutputStream(stream))
             using (TarOutputStream tar = new TarOutputStream(gzip))
@@ -62,14 +53,10 @@ namespace Firely.Fhir.Packages
             var bytes = stream.ToArray();
             stream.DisposeAfter();
             return bytes;
-#else
-            throw new NotImplementedException();
-#endif
         }
 
         public static byte[] Pack(IEnumerable<FileEntry> entries)
         {
-#if !NETSTANDARD1_6
             var stream = new LateDisposalMemoryStream();
             using (var gzip = new GZipOutputStream(stream))
             using (TarOutputStream tar = new TarOutputStream(gzip))
@@ -80,9 +67,6 @@ namespace Firely.Fhir.Packages
             var bytes = stream.ToArray();
             stream.DisposeAfter();
             return bytes;
-#else
-            throw new NotImplementedException();
-#endif
         }
 
         //public static void WriteManifest(TarOutputStream tar, PackageManifest manifest)
@@ -94,16 +78,12 @@ namespace Firely.Fhir.Packages
 
         public static void ExtractTarballToToDisk(byte[] buffer, string folder)
         {
-#if !NETSTANDARD1_6
             Directory.CreateDirectory(folder);
             var stream = new MemoryStream(buffer);
 
             using var archive = TarArchive.CreateInputTarArchive(stream);
 
             archive.ExtractContents(folder);
-#else
-            throw new NotImplementedException();
-#endif
         }
 
         public static IEnumerable<FileEntry> ExtractFiles(string path, Predicate<string> predicate)
@@ -118,7 +98,6 @@ namespace Firely.Fhir.Packages
 
         public static IEnumerable<FileEntry> ExtractFiles(Stream stream, Predicate<string> predicate)
         {
-#if !NETSTANDARD1_6
             using var gzip = new GZipInputStream(stream);
             using var tar = new TarInputStream(gzip);
 
@@ -139,9 +118,6 @@ namespace Firely.Fhir.Packages
                     yield return fileEntry;
                 }
             }
-#else
-            throw new NotImplementedException("doesn't support");
-#endif
         }
 
         public static IEnumerable<FileEntry> ExtractMatchingFiles(string packagefile, string match)
@@ -158,30 +134,22 @@ namespace Firely.Fhir.Packages
 
         public static byte[] Unzip(byte[] buffer)
         {
-#if !NETSTANDARD1_6
             using var instream = new MemoryStream(buffer);
             using var outstream = new MemoryStream();
 
             GZip.Decompress(instream, outstream, false);
             return outstream.ToArray();
-#else
-            throw new NotImplementedException();
-#endif
         }
 
         public static void PackToStream(IEnumerable<FileEntry> entries, Stream stream)
         {
-#if !NETSTANDARD1_6
             using var gzip = new GZipOutputStream(stream);
             using TarOutputStream tar = new TarOutputStream(gzip);
 
             Tar.Write(tar, entries);
-#else
-            throw new NotImplementedException();
-#endif
         }
 
-#if !NETSTANDARD1_6
+
         [CLSCompliant(false)]
         public static void Write(this TarOutputStream tar, IEnumerable<FileEntry> entries)
         {
@@ -226,10 +194,7 @@ namespace Firely.Fhir.Packages
             };
             Write(tar, entry);
         }
-#endif
-
     }
-
 }
 
 

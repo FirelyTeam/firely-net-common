@@ -1,5 +1,4 @@
-﻿using System;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 
 namespace Firely.Fhir.Packages
@@ -9,13 +8,9 @@ namespace Firely.Fhir.Packages
     {
         public static byte[] ShaSum(byte[] buffer)
         {
-#if !NETSTANDARD1_6
             using var sha = new SHA1Managed();
             var hash = sha.ComputeHash(buffer);
             return hash;
-#else
-            throw new NotImplementedException();
-#endif
         }
 
         public static string HashToHexString(byte[] hash)

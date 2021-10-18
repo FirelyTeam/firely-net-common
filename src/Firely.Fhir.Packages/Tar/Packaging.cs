@@ -1,6 +1,4 @@
-﻿#if !NETSTANDARD1_6
-using ICSharpCode.SharpZipLib.Tar;
-#endif
+﻿using ICSharpCode.SharpZipLib.Tar;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -22,14 +20,13 @@ namespace Firely.Fhir.Packages
             return Parser.ReadManifest(entry.Buffer);
         }
 
-#if !NETSTANDARD1_6
+
         [CLSCompliant(false)]
         public static void WriteResource(this TarOutputStream tar, FileEntry entry)
         {
             entry.ChangeFolder(PACKAGE);
             Tar.Write(tar, entry);
         }
-#endif
 
         public static string PackFolder(string name, string folder)
         {

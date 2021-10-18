@@ -9,18 +9,14 @@ namespace Firely.Fhir.Packages
         static readonly FhirJsonParsingSettings _jsonParsingSettings = new FhirJsonParsingSettings()
         {
             PermissiveParsing = true,
-#if !NETSTANDARD1_6
             ValidateFhirXhtml = false,
-#endif
             AllowJsonComments = true
         };
 
         static readonly FhirXmlParsingSettings _xmlParsingSettings = new FhirXmlParsingSettings()
         {
             PermissiveParsing = true,
-#if !NETSTANDARD1_6
             ValidateFhirXhtml = false
-#endif
         };
 
         public static ISourceNode ParseToSourceNode(string filepath)
