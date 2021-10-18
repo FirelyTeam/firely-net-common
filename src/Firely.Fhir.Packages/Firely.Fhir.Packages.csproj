@@ -39,7 +39,6 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Hl7.Fhir.ElementModel\Hl7.Fhir.ElementModel.csproj" />
 		<ProjectReference Include="..\Hl7.Fhir.Serialization\Hl7.Fhir.Serialization.csproj" />
-		<ProjectReference Include="..\Hl7.Fhir.Support.Poco\Hl7.Fhir.Support.Poco.csproj" />
 	</ItemGroup>
 	
 
