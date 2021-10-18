@@ -9,9 +9,13 @@
 using FluentAssertions;
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.FhirPath;
+using Hl7.Fhir.Introspection;
+using Hl7.Fhir.Model;
+using Hl7.Fhir.Serialization;
 using Hl7.FhirPath;
 using Hl7.FhirPath.Expressions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Hl7.Fhir.Support.Tests
@@ -42,9 +46,9 @@ namespace Hl7.Fhir.Support.Tests
 
         [DataTestMethod]
         [DataRow("<div>Not empty</div>", false, "no XHTML namespace")]
-        [DataRow("<div xmlns=\"http://www.w3.org/1999/xhtml\"> </div>", false, "containing only whitespace")] 
-        [DataRow("<div xmlns=\"http://www.w3.org/1999/xhtml\">\t\n</div>", false, "containing only whitespace")] 
-        [DataRow("<div xmlns=\"http://www.w3.org/1999/xhtml\"></div>", false, "empty div element")] 
+        [DataRow("<div xmlns=\"http://www.w3.org/1999/xhtml\"> </div>", false, "containing only whitespace")]
+        [DataRow("<div xmlns=\"http://www.w3.org/1999/xhtml\">\t\n</div>", false, "containing only whitespace")]
+        [DataRow("<div xmlns=\"http://www.w3.org/1999/xhtml\"></div>", false, "empty div element")]
         [DataRow("<div xmlns=\"http://www.w3.org/1999/xhtml\">Not empty</div>", true, "non empty div element with XHTML namespace")]
         [DataRow("<div xmlns=\"http://www.w3.org/1999/xhtml\"><img src=\"fhir.gif\" alt=\"Fhir gif\"></img></div>", true, "containing an image element")]
         [DataRow("<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b><i> </i></b></p></div>", false, "no text")]
@@ -53,6 +57,29 @@ namespace Hl7.Fhir.Support.Tests
         {
             var evaluator = _compiler.Compile("htmlChecks()");
             evaluator.Predicate(ElementNode.ForPrimitive(xml), FhirEvaluationContext.CreateDefault()).Should().Be(expected, because);
+        }
+
+        [DataTestMethod]
+        [DynamicData(nameof(GetTypedElements), DynamicDataSourceType.Method)]
+        public void NavigateWithChoiceTypes(ITypedElement typedElement, string method)
+        {
+            // expression with TypedElement
+            typedElement.Predicate("parameter[0].value.exists()").Should().BeTrue();
+            typedElement.Predicate("parameter[0].valueString.exists()").Should().BeFalse();
+            typedElement.Scalar("parameter[0].value").Should().Be("test");
+            typedElement.Scalar("parameter[0].valueString").Should().BeNull();
+        }
+
+        public static IEnumerable<object[]> GetTypedElements()
+        {
+            var xml = "<Parameters xmlns=\"http://hl7.org/fhir\"><parameter><name value=\"item\" /><valueString value=\"test\"/></parameter></Parameters>";
+            var sourceNode = FhirXmlNode.Parse(xml);
+
+            yield return new object[] { sourceNode.ToTypedElement(ModelInspector.ForAssembly(typeof(Resource).Assembly)), "sourceNode to TypedElement" };
+
+            var poco = TypedSerialization.ToPoco<Parameters>(sourceNode);
+            yield return new object[] { TypedSerialization.ToTypedElement(poco), "poco to TypedElement" };
+
         }
     }
 }

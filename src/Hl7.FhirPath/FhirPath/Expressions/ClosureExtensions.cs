@@ -24,6 +24,18 @@ namespace Hl7.FhirPath.Expressions
             ctx.SetValue("builtin.this", value);
         }
 
+        public static IEnumerable<ITypedElement> GetTotal(this Closure ctx)
+        {
+            return ctx.ResolveValue("builtin.total");
+        }
+
+
+        public static void SetTotal(this Closure ctx, IEnumerable<ITypedElement> value)
+        {
+            ctx.SetValue("builtin.total", value);
+        }
+
+
         public static IEnumerable<ITypedElement> GetThat(this Closure ctx)
         {
             return ctx.ResolveValue("builtin.that");

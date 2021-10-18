@@ -27,6 +27,11 @@ namespace Hl7.FhirPath.Expressions
             return context.GetThis();
         }
 
+        public static IEnumerable<ITypedElement> GetTotal(Closure context, IEnumerable<Invokee> _)
+        {
+            return context.GetTotal();
+        }
+
         public static IEnumerable<ITypedElement> GetContext(Closure context, IEnumerable<Invokee> _)
         {
             return context.GetOriginalContext();
