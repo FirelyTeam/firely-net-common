@@ -3,7 +3,9 @@ using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 
 #nullable enable
@@ -11,7 +13,7 @@ using System.Threading.Tasks;
 namespace Hl7.Fhir.Specification.Source
 {
 
-    public class NpmPackageResolver : IAsyncResourceResolver
+    public class NpmPackageResolver : IAsyncResourceResolver, IArtifactSource
     {
         private PackageContext _context;
         private ModelInspector _provider;
@@ -110,6 +112,17 @@ namespace Hl7.Fhir.Specification.Source
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             return new PackageContext(cache, project, null);
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+        }
+
+        public IEnumerable<string> ListArtifactNames()
+        {
+            return _context.GetFileNames();
+        }
+
+        public Stream? LoadArtifactByName(string artifactName)
+        {
+            var content = _context.GetFileContentByFileName(artifactName).Result;
+            return content == null ? null : new MemoryStream(Encoding.UTF8.GetBytes(content));
         }
     }
 }

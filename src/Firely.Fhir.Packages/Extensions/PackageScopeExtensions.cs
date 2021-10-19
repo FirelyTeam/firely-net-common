@@ -106,6 +106,18 @@ namespace Firely.Fhir.Packages
             var content = await scope.GetFileContent(reference);
             return content;
         }
+        public static IEnumerable<string> GetFileNames(this PackageContext scope)
+        {
+            return scope.Index.Select(i => i.FileName);
+        }
 
+        public static async Task<string> GetFileContentByFileName(this PackageContext scope, string fileName)
+        {
+            var reference = scope.Index.Where(i => i.FileName == fileName).FirstOrDefault();
+            if (reference is null) return null;
+
+            var content = await scope.GetFileContent(reference);
+            return content;
+        }
     }
 }
