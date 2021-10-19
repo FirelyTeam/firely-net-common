@@ -35,6 +35,15 @@
 			<HintPath>..\..\lib\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll</HintPath>
 		</Reference>
 	</ItemGroup>
-	
+
+	<PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+		<SignAssembly>True</SignAssembly>
+		<DelaySign>true</DelaySign>
+		<AssemblyOriginatorKeyFile>..\FhirNetApi.publickey</AssemblyOriginatorKeyFile>
+		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+		<!-- Missing XML comments -->
+		<NoWarn>1591</NoWarn>
+	</PropertyGroup>
+
 </Project>
 
