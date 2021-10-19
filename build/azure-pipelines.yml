@@ -91,7 +91,7 @@ stages:
         searchPatternPack: '**/*.csproj;!**/*.Tests.csproj;!**/Sprache.csproj'
         configurationToPack: $(buildConfiguration)
         nobuild: true
-        verbosityPack: Normal
+        verbosityPack: Detailed
 
     - task: PublishBuildArtifacts@1
       displayName: Publish Artifact
