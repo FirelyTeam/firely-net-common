@@ -92,7 +92,7 @@ namespace Hl7.Fhir.Serialization
                 {
                     writer.WritePropertyName(propertyName);
 
-                    if (member.Value is ICollection coll && !(member.Value is byte[]))
+                    if (member.Value is ICollection coll && member.Value is not byte[])
                     {
                         writer.WriteStartArray();
 
@@ -121,7 +121,7 @@ namespace Hl7.Fhir.Serialization
                 _ => null
             };
 
-            return typeName is null ? elementName : elementName + char.ToUpperInvariant(typeName[0]) + typeName.Substring(1);
+            return typeName is null ? elementName : elementName + char.ToUpperInvariant(typeName[0]) + typeName[1..];
         }
 
 
@@ -261,7 +261,6 @@ namespace Hl7.Fhir.Serialization
         {
             switch (value)
             {
-                //TODO: Include support for Any subclasses (CQL types)?
                 case int i32: writer.WriteNumberValue(i32); break;
                 case uint ui32: writer.WriteNumberValue(ui32); break;
                 case long i64: writer.WriteNumberValue(i64); break;

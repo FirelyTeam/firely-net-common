@@ -6,6 +6,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
+#nullable enable
 
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Serialization;
@@ -21,17 +22,23 @@ namespace Hl7.Fhir.Model
     [DataContract]
     public abstract class PrimitiveType : DataType
     {
+        /// <inheritdoc />
         public override string TypeName { get { return "PrimitiveType"; } }
 
-        public object ObjectValue { get; set; }
+        /// <summary>
+        /// The value of the primitive, stored as an object.
+        /// </summary>
+        /// <remarks>This value maybe incompatible with the primitive's <c>Value</c> property. Both
+        /// <c>Value</c> and <c>ObjectValue</c> may contain invalid values according to the 
+        /// primitive's official domain. E.g. <c>Value</c> is a <c>string</c> for <see cref="FhirDateTime"/>,
+        /// and may contain illegally formatted values.</remarks>
+        public object? ObjectValue { get; set; }
 
-        public override string ToString()
+        public override string? ToString()
         {
             // The primitive can exist without a value (when there is an extension present)
             // so we need to be able to handle when there is no extension present
-            if (this.ObjectValue == null)
-                return null;
-            return PrimitiveTypeConverter.ConvertTo<string>(this.ObjectValue);
+            return ObjectValue is null ? null : PrimitiveTypeConverter.ConvertTo<string>(this.ObjectValue);
         }
 
         public override IDeepCopyable CopyTo(IDeepCopyable other)
@@ -48,7 +55,7 @@ namespace Hl7.Fhir.Model
 
         public override IDeepCopyable DeepCopy()
         {
-            return CopyTo((IDeepCopyable)Activator.CreateInstance(this.GetType()));
+            return CopyTo((IDeepCopyable)Activator.CreateInstance(GetType())!);
         }
 
         public override bool Matches(IDeepComparable other) => IsExactly(other);
@@ -85,7 +92,7 @@ namespace Hl7.Fhir.Model
             }
         }
 
-        protected override bool TryGetValue(string key, out object value)
+        protected override bool TryGetValue(string key, out object? value)
         {
             if (key == "value")
             {
@@ -105,3 +112,5 @@ namespace Hl7.Fhir.Model
         public bool HasElements => ElementId is not null || Extension?.Any() == true;
     }
 }
+
+#nullable restore

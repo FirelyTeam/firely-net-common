@@ -33,15 +33,30 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         /// <param name="assembly">The assembly containing classes to be used for deserialization.</param>
         /// <param name="filter">A filter that determines which elements to include when serializing a summary.</param>
-#pragma warning disable IDE0060 // Will become used when we add deserialization.
         public JsonFhirConverter(Assembly assembly, SerializationFilter? filter = default)
-#pragma warning restore IDE0060 // Remove unused parameter
         {
             ModelInspector inspector = ModelInspector.ForAssembly(assembly);
 
              _deserializer = new JsonDynamicDeserializer(assembly);
             _serializer = new JsonFhirDictionarySerializer(inspector.FhirRelease);
-            Filter = filter;
+            SerializationFilter = filter;
+        }
+
+        /// <summary>
+        /// Constructs a <see cref="JsonConverter{T}"/> that (de)serializes FHIR json for the 
+        /// POCOs in a given assembly.
+        /// </summary>
+        /// <param name="deserializer">A custom deserializer to be used by the json converter.</param>
+        /// <param name="serializer">A customer serializer to be used by the json converter.</param>
+        /// <param name="filter">A filter that determines which elements to include when serializing a summary.</param>
+        /// <remarks>Since the standard serializer/deserializer will allow you to override its behaviour to produce
+        /// custom behaviour, this constructor will allow the developer to use such custom serializers/deserializers instead
+        /// of the defaults.</remarks>
+        public JsonFhirConverter(JsonDynamicDeserializer deserializer, JsonFhirDictionarySerializer serializer, SerializationFilter? filter = default)
+        {
+            _deserializer = deserializer;
+            _serializer = serializer;
+            SerializationFilter = filter;
         }
 
         /// <summary>
@@ -55,14 +70,14 @@ namespace Hl7.Fhir.Serialization
         /// <summary>
         /// The filter used to serialize a summary of the resource.
         /// </summary>
-        public SerializationFilter? Filter { get; }
+        public SerializationFilter? SerializationFilter { get; }
 
         /// <summary>
         /// Writes a specified value as JSON.
         /// </summary>
         public override void Write(Utf8JsonWriter writer, Base poco, JsonSerializerOptions options)
         {
-            _serializer.Serialize(poco, writer, Filter);
+            _serializer.Serialize(poco, writer, SerializationFilter);
         }
 
         /// <summary>
@@ -70,10 +85,9 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public override Base Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            if (typeof(Resource).IsAssignableFrom(typeToConvert))
-                return _deserializer.DeserializeResource(ref reader);
-            else
-                return _deserializer.DeserializeObject(typeToConvert, ref reader);
+            return typeof(Resource).IsAssignableFrom(typeToConvert)
+                ? _deserializer.DeserializeResource(ref reader)
+                : _deserializer.DeserializeObject(typeToConvert, ref reader);
         }
     }
 }
