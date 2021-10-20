@@ -249,10 +249,12 @@ namespace Firely.Fhir.Packages
         [JsonProperty("fhirVersion")]
         public string? FhirVersion;
 
-        [JsonProperty("hasSnapshot")]
+        //Firely specific attribute used to make choices when multiple artifacts with the same canonical URL and version are found.
+        [JsonProperty("Firely-hasSnapshot")]
         public bool HasSnapshot;
 
-        [JsonProperty("hasExpansion")]
+        //Firely specific attribute used to make choices when multiple artifacts with the same canonical URL and version are found.
+        [JsonProperty("Firely-hasExpansion")]
         public bool HasExpansion;
 
         public void CopyTo(ResourceMetadata other)

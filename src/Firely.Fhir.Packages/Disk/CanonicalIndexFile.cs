@@ -5,7 +5,7 @@ namespace Firely.Fhir.Packages
 {
     public static class CanonicalIndexFile
     {
-        public const int VERSION = 5;
+        public const int VERSION = 6;
 
         public static CanonicalIndex GetFromFolder(string folder, bool recurse)
         {
