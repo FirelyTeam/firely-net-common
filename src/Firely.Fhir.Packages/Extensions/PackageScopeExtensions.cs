@@ -7,9 +7,11 @@ namespace Firely.Fhir.Packages
 {
     public static class PackageScopeExtensions
     {
-        public static async Task<string> GetFileContentByCanonical(this PackageContext scope, string uri, string version = null)
+        public static async Task<string> GetFileContentByCanonical(this PackageContext scope, string uri, string version = null, bool resolveBestCandidate = false)
         {
-            var reference = scope.Index.ResolveCanonical(uri, version);
+            var reference = resolveBestCandidate
+                ? scope.Index.ResolveBestCandidateByCanonical(uri, version)
+                : scope.Index.ResolveCanonical(uri, version);
 
             return reference is not null ? await scope.GetFileContent(reference) : null;
         }
@@ -21,9 +23,11 @@ namespace Firely.Fhir.Packages
             return await scope.CacheInstall(dependency);
         }
 
-        public static PackageFileReference GetFileReferenceByCanonical(this PackageContext scope, string canonical)
+        public static PackageFileReference GetFileReferenceByCanonical(this PackageContext scope, string uri, string version = null, bool resolveBestCandidate = false)
         {
-            return scope.Index.ResolveCanonical(canonical);
+            return resolveBestCandidate
+                ? scope.Index.ResolveBestCandidateByCanonical(uri, version)
+                : scope.Index.ResolveCanonical(uri, version);
         }
 
         public static async Task<string> GetFileContent(this PackageContext scope, PackageFileReference reference)

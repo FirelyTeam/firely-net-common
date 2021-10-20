@@ -75,7 +75,7 @@ namespace Hl7.Fhir.Specification.Source
         public async Task<Resource?> ResolveByCanonicalUriAsync(string uri)
         {
             (var url, var version) = splitCanonical(uri);
-            var content = await _context.GetFileContentByCanonical(url, version);
+            var content = await _context.GetFileContentByCanonical(url, version, resolveBestCandidate: true);
             return content is null ? null : toResource(content);
         }
 

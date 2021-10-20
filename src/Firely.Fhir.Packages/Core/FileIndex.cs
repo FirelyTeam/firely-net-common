@@ -1,5 +1,4 @@
-﻿using Hl7.Fhir.Support;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,7 +12,27 @@ namespace Firely.Fhir.Packages
         {
         }
 
+
+        /// <summary>
+        /// Returns the first file found with a specific canonical URI and optional version.
+        /// </summary>
+        /// <param name="canonical">canonical URI used to identify the artifact</param>
+        /// <param name="version">version of the artifact</param>
+        /// <returns>First file found with a specific canonical URI and optional version</returns>
         public PackageFileReference ResolveCanonical(string canonical, string version = null)
+        {
+            return !string.IsNullOrEmpty(version)
+                ? this.FirstOrDefault(r => r.Canonical == canonical && r.Version == version)
+                : this.FirstOrDefault(r => r.Canonical == canonical);
+        }
+
+        /// <summary>
+        /// Returns the best candidate found with a specific canonical URI and optional version.
+        /// </summary>
+        /// <param name="canonical">canonical URI used to identify the artifact</param>
+        /// <param name="version">version of the artifact</param>
+        /// <returns>Returns the best candidate found with a specific canonical URI and optional version.</returns>
+        public PackageFileReference ResolveBestCandidateByCanonical(string canonical, string version = null)
         {
             var candidates = !string.IsNullOrEmpty(version)
                 ? this.Where(r => r.Canonical == canonical && r.Version == version)
