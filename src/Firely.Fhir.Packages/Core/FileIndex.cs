@@ -38,7 +38,7 @@ namespace Firely.Fhir.Packages
                 ? this.Where(r => r.Canonical == canonical && r.Version == version)
                 : this.Where(r => r.Canonical == canonical);
 
-            return candidates.Count() > 1 ? candidates.ResolveFromMultipleCandidates(canonical) : candidates.SingleOrDefault();
+            return candidates.Count() > 1 ? candidates.ResolveFromMultipleCandidates() : candidates.SingleOrDefault();
         }
 
         public void Add(PackageReference package, ResourceMetadata metadata)
@@ -59,7 +59,7 @@ namespace Firely.Fhir.Packages
             }
         }
 
-        internal static PackageFileReference ResolveFromMultipleCandidates(this IEnumerable<PackageFileReference> candidates, string canonical)
+        internal static PackageFileReference ResolveFromMultipleCandidates(this IEnumerable<PackageFileReference> candidates)
         {
             candidates = candidates.Where(c => c.HasSnapshot || c.HasExpansion);
             if (candidates.Count() == 1)
