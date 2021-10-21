@@ -13,6 +13,7 @@ using Hl7.Fhir.Model;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using ERR = Hl7.Fhir.Serialization.JsonSerializerErrors;
@@ -21,8 +22,6 @@ using ERR = Hl7.Fhir.Serialization.JsonSerializerErrors;
 
 namespace Hl7.Fhir.Serialization
 {
-    
-
     /// <summary>
     /// Deserializes a byte stream into FHIR POCO objects.
     /// </summary>
@@ -54,6 +53,11 @@ namespace Hl7.Fhir.Serialization
             if (reader.CurrentState.Options.CommentHandling is not JsonCommentHandling.Skip and not JsonCommentHandling.Disallow)
                 throw new InvalidOperationException("The reader must be set to ignore or refuse comments.");
 
+            return DeserializeResourceInternal(ref reader);
+        }
+
+        internal void DeserializeResourceInternal(ref Utf8JsonReader reader, out Resource? result)
+        {
             if (reader.TokenType == JsonTokenType.None) reader.Read();
 
             //TODO: determineResourceType probably won't work with streaming inputs to Utf8JsonReader
@@ -61,10 +65,10 @@ namespace Hl7.Fhir.Serialization
             var resourceMapping = _inspector.FindClassMapping(resourceType) ??
                 throw ERR.JSON201.With(ref reader, resourceType);
 
-            if (resourceMapping.Factory() is Resource resource)
+            if (resourceMapping.Factory() is Resource newResource)
             {
-                DeserializeObjectInto(resource, resourceMapping, ref reader, allowNull: false);
-                return resource;
+                result = newResource;
+                DeserializeObjectIntoInternal(result, resourceMapping, ref reader, allowNull: false);
             }
             else
                 throw ERR.JSON202.With(ref reader, resourceType);
@@ -74,32 +78,20 @@ namespace Hl7.Fhir.Serialization
 
         public Base DeserializeObject(Type targetType, ref Utf8JsonReader reader)
         {
-            var mapping = SerializationUtilities.FindClassMapping(_inspector, targetType) ??
+            var mapping = FindClassMapping(_inspector, targetType) ??
                 throw new ArgumentException($"Type '{targetType}' could not be located in model assembly '{Assembly}' and can therefore not be used for deserialization.", nameof(targetType));
 
             // Create a new instance of the object to read the members into.
             if (mapping.Factory() is Base b)
             {
-                DeserializeObjectInto(b, mapping, ref reader, allowNull: false);
+                DeserializeObjectIntoInternal(b, mapping, ref reader, allowNull: false);
                 return b;
             }
             else
                 throw new ArgumentException($"Can only deserialize into subclasses of class {nameof(Base)}.", nameof(targetType));
         }
 
-        public void DeserializeObjectInto(object target, ref Utf8JsonReader reader)
-        {
-            if (reader.CurrentState.Options.CommentHandling is not JsonCommentHandling.Skip and not JsonCommentHandling.Disallow)
-                throw new InvalidOperationException("The reader must be set to ignore or refuse comments.");
-
-            var targetType = target.GetType();
-            var mapping = SerializationUtilities.FindClassMapping(_inspector, targetType) ??
-                throw new ArgumentException($"Type '{targetType}' could not be located in model assembly '{Assembly}' and can therefore not be used for deserialization.", nameof(target));
-
-            DeserializeObjectInto(target, mapping, ref reader, allowNull: false);
-        }
-
-        internal void DeserializeObjectInto(object target, ClassMapping mapping, ref Utf8JsonReader reader, bool allowNull)
+        internal void DeserializeObjectIntoInternal(object target, ClassMapping mapping, ref Utf8JsonReader reader, bool allowNull)
         {
             // Read() will either work, or throw an exception that the json string is empty - which is fine.
             if (reader.TokenType == JsonTokenType.None) reader.Read();
@@ -125,9 +117,13 @@ namespace Hl7.Fhir.Serialization
             // read past start of object into first property or end of object
             reader.Read();
 
+            ExceptionAggregator aggregator = new();
+
             while (reader.TokenType != JsonTokenType.EndObject)
             {
                 var currentPropertyName = reader.GetString()!;
+
+                //TODO: if this is not a resource, there should not be a resource type.
                 if (currentPropertyName == "resourceType")
                 {
                     reader.Read(); // into value
@@ -136,16 +132,19 @@ namespace Hl7.Fhir.Serialization
                 }
 
                 // Lookup the metadata for this property by its name to determine the expected type of the value
-                var (propMapping, propValueMapping) = SerializationUtilities.GetMappedElementMetadata(_inspector, mapping, ref reader, currentPropertyName);
+                var (propMapping, propValueMapping) = GetMappedElementMetadata(_inspector, mapping, ref reader, currentPropertyName);
 
                 // read past the property name into the value
                 reader.Read();
 
-                deserializePropertyValue(target, currentPropertyName, propMapping, propValueMapping, ref reader);
+                aggregator.Try(ref reader, (ref Utf8JsonReader r) =>
+                    deserializePropertyValue(target, currentPropertyName, propMapping, propValueMapping, ref r));
             }
 
             // read past object
             reader.Read();
+
+            if (aggregator.HasExceptions) aggregator.Throw();
         }
 
         /// <summary>
@@ -170,17 +169,24 @@ namespace Hl7.Fhir.Serialization
             {
                 // There might be an existing value, since FhirPrimitives may be spread out over two properties
                 var existing = propertyMapping.GetValue(target);
+                ExceptionAggregator aggregator = new();
 
                 if (propertyMapping.IsCollection)
                 {
-                    deserializeFhirPrimitiveList(existing as IList, propertyName, propertyValueMapping, ref reader, out var resultList);
+                    IList? resultList = null;
+                    aggregator.Try(ref reader, (ref Utf8JsonReader r) =>
+                        deserializeFhirPrimitiveList(existing as IList, propertyName, propertyValueMapping, ref r, out resultList));
                     propertyMapping.SetValue(target, resultList);
                 }
                 else
                 {
-                    deserializeFhirPrimitive(existing as PrimitiveType, propertyName, propertyValueMapping, ref reader, inArray: false, out var result);
+                    PrimitiveType? result = null;
+                    aggregator.Try(ref reader, (ref Utf8JsonReader r) =>
+                        deserializeFhirPrimitive(existing as PrimitiveType, propertyName, propertyValueMapping, ref r, inArray: false, out result));
                     propertyMapping.SetValue(target, result);
                 }
+
+                if(aggregator.HasExceptions) aggregator.Throw();
             }
             else
             {
@@ -196,34 +202,33 @@ namespace Hl7.Fhir.Serialization
                     // Create a list of the type of this property's value.
                     var listInstance = propertyValueMapping.ListFactory();
 
+                    var aggregator = new ExceptionAggregator();
+
                     // TODO: Adding this one by one is probably much slower than yielding and creating a new list
                     // using the IEnumerable constructor or maybe even using AddRange().
                     while (reader.TokenType != JsonTokenType.EndArray)
                     {
                         object? newArrayElement = null;
-                        try
-                        {
-                            deserializeSingleValue(ref reader, propertyValueMapping, out newArrayElement);
-                        }
-                        catch (Exception ex) when (ex is JsonException or FormatException or AggregateException)
-                        {
-                            // recover from error
-                        }
-                        finally
-                        {
-                            listInstance.Add(newArrayElement);
-                        }
-                        
+
+                        aggregator.Try(ref reader, (ref Utf8JsonReader r) => deserializeSingleValue(ref r, propertyValueMapping, out newArrayElement));
+                        listInstance.Add(newArrayElement);                        
                     }
 
                     propertyMapping.SetValue(target, listInstance);
 
                     // Read past end of array
                     reader.Read();
+
+                    if (aggregator.HasExceptions) aggregator.Throw();
                 }
                 else
                 {
-                    propertyMapping.SetValue(target, deserializeSingleValue(ref reader, propertyValueMapping));
+                    object? result = null;
+                    var aggregator = ExceptionAggregator.Once(ref reader, (ref Utf8JsonReader r) =>
+                        deserializeSingleValue(ref r, propertyValueMapping, out result));
+                    propertyMapping.SetValue(target, result);
+
+                    if (aggregator.HasExceptions) aggregator.Throw();
                 }
             }
         }
@@ -247,20 +252,68 @@ namespace Hl7.Fhir.Serialization
                     throw new InvalidOperationException($"All subclasses of {nameof(PrimitiveType)} should have a value property, but {propertyValueMapping.Name} has not.");
 
                 object? valueResult = null;
-                try
-                {
-                    deserializePrimitiveValue(ref reader, primitiveValueProperty.ImplementingType, allowNull: inArray, out valueResult);
-                    //TODO: (optionally?) validate the FhirPrimitive we have just constructed.
-                }
-                finally
-                {
-                    result.ObjectValue = valueResult;
-                }
+                var aggregator = ExceptionAggregator.Once(ref reader, (ref Utf8JsonReader r) =>
+                    deserializePrimitiveValue(ref r, primitiveValueProperty.ImplementingType, allowNull: inArray, out valueResult));
+                result.ObjectValue = valueResult;
+                //TODO: validate the targetPrimitive?
+                aggregator.Throw();
             }
             else
                 // Dealing with the complex part of a FHIR primitive, which is an object.
-                DeserializeObjectInto(result, propertyValueMapping, ref reader, allowNull: inArray);
+                DeserializeObjectIntoInternal(result, propertyValueMapping, ref reader, allowNull: inArray);
 
+            return;
+        }
+
+        private void deserializeFhirPrimitiveList(IList? existingPrimitiveList, string propertyName, ClassMapping propertyValueMapping, ref Utf8JsonReader reader, out IList resultList)
+        {
+            if (reader.TokenType != JsonTokenType.StartArray)
+                throw new JsonException($"Expected start of array since '{propertyName}' is a repeating element.");
+
+            // read into array
+            reader.Read();
+
+            var existed = existingPrimitiveList is not null;
+            resultList = existingPrimitiveList ??
+                propertyValueMapping.ListFactory() ??
+                throw new ArgumentException($"Type of property '{propertyName}' should be a subtype of IList<PrimitiveType>.", nameof(propertyValueMapping));
+
+            // TODO: We can speed this up by having a codepath for adding to existing items,
+            // and having a fresh (yield based) factory returning an IEnumerable and then initializing
+            // a new list with this IEnumerable.
+            int elementIndex = 0;
+            ExceptionAggregator aggregator = new();
+
+            while (reader.TokenType != JsonTokenType.EndArray)
+            {
+                if (elementIndex >= resultList.Count)
+                {
+                    //TODO: not an empty array
+                    //TODO: not an array with just nulls
+                    //TODO: x and _x may not a null at the same index
+                    //TODO: x and _x should have the same # of items
+                    resultList.Add((PrimitiveType)propertyValueMapping.Factory());
+                }
+
+                var targetPrimitive = (PrimitiveType)resultList[elementIndex]!;
+
+                if (propertyName[0] != '_')
+                {
+                    object? valueResult = null;
+                    aggregator.Try(ref reader, (ref Utf8JsonReader r) =>
+                        deserializePrimitiveValue(ref r, typeof(object), allowNull: true, out valueResult));
+                    targetPrimitive.ObjectValue = valueResult;
+                    //TODO: validate the targetPrimitive?
+                }
+                else
+                    DeserializeObjectIntoInternal(targetPrimitive, propertyValueMapping, ref reader, allowNull: true);
+
+                elementIndex += 1;
+            }
+
+            // read past array to next property or end of object
+            reader.Read();
+            if (aggregator.HasExceptions) aggregator.Throw();
             return;
         }
 
@@ -272,10 +325,10 @@ namespace Hl7.Fhir.Serialization
             // Resources
             if (propertyValueMapping.IsResource)
             {
-                var resource = DeserializeResource(ref reader);
-                if(!propertyValueMapping.NativeType.IsAssignableFrom(resource.GetType()))
-                    throw new InvalidOperationException($"Found a resource of type '{resource.GetType()}', but expected a '{propertyValueMapping.NativeType}'.");
-                result = resource;
+                result = DeserializeResource(ref reader);
+                if (!propertyValueMapping.NativeType.IsAssignableFrom(result.GetType()))
+                    throw new InvalidOperationException($"Found a resource of type '{result.GetType()}', but expected a '{propertyValueMapping.NativeType}'.");
+
                 return;
             }
 
@@ -291,9 +344,8 @@ namespace Hl7.Fhir.Serialization
             // "normal" complex types & backbones
             else
             {
-                var target = propertyValueMapping.Factory();
-                DeserializeObjectInto(target, propertyValueMapping, ref reader, allowNull: false);
-                result = target;
+                result = propertyValueMapping.Factory();
+                DeserializeObjectIntoInternal(result, propertyValueMapping, ref reader, allowNull: false);
                 return;
             }
         }
@@ -438,12 +490,8 @@ namespace Hl7.Fhir.Serialization
         //        _ => throw new NotSupportedException($"Expecting a json property value, not a {reader.TokenType}.")
         //    };
         //}
-    }
 
-
-    internal class SerializationUtilities
-    {
-        public static ClassMapping? FindClassMapping(ModelInspector inspector, Type nativeType) =>
+        internal static ClassMapping? FindClassMapping(ModelInspector inspector, Type nativeType) =>
             inspector.FindClassMapping(nativeType) ?? inspector.ImportType(nativeType);
 
         /// <summary>

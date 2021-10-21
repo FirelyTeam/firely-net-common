@@ -135,13 +135,13 @@ namespace Hl7.Fhir.Utility
         /// <summary>
         /// Generates a function that, when passed an object instance, gets the value of the given property.
         /// </summary>   
-        public static Func<object, object> GetValueGetter(this PropertyInfo propertyInfo) =>
-            GetValueGetter<object>(propertyInfo);
+        public static Func<object, object?> GetValueGetter(this PropertyInfo propertyInfo) =>
+            GetValueGetter<object?>(propertyInfo);
 
         /// <summary>
         /// Generates a function that, when passed an instance and a value, sets the value of the given property.
         /// </summary>
-        public static Action<T, object> GetValueSetter<T>(this PropertyInfo propertyInfo)
+        public static Action<T, object?> GetValueSetter<T>(this PropertyInfo propertyInfo)
         {
             MethodInfo setMethod = propertyInfo.SetMethod ?? throw new InvalidOperationException($"Property {propertyInfo.Name} does not have a setter."); ;
 
@@ -170,8 +170,8 @@ namespace Hl7.Fhir.Utility
 
                 il.Emit(OpCodes.Ret);
 
-                var del = (Func<T, object, object>)setter.CreateDelegate(typeof(Func<T, object, object>));
-                void actionDelegate(T obj, object val) => del(obj, val);
+                var del = (Func<T, object?, object>)setter.CreateDelegate(typeof(Func<T, object?, object>));
+                void actionDelegate(T obj, object? val) => del(obj, val);
 
                 return actionDelegate;
             }
@@ -181,13 +181,13 @@ namespace Hl7.Fhir.Utility
                 return setValue;
             }
 
-            void setValue(T instance, object value) => propertyInfo.SetValue(instance, value, null);
+            void setValue(T instance, object? value) => propertyInfo.SetValue(instance, value, null);
         }
 
         /// <summary>
         /// Generates a function that, when passed an object instance and a value, sets the value of the given property.
         /// </summary>
-        public static Action<object, object> GetValueSetter(this PropertyInfo propertyInfo) => GetValueSetter<object>(propertyInfo);
+        public static Action<object, object?> GetValueSetter(this PropertyInfo propertyInfo) => GetValueSetter<object>(propertyInfo);
     }
 }
 

@@ -246,17 +246,17 @@ namespace Hl7.Fhir.Introspection
         /// <summary>
         /// Given an instance of the parent class, gets the value for this property.
         /// </summary>
-        public object GetValue(object instance) => LazyInitializer.EnsureInitialized(ref _getter, NativeProperty.GetValueGetter)!(instance);
+        public object? GetValue(object instance) => LazyInitializer.EnsureInitialized(ref _getter, NativeProperty.GetValueGetter)!(instance);
 
-        private Func<object, object>? _getter;
+        private Func<object, object?>? _getter;
 
         /// <summary>
         /// Given an instance of the parent class, sets the value for this property.
         /// </summary>
-        public void SetValue(object instance, object value) =>
+        public void SetValue(object instance, object? value) =>
             LazyInitializer.EnsureInitialized(ref _setter, NativeProperty.GetValueSetter)!(instance, value);
 
-        private Action<object, object>? _setter;
+        private Action<object, object?>? _setter;
 
         #region IElementDefinitionSummary members
         string IElementDefinitionSummary.ElementName => this.Name;

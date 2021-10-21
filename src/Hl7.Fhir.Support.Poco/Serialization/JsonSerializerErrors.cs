@@ -11,6 +11,7 @@
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Model;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text.Json;
@@ -19,48 +20,57 @@ using System.Text.Json;
 
 namespace Hl7.Fhir.Serialization
 {
-    public class JsonFhirException : JsonException
+    public class JsonFhirExceptions : AggregateException
     {
-        public string ErrorCode { get; private set; }
+        public static JsonFhirExceptions Create(Base? partialResult, JsonFhirException exception)
+        {
+
+        }
+
+        public static JsonFhirExceptions Create(Base? partialResult, AggregateException exception)
+        {
+
+        }
+
+
+        private JsonFhirExceptions(string message, Base? partialResult, AggregateException innerExceptions) : base(message,), innerExceptions)
+        {
+            PartialResult = partialResult;
+
+            Flatten();
+        }
 
         public Base? PartialResult { get; private set; }
 
-        public JsonFhirException(string code, string message) :
-            this(code, message, partialResult: null, lineNumber: null, bytePositionInLine: null, innerException: null)
+        static string generateMessage(Exception inner)
         {
+            return "hi!";
         }
+    }
 
-        public JsonFhirException(string code, string message, Base? partialResult) :
-            this(code, message, partialResult, lineNumber: null, bytePositionInLine: null, innerException: null)
+    public class JsonFhirException : JsonException
+    {
+        public string ErrorCode { get; private set; }
+        
+        public JsonFhirException(string code, string message) :
+            this(code, message, lineNumber: null, bytePositionInLine: null, innerException: null)
         {
         }
 
         public JsonFhirException(string code, string message, Exception? innerException) :
-            this(code, message, partialResult: null, lineNumber: null, bytePositionInLine: null, innerException)
-        {
-
-        }
-
-        public JsonFhirException(string code, string message, Base? partialResult, Exception? innerException) :
-            this(code, message, partialResult, lineNumber: null, bytePositionInLine: null, innerException)
+            this(code, message, lineNumber: null, bytePositionInLine: null, innerException)
         {
 
         }
 
         public JsonFhirException(string code, string message, long? lineNumber, long? bytePositionInLine) :
-            this(code, message, partialResult: null, lineNumber, bytePositionInLine, innerException: null)
+            this(code, message, lineNumber, bytePositionInLine, innerException: null)
         {
         }
 
-        public JsonFhirException(string code, string message, Base? partialResult, long? lineNumber, long? bytePositionInLine) :
-            this(code, message, partialResult, lineNumber, bytePositionInLine, innerException: null)
-        {
-        }
-
-        public JsonFhirException(string code, string message, Base? partialResult, long? lineNumber, long? bytePositionInLine, Exception? innerException) : base(message, path: null, lineNumber, bytePositionInLine, innerException)
+        public JsonFhirException(string code, string message, long? lineNumber, long? bytePositionInLine, Exception? innerException) : base(message, path: null, lineNumber, bytePositionInLine, innerException)
         {
             ErrorCode = code;
-            PartialResult = partialResult;
         }
     }
 
