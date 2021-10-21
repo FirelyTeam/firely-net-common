@@ -11,13 +11,15 @@ namespace Firely.Fhir.Packages.Tests
     [TestClass]
     public class IndexGenerationTest
     {
-        internal const string TESTPACKAGE = "hl7.fhir.us.core@3.2.0";
+        internal const string HL7_CORE_PACKAGE_R4 = "hl7.fhir.r4.core@4.0.1";
+        internal const string US_CORE_TESTPACKAGE = "hl7.fhir.us.core@3.2.0";
         private const string US_CORE_PAT_URL = "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient";
+        private const string JSON_SCHEMA_FILE = "../openapi/Patient.schema.json";
 
         [TestMethod]
         public void ResourceMetadataIsHarvestedCorrectly()
         {
-            var FixtureDirectory = InitializeTemporary("integration-test", TESTPACKAGE).Result;
+            var FixtureDirectory = InitializeTemporary("integration-test", US_CORE_TESTPACKAGE).Result;
             var projectContext = Open(FixtureDirectory, _ => { }).Result;
 
             var usCorePat = projectContext.Index.ResolveCanonical(US_CORE_PAT_URL);
@@ -30,6 +32,16 @@ namespace Firely.Fhir.Packages.Tests
             usCorePat.ResourceType.Should().Be("StructureDefinition");
             usCorePat.Type.Should().Be("Patient");
             usCorePat.Version.Should().Be("3.2.0");
+        }
+
+        [TestMethod]
+        public void SiblingFolderMetatDataIndexedCorrectly()
+        {
+            var FixtureDirectory = InitializeTemporary("integration-test", HL7_CORE_PACKAGE_R4).Result;
+            var projectContext = Open(FixtureDirectory, _ => { }).Result;
+
+            var schemaFile = projectContext.Index.Where(i => i.FileName == JSON_SCHEMA_FILE).FirstOrDefault();
+            schemaFile.Should().NotBeNull();
         }
 
         /// <summary>

@@ -28,11 +28,16 @@ namespace Firely.Fhir.Packages
 
         public static ResourceMetadata? GetFileMetadata(string folder, string filepath)
         {
+            ISourceNode node;
             try
             {
-                var node = ElementNavigation.ParseToSourceNode(filepath);
-
-                return node is null
+                node = ElementNavigation.ParseToSourceNode(filepath);
+            }
+            catch (Exception)
+            {
+                node = null;
+            }
+            return node is null
                     ? new ResourceMetadata
                     {
                         FileName = GetRelativePath(folder, filepath)
@@ -50,11 +55,6 @@ namespace Firely.Fhir.Packages
                         HasSnapshot = node.checkForSnapshot(),
                         HasExpansion = node.checkForExpansion()
                     };
-            }
-            catch (Exception)
-            {
-                return null;
-            }
         }
 
 
