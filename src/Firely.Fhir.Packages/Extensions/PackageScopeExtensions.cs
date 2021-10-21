@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -112,12 +113,12 @@ namespace Firely.Fhir.Packages
         }
         public static IEnumerable<string> GetFileNames(this PackageContext scope)
         {
-            return scope.Index.Select(i => i.FileName);
+            return scope.Index.Select(i => Path.GetFileName(i.FileName));
         }
 
         public static async Task<string> GetFileContentByFileName(this PackageContext scope, string fileName)
         {
-            var reference = scope.Index.Where(i => i.FileName == fileName).FirstOrDefault();
+            var reference = scope.Index.Where(i => Path.GetFileName(i.FileName) == fileName).FirstOrDefault();
             if (reference is null) return null;
 
             var content = await scope.GetFileContent(reference);

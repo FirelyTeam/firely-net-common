@@ -9,11 +9,11 @@ namespace Firely.Fhir.Packages
 
     public static class CanonicalIndexer
     {
-        public static List<ResourceMetadata> IndexFolder(string folder, bool recurse)
+        public static List<ResourceMetadata> IndexFolder(string originFolder, bool recurse, string indexDestinationFolder = null)
         {
             var option = recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-            var paths = Directory.GetFiles(folder, "*.*", option);
-            return EnumerateMetadata(folder, paths).ToList();
+            var paths = Directory.GetFiles(originFolder, "*.*", option);
+            return EnumerateMetadata(indexDestinationFolder ?? originFolder, paths).ToList();
         }
 
         private static IEnumerable<ResourceMetadata> EnumerateMetadata(string folder, IEnumerable<string> filepaths)
@@ -31,23 +31,25 @@ namespace Firely.Fhir.Packages
             try
             {
                 var node = ElementNavigation.ParseToSourceNode(filepath);
-                if (node is null) return null;
 
-                string? canonical = node.GetString("url"); // node.Children("url").FirstOrDefault()?.Text;
-
-                return new ResourceMetadata
-                {
-                    FileName = GetRelativePath(folder, filepath),
-                    ResourceType = node.Name,
-                    Id = node.GetString("id"),
-                    Canonical = node.GetString("url"),
-                    Version = node.GetString("version"),
-                    Kind = node.GetString("kind"),
-                    Type = node.GetString("type"),
-                    FhirVersion = node.GetString("fhirVersion"),
-                    HasSnapshot = node.checkForSnapshot(),
-                    HasExpansion = node.checkForExpansion()
-                };
+                return node is null
+                    ? new ResourceMetadata
+                    {
+                        FileName = GetRelativePath(folder, filepath)
+                    }
+                    : new ResourceMetadata
+                    {
+                        FileName = GetRelativePath(folder, filepath),
+                        ResourceType = node.Name,
+                        Id = node.GetString("id"),
+                        Canonical = node.GetString("url"),
+                        Version = node.GetString("version"),
+                        Kind = node.GetString("kind"),
+                        Type = node.GetString("type"),
+                        FhirVersion = node.GetString("fhirVersion"),
+                        HasSnapshot = node.checkForSnapshot(),
+                        HasExpansion = node.checkForExpansion()
+                    };
             }
             catch (Exception)
             {

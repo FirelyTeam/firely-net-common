@@ -44,8 +44,9 @@ namespace Firely.Fhir.Packages
 
         public Task<CanonicalIndex> GetCanonicalIndex(PackageReference reference)
         {
-            var folder = PackageContentFolder(reference);
-            return Task.FromResult(CanonicalIndexFile.GetFromFolder(folder, recurse: false));
+            var originFolder = PackageRootFolder(reference);
+            var indexDestinationFolder = PackageContentFolder(reference);
+            return Task.FromResult(CanonicalIndexFile.GetFromFolder(originFolder, indexDestinationFolder, recurse: false));
         }
 
         public string PackageContentFolder(PackageReference reference)
@@ -64,6 +65,7 @@ namespace Firely.Fhir.Packages
                 return folder;
             }
         }
+
 
         private string PackageRootFolder(PackageReference reference)
         {
@@ -127,8 +129,9 @@ namespace Firely.Fhir.Packages
 
         private void CreateIndexFile(PackageReference reference)
         {
-            var folder = PackageContentFolder(reference);
-            CanonicalIndexFile.Create(folder, recurse: false);
+            var originFolder = PackageRootFolder(reference);
+            var destinationFolder = PackageContentFolder(reference);
+            CanonicalIndexFile.Create(originFolder, destinationFolder, recurse: true);
         }
 
         private static string PackageFolderName(PackageReference reference, char glue = '#')
@@ -148,9 +151,9 @@ namespace Firely.Fhir.Packages
             }
         }
 
-      
+
     }
 
-    
+
 }
 
