@@ -10,6 +10,7 @@
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.Json;
 
@@ -19,47 +20,21 @@ namespace Hl7.Fhir.Serialization
 {
     internal class ExceptionAggregator
     {
-        public delegate void ReaderFunction(ref Utf8JsonReader reader);
-
         public List<Exception> _aggregated = new();
 
-        public static ExceptionAggregator Once(ref Utf8JsonReader reader, ReaderFunction a)
+        public void Add(Exception? e)
         {
-            var aggregator = new ExceptionAggregator();
-            aggregator.Try(ref reader, a);
-
-            return aggregator;
-        }
-
-        public void Try(ref Utf8JsonReader reader, ReaderFunction a)
-        {
-            try
-            {
-                a(ref reader);
-            }
-            catch (Exception ex) when (ex is JsonFhirException or AggregateException)
-            {
-                _aggregated.Add(ex);
-            }
-
-            return;
+            if(e is not null)
+                _aggregated.Add(e);
         }
 
         public bool HasExceptions => _aggregated.Count > 0;
 
-        public Exception Aggregate()
+        public Exception? Aggregate()
         {
-            if (_aggregated.Count == 0) throw new InvalidOperationException();
+            if (_aggregated.Count == 0) return null;
 
             return _aggregated.Count != 1 ? new AggregateException(_aggregated) : _aggregated.Single();
-        }
-
-        public void Throw()
-        {
-            if (HasExceptions)
-                throw Aggregate();
-            else
-                return;
         }
     }
 
