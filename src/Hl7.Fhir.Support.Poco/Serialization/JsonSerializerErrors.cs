@@ -80,7 +80,7 @@ namespace Hl7.Fhir.Serialization
         internal static readonly JsonFhirException JSON104 = new("JSON104", "Expected a primitive value, not a json object.");
         internal static readonly JsonFhirException JSON105 = new("JSON105", "Expected a primitive value, not the start of an array.");
         internal static readonly JsonFhirException JSON106 = new("JSON106", "Encountered incorrectly encoded base64 data.");
-        internal static readonly JsonFhirException JSON107 = new("JSON107", "Literal string '{0}' cannot be parsed as a {1}.");
+        internal static readonly JsonFhirException JSON107 = new("JSON107", "Literal string '{0}' cannot be parsed as a datetime.");
         internal static readonly JsonFhirException JSON108 = new("JSON108", "Json number '{0}' cannot be parsed as a {1}.");
         internal static readonly JsonFhirException JSON109 = new("JSON109", "A json null cannot be used here.");
         internal static readonly JsonFhirException JSON110 = new("JSON110", "Expecting a {0}, but found a json {1}.");
@@ -109,20 +109,24 @@ namespace Hl7.Fhir.Serialization
         {
             var formattedMessage = string.Format(protoType.Message, parameters);
 
-            // While we are waiting for this https://github.com/dotnet/runtime/issues/28482,
-            // there's no other option than to just force our way to these valuable properties.
-            var lineNumber = (long)typeof(JsonReaderState)
-                .GetField("_lineNumber", BindingFlags.NonPublic | BindingFlags.Instance)!
-                .GetValue(reader.CurrentState)!;
-
-            var position = (long)typeof(JsonReaderState)
-                .GetField("_bytePositionInLine", BindingFlags.NonPublic | BindingFlags.Instance)!
-                .GetValue(reader.CurrentState)!;
-
-            var location = $" Line {lineNumber}, position {position}.";
+            var location = GenerateLocationMessage(ref reader, out var lineNumber, out var position);
             var message = formattedMessage + location;
 
             return new JsonFhirException(protoType.ErrorCode, message, lineNumber, position);
+        }
+
+        internal static string GenerateLocationMessage(ref Utf8JsonReader reader, out long lineNumber, out long position)
+        {
+            // While we are waiting for this https://github.com/dotnet/runtime/issues/28482,
+            // there's no other option than to just force our way to these valuable properties.
+            lineNumber = (long)typeof(JsonReaderState)
+                .GetField("_lineNumber", BindingFlags.NonPublic | BindingFlags.Instance)!
+                .GetValue(reader.CurrentState)!;
+            position = (long)typeof(JsonReaderState)
+                .GetField("_bytePositionInLine", BindingFlags.NonPublic | BindingFlags.Instance)!
+                .GetValue(reader.CurrentState)!;
+
+            return $" Line {lineNumber}, position {position}.";
         }
     }
 }

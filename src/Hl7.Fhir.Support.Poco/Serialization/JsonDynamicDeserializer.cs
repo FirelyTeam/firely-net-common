@@ -119,9 +119,6 @@ namespace Hl7.Fhir.Serialization
         internal PartialDeserialization<T> DeserializeObjectIntoInternal<T>(T target, ClassMapping mapping, ref Utf8JsonReader reader, bool allowNull)
             where T : Base
         {
-            // Read() will either work, or throw an exception that the json string is empty - which is fine.
-            if (reader.TokenType == JsonTokenType.None) reader.Read();
-
             if (reader.TokenType == JsonTokenType.Null)
             {
                 var err = allowNull ? null : ERR.JSON109.With(ref reader);
@@ -156,7 +153,7 @@ namespace Hl7.Fhir.Serialization
                 try
                 {
                     // Lookup the metadata for this property by its name to determine the expected type of the value
-                    var (propMapping, propValueMapping) = GetMappedElementMetadata(_inspector, mapping, ref reader, currentPropertyName);
+                    var (propMapping, propValueMapping) = getMappedElementMetadata(_inspector, mapping, ref reader, currentPropertyName);
 
                     // read past the property name into the value
                     reader.Read();
@@ -168,11 +165,12 @@ namespace Hl7.Fhir.Serialization
                 {
                     aggregator.Add(jfe);
 
-                    // try to recover by skipping this property
+                    // try to recover by skipping this property - next propertyname or endobject AT THE SAME DEPTH!!!!!
                     do
                     {
                         reader.Read();
                     }
+                    //TODO:at the same depth
                     while (reader.TokenType != JsonTokenType.EndObject && reader.TokenType != JsonTokenType.PropertyName);
                 }
             }
@@ -193,11 +191,11 @@ namespace Hl7.Fhir.Serialization
         /// <param name="propertyValueMapping">The cached metadata for the type of the property to set.</param>
         /// <param name="reader">The reader to deserialize from.</param>
         /// <remarks>Expects the reader to be positioned on the property value.
-        /// Reader will be on the first token after the property value upon return.</remarks>
+        /// Reader will be on the first token after the property value upon return. In case of an error, the reader will be on
+        /// the position of the error and the caller needs to implement recovery.</remarks>
         private PartialDeserialization<Base> deserializePropertyValue(Base target, string propertyName, PropertyMapping propertyMapping, ClassMapping propertyValueMapping, ref Utf8JsonReader reader)
         {
-            //TODO: needs recovery. If this is an unexpected collection, read until the end of the collection.
-            //If this should have been a collection, but itsn't - read until the next property or end of object.
+            // TODO: This needs recovery (unless the one caller already does that - I believe that is the case)
             if (propertyMapping.IsCollection && reader.TokenType != JsonTokenType.StartArray)
                 return new(target, ERR.JSON111.With(ref reader, propertyName));
             else if (!propertyMapping.IsCollection && reader.TokenType == JsonTokenType.StartArray)
@@ -278,7 +276,7 @@ namespace Hl7.Fhir.Serialization
                 var primitiveValueProperty = propertyValueMapping.PrimitiveValueProperty ??
                     throw new InvalidOperationException($"All subclasses of {nameof(PrimitiveType)} should have a value property, but {propertyValueMapping.Name} has not.");
 
-                var result = deserializePrimitiveValue(ref reader, primitiveValueProperty.ImplementingType, allowNull: inArray);
+                var result = DeserializePrimitiveValue(ref reader, primitiveValueProperty.ImplementingType, allowNull: inArray);
                 targetPrimitive.ObjectValue = result.PartialResult;
                 //TODO: validate the targetPrimitive?
 
@@ -355,7 +353,7 @@ namespace Hl7.Fhir.Serialization
             // needs to handle PrimitiveType.ObjectValue & dual properties.
             else if (propertyValueMapping.IsPrimitive)
             {
-                return deserializePrimitiveValue(ref reader, propertyValueMapping.NativeType, allowNull: false);
+                return DeserializePrimitiveValue(ref reader, propertyValueMapping.NativeType, allowNull: false);
             }
 
             // "normal" complex types & backbones
@@ -364,6 +362,13 @@ namespace Hl7.Fhir.Serialization
                 var newComplex = (Base)propertyValueMapping.Factory();
                 return DeserializeObjectIntoInternal(newComplex, propertyValueMapping, ref reader, allowNull: false).ToObjectResult();
             }
+        }
+
+        private static void SkipTo(ref Utf8JsonReader reader, JsonTokenType tt)
+        {
+            var depth = reader.CurrentDepth;
+
+            while (reader.Read() && !(reader.CurrentDepth == depth && reader.TokenType == tt)) ;
         }
 
         private static PartialDeserialization<string> determineResourceType(ref Utf8JsonReader reader)
@@ -402,38 +407,47 @@ namespace Hl7.Fhir.Serialization
         /// Does a best-effort parse of the data available at the reader, given the required type of the property the
         /// data needs to be read into. 
         /// </summary>
-        /// <remarks>A value without an error if the data could be parsed to the required type, and a value with an error if the
-        /// value could not be parsed - in which case the value returned is the raw value coming in from the reader. When 
-        /// Returning the raw value is useful for the codepaths where we want to report an error, but are still
+        /// <returns>A value without an error if the data could be parsed to the required type, and a value with an error if the
+        /// value could not be parsed - in which case the value returned is the raw value coming in from the reader.</returns>
+        /// <remarks>Upon return, the reader will be positioned after the primitive. Returning the raw value is useful for the
+        /// codepaths where we want to report an error, but are still
         /// able to store the read value into the object model (most commonly <see cref="PrimitiveType.ObjectValue" />)</remarks>
-        private PartialDeserialization<object> deserializePrimitiveValue(ref Utf8JsonReader reader, Type requiredType, bool allowNull)
+        internal static PartialDeserialization<object> DeserializePrimitiveValue(ref Utf8JsonReader reader, Type requiredType, bool allowNull)
         {
             var result = reader.TokenType switch
             {
-                JsonTokenType.StartObject => new(null, ERR.JSON104.With(ref reader)),
-                JsonTokenType.StartArray => new(null, ERR.JSON105.With(ref reader)),
+                JsonTokenType.StartObject => recover(ref reader, null, ERR.JSON104.With(ref reader), JsonTokenType.EndObject),
+                JsonTokenType.StartArray => recover(ref reader, null, ERR.JSON105.With(ref reader), JsonTokenType.EndArray),
                 JsonTokenType.Null when allowNull => new(null, null),
                 JsonTokenType.Null => new(null, ERR.JSON109.With(ref reader)),
                 JsonTokenType.String when requiredType == typeof(string) => new(reader.GetString(), null),
                 JsonTokenType.String when requiredType == typeof(byte[]) => readBase64(ref reader),
                 JsonTokenType.String when requiredType == typeof(DateTimeOffset) => readDateTimeOffset(ref reader),
+                JsonTokenType.String when requiredType.IsEnum => new(reader.GetString(), null),
                 JsonTokenType.String => new(reader.GetString(), ERR.JSON110.With(ref reader, requiredType.Name, "string")),
                 JsonTokenType.Number => tryGetMatchingNumber(ref reader, requiredType),
                 JsonTokenType.True or JsonTokenType.False when requiredType == typeof(bool) => new(reader.GetBoolean(), null),
                 JsonTokenType.True or JsonTokenType.False => new(reader.GetBoolean(), ERR.JSON110.With(ref reader, requiredType.Name, "boolean")),
 
-                _ =>
+                _ => 
                     // This would be an internal logic error, since our callers should have made sure we're
                     // on the primitive value after the property name (and the Utf8JsonReader would have complained about any
                     // other token that one that is a value).
                     // EK: I think 'Comment' is the only possible non-expected option here....
-                    throw new InvalidOperationException($"Unexpected token type {reader.TokenType}."),
+                    throw new InvalidOperationException($"Unexpected token type {reader.TokenType} while parsing a primitive value. " +
+                        ERR.GenerateLocationMessage(ref reader, out var _, out var _)),
             };
 
             // Read past the value
             reader.Read();
 
-            return result;             
+            return result;
+
+            static PartialDeserialization<object> recover(ref Utf8JsonReader reader, object? result, JsonFhirException error, JsonTokenType recoveryToken)
+            {
+                SkipTo(ref reader, recoveryToken);
+                return new(result, error);
+            }
 
             static PartialDeserialization<object> readBase64(ref Utf8JsonReader reader) =>
                 reader.TryGetBytesFromBase64(out var bytesValue) ?
@@ -446,17 +460,18 @@ namespace Hl7.Fhir.Serialization
 
                 return ElementModel.Types.DateTime.TryParse(contents, out var parsed) ?
                     new (parsed.ToDateTimeOffset(TimeSpan.Zero), null) :
-                    new (contents, ERR.JSON107.With(ref reader, contents, nameof(DateTimeOffset)));
+                    new (contents, ERR.JSON107.With(ref reader, contents));
             }
         }
 
         /// <summary>
-        /// This function tries to map from the json-format "generic" number to the kind
-        /// of numeric type defined in the POCO.
+        /// This function tries to map from the json-format "generic" number to the kind of numeric type defined in the POCO.
         /// </summary>
-        /// <returns>If the json number cannot be parsed into the kind of numeric required by the POCO property.</returns>
-        private PartialDeserialization<object> tryGetMatchingNumber(ref Utf8JsonReader reader, Type requiredType)
+        /// <remarks>Reader must be positioned on a number token. This function will not move the reader to the next token.</remarks>
+        private static PartialDeserialization<object> tryGetMatchingNumber(ref Utf8JsonReader reader, Type requiredType)
         {
+            if (reader.TokenType != JsonTokenType.Number) throw new InvalidOperationException($"Cannot read a numeric when reader is on a {reader.TokenType}.");
+
             object? value = null;
             bool success;
 
@@ -476,30 +491,21 @@ namespace Hl7.Fhir.Serialization
                 success = reader.TryGetDouble(out double dbl) && (value = dbl) is { };
             else
             {
-                // We are not really expecting a number type, although we encountered
-                // a json number.
-                value = reader.GetDecimal();
-                return new(value, ERR.JSON110.With(ref reader, requiredType.Name, "number"));
+                var gotValue = reader.TryGetDecimal(out var dec);
+                return new(gotValue ? dec : null, ERR.JSON110.With(ref reader, requiredType.Name, "number"));
             }
 
             // We expected a number, we found a json number, but they don't match (e.g. precision etc)
-            return success ?
-                new(value, null) :
-                new(value, ERR.JSON108.With(ref reader, value, requiredType.Name));
+            if(success)
+            {
+                return new(value, null);
+            }
+            else
+            {
+                var gotValue = reader.TryGetDecimal(out var dec);
+                return new(gotValue ? dec : null, ERR.JSON108.With(ref reader, gotValue ? dec : "(unreadable number)", requiredType.Name));
+            }
         }
-
-        //private object? readPropertyValue(ref Utf8JsonReader reader)
-        //{
-        //    return reader.TokenType switch
-        //    {
-        //        JsonTokenType.False => false,
-        //        JsonTokenType.Null => null,
-        //        JsonTokenType.Number => reader.GetDecimal(),
-        //        JsonTokenType.String => reader.GetString(),
-        //        JsonTokenType.True => true,
-        //        _ => throw new NotSupportedException($"Expecting a json property value, not a {reader.TokenType}.")
-        //    };
-        //}
 
         internal static ClassMapping? FindClassMapping(ModelInspector inspector, Type nativeType) =>
             inspector.FindClassMapping(nativeType) ?? inspector.ImportType(nativeType);
@@ -512,8 +518,8 @@ namespace Hl7.Fhir.Serialization
         /// <see cref="ClassMapping"/>, otherwise the <see cref="PropertyMapping.ImplementingType"/> is used. As well,
         /// since the property name is from the serialized form it may also be prefixed by '_'.
         /// </remarks>
-        internal static (PropertyMapping propMapping, ClassMapping propValueMapping)
-            GetMappedElementMetadata(ModelInspector inspector, ClassMapping parentMapping, ref Utf8JsonReader reader, string propertyName)
+        private static (PropertyMapping propMapping, ClassMapping propValueMapping)
+            getMappedElementMetadata(ModelInspector inspector, ClassMapping parentMapping, ref Utf8JsonReader reader, string propertyName)
         {
             bool startsWithUnderscore = propertyName[0] == '_';
             var elementName = startsWithUnderscore ? propertyName[1..] : propertyName;

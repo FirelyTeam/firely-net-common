@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 
 #if DEBUG
 [assembly: InternalsVisibleTo("Hl7.Fhir.Core.Tests")]
+[assembly: InternalsVisibleTo("Hl7.Fhir.Support.Poco.Tests")]
 [assembly: InternalsVisibleTo("Hl7.Fhir.STU3.Core")]
 [assembly: InternalsVisibleTo("Hl7.Fhir.R4.Core")]
 [assembly: InternalsVisibleTo("Hl7.Fhir.R4B.Core")]
