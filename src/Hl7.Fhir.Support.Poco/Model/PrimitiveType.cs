@@ -50,7 +50,7 @@ namespace Hl7.Fhir.Model
                 return dest;
             }
             else
-                throw new ArgumentException("Can only copy to an object of the same type", "other");
+                throw new ArgumentException("Can only copy to an object of the same type", nameof(other));
         }
 
         public override IDeepCopyable DeepCopy()
@@ -62,7 +62,7 @@ namespace Hl7.Fhir.Model
 
         public override bool IsExactly(IDeepComparable other)
         {
-            if (!(other is PrimitiveType otherT)) return false;
+            if (other is not PrimitiveType otherT) return false;
 
             if (!base.IsExactly(other)) return false;
 
@@ -71,7 +71,7 @@ namespace Hl7.Fhir.Model
             if (ObjectValue is byte[] bytes && otherValue is byte[] bytesOther)
                 return Enumerable.SequenceEqual(bytes, bytesOther);
             else
-                return Object.Equals(ObjectValue, otherT.ObjectValue);
+                return Equals(ObjectValue, otherT.ObjectValue);
         }
 
         [IgnoreDataMember]

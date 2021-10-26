@@ -74,24 +74,26 @@ namespace Hl7.Fhir.Serialization
 
     public static class JsonSerializerErrors
     {
-        internal static readonly JsonFhirException JSON101 = new("JSON101", "Expected start of object, but found {0}.");
-        internal static readonly JsonFhirException JSON102 = new("JSON102", "Property 'resourceType' should be a string, but found {0}.");
-        internal static readonly JsonFhirException JSON103 = new("JSON103", "Resource has no 'resourceType' property.");
-        internal static readonly JsonFhirException JSON104 = new("JSON104", "Expected a primitive value, not a json object.");
-        internal static readonly JsonFhirException JSON105 = new("JSON105", "Expected a primitive value, not the start of an array.");
-        internal static readonly JsonFhirException JSON106 = new("JSON106", "Encountered incorrectly encoded base64 data.");
-        internal static readonly JsonFhirException JSON107 = new("JSON107", "Literal string '{0}' cannot be parsed as a datetime.");
-        internal static readonly JsonFhirException JSON108 = new("JSON108", "Json number '{0}' cannot be parsed as a {1}.");
-        internal static readonly JsonFhirException JSON109 = new("JSON109", "A json null cannot be used here.");
-        internal static readonly JsonFhirException JSON110 = new("JSON110", "Expecting a {0}, but found a json {1}.");
-        internal static readonly JsonFhirException JSON111 = new("JSON111", "Expected start of array since '{0}' is a repeating element.");
-        internal static readonly JsonFhirException JSON112 = new("JSON112", "Found the start of an array, but '{0}' is not a repeating element.");
-        internal static readonly JsonFhirException JSON113 = new("JSON113", "Element '{0}' is not a FHIR primitive, so it should not use an underscore in the '{1}' property.");
-        internal static readonly JsonFhirException JSON114 = new("JSON114", "Choice element '{0}' is not suffixed with a type.");
-        internal static readonly JsonFhirException JSON115 = new("JSON115", "Choice element '{0}' is suffixed with an unrecognized type '{1}'.");
-        internal static readonly JsonFhirException JSON201 = new("JSON201", "Unknown resource type '{0}'.");
-        internal static readonly JsonFhirException JSON202 = new("JSON202", "Data type '{0}' in property 'resourceType' is not a type of resource.");
-        internal static readonly JsonFhirException JSON203 = new("JSON203", "Encountered unrecognized property '{0}'.");
+        internal static readonly JsonFhirException EXPECTED_START_OF_OBJECT         = new("JSON101", "Expected start of object, but found {0}.");
+        internal static readonly JsonFhirException RESOURCETYPE_SHOULD_BE_STRING    = new("JSON102", "Property 'resourceType' should be a string, but found {0}.");
+        internal static readonly JsonFhirException NO_RESOURCETYPE_PROPERTY         = new("JSON103", "Resource has no 'resourceType' property.");
+        internal static readonly JsonFhirException EXPECTED_PRIMITIVE_NOT_OBJECT    = new("JSON104", "Expected a primitive value, not a json object.");
+        internal static readonly JsonFhirException EXPECTED_PRIMITIVE_NOT_ARRAY     = new("JSON105", "Expected a primitive value, not the start of an array.");
+        internal static readonly JsonFhirException EXPECTED_PRIMITIVE_NOT_NULL      = new("JSON109", "Expected a primitive value, not a json null.");
+        internal static readonly JsonFhirException INCORRECT_BASE64_DATA            = new("JSON106", "Encountered incorrectly encoded base64 data.");
+        internal static readonly JsonFhirException STRING_ISNOTA_DATETIME           = new("JSON107", "Literal string '{0}' cannot be parsed as a datetime.");
+        internal static readonly JsonFhirException NUMBER_CANNOT_BE_PARSED          = new("JSON108", "Json number '{0}' cannot be parsed as a {1}.");
+        internal static readonly JsonFhirException UNEXPECTED_JSON_TOKEN            = new("JSON110", "Expecting a {0}, but found a json {1}.");
+        internal static readonly JsonFhirException EXPECTED_START_OF_ARRAY          = new("JSON111", "Expected start of array since '{0}' is a repeating element.");
+        internal static readonly JsonFhirException START_OF_ARRAY_UNEXPECTED        = new("JSON112", "Found the start of an array, but '{0}' is not a repeating element.");
+        internal static readonly JsonFhirException USE_OF_UNDERSCORE_ILLEGAL       = new("JSON113", "Element '{0}' is not a FHIR primitive, so it should not use an underscore in the '{1}' property.");
+        internal static readonly JsonFhirException CHOICE_ELEMENT_HAS_NO_TYPE       = new("JSON114", "Choice element '{0}' is not suffixed with a type.");
+        internal static readonly JsonFhirException CHOICE_ELEMENT_HAS_UNKOWN_TYPE   = new("JSON115", "Choice element '{0}' is suffixed with an unrecognized type '{1}'.");
+        internal static readonly JsonFhirException UNKNOWN_RESOURCE_TYPE            = new("JSON116", "Unknown type '{0}' found in 'resourceType' property.");
+        internal static readonly JsonFhirException EXPECTED_A_RESOURCE_TYPE         = new("JSON117", "Data type '{0}' in property 'resourceType' is not a type of resource.");
+        internal static readonly JsonFhirException UNKNOWN_PROPERTY_FOUND           = new("JSON118", "Encountered unrecognized property '{0}'.");
+        internal static readonly JsonFhirException DATATYPE_WITH_RESOURCETYPE_PROP  = new("JSON119", "The 'resourceType' property should only be used in resources.");
+        internal static readonly JsonFhirException OBJECTS_CANNOT_BE_EMPTY          = new("JSON120", "An object needs to have at least one property.");
 
         /// <summary>
         /// The set of errors that can be considered to not lose data and so can be used to simulate the old "permissive" parsing option.
@@ -99,10 +101,16 @@ namespace Hl7.Fhir.Serialization
         public static readonly string[] PERMISSIVESET = new string[]
         { 
             // These errors signal parsing errors, but the original raw data is retained in the POCO so no data is lost.
-            JSON106.ErrorCode, JSON107.ErrorCode, JSON108.ErrorCode, JSON110.ErrorCode,
+            INCORRECT_BASE64_DATA.ErrorCode, STRING_ISNOTA_DATETIME.ErrorCode, NUMBER_CANNOT_BE_PARSED.ErrorCode, UNEXPECTED_JSON_TOKEN.ErrorCode,
 
             // The serialization contained a json null where it is not allowed, but a null does not contain data anyway.
-            JSON109.ErrorCode,
+            EXPECTED_PRIMITIVE_NOT_NULL.ErrorCode,
+
+            // We expected a resource, but found another datatype. Regardless, we will return all data.
+            EXPECTED_A_RESOURCE_TYPE.ErrorCode,
+
+            // The serialization contained a superfluous 'resourceType' property, but we have read all data anyway.
+            DATATYPE_WITH_RESOURCETYPE_PROP.ErrorCode
         };
 
         internal static JsonFhirException With(this JsonFhirException protoType, ref Utf8JsonReader reader, params object?[] parameters)
@@ -114,6 +122,9 @@ namespace Hl7.Fhir.Serialization
 
             return new JsonFhirException(protoType.ErrorCode, message, lineNumber, position);
         }
+
+        internal static string GenerateLocationMessage(ref Utf8JsonReader reader) =>
+            GenerateLocationMessage(ref reader, out var _, out var _);
 
         internal static string GenerateLocationMessage(ref Utf8JsonReader reader, out long lineNumber, out long position)
         {
