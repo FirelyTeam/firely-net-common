@@ -38,6 +38,11 @@ namespace Hl7.FhirPath.Expressions
             return functionName == Name && arguments.Count() == ArgumentTypes.Count() &&
                    arguments.Zip(ArgumentTypes, (call, sig) => Typecasts.CanCastTo(call, sig)).All(r => r == true);
         }
+        public bool DynamicExactMatches(string functionName, IEnumerable<object> arguments)
+        {
+            return functionName == Name && arguments.Count() == ArgumentTypes.Count() &&
+                   arguments.Zip(ArgumentTypes, (call, sig) => Typecasts.IsOfType(call, sig)).All(r => r == true);
+        }
 
         public bool Matches(string functionName, int argCount)
         {
