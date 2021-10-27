@@ -22,6 +22,11 @@ namespace HL7.FhirPath.Tests
         private static IEnumerable<object[]> EqualityOperatorTestcases() =>
             new (string expression, bool expected, bool invalid)[]
                  {
+                    ("(@2012 + 1 year) = @2013", true, false),
+                    ("(@2012-02 + 1 year) = @2013-02", true, false),
+                    ("(@2012-02-13 + 13 month) = @2013-03-13", true, false),
+                    ("(@2012 + 1 month) = @2012", true, false),
+                    ("(@2012 + 12 month) = @2013", true, false),
                     ("@2012 = @2012", true, false),
                     ("@2012 = @2013", false, false),
                     ("(@2012-01 = @2012).empty()", true, false),

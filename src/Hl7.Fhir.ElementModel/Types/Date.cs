@@ -137,6 +137,34 @@ namespace Hl7.Fhir.ElementModel.Types
             return success;
         }
 
+        public static Date operator +(Date me, Quantity value)
+        {
+            var dto = me._parsedValue;
+            switch (value.Unit)
+            {
+                case "a":
+                case "years":
+                case "year":
+                    dto = me._parsedValue.AddYears((int)value.Value);
+                    break;
+                case "mo":
+                case "month":
+                case "months":
+                    // we can ignore precision, as the precision will "trim" it anyway, and if we add 13 months, then the year can tick over nicely
+                    dto = me._parsedValue.AddMonths((int)value.Value);
+                    break;
+                case "d":
+                case "day":
+                case "days":
+                    dto = me._parsedValue.AddDays((int)value.Value);
+                    break;
+            }
+
+            var result = Date.FromDateTimeOffset(dto, me.Precision);
+            return result;
+        }
+
+
         /// <summary>
         /// Determines if two dates are equal according to CQL equality rules.
         /// </summary>
