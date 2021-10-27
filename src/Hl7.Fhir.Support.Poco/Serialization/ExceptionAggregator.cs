@@ -28,8 +28,6 @@ namespace Hl7.Fhir.Serialization
                 _aggregated.Add(e);
         }
 
-        public bool HasExceptions => _aggregated.Count > 0;
-
         public Exception? Aggregate()
         {
             if (_aggregated.Count == 0) return null;

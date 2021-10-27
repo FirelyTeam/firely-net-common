@@ -27,12 +27,13 @@ namespace Hl7.Fhir.Serialization
             if (exception is AggregateException ae)
             {
                 var children = ae.Flatten().InnerExceptions;
-                var message = $"Deserialization failed with {children.Count} errors.";
+                //var message = $"Deserialization failed with {children.Count} errors.";
+                var message = ae.Message;
                 return new DeserializationFailedException(message, partialResult, children);
             }
             else
             {
-                var message = "Deserialization failed with one error.";
+                var message = "Deserialization failed with one error: " + exception.Message;
                 return new DeserializationFailedException(message, partialResult, new[] { exception });
             }
         }
@@ -92,25 +93,32 @@ namespace Hl7.Fhir.Serialization
         internal static readonly JsonFhirException UNKNOWN_RESOURCE_TYPE            = new("JSON116", "Unknown type '{0}' found in 'resourceType' property.");
         internal static readonly JsonFhirException EXPECTED_A_RESOURCE_TYPE         = new("JSON117", "Data type '{0}' in property 'resourceType' is not a type of resource.");
         internal static readonly JsonFhirException UNKNOWN_PROPERTY_FOUND           = new("JSON118", "Encountered unrecognized property '{0}'.");
-        internal static readonly JsonFhirException DATATYPE_WITH_RESOURCETYPE_PROP  = new("JSON119", "The 'resourceType' property should only be used in resources.");
+        internal static readonly JsonFhirException RESOURCETYPE_UNEXPECTED_IN_DT    = new("JSON119", "The 'resourceType' property should only be used in resources.");
         internal static readonly JsonFhirException OBJECTS_CANNOT_BE_EMPTY          = new("JSON120", "An object needs to have at least one property.");
+        internal static readonly JsonFhirException ARRAYS_CANNOT_BE_EMPTY           = new("JSON121", "An array needs to have at least one element.");
 
         /// <summary>
         /// The set of errors that can be considered to not lose data and so can be used to simulate the old "permissive" parsing option.
         /// </summary>
-        public static readonly string[] PERMISSIVESET = new string[]
+        public static readonly JsonFhirException[] PERMISSIVESET = new []
         { 
             // These errors signal parsing errors, but the original raw data is retained in the POCO so no data is lost.
-            INCORRECT_BASE64_DATA.ErrorCode, STRING_ISNOTA_DATETIME.ErrorCode, NUMBER_CANNOT_BE_PARSED.ErrorCode, UNEXPECTED_JSON_TOKEN.ErrorCode,
+            INCORRECT_BASE64_DATA, STRING_ISNOTA_DATETIME, NUMBER_CANNOT_BE_PARSED, UNEXPECTED_JSON_TOKEN,
 
             // The serialization contained a json null where it is not allowed, but a null does not contain data anyway.
-            EXPECTED_PRIMITIVE_NOT_NULL.ErrorCode,
+            EXPECTED_PRIMITIVE_NOT_NULL,
+
+            // We will just ignore the underscore and keep on parsing
+            USE_OF_UNDERSCORE_ILLEGAL,
 
             // We expected a resource, but found another datatype. Regardless, we will return all data.
-            EXPECTED_A_RESOURCE_TYPE.ErrorCode,
+            EXPECTED_A_RESOURCE_TYPE,
 
             // The serialization contained a superfluous 'resourceType' property, but we have read all data anyway.
-            DATATYPE_WITH_RESOURCETYPE_PROP.ErrorCode
+            RESOURCETYPE_UNEXPECTED_IN_DT,
+
+            // Empty objects and arrays can be ignored without discarding data
+            OBJECTS_CANNOT_BE_EMPTY, ARRAYS_CANNOT_BE_EMPTY
         };
 
         internal static JsonFhirException With(this JsonFhirException protoType, ref Utf8JsonReader reader, params object?[] parameters)
