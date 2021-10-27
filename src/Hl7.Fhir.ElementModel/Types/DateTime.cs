@@ -54,6 +54,76 @@ namespace Hl7.Fhir.ElementModel.Types
         public int? Seconds => Precision >= DateTimePrecision.Second ? _parsedValue.Second : (int?)null;
         public int? Millis => Precision >= DateTimePrecision.Fraction ? _parsedValue.Millisecond : (int?)null;
 
+        public static DateTime operator +(DateTime me, Quantity value)
+        {
+            var dto = me._parsedValue;
+            switch (value.Unit)
+            {
+                // we can ignore precision, as the precision will "trim" it anyway, and if we add 13 months, then the year can tick over nicely
+                case "a": // UCUM
+                case "years":
+                case "year":
+                    dto = me._parsedValue.AddYears((int)value.Value);
+                    break;
+                case "mo": // UCUM
+                case "month":
+                case "months":
+                    dto = me._parsedValue.AddMonths((int)value.Value);
+                    break;
+                case "d": // UCUM
+                case "day":
+                case "days":
+                    dto = me._parsedValue.AddDays((int)value.Value);
+                    break;
+
+                // NOT ignoring precision on time based stuff if there is no time component
+                // if no time component, don't modify result
+                case "h":
+                case "hour":
+                case "hours":
+                    if (me.Precision > DateTimePrecision.Day)
+                        dto = me._parsedValue.AddHours((double)value.Value);
+                    break;
+                case "min":
+                case "minute":
+                case "minutes":
+                    if (me.Precision > DateTimePrecision.Day)
+                        dto = me._parsedValue.AddMinutes((double)value.Value);
+                    break;
+                case "s":
+                case "second":
+                case "seconds":
+                    if (me.Precision > DateTimePrecision.Day)
+                        dto = me._parsedValue.AddSeconds((double)value.Value);
+                    break;
+                case "ms":
+                case "millisecond":
+                case "milliseconds":
+                    if (me.Precision > DateTimePrecision.Day)
+                        dto = me._parsedValue.AddMilliseconds((double)value.Value);
+                    break;
+            }
+
+            string representation = dto.ToString(FMT_FULL);
+            if (representation.Length > me._original.Length)
+            {
+                // need to trim appropriately.
+                if (me.Precision <= DateTimePrecision.Minute)
+                    representation = representation.Substring(0, me._original.Length);
+                else
+                {
+                    if (!me.HasOffset)
+                    {
+                        // trim the offset from it
+                        representation = dto.ToString("yyyy-MM-dd'T'HH:mm:ss.FFFFFFF");
+                    }
+                }
+            }
+
+            var result = new DateTime(representation, dto, me.Precision, me.HasOffset);
+            return result;
+        }
+
         /// <summary>
         /// The span of time ahead/behind UTC
         /// </summary>
