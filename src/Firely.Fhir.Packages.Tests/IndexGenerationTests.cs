@@ -14,7 +14,7 @@ namespace Firely.Fhir.Packages.Tests
         internal const string HL7_CORE_PACKAGE_R4 = "hl7.fhir.r4.core@4.0.1";
         internal const string US_CORE_TESTPACKAGE = "hl7.fhir.us.core@3.2.0";
         private const string US_CORE_PAT_URL = "http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient";
-        private const string JSON_SCHEMA_FILE = "../openapi/Patient.schema.json";
+        private const string JSON_SCHEMA_FILE = "openapi/Patient.schema.json";
 
         [TestMethod]
         public void ResourceMetadataIsHarvestedCorrectly()
@@ -35,7 +35,7 @@ namespace Firely.Fhir.Packages.Tests
         }
 
         [TestMethod]
-        public void SiblingFolderMetatDataIndexedCorrectly()
+        public void TestIndexJsonOnRoot()
         {
             var FixtureDirectory = InitializeTemporary("integration-test", HL7_CORE_PACKAGE_R4).Result;
             var projectContext = Open(FixtureDirectory, _ => { }).Result;
