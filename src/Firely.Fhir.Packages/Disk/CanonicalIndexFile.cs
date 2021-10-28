@@ -7,22 +7,22 @@ namespace Firely.Fhir.Packages
     {
         public const int VERSION = 6;
 
-        public static CanonicalIndex GetFromFolder(string originFolder, string indexDestinationFolder, bool recurse)
+        public static CanonicalIndex GetFromFolder(string folder, bool recurse)
         {
-            if (ExistsIn(indexDestinationFolder))
+            if (ExistsIn(folder))
             {
-                var index = ReadFromFolder(indexDestinationFolder);
+                var index = ReadFromFolder(folder);
                 if (index.Version == VERSION) return index;
             }
             // otherwise:
-            return Create(originFolder, indexDestinationFolder, recurse);
+            return Create(folder, recurse);
         }
 
-        public static CanonicalIndex Create(string originFolder, string indexDestinationFolder, bool recurse)
+        public static CanonicalIndex Create(string folder, bool recurse)
         {
-            var entries = CanonicalIndexer.IndexFolder(originFolder, recurse, indexDestinationFolder);
+            var entries = CanonicalIndexer.IndexFolder(folder, recurse);
             var index = new CanonicalIndex { Files = entries, Version = VERSION, date = DateTimeOffset.Now };
-            WriteToFolder(index, indexDestinationFolder);
+            WriteToFolder(index, folder);
             return index;
         }
 

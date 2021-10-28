@@ -32,21 +32,15 @@ namespace Firely.Fhir.Packages
         {
             var folder = PackageContentFolder(reference);
 
-            if (Directory.Exists(folder))
-            {
-                return Task.FromResult(ManifestFile.ReadFromFolder(folder));
-            }
-            else
-            {
-                return null;
-            }
+            return Directory.Exists(folder)
+                ? Task.FromResult(ManifestFile.ReadFromFolder(folder))
+                : null;
         }
 
         public Task<CanonicalIndex> GetCanonicalIndex(PackageReference reference)
         {
-            var originFolder = PackageRootFolder(reference);
-            var indexDestinationFolder = PackageContentFolder(reference);
-            return Task.FromResult(CanonicalIndexFile.GetFromFolder(originFolder, indexDestinationFolder, recurse: false));
+            var rootFolder = PackageRootFolder(reference);
+            return Task.FromResult(CanonicalIndexFile.GetFromFolder(rootFolder, recurse: true));
         }
 
         public string PackageContentFolder(PackageReference reference)
@@ -65,7 +59,6 @@ namespace Firely.Fhir.Packages
                 return folder;
             }
         }
-
 
         private string PackageRootFolder(PackageReference reference)
         {
@@ -97,7 +90,7 @@ namespace Firely.Fhir.Packages
         public Task<string> GetFileContent(PackageReference reference, string filename)
         {
 
-            var folder = PackageContentFolder(reference);
+            var folder = PackageRootFolder(reference);
             string path = Path.Combine(folder, filename);
 
             string content;
@@ -129,9 +122,8 @@ namespace Firely.Fhir.Packages
 
         private void CreateIndexFile(PackageReference reference)
         {
-            var originFolder = PackageRootFolder(reference);
-            var destinationFolder = PackageContentFolder(reference);
-            CanonicalIndexFile.Create(originFolder, destinationFolder, recurse: true);
+            var rootFolder = PackageRootFolder(reference);
+            CanonicalIndexFile.Create(rootFolder, recurse: true);
         }
 
         private static string PackageFolderName(PackageReference reference, char glue = '#')

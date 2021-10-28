@@ -9,11 +9,11 @@ namespace Firely.Fhir.Packages
 
     public static class CanonicalIndexer
     {
-        public static List<ResourceMetadata> IndexFolder(string originFolder, bool recurse, string indexDestinationFolder = null)
+        public static List<ResourceMetadata> IndexFolder(string folder, bool recurse)
         {
             var option = recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-            var paths = Directory.GetFiles(originFolder, "*.*", option);
-            return EnumerateMetadata(indexDestinationFolder ?? originFolder, paths).ToList();
+            var paths = Directory.GetFiles(folder, "*.*", option);
+            return EnumerateMetadata(folder, paths).ToList();
         }
 
         private static IEnumerable<ResourceMetadata> EnumerateMetadata(string folder, IEnumerable<string> filepaths)
@@ -28,7 +28,6 @@ namespace Firely.Fhir.Packages
 
         public static ResourceMetadata? GetFileMetadata(string folder, string filepath)
         {
-
             return ElementNavigation.TryParseToSourceNode(filepath, out var node)
                     ? new ResourceMetadata
                     {
