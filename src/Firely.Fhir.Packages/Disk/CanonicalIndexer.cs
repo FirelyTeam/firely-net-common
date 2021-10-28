@@ -28,21 +28,9 @@ namespace Firely.Fhir.Packages
 
         public static ResourceMetadata? GetFileMetadata(string folder, string filepath)
         {
-            ISourceNode node;
-            try
-            {
-                node = ElementNavigation.ParseToSourceNode(filepath);
-            }
-            catch (Exception)
-            {
-                node = null;
-            }
-            return node is null
+
+            return ElementNavigation.TryParseToSourceNode(filepath, out var node)
                     ? new ResourceMetadata
-                    {
-                        FileName = GetRelativePath(folder, filepath)
-                    }
-                    : new ResourceMetadata
                     {
                         FileName = GetRelativePath(folder, filepath),
                         ResourceType = node.Name,
@@ -54,6 +42,10 @@ namespace Firely.Fhir.Packages
                         FhirVersion = node.GetString("fhirVersion"),
                         HasSnapshot = node.checkForSnapshot(),
                         HasExpansion = node.checkForExpansion()
+                    }
+                    : new ResourceMetadata
+                    {
+                        FileName = GetRelativePath(folder, filepath)
                     };
         }
 
