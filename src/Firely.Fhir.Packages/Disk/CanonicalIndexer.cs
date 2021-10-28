@@ -31,7 +31,8 @@ namespace Firely.Fhir.Packages
             return ElementNavigation.TryParseToSourceNode(filepath, out var node)
                     ? new ResourceMetadata
                     {
-                        FileName = GetRelativePath(folder, filepath),
+                        FileName = Path.GetFileName(filepath),
+                        FilePath = GetRelativePath(folder, filepath),
                         ResourceType = node.Name,
                         Id = node.GetString("id"),
                         Canonical = node.GetString("url"),
@@ -44,7 +45,8 @@ namespace Firely.Fhir.Packages
                     }
                     : new ResourceMetadata
                     {
-                        FileName = GetRelativePath(folder, filepath)
+                        FileName = Path.GetFileName(filepath),
+                        FilePath = GetRelativePath(folder, filepath)
                     };
         }
 

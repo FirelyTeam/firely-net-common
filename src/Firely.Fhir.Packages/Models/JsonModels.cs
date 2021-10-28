@@ -228,6 +228,9 @@ namespace Firely.Fhir.Packages
         [JsonProperty("filename")]
         public string FileName;
 
+        [JsonProperty("filepath")]
+        public string FilePath;
+
         [JsonProperty("resourceType")]
         public string ResourceType;
 
@@ -260,6 +263,7 @@ namespace Firely.Fhir.Packages
         public void CopyTo(ResourceMetadata other)
         {
             other.FileName = FileName;
+            other.FilePath = FilePath;
             other.ResourceType = ResourceType;
             other.Id = Id;
             other.Canonical = Canonical;
