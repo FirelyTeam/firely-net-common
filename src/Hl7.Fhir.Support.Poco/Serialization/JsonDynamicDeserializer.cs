@@ -149,6 +149,7 @@ namespace Hl7.Fhir.Serialization
 
             ExceptionAggregator aggregator = new();
             var empty = true;
+            var plps = new FhirPrimitiveListParsingState();
 
             while (reader.TokenType != JsonTokenType.EndObject)
             {
@@ -182,10 +183,13 @@ namespace Hl7.Fhir.Serialization
                 // read past the property name into the value
                 reader.Read();
 
-                var partial = deserializePropertyValue(target, currentPropertyName, propMapping, propValueMapping, ref reader);
+                var partial = deserializePropertyValue(target, currentPropertyName, propMapping, propValueMapping, ref reader, plps);
                 aggregator.Add(partial.Exception);
 
             }
+
+            // check for single array properties containing a null
+            aggregator.Add(plps.Check(ref reader));
 
             // read past object
             reader.Read();
@@ -205,9 +209,17 @@ namespace Hl7.Fhir.Serialization
         /// <param name="propertyMapping">The cached metadata for the POCO's property we are setting.</param>
         /// <param name="propertyValueMapping">The cached metadata for the type of the property to set.</param>
         /// <param name="reader">The reader to deserialize from.</param>
+        /// <param name="plps">State used internally by the parser.</param>
         /// <remarks>Expects the reader to be positioned on the property value.
         /// Reader will be on the first token after the property value upon return.</remarks>
-        private PartialDeserialization<Base> deserializePropertyValue(Base target, string propertyName, PropertyMapping propertyMapping, ClassMapping propertyValueMapping, ref Utf8JsonReader reader)
+        private PartialDeserialization<Base> deserializePropertyValue(
+            Base target, 
+            string propertyName, 
+            PropertyMapping propertyMapping, 
+            ClassMapping propertyValueMapping, 
+            ref Utf8JsonReader reader,
+            FhirPrimitiveListParsingState plps
+            )
         {
             if (propertyValueMapping.IsFhirPrimitive)
             {
@@ -217,7 +229,9 @@ namespace Hl7.Fhir.Serialization
 
                 if (propertyMapping.IsCollection)
                 {
-                    var result = deserializeFhirPrimitiveList(existingValue as IList, propertyName, propertyValueMapping, ref reader);
+                    // Note that the POCO model will always allocate a new list if the property had not been set before,
+                    // so there is always an existingValue;
+                    var result = deserializeFhirPrimitiveList((IList)existingValue!, propertyName, propertyValueMapping, ref reader, plps);
                     propertyMapping.SetValue(target, result.PartialResult);
                     return new(target, result.Exception);
                 }
@@ -266,6 +280,9 @@ namespace Hl7.Fhir.Serialization
             var listInstance = propertyValueMapping.ListFactory();
             var aggregator = new ExceptionAggregator();
 
+            if (reader.TokenType == JsonTokenType.EndArray)
+                aggregator.Add(ERR.ARRAYS_CANNOT_BE_EMPTY.With(ref reader));
+
             // Can't make an iterator because of the ref readers struct, so need
             // to simply create a list by Adding(). Not the fastest approach :-(
             while (reader.TokenType != JsonTokenType.EndArray)
@@ -278,18 +295,43 @@ namespace Hl7.Fhir.Serialization
             // Read past end of array
             reader.Read();
 
-            if (listInstance.Count == 0)
-                aggregator.Add(ERR.ARRAYS_CANNOT_BE_EMPTY.With(ref reader));
-
             return new(listInstance, aggregator.Aggregate());
+        }
+
+        private class FhirPrimitiveListParsingState
+        {
+            public Dictionary<string, string?> SingleArraysWithNull = new();
+
+            public JsonFhirException? Check(ref Utf8JsonReader reader)
+            {
+                var relevantElements = SingleArraysWithNull.Where(kvp => kvp.Value is not null).Select(kvp => kvp.Key);
+
+                if (relevantElements.Any())
+                {
+                    return ERR.PRIMITIVE_ARRAYS_LONELY_NULL.With(ref reader, string.Join(", ", relevantElements));
+                }
+                else
+                    return null;
+            }
+             
         }
 
         /// <summary>
         /// Reads a list of FHIR primitives (either from a name or _name property).
         /// </summary>
         /// <remarks>Upon completion, reader will be located at the next token afther the list.</remarks>
-        private PartialDeserialization<IList> deserializeFhirPrimitiveList(IList? existingPrimitiveList, string propertyName, ClassMapping propertyValueMapping, ref Utf8JsonReader reader)
+        private PartialDeserialization<IList> deserializeFhirPrimitiveList(
+            IList existingList, 
+            string propertyName, 
+            ClassMapping propertyValueMapping, 
+            ref Utf8JsonReader reader,
+            FhirPrimitiveListParsingState state
+            )
         {
+            bool hadLonely = 
+                state.SingleArraysWithNull.Any() &&
+                state.SingleArraysWithNull.Remove(propertyName.TrimStart('_')); 
+
             if (reader.TokenType != JsonTokenType.StartArray)
             {
                 reader.Recover();        // skip the whole array
@@ -299,32 +341,34 @@ namespace Hl7.Fhir.Serialization
             // read into array
             reader.Read();
 
-            var existed = existingPrimitiveList is not null;
-            IList resultList = existingPrimitiveList ??
-                propertyValueMapping.ListFactory() ??
-                throw new ArgumentException($"Type of property '{propertyName}' should be a subtype of IList<PrimitiveType>. " + ERR.GenerateLocationMessage(ref reader), nameof(propertyValueMapping));
+            int originalSize = existingList.Count;
 
             // Can't make an iterator because of the ref readers struct, so need
             // to simply create a list by Adding(). Not the fastest approach :-(
             int elementIndex = 0;
             ExceptionAggregator aggregator = new();
 
+            if (reader.TokenType == JsonTokenType.EndArray)
+            {
+                aggregator.Add(ERR.ARRAYS_CANNOT_BE_EMPTY.With(ref reader));
+                if(!hadLonely) state.SingleArraysWithNull.Add(propertyName.TrimStart('_'), null);
+            }
+
             while (reader.TokenType != JsonTokenType.EndArray)
             {
-                if (elementIndex >= resultList.Count)
-                {
-                    //TODO: not an empty array
-                    //TODO: not an array with just nulls
-                    //TODO: x and _x may not a null at the same index
-                    //TODO: x and _x should have the same # of items
-                    resultList.Add(propertyValueMapping.Factory());
-                }
+                if (elementIndex >= originalSize)
+                    existingList.Add(propertyValueMapping.Factory());
 
-                var targetPrimitive = (PrimitiveType)resultList[elementIndex]!;
+                var targetPrimitive = (PrimitiveType)existingList[elementIndex]!;
 
                 if(reader.TokenType == JsonTokenType.Null)
                 {
-                    // don't add any new data here
+                    if (originalSize == 0 && !hadLonely) state.SingleArraysWithNull.TryAdd(propertyName.TrimStart('_'), propertyName);
+
+                    if (originalSize > 0 && elementIndex < originalSize && targetPrimitive.Count() == 0)
+                        aggregator.Add(ERR.PRIMITIVE_ARRAYS_BOTH_NULL.With(ref reader));
+
+                    // don't read aby any new data into the primitive here
                     reader.Read();
                 }
                 else
@@ -336,10 +380,13 @@ namespace Hl7.Fhir.Serialization
                 elementIndex += 1;
             }
 
+            if (originalSize > 0 && elementIndex != originalSize)
+                aggregator.Add(ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE.With(ref reader));
+
             // read past array to next property or end of object
             reader.Read();
 
-            return new(resultList, aggregator.Aggregate());
+            return new(existingList, aggregator.Aggregate());
         }
 
         /// <summary>
@@ -384,7 +431,7 @@ namespace Hl7.Fhir.Serialization
             if (propertyValueMapping.IsResource)
             {
                 var result = DeserializeResourceInternal(ref reader);
-                return propertyValueMapping.NativeType.IsAssignableFrom(result.GetType())
+                return (result.PartialResult is null || propertyValueMapping.NativeType.IsAssignableFrom(result.PartialResult.GetType()))
                     ? result.Cast<object>()
                     : throw new InvalidOperationException($"Found a resource of type '{result.GetType()}', but expected a " +
                         $"'{propertyValueMapping.NativeType}'. " + ERR.GenerateLocationMessage(ref reader));
@@ -611,6 +658,7 @@ namespace Hl7.Fhir.Serialization
             }
         }
 
+        //TODO: check & guard direct casts
     }
 
 

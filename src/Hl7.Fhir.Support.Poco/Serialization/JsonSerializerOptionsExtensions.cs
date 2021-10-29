@@ -26,9 +26,13 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public static JsonSerializerOptions ForFhir(this JsonSerializerOptions options, Assembly modelAssembly, SerializationFilter? filter = default)
         {
-            options.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
-            options.Converters.Add(new JsonFhirConverter(modelAssembly, filter));
-            return options;
+            var result = new JsonSerializerOptions(options)
+            {
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            };
+
+            result.Converters.Add(new JsonFhirConverter(modelAssembly, filter));
+            return result;
         }
 
         /// <summary>
@@ -36,9 +40,13 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public static JsonSerializerOptions ForFhir(this JsonSerializerOptions options, JsonFhirConverter converter)
         {
-            options.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
-            options.Converters.Add(converter);
-            return options;
+            var result = new JsonSerializerOptions(options)
+            {
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            };
+
+            result.Converters.Add(converter);
+            return result;
         }
 
         /// <summary>
@@ -46,8 +54,10 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public static JsonSerializerOptions Compact(this JsonSerializerOptions options)
         {
-            options.WriteIndented = false;
-            return options;
+            return new JsonSerializerOptions(options)
+            {
+                WriteIndented = false
+            };
         }
 
 
@@ -56,8 +66,10 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public static JsonSerializerOptions Pretty(this JsonSerializerOptions options)
         {
-            options.WriteIndented = true;
-            return options;
+            return new JsonSerializerOptions(options)
+            {
+                WriteIndented = true
+            };
         }
     }
 }

@@ -78,7 +78,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 else
                     result.PartialResult.Should().Be(data);
             }
-            else if (code == JsonSerializerErrors.EXPECTED_PRIMITIVE_NOT_ARRAY.ErrorCode || 
+            else if (code == JsonSerializerErrors.EXPECTED_PRIMITIVE_NOT_ARRAY.ErrorCode ||
                 code == JsonSerializerErrors.EXPECTED_PRIMITIVE_NOT_OBJECT.ErrorCode)
 #pragma warning disable CS0642 // Possible mistaken empty statement
                 ; // nothing to check
@@ -148,8 +148,8 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
             PartialDeserialization<PrimitiveType> test()
             {
-                var inspector = ModelInspector.ForAssembly(typeof(Resource).Assembly);
-                var deserializer = new JsonDynamicDeserializer(typeof(Resource).Assembly);
+                var inspector = ModelInspector.ForAssembly(typeof(TestPatient).Assembly);
+                var deserializer = new JsonDynamicDeserializer(typeof(TestPatient).Assembly);
                 var mapping = inspector.ImportType(targetType)!;
 
                 var reader = constructReader(value);
@@ -159,6 +159,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             }
 
             var result = test();
+
             if (result.Exception is not null)
             {
                 if (errorcode is not null)
@@ -176,10 +177,10 @@ namespace Hl7.Fhir.Support.Poco.Tests
             }
         }
 
-        internal static PartialDeserialization<Base> TestDeserializeComplex(Type objectType, object testObject, out Utf8JsonReader readerState)
+        private static PartialDeserialization<Base> deserializeComplex(Type objectType, object testObject, out Utf8JsonReader readerState)
         {
-            var inspector = ModelInspector.ForAssembly(typeof(Resource).Assembly);
-            var deserializer = new JsonDynamicDeserializer(typeof(Resource).Assembly);
+            var inspector = ModelInspector.ForAssembly(typeof(TestPatient).Assembly);
+            var deserializer = new JsonDynamicDeserializer(typeof(TestPatient).Assembly);
             var mapping = inspector.ImportType(objectType)!;
 
             Utf8JsonReader reader = constructReader(testObject);
@@ -214,7 +215,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
                     _ => throw new InvalidOperationException("Wrong kind of error received.")
                 };
 
-                actual.Length.Should().Be(expected.Length);
+                actual.Length.Should().Be(expected.Length, because: e.Message);
                 _ = actual.Zip(expected, (a, e) => a.ErrorCode.Should().Be(e.ErrorCode));
             }
             else
@@ -224,47 +225,14 @@ namespace Hl7.Fhir.Support.Poco.Tests
         }
 
         [TestMethod]
-        [DynamicData(nameof(CatchesIncorrectlyStructuredComplexData))]
-        public void CatchesIncorrectlyStructuredComplex(object testObject, JsonTokenType tokenAfterParsing, params JsonFhirException[] errors)
-        {
-            var result = TestDeserializeComplex(typeof(Extension), testObject, out var readerState);
-            assertErrors(result.Exception, errors);
-            readerState.TokenType.Should().Be(tokenAfterParsing);
-        }
-
-        public static IEnumerable<object[]> CatchesIncorrectlyStructuredComplexData
-        {
-            get
-            {
-                yield return new object[] { 5, JsonTokenType.Number, JsonSerializerErrors.EXPECTED_START_OF_OBJECT };
-                yield return new object[] { new[] { 2,3 }, JsonTokenType.EndArray, JsonSerializerErrors.START_OF_ARRAY_UNEXPECTED };
-                yield return new object[] { new { }, JsonTokenType.EndObject, JsonSerializerErrors.OBJECTS_CANNOT_BE_EMPTY };
-                yield return new object[] { new { resourceType = "Whatever" }, JsonTokenType.EndObject,
-                    JsonSerializerErrors.RESOURCETYPE_UNEXPECTED_IN_DT, JsonSerializerErrors.OBJECTS_CANNOT_BE_EMPTY };
-                yield return new object[] { new { }, JsonTokenType.EndObject, JsonSerializerErrors.OBJECTS_CANNOT_BE_EMPTY };
-                yield return new object[] { new { unknown = "test" }, JsonTokenType.EndObject, JsonSerializerErrors.UNKNOWN_PROPERTY_FOUND };
-                yield return new object[] { new { url = "test" }, JsonTokenType.EndObject };
-                yield return new object[] { new { _url = "test" }, JsonTokenType.EndObject, JsonSerializerErrors.USE_OF_UNDERSCORE_ILLEGAL };
-                yield return new object[] { new { resourceType = "whatever", unknown = "test", url = "test" }, JsonTokenType.EndObject,
-                    JsonSerializerErrors.RESOURCETYPE_UNEXPECTED_IN_DT, JsonSerializerErrors.UNKNOWN_PROPERTY_FOUND };
-                yield return new object[] { new { value = "no type suffix" }, JsonTokenType.EndObject,
-                    JsonSerializerErrors.CHOICE_ELEMENT_HAS_NO_TYPE };
-                yield return new object[] { new { valueUnknown = "incorrect type suffix" }, JsonTokenType.EndObject,
-                    JsonSerializerErrors.CHOICE_ELEMENT_HAS_UNKOWN_TYPE };
-                yield return new object[] { new { valueBoolean = true }, JsonTokenType.EndObject };
-                yield return new object[] { new { valueUnknown = "incorrect type suffix", unknown = "unknown" }, JsonTokenType.EndObject,
-                    JsonSerializerErrors.CHOICE_ELEMENT_HAS_UNKOWN_TYPE, JsonSerializerErrors.UNKNOWN_PROPERTY_FOUND };
-            }
-        }
-
-        [TestMethod]
         [DynamicData(nameof(TestDeserializeResourceData))]
+        [DynamicData(nameof(TestDeserializeNestedResource))]
         public void TestDeserializeResource(object testObject, JsonTokenType tokenAfterParsing, params JsonFhirException[] errors)
         {
             var reader = constructReader(testObject);
             reader.Read();
 
-            var deserializer = new JsonDynamicDeserializer(typeof(Resource).Assembly);
+            var deserializer = new JsonDynamicDeserializer(typeof(TestPatient).Assembly);
             var result = deserializer.DeserializeResourceInternal(ref reader);
             assertErrors(result.Exception, errors);
             reader.TokenType.Should().Be(tokenAfterParsing);
@@ -279,79 +247,234 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 yield return new object[] { new { resourceType = 4, crap = 4 }, JsonTokenType.EndObject, JsonSerializerErrors.RESOURCETYPE_SHOULD_BE_STRING };
                 yield return new object[] { new { resourceType = "Doesnotexist", crap = 5 }, JsonTokenType.EndObject, JsonSerializerErrors.UNKNOWN_RESOURCE_TYPE };
                 yield return new object[] { new { resourceType = nameof(OperationOutcome), crap = 5 }, JsonTokenType.EndObject, JsonSerializerErrors.UNKNOWN_PROPERTY_FOUND };
-                yield return new object[] { new { resourceType = nameof(Meta) }, 
+                yield return new object[] { new { resourceType = nameof(Meta) },
                     JsonTokenType.EndObject, JsonSerializerErrors.EXPECTED_A_RESOURCE_TYPE, JsonSerializerErrors.OBJECTS_CANNOT_BE_EMPTY };
             }
 
         }
 
-        [TestMethod]
-        [DynamicData(nameof(TestNormalArrayData), DynamicDataSourceType.Method)]
-        [DynamicData(nameof(TestPrimitiveData), DynamicDataSourceType.Method)]
-        public void TestData(object testObject, Action<ContactDetail> verify, params JsonFhirException[] errors)
+        public static IEnumerable<object[]> TestDeserializeNestedResource
         {
-            var result = TestDeserializeComplex(typeof(ContactDetail), testObject, out var readerState);
-            assertErrors(result.Exception, errors);
-            readerState.TokenType.Should().Be(JsonTokenType.EndObject);
-            var cdResult = result.PartialResult.Should().BeOfType<ContactDetail>().Subject;
-            verify(cdResult);         
+            get
+            {
+                yield return new object[]
+                { 
+                    new
+                    {
+                        resourceType = "Parameters",
+                        parameter = new[] 
+                        { 
+                            new 
+                            { name = "a", resource = new
+                                {
+                                    resourceType = "Patient",
+                                    active = true
+                                } 
+                            }
+                        }
+                    },
+                    JsonTokenType.EndObject
+                };                
+            }
         }
 
-        public static IEnumerable<object[]> TestNormalArrayData()
+        [TestMethod]
+        [DynamicData(nameof(TestPrimitiveArrayData), DynamicDataSourceType.Method)]
+        [DynamicData(nameof(CatchesIncorrectlyStructuredComplexData), DynamicDataSourceType.Method)]
+        [DynamicData(nameof(TestNormalArrayData), DynamicDataSourceType.Method)]
+        [DynamicData(nameof(TestPrimitiveData), DynamicDataSourceType.Method)]        
+        public void TestData(Type t, object testObject, JsonTokenType token, Action<object>? verify, params JsonFhirException[] errors)
         {
-            yield return new object[] { new { name = "Ewout", telecom = 4 }, (Action<ContactDetail>)checkName, 
-                JsonSerializerErrors.EXPECTED_START_OF_OBJECT };
-            yield return new object[] { new { name = "Ewout", telecom = Array.Empty<object>() }, (Action<ContactDetail>)checkName, 
-                JsonSerializerErrors.ARRAYS_CANNOT_BE_EMPTY };
-            yield return new object[] { new { name = "Ewout", telecom = new object[] { new { system = "phone" }, new { systemX = "b" } } },
-                 (Action<ContactDetail>)checkData,
-                JsonSerializerErrors.UNKNOWN_PROPERTY_FOUND  };
-            yield return new object[] { new { name = "Ewout", _telecom = new object[] { new { system = "phone" }, new { systemX = "b" } } },
-                 (Action<ContactDetail>)checkData,
-                JsonSerializerErrors.USE_OF_UNDERSCORE_ILLEGAL, JsonSerializerErrors.UNKNOWN_PROPERTY_FOUND };
-            yield return new object[] { new { name = new[] { "Ewout" } }, (Action<ContactDetail>)(_ => { }), JsonSerializerErrors.EXPECTED_PRIMITIVE_NOT_ARRAY };
+            var result = deserializeComplex(t, testObject, out var readerState);
+            assertErrors(result.Exception, errors);
+            readerState.TokenType.Should().Be(token);
+            var cdResult = result.PartialResult.Should().BeOfType(t);
+            verify?.Invoke(result.PartialResult!);
+        }
 
-            static void checkName(ContactDetail parsed) => parsed.Name.Should().Be("Ewout");
+        private static object?[] data<T>(object data, Action<object> verifier, params object[] args) =>
+            new[] { typeof(T), data, JsonTokenType.EndObject, verifier }.Concat(args).ToArray();
 
-            static void checkData(ContactDetail parsed)
+        private static object?[] data<T>(object data, JsonTokenType token, params object[] args) =>
+            new[] { typeof(T), data, token, default(Action<object>) }.Concat(args).ToArray();
+
+        private static object?[] data<T>(object data, params object[] args) =>
+            new[] { typeof(T), data, JsonTokenType.EndObject, null }.Concat(args).ToArray();
+
+
+        public static IEnumerable<object?[]> CatchesIncorrectlyStructuredComplexData()
+        {
+            yield return new object?[] { typeof(Extension), 5, JsonTokenType.Number, default(Action<object>), JsonSerializerErrors.EXPECTED_START_OF_OBJECT };
+            yield return data<Extension>(5, JsonTokenType.Number, JsonSerializerErrors.EXPECTED_START_OF_OBJECT);
+            yield return data<Extension>(new[] { 2, 3 }, JsonTokenType.EndArray, JsonSerializerErrors.START_OF_ARRAY_UNEXPECTED);
+            yield return data<Extension>(new { }, JsonSerializerErrors.OBJECTS_CANNOT_BE_EMPTY);
+            yield return data<Extension>(new { resourceType = "Whatever" },
+                JsonSerializerErrors.RESOURCETYPE_UNEXPECTED_IN_DT, JsonSerializerErrors.OBJECTS_CANNOT_BE_EMPTY);
+            yield return data<Extension>(new { }, JsonSerializerErrors.OBJECTS_CANNOT_BE_EMPTY);
+            yield return data<Extension>(new { unknown = "test" }, JsonSerializerErrors.UNKNOWN_PROPERTY_FOUND);
+            yield return data<Extension>(new { url = "test" });
+            yield return data<Extension>(new { _url = "test" }, JsonSerializerErrors.USE_OF_UNDERSCORE_ILLEGAL);
+            yield return data<Extension>(new { resourceType = "whatever", unknown = "test", url = "test" },
+                    JsonSerializerErrors.RESOURCETYPE_UNEXPECTED_IN_DT, JsonSerializerErrors.UNKNOWN_PROPERTY_FOUND);
+            yield return data<Extension>(new { value = "no type suffix" }, JsonSerializerErrors.CHOICE_ELEMENT_HAS_NO_TYPE);
+            yield return data<Extension>(new { valueUnknown = "incorrect type suffix" }, JsonSerializerErrors.CHOICE_ELEMENT_HAS_UNKOWN_TYPE);
+            yield return data<Extension>(new { valueBoolean = true }, JsonTokenType.EndObject);
+            yield return data<Extension>(new { valueUnknown = "incorrect type suffix", unknown = "unknown" },
+                    JsonSerializerErrors.CHOICE_ELEMENT_HAS_UNKOWN_TYPE, JsonSerializerErrors.UNKNOWN_PROPERTY_FOUND);
+        }
+
+        public static IEnumerable<object?[]> TestNormalArrayData()
+        {
+            yield return data<ContactDetail>(new { name = "Ewout", telecom = 4 }, checkName, JsonSerializerErrors.EXPECTED_START_OF_OBJECT);
+            yield return data<ContactDetail>(new { name = "Ewout", telecom = Array.Empty<object>() }, checkName,
+                JsonSerializerErrors.ARRAYS_CANNOT_BE_EMPTY);
+            yield return data<ContactDetail>(new { name = "Ewout", telecom = new object[] { new { system = "phone" }, new { systemX = "b" } } },
+                    checkData, JsonSerializerErrors.UNKNOWN_PROPERTY_FOUND);
+            yield return data<ContactDetail>(new { name = "Ewout", _telecom = new object[] { new { system = "phone" }, new { systemX = "b" } } },
+                 checkData, JsonSerializerErrors.USE_OF_UNDERSCORE_ILLEGAL, JsonSerializerErrors.UNKNOWN_PROPERTY_FOUND);
+            yield return data<ContactDetail>(new { name = new[] { "Ewout" } }, JsonSerializerErrors.EXPECTED_PRIMITIVE_NOT_ARRAY);
+
+            static void checkName(object parsed) => parsed.Should().BeOfType<ContactDetail>().Which.Name.Should().Be("Ewout");
+
+            static void checkData(object parsedObject)
             {
-                checkName(parsed);
+                checkName(parsedObject);
+
+                var parsed = parsedObject.Should().BeOfType<ContactDetail>().Subject;
                 parsed.Telecom.Count.Should().Be(2);
                 parsed.Telecom[0].System.Should().Be(ContactPoint.ContactPointSystem.Phone);
                 parsed.Telecom[1].Count().Should().Be(0);
             }
         }
 
-        public static IEnumerable<object[]> TestPrimitiveData()
+        public static IEnumerable<object?[]> TestPrimitiveData()
         {
-            yield return new object[] { new { name = new[] { "Ewout" } }, (Action<ContactDetail>)(_ => { }),
-                JsonSerializerErrors.EXPECTED_PRIMITIVE_NOT_ARRAY };
-            yield return new object[] { new { name = new { dummy = "Ewout" } }, (Action<ContactDetail>)(_ => { }),
-                JsonSerializerErrors.EXPECTED_PRIMITIVE_NOT_OBJECT };
-            yield return new object[] { new { _name = new[] { "Ewout" } }, (Action<ContactDetail>)(_ => { }),
-                JsonSerializerErrors.EXPECTED_START_OF_OBJECT };
-            yield return new object[] { new { _name = "Ewout" }, (Action<ContactDetail>)(_ => { }),
-                JsonSerializerErrors.EXPECTED_START_OF_OBJECT };
-            yield return new object[] { new { name = "Ewout" }, (Action<ContactDetail>)checkName };
-            yield return new object[] { new { _name = new { id = "12345" } }, (Action<ContactDetail>)checkId };
-            yield return new object[] { new { name = "Ewout", _name = new { id = "12345" } }, (Action<ContactDetail>)checkAll };
+            yield return data<ContactDetail>(new { name = new[] { "Ewout" } }, JsonSerializerErrors.EXPECTED_PRIMITIVE_NOT_ARRAY);
+            yield return data<ContactDetail>(new { name = new { dummy = "Ewout" } }, JsonSerializerErrors.EXPECTED_PRIMITIVE_NOT_OBJECT);
+            yield return data<ContactDetail>(new { _name = new[] { "Ewout" } }, JsonSerializerErrors.EXPECTED_START_OF_OBJECT);
+            yield return data<ContactDetail>(new { _name = "Ewout" }, JsonSerializerErrors.EXPECTED_START_OF_OBJECT);
+            yield return data<ContactDetail>(new { name = "Ewout" }, checkName);
+            yield return data<ContactDetail>(new { _name = new { id = "12345" } }, checkId);
+            yield return data<ContactDetail>(new { name = "Ewout", _name = new { id = "12345" } }, checkAll);
 
-            static void checkName(ContactDetail parsed) => parsed.NameElement.Value.Should().Be("Ewout");
-            static void checkId(ContactDetail parsed) => parsed.NameElement.ElementId.Should().Be("12345");
-            static void checkAll(ContactDetail parsed)
+            static void checkName(object parsed) => parsed.Should().BeOfType<ContactDetail>().Which.NameElement.Value.Should().Be("Ewout");
+            static void checkId(object parsed) => parsed.Should().BeOfType<ContactDetail>().Which.NameElement.ElementId.Should().Be("12345");
+            static void checkAll(object parsed)
             {
                 checkName(parsed);
                 checkId(parsed);
             }
         }
 
-        [TestMethod]
-        public void TestParseFullPrimitive()
+        public static IEnumerable<object?[]> TestPrimitiveArrayData()
         {
+            yield return data<TestAddress>(new { line = default(string[]) }, JsonSerializerErrors.EXPECTED_START_OF_ARRAY);
+            yield return data<TestAddress>(new { line = new string[0] }, JsonSerializerErrors.ARRAYS_CANNOT_BE_EMPTY);
+            yield return data<TestAddress>(new { line = new string[0], _line = new string[0] }, JsonSerializerErrors.ARRAYS_CANNOT_BE_EMPTY, JsonSerializerErrors.ARRAYS_CANNOT_BE_EMPTY);
+            yield return data<TestAddress>(new { line = new string[0], _line = new string?[] { null } }, JsonSerializerErrors.ARRAYS_CANNOT_BE_EMPTY);
+            yield return data<TestAddress>(new { line = new string?[] { null }, _line = new string?[] { null } }, JsonSerializerErrors.PRIMITIVE_ARRAYS_BOTH_NULL);
+            yield return data<TestAddress>(new { line = new string?[] { null }, _line = new string?[] { null, null } }, JsonSerializerErrors.PRIMITIVE_ARRAYS_BOTH_NULL, JsonSerializerErrors.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
+            yield return data<TestAddress>(new { line = new string?[] { null, null }, _line = new string?[] { null } }, JsonSerializerErrors.PRIMITIVE_ARRAYS_BOTH_NULL, JsonSerializerErrors.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
+            yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" } }, checkName);
+            yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" }, _line = new[] { new { id = "1" } } }, checkId1AndName, JsonSerializerErrors.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
+            yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" }, _line = new[] { new { id = "1" }, null } }, checkId1AndName); 
+            yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" }, _line = new[] { new { id = "1" }, new { id = "2" } } }, checkAll);
+            yield return data<TestAddress>(new { line = new[] { "Ewout", null }, _line = new[] { null, new { id = "2" } } });
+            yield return data<TestAddress>(new { line = new[] { "Ewout", null }, _line = new[] { new { id = "1" }, null } }, checkId1, JsonSerializerErrors.PRIMITIVE_ARRAYS_BOTH_NULL);
+            yield return data<TestAddress>(new { _line = new[] { new { id = "1" }, null } }, checkId1, JsonSerializerErrors.PRIMITIVE_ARRAYS_LONELY_NULL);
+            yield return data<TestAddress>(new { _line = new[] { new { id = "1" }, new { id = "2" } } }, checkIds);
+
+            static void checkName(object parsed) => parsed.Should().BeOfType<TestAddress>().Which.Line.Should().BeEquivalentTo("Ewout", "Wouter");
+            static void checkIds(object parsed) => 
+                parsed.Should().BeOfType<TestAddress>().Which.LineElement.Select(le => le.ElementId).Should().BeEquivalentTo("1","2");
+            static void checkId1(object parsed) =>
+                parsed.Should().BeOfType<TestAddress>().Which.LineElement.Select(le => le.ElementId).Should().BeEquivalentTo("1", null);
+            static void checkId1AndName(object parsed)
+            {
+                checkName(parsed);
+                checkId1(parsed);
+            }
+            static void checkAll(object parsed)
+            {
+                checkName(parsed);
+                checkIds(parsed);
+            }
 
         }
-        //TODO: test fhir primitive with id/extension
-        // TODO: test recovery of object using a nested object + property after it.
+
+        [TestMethod]
+        public void TestParseResourcePublicMethod()
+        {
+            var deserializer = new JsonDynamicDeserializer(typeof(Resource).Assembly);
+            var reader = constructReader(
+                    new
+                    {
+                        resourceType = "Parameters",
+                        parameter = new[]
+                        {
+                            new { name = "a" }
+                        }
+                    });
+
+            deserializer.DeserializeResource(ref reader).Should().NotBeNull();
+
+            reader = constructReader(
+                    new
+                    {
+                        resourceType = "ParametersX",
+                    });
+
+            try
+            {
+                deserializer.DeserializeResource(ref reader);
+                Assert.Fail();
+            }
+            catch(DeserializationFailedException)
+            {
+                // ok!
+            }
+        }
+
+        [TestMethod]
+        public void TestParseObjectPublicMethod()
+        {
+            var deserializer = new JsonDynamicDeserializer(typeof(Resource).Assembly);
+            var reader = constructReader(
+                    new
+                    {
+                        name = "Ewout"
+                    });
+
+            deserializer.DeserializeObject<ContactDetail>(ref reader).Should().NotBeNull();
+
+            reader = constructReader(
+                    new
+                    {
+                        nameX = "Ewout",
+                    });
+
+            try
+            {
+                deserializer.DeserializeObject<ContactDetail>(ref reader);
+                Assert.Fail();
+            }
+            catch (DeserializationFailedException)
+            {
+                // ok!
+            }
+
+            try
+            {
+                deserializer.DeserializeObject(typeof(JsonFhirDeserializationTests), ref reader);
+                Assert.Fail();
+            }
+            catch (ArgumentException)
+            {
+                // ok!
+            }
+        }
     }
+
+    // TODO: test recovery
 }
 #nullable restore

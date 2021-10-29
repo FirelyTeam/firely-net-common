@@ -96,6 +96,9 @@ namespace Hl7.Fhir.Serialization
         internal static readonly JsonFhirException RESOURCETYPE_UNEXPECTED_IN_DT    = new("JSON119", "The 'resourceType' property should only be used in resources.");
         internal static readonly JsonFhirException OBJECTS_CANNOT_BE_EMPTY          = new("JSON120", "An object needs to have at least one property.");
         internal static readonly JsonFhirException ARRAYS_CANNOT_BE_EMPTY           = new("JSON121", "An array needs to have at least one element.");
+        internal static readonly JsonFhirException PRIMITIVE_ARRAYS_INCOMPAT_SIZE   = new("JSON122", "Primitive arrays split in two properties should have the same size.");
+        internal static readonly JsonFhirException PRIMITIVE_ARRAYS_BOTH_NULL       = new("JSON123", "Primitive arrays split in two properties should not both have a null at the same position.");
+        internal static readonly JsonFhirException PRIMITIVE_ARRAYS_LONELY_NULL     = new("JSON123", "Property '{0}' is a single primitive array and should not contain a null.");
 
         /// <summary>
         /// The set of errors that can be considered to not lose data and so can be used to simulate the old "permissive" parsing option.
@@ -118,7 +121,9 @@ namespace Hl7.Fhir.Serialization
             RESOURCETYPE_UNEXPECTED_IN_DT,
 
             // Empty objects and arrays can be ignored without discarding data
-            OBJECTS_CANNOT_BE_EMPTY, ARRAYS_CANNOT_BE_EMPTY
+            OBJECTS_CANNOT_BE_EMPTY, ARRAYS_CANNOT_BE_EMPTY,
+
+            PRIMITIVE_ARRAYS_INCOMPAT_SIZE, PRIMITIVE_ARRAYS_BOTH_NULL, PRIMITIVE_ARRAYS_LONELY_NULL
         };
 
         internal static JsonFhirException With(this JsonFhirException protoType, ref Utf8JsonReader reader, params object?[] parameters)
