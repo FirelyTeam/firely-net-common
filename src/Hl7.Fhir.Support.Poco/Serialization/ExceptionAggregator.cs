@@ -9,6 +9,7 @@
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -18,22 +19,20 @@ using System.Text.Json;
 
 namespace Hl7.Fhir.Serialization
 {
-    internal class ExceptionAggregator
+    internal class ExceptionAggregator : IEnumerable<JsonFhirException>
     {
-        public List<Exception> _aggregated = new();
+        public List<JsonFhirException> _aggregated = new();
 
-        public void Add(Exception? e)
+        public void Add(JsonFhirException? e)
         {
             if(e is not null)
                 _aggregated.Add(e);
         }
 
-        public Exception? Aggregate()
-        {
-            if (_aggregated.Count == 0) return null;
+        public bool HasExceptions => _aggregated.Count > 0;
 
-            return _aggregated.Count != 1 ? new AggregateException(_aggregated) : _aggregated.Single();
-        }
+        public IEnumerator<JsonFhirException> GetEnumerator() => ((IEnumerable<JsonFhirException>)_aggregated).GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)_aggregated).GetEnumerator();
     }
 
 

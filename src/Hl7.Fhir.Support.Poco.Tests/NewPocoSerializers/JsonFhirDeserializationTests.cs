@@ -57,26 +57,27 @@ namespace Hl7.Fhir.Support.Poco.Tests
             var reader = constructReader(data);
             reader.Read();
 
-            var result = JsonDynamicDeserializer.DeserializePrimitiveValue(ref reader, expected);
+            ExceptionAggregator aggregator = new();
+            var result = JsonDynamicDeserializer.DeserializePrimitiveValue(ref reader, expected, aggregator);
 
             if (code is not null)
-                result.Exception.Should().BeOfType<JsonFhirException>().Which.ErrorCode.Should().Be(code);
+                aggregator.Single().ErrorCode.Should().Be(code);
             else
-                result.Exception.Should().BeNull();
+                aggregator.Should().BeEmpty();
 
             if (expected == typeof(byte[]))
             {
-                if (result.Exception is null)
-                    Convert.ToBase64String((byte[])result.PartialResult!).Should().Be((string)data);
+                if (!aggregator.HasExceptions)
+                    Convert.ToBase64String((byte[])result!).Should().Be((string)data);
                 else
-                    result.PartialResult.Should().Be(data);
+                    result.Should().Be(data);
             }
             else if (expected == typeof(DateTimeOffset))
             {
-                if (result.Exception is null)
-                    result.PartialResult.Should().BeOfType<DateTimeOffset>().Which.ToFhirDate().Should().Be((string)data);
+                if (!aggregator.HasExceptions)
+                    result.Should().BeOfType<DateTimeOffset>().Which.ToFhirDate().Should().Be((string)data);
                 else
-                    result.PartialResult.Should().Be(data);
+                    result.Should().Be(data);
             }
             else if (code == JsonSerializerErrors.EXPECTED_PRIMITIVE_NOT_ARRAY.ErrorCode ||
                 code == JsonSerializerErrors.EXPECTED_PRIMITIVE_NOT_OBJECT.ErrorCode)
@@ -84,7 +85,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 ; // nothing to check
 #pragma warning restore CS0642 // Possible mistaken empty statement
             else
-                result.PartialResult.Should().Be(data);
+                result.Should().Be(data);
         }
 
         [TestMethod]
@@ -101,16 +102,16 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [DataRow(null, "JSON103")]
         public void DeriveClassMapping(object typename, string errorcode, bool checkPartial = false)
         {
-            var result = test(typename);
+            var (result,error) = test(typename);
             if (errorcode is null)
-                result.Success.Should().BeTrue();
+                error.Should().BeNull();
             else
-                result.Exception.Should().BeOfType<JsonFhirException>().Which.ErrorCode.Should().Be(errorcode);
+                error?.ErrorCode.Should().Be(errorcode);
 
             if (errorcode is null || checkPartial)
-                result.PartialResult!.Name.Should().Be((string)typename);
+                result!.Name.Should().Be((string)typename);
 
-            static PartialDeserialization<ClassMapping> test(object typename)
+            static (ClassMapping?, JsonFhirException?) test(object typename)
             {
                 var inspector = ModelInspector.ForAssembly(typeof(Resource).Assembly);
 
@@ -145,8 +146,9 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [DataRow("2007-02-03", typeof(Instant), null, 2007)]
         public void ParsePrimitiveValue(object value, Type targetType, string errorcode, object? expectedObjectValue = null)
         {
+            ExceptionAggregator aggregator = new();
 
-            PartialDeserialization<PrimitiveType> test()
+            PrimitiveType test()
             {
                 var inspector = ModelInspector.ForAssembly(typeof(TestPatient).Assembly);
                 var deserializer = new JsonDynamicDeserializer(typeof(TestPatient).Assembly);
@@ -155,29 +157,29 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 var reader = constructReader(value);
                 reader.Read();
 
-                return deserializer.DeserializeFhirPrimitive(null, "dummy", mapping, ref reader);
+                return deserializer.DeserializeFhirPrimitive(null, "dummy", mapping, ref reader, aggregator);
             }
 
             var result = test();
 
-            if (result.Exception is not null)
+            if (aggregator.HasExceptions)
             {
                 if (errorcode is not null)
-                    result.Exception.Should().BeOfType<JsonFhirException>().Which.ErrorCode.Should().Be(errorcode);
+                    aggregator.Single().Should().BeOfType<JsonFhirException>().Which.ErrorCode.Should().Be(errorcode);
                 else
-                    throw result.Exception;
+                    throw aggregator.Single();
             }
 
             if (expectedObjectValue is not null)
             {
                 if (targetType != typeof(Instant))
-                    result.PartialResult!.ObjectValue.Should().BeEquivalentTo(expectedObjectValue);
+                    result.ObjectValue.Should().BeEquivalentTo(expectedObjectValue);
                 else
-                    result.PartialResult!.ObjectValue.Should().BeOfType<DateTimeOffset>().Which.Year.Should().Be((int)expectedObjectValue!);
+                    result.ObjectValue.Should().BeOfType<DateTimeOffset>().Which.Year.Should().Be((int)expectedObjectValue!);
             }
         }
 
-        private static PartialDeserialization<Base> deserializeComplex(Type objectType, object testObject, out Utf8JsonReader readerState)
+        private static Base deserializeComplex(Type objectType, object testObject, out Utf8JsonReader readerState, ExceptionAggregator aggregator)
         {
             var inspector = ModelInspector.ForAssembly(typeof(TestPatient).Assembly);
             var deserializer = new JsonDynamicDeserializer(typeof(TestPatient).Assembly);
@@ -188,10 +190,10 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
             Base newObject = (Base)mapping.Factory();
 
-            var result = deserializer.DeserializeObjectInto(newObject, mapping, ref reader, inResource: false);
+            deserializer.DeserializeObjectInto(newObject, mapping, ref reader, inResource: false, aggregator);
             readerState = reader; // copy
 
-            return result;
+            return newObject;
         }
 
         private static Utf8JsonReader constructReader(object testObject)
@@ -201,26 +203,18 @@ namespace Hl7.Fhir.Support.Poco.Tests
             return reader;
         }
 
-        private void assertErrors(Exception? e, JsonFhirException[] expected)
+        private static void assertErrors(IEnumerable<JsonFhirException> exceptions, JsonFhirException[] expected)
         {
             if (expected.Length > 0)
             {
-                e.Should().NotBeNull();
+                exceptions.Should().NotBeEmpty();
 
-                JsonFhirException[] actual = e switch
-                {
-
-                    JsonFhirException jfe => new[] { jfe },
-                    AggregateException ae => ae.Flatten().InnerExceptions.Cast<JsonFhirException>().ToArray(),
-                    _ => throw new InvalidOperationException("Wrong kind of error received.")
-                };
-
-                actual.Length.Should().Be(expected.Length, because: e.Message);
-                _ = actual.Zip(expected, (a, e) => a.ErrorCode.Should().Be(e.ErrorCode));
+                exceptions.Count().Should().Be(expected.Length);
+                _ = exceptions.Zip(expected, (a, e) => a.ErrorCode.Should().Be(e.ErrorCode));
             }
             else
             {
-                e.Should().BeNull();
+                exceptions.Should().BeEmpty();
             }
         }
 
@@ -233,8 +227,9 @@ namespace Hl7.Fhir.Support.Poco.Tests
             reader.Read();
 
             var deserializer = new JsonDynamicDeserializer(typeof(TestPatient).Assembly);
-            var result = deserializer.DeserializeResourceInternal(ref reader);
-            assertErrors(result.Exception, errors);
+            var aggregator = new ExceptionAggregator();
+            _ = deserializer.DeserializeResourceInternal(ref reader, aggregator);
+            assertErrors(aggregator, errors);
             reader.TokenType.Should().Be(tokenAfterParsing);
         }
 
@@ -285,11 +280,12 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [DynamicData(nameof(TestPrimitiveData), DynamicDataSourceType.Method)]        
         public void TestData(Type t, object testObject, JsonTokenType token, Action<object>? verify, params JsonFhirException[] errors)
         {
-            var result = deserializeComplex(t, testObject, out var readerState);
-            assertErrors(result.Exception, errors);
+            var aggregator = new ExceptionAggregator();
+            var result = deserializeComplex(t, testObject, out var readerState, aggregator);
+            assertErrors(aggregator, errors);
             readerState.TokenType.Should().Be(token);
-            var cdResult = result.PartialResult.Should().BeOfType(t);
-            verify?.Invoke(result.PartialResult!);
+            var cdResult = result.Should().BeOfType(t);
+            verify?.Invoke(result);
         }
 
         private static object?[] data<T>(object data, Action<object> verifier, params object[] args) =>
@@ -369,9 +365,9 @@ namespace Hl7.Fhir.Support.Poco.Tests
         public static IEnumerable<object?[]> TestPrimitiveArrayData()
         {
             yield return data<TestAddress>(new { line = default(string[]) }, JsonSerializerErrors.EXPECTED_START_OF_ARRAY);
-            yield return data<TestAddress>(new { line = new string[0] }, JsonSerializerErrors.ARRAYS_CANNOT_BE_EMPTY);
-            yield return data<TestAddress>(new { line = new string[0], _line = new string[0] }, JsonSerializerErrors.ARRAYS_CANNOT_BE_EMPTY, JsonSerializerErrors.ARRAYS_CANNOT_BE_EMPTY);
-            yield return data<TestAddress>(new { line = new string[0], _line = new string?[] { null } }, JsonSerializerErrors.ARRAYS_CANNOT_BE_EMPTY);
+            yield return data<TestAddress>(new { line = Array.Empty<string>() }, JsonSerializerErrors.ARRAYS_CANNOT_BE_EMPTY);
+            yield return data<TestAddress>(new { line = Array.Empty<string>(), _line = Array.Empty<string>() }, JsonSerializerErrors.ARRAYS_CANNOT_BE_EMPTY, JsonSerializerErrors.ARRAYS_CANNOT_BE_EMPTY);
+            yield return data<TestAddress>(new { line = Array.Empty<string>(), _line = new string?[] { null } }, JsonSerializerErrors.ARRAYS_CANNOT_BE_EMPTY);
             yield return data<TestAddress>(new { line = new string?[] { null }, _line = new string?[] { null } }, JsonSerializerErrors.PRIMITIVE_ARRAYS_BOTH_NULL);
             yield return data<TestAddress>(new { line = new string?[] { null }, _line = new string?[] { null, null } }, JsonSerializerErrors.PRIMITIVE_ARRAYS_BOTH_NULL, JsonSerializerErrors.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
             yield return data<TestAddress>(new { line = new string?[] { null, null }, _line = new string?[] { null } }, JsonSerializerErrors.PRIMITIVE_ARRAYS_BOTH_NULL, JsonSerializerErrors.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);

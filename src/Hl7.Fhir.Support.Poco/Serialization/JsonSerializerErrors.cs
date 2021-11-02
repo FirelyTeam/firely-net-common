@@ -20,32 +20,6 @@ using System.Text.Json;
 
 namespace Hl7.Fhir.Serialization
 {
-    public class DeserializationFailedException : AggregateException
-    {
-        public static DeserializationFailedException Create(Base? partialResult, Exception exception)
-        {        
-            if (exception is AggregateException ae)
-            {
-                var children = ae.Flatten().InnerExceptions;
-                //var message = $"Deserialization failed with {children.Count} errors.";
-                var message = ae.Message;
-                return new DeserializationFailedException(message, partialResult, children);
-            }
-            else
-            {
-                var message = "Deserialization failed with one error: " + exception.Message;
-                return new DeserializationFailedException(message, partialResult, new[] { exception });
-            }
-        }
-
-        private DeserializationFailedException(string message, Base? partialResult, IEnumerable<Exception> innerExceptions) : base(message, innerExceptions)
-        {
-            PartialResult = partialResult;
-        }
-
-        public Base? PartialResult { get; private set; }
-    }
-
     public class JsonFhirException : JsonException
     {
         public string ErrorCode { get; private set; }
