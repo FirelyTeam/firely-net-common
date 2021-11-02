@@ -84,6 +84,9 @@ namespace Hl7.Fhir.Rest
                 return ResourceFormat.Unknown;
         }
 
+        internal static string BuildContentType(FhirClientSettings settings, string fhirVersion)
+            => BuildContentType(settings.PreferredFormat, fhirVersion);
+        //settings.UseFhirVersionHeader ? fhirVersion : String.Empty);
 
         public static string BuildContentType(ResourceFormat format, string fhirVersion)
         {

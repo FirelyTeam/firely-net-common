@@ -23,6 +23,11 @@ namespace Hl7.Fhir.Rest
         public bool UseFormatParameter;
 
         /// <summary>
+        /// When passing the content preference, use the _format parameter instead of the request header
+        /// </summary>
+        public bool UseFhirVersionInAcceptHeader = true;
+
+        /// <summary>
         /// The timeout (in milliseconds) to be used when making calls to the FHIR server
         /// </summary>
         public int Timeout = 100 * 1000;
@@ -81,6 +86,7 @@ namespace Hl7.Fhir.Rest
             other.PreferredReturn = PreferredReturn;
             other.Timeout = Timeout;
             other.UseFormatParameter = UseFormatParameter;
+            other.UseFhirVersionInAcceptHeader = UseFhirVersionInAcceptHeader;
             other.VerifyFhirVersion = VerifyFhirVersion;
             other.PreferredParameterHandling = PreferredParameterHandling;
         }
