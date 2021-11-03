@@ -9,15 +9,39 @@
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
 using System;
+using System.Reflection;
 using System.Text.Json;
-using ERR = Hl7.Fhir.Serialization.JsonSerializerErrors;
-
 #nullable enable
 
 namespace Hl7.Fhir.Serialization
 {
     internal static class SystemTextJsonParsingExtensions
     {
+        internal static (long lineNumber, long position) GetLocation(this ref Utf8JsonReader reader)
+        {
+            var lineNumber = ((long)typeof(JsonReaderState)
+                .GetField("_lineNumber", BindingFlags.NonPublic | BindingFlags.Instance)!
+                .GetValue(reader.CurrentState)!) + 1;
+            var position = ((long)typeof(JsonReaderState)
+                .GetField("_bytePositionInLine", BindingFlags.NonPublic | BindingFlags.Instance)!
+                .GetValue(reader.CurrentState)!) + 1;
+
+            return (lineNumber, position);
+        }
+
+        internal static string GenerateLocationMessage(this ref Utf8JsonReader reader) =>
+            GenerateLocationMessage(ref reader, out var _, out var _);
+
+        internal static string GenerateLocationMessage(this ref Utf8JsonReader reader, out long lineNumber, out long position)
+        {
+            // While we are waiting for this https://github.com/dotnet/runtime/issues/28482,
+            // there's no other option than to just force our way to these valuable properties.
+            // Note: linenumber/position are 0 based, so adding 1 position here.
+            (lineNumber, position) = reader.GetLocation();
+            return $" Line {lineNumber}, position {position}.";
+        }
+
+
         public static bool TryGetNumber(this ref Utf8JsonReader reader, out object? value)
         {
             value = null;
@@ -55,7 +79,7 @@ namespace Hl7.Fhir.Serialization
                     return;
                 default:
                     throw new InvalidOperationException($"Cannot recover, aborting. Token {reader.TokenType} was unexpected at this point. " +
-                        ERR.GenerateLocationMessage(ref reader));
+                        reader.GenerateLocationMessage());
             }
         }
 

@@ -2,11 +2,14 @@ using FluentAssertions;
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
+using Hl7.Fhir.Tests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
+using ERR = Hl7.Fhir.Serialization.JsonFhirException;
 
 #nullable enable
 
@@ -57,30 +60,29 @@ namespace Hl7.Fhir.Support.Poco.Tests
             var reader = constructReader(data);
             reader.Read();
 
-            ExceptionAggregator aggregator = new();
-            var result = JsonDynamicDeserializer.DeserializePrimitiveValue(ref reader, expected, aggregator);
+            var (result,error) = JsonDynamicDeserializer.DeserializePrimitiveValue(ref reader, expected);
 
             if (code is not null)
-                aggregator.Single().ErrorCode.Should().Be(code);
+                error?.ErrorCode.Should().Be(code);
             else
-                aggregator.Should().BeEmpty();
+                error.Should().BeNull();
 
             if (expected == typeof(byte[]))
             {
-                if (!aggregator.HasExceptions)
+                if (error is null)
                     Convert.ToBase64String((byte[])result!).Should().Be((string)data);
                 else
                     result.Should().Be(data);
             }
             else if (expected == typeof(DateTimeOffset))
             {
-                if (!aggregator.HasExceptions)
+                if (error is null)
                     result.Should().BeOfType<DateTimeOffset>().Which.ToFhirDate().Should().Be((string)data);
                 else
                     result.Should().Be(data);
             }
-            else if (code == JsonSerializerErrors.EXPECTED_PRIMITIVE_NOT_ARRAY.ErrorCode ||
-                code == JsonSerializerErrors.EXPECTED_PRIMITIVE_NOT_OBJECT.ErrorCode)
+            else if (code == ERR.EXPECTED_PRIMITIVE_NOT_ARRAY.ErrorCode ||
+                code == ERR.EXPECTED_PRIMITIVE_NOT_OBJECT.ErrorCode)
 #pragma warning disable CS0642 // Possible mistaken empty statement
                 ; // nothing to check
 #pragma warning restore CS0642 // Possible mistaken empty statement
@@ -91,7 +93,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [TestMethod]
         public void PrimitiveValueCannotBeComplex()
         {
-            TryDeserializePrimitiveValue(new { bla = 4 }, typeof(int), JsonSerializerErrors.EXPECTED_PRIMITIVE_NOT_OBJECT.ErrorCode);
+            TryDeserializePrimitiveValue(new { bla = 4 }, typeof(int), ERR.EXPECTED_PRIMITIVE_NOT_OBJECT.ErrorCode);
         }
 
         [DataTestMethod]
@@ -203,18 +205,20 @@ namespace Hl7.Fhir.Support.Poco.Tests
             return reader;
         }
 
-        private static void assertErrors(IEnumerable<JsonFhirException> exceptions, JsonFhirException[] expected)
+        private static void assertErrors(IEnumerable<JsonFhirException> actual, JsonFhirException[] expected)
         {
             if (expected.Length > 0)
             {
-                exceptions.Should().NotBeEmpty();
+                actual.Should().NotBeEmpty();
 
-                exceptions.Count().Should().Be(expected.Length);
-                _ = exceptions.Zip(expected, (a, e) => a.ErrorCode.Should().Be(e.ErrorCode));
+                string why = $"Not the same: actual - {string.Join(",", actual.Select(a => a.ErrorCode))} and expected {string.Join(";", expected.Select(a => a.ErrorCode) )}";
+                _ = actual.Zip(expected, (a, e) => a.ErrorCode.Should().Be(e.ErrorCode, because: why)).ToList();
+                actual.Count().Should().Be(expected.Length, because: why);
+                Console.WriteLine($"Found {string.Join(", ", actual.Select(a => a.Message))}");
             }
             else
             {
-                exceptions.Should().BeEmpty();
+                actual.Should().BeEmpty();
             }
         }
 
@@ -237,13 +241,13 @@ namespace Hl7.Fhir.Support.Poco.Tests
         {
             get
             {
-                yield return new object[] { 5, JsonTokenType.Number, JsonSerializerErrors.EXPECTED_START_OF_OBJECT };
-                yield return new object[] { new { }, JsonTokenType.EndObject, JsonSerializerErrors.OBJECTS_CANNOT_BE_EMPTY };
-                yield return new object[] { new { resourceType = 4, crap = 4 }, JsonTokenType.EndObject, JsonSerializerErrors.RESOURCETYPE_SHOULD_BE_STRING };
-                yield return new object[] { new { resourceType = "Doesnotexist", crap = 5 }, JsonTokenType.EndObject, JsonSerializerErrors.UNKNOWN_RESOURCE_TYPE };
-                yield return new object[] { new { resourceType = nameof(OperationOutcome), crap = 5 }, JsonTokenType.EndObject, JsonSerializerErrors.UNKNOWN_PROPERTY_FOUND };
+                yield return new object[] { 5, JsonTokenType.Number, ERR.EXPECTED_START_OF_OBJECT };
+                yield return new object[] { new { }, JsonTokenType.EndObject, ERR.NO_RESOURCETYPE_PROPERTY };
+                yield return new object[] { new { resourceType = 4, crap = 4 }, JsonTokenType.EndObject, ERR.RESOURCETYPE_SHOULD_BE_STRING };
+                yield return new object[] { new { resourceType = "Doesnotexist", crap = 5 }, JsonTokenType.EndObject, ERR.UNKNOWN_RESOURCE_TYPE };
+                yield return new object[] { new { resourceType = nameof(OperationOutcome), crap = 5 }, JsonTokenType.EndObject, ERR.UNKNOWN_PROPERTY_FOUND };
                 yield return new object[] { new { resourceType = nameof(Meta) },
-                    JsonTokenType.EndObject, JsonSerializerErrors.EXPECTED_A_RESOURCE_TYPE, JsonSerializerErrors.OBJECTS_CANNOT_BE_EMPTY };
+                    JsonTokenType.EndObject, ERR.OBJECTS_CANNOT_BE_EMPTY, ERR.RESOURCE_TYPE_NOT_A_RESOURCE };
             }
 
         }
@@ -300,35 +304,35 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
         public static IEnumerable<object?[]> CatchesIncorrectlyStructuredComplexData()
         {
-            yield return new object?[] { typeof(Extension), 5, JsonTokenType.Number, default(Action<object>), JsonSerializerErrors.EXPECTED_START_OF_OBJECT };
-            yield return data<Extension>(5, JsonTokenType.Number, JsonSerializerErrors.EXPECTED_START_OF_OBJECT);
-            yield return data<Extension>(new[] { 2, 3 }, JsonTokenType.EndArray, JsonSerializerErrors.START_OF_ARRAY_UNEXPECTED);
-            yield return data<Extension>(new { }, JsonSerializerErrors.OBJECTS_CANNOT_BE_EMPTY);
+            yield return new object?[] { typeof(Extension), 5, JsonTokenType.Number, default(Action<object>), ERR.EXPECTED_START_OF_OBJECT };
+            yield return data<Extension>(5, JsonTokenType.Number, ERR.EXPECTED_START_OF_OBJECT);
+            yield return data<Extension>(new[] { 2, 3 }, JsonTokenType.EndArray, ERR.EXPECTED_START_OF_OBJECT);
+            yield return data<Extension>(new { }, ERR.OBJECTS_CANNOT_BE_EMPTY);
             yield return data<Extension>(new { resourceType = "Whatever" },
-                JsonSerializerErrors.RESOURCETYPE_UNEXPECTED_IN_DT, JsonSerializerErrors.OBJECTS_CANNOT_BE_EMPTY);
-            yield return data<Extension>(new { }, JsonSerializerErrors.OBJECTS_CANNOT_BE_EMPTY);
-            yield return data<Extension>(new { unknown = "test" }, JsonSerializerErrors.UNKNOWN_PROPERTY_FOUND);
+                ERR.RESOURCETYPE_UNEXPECTED, ERR.OBJECTS_CANNOT_BE_EMPTY);
+            yield return data<Extension>(new { }, ERR.OBJECTS_CANNOT_BE_EMPTY);
+            yield return data<Extension>(new { unknown = "test" }, ERR.UNKNOWN_PROPERTY_FOUND);
             yield return data<Extension>(new { url = "test" });
-            yield return data<Extension>(new { _url = "test" }, JsonSerializerErrors.USE_OF_UNDERSCORE_ILLEGAL);
+            yield return data<Extension>(new { _url = "test" }, ERR.USE_OF_UNDERSCORE_ILLEGAL);
             yield return data<Extension>(new { resourceType = "whatever", unknown = "test", url = "test" },
-                    JsonSerializerErrors.RESOURCETYPE_UNEXPECTED_IN_DT, JsonSerializerErrors.UNKNOWN_PROPERTY_FOUND);
-            yield return data<Extension>(new { value = "no type suffix" }, JsonSerializerErrors.CHOICE_ELEMENT_HAS_NO_TYPE);
-            yield return data<Extension>(new { valueUnknown = "incorrect type suffix" }, JsonSerializerErrors.CHOICE_ELEMENT_HAS_UNKOWN_TYPE);
+                    ERR.RESOURCETYPE_UNEXPECTED, ERR.UNKNOWN_PROPERTY_FOUND);
+            yield return data<Extension>(new { value = "no type suffix" }, ERR.CHOICE_ELEMENT_HAS_NO_TYPE);
+            yield return data<Extension>(new { valueUnknown = "incorrect type suffix" }, ERR.CHOICE_ELEMENT_HAS_UNKOWN_TYPE);
             yield return data<Extension>(new { valueBoolean = true }, JsonTokenType.EndObject);
             yield return data<Extension>(new { valueUnknown = "incorrect type suffix", unknown = "unknown" },
-                    JsonSerializerErrors.CHOICE_ELEMENT_HAS_UNKOWN_TYPE, JsonSerializerErrors.UNKNOWN_PROPERTY_FOUND);
+                    ERR.CHOICE_ELEMENT_HAS_UNKOWN_TYPE, ERR.UNKNOWN_PROPERTY_FOUND);
         }
 
         public static IEnumerable<object?[]> TestNormalArrayData()
         {
-            yield return data<ContactDetail>(new { name = "Ewout", telecom = 4 }, checkName, JsonSerializerErrors.EXPECTED_START_OF_OBJECT);
+            yield return data<ContactDetail>(new { name = "Ewout", telecom = 4 }, checkName, ERR.EXPECTED_START_OF_ARRAY, ERR.EXPECTED_START_OF_OBJECT);
             yield return data<ContactDetail>(new { name = "Ewout", telecom = Array.Empty<object>() }, checkName,
-                JsonSerializerErrors.ARRAYS_CANNOT_BE_EMPTY);
+                ERR.ARRAYS_CANNOT_BE_EMPTY);
             yield return data<ContactDetail>(new { name = "Ewout", telecom = new object[] { new { system = "phone" }, new { systemX = "b" } } },
-                    checkData, JsonSerializerErrors.UNKNOWN_PROPERTY_FOUND);
+                    checkData, ERR.UNKNOWN_PROPERTY_FOUND);
             yield return data<ContactDetail>(new { name = "Ewout", _telecom = new object[] { new { system = "phone" }, new { systemX = "b" } } },
-                 checkData, JsonSerializerErrors.USE_OF_UNDERSCORE_ILLEGAL, JsonSerializerErrors.UNKNOWN_PROPERTY_FOUND);
-            yield return data<ContactDetail>(new { name = new[] { "Ewout" } }, JsonSerializerErrors.EXPECTED_PRIMITIVE_NOT_ARRAY);
+                 checkData, ERR.USE_OF_UNDERSCORE_ILLEGAL, ERR.UNKNOWN_PROPERTY_FOUND);
+            yield return data<ContactDetail>(new { name = new[] { "Ewout" } }, ERR.EXPECTED_PRIMITIVE_NOT_ARRAY);
 
             static void checkName(object parsed) => parsed.Should().BeOfType<ContactDetail>().Which.Name.Should().Be("Ewout");
 
@@ -345,12 +349,13 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
         public static IEnumerable<object?[]> TestPrimitiveData()
         {
-            yield return data<ContactDetail>(new { name = new[] { "Ewout" } }, JsonSerializerErrors.EXPECTED_PRIMITIVE_NOT_ARRAY);
-            yield return data<ContactDetail>(new { name = new { dummy = "Ewout" } }, JsonSerializerErrors.EXPECTED_PRIMITIVE_NOT_OBJECT);
-            yield return data<ContactDetail>(new { _name = new[] { "Ewout" } }, JsonSerializerErrors.EXPECTED_START_OF_OBJECT);
-            yield return data<ContactDetail>(new { _name = "Ewout" }, JsonSerializerErrors.EXPECTED_START_OF_OBJECT);
+            yield return data<ContactDetail>(new { name = new[] { "Ewout" } }, ERR.EXPECTED_PRIMITIVE_NOT_ARRAY);
+            yield return data<ContactDetail>(new { name = new { dummy = "Ewout" } }, ERR.EXPECTED_PRIMITIVE_NOT_OBJECT);
+            yield return data<ContactDetail>(new { _name = new[] { "Ewout" } }, ERR.EXPECTED_START_OF_OBJECT);
+            yield return data<ContactDetail>(new { _name = "Ewout" }, ERR.EXPECTED_START_OF_OBJECT);
             yield return data<ContactDetail>(new { name = "Ewout" }, checkName);
             yield return data<ContactDetail>(new { _name = new { id = "12345" } }, checkId);
+            yield return data<ContactDetail>(new { _name = new { id = true } }, ERR.INCOMPATIBLE_SIMPLE_VALUE);
             yield return data<ContactDetail>(new { name = "Ewout", _name = new { id = "12345" } }, checkAll);
 
             static void checkName(object parsed) => parsed.Should().BeOfType<ContactDetail>().Which.NameElement.Value.Should().Be("Ewout");
@@ -364,20 +369,22 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
         public static IEnumerable<object?[]> TestPrimitiveArrayData()
         {
-            yield return data<TestAddress>(new { line = default(string[]) }, JsonSerializerErrors.EXPECTED_START_OF_ARRAY);
-            yield return data<TestAddress>(new { line = Array.Empty<string>() }, JsonSerializerErrors.ARRAYS_CANNOT_BE_EMPTY);
-            yield return data<TestAddress>(new { line = Array.Empty<string>(), _line = Array.Empty<string>() }, JsonSerializerErrors.ARRAYS_CANNOT_BE_EMPTY, JsonSerializerErrors.ARRAYS_CANNOT_BE_EMPTY);
-            yield return data<TestAddress>(new { line = Array.Empty<string>(), _line = new string?[] { null } }, JsonSerializerErrors.ARRAYS_CANNOT_BE_EMPTY);
-            yield return data<TestAddress>(new { line = new string?[] { null }, _line = new string?[] { null } }, JsonSerializerErrors.PRIMITIVE_ARRAYS_BOTH_NULL);
-            yield return data<TestAddress>(new { line = new string?[] { null }, _line = new string?[] { null, null } }, JsonSerializerErrors.PRIMITIVE_ARRAYS_BOTH_NULL, JsonSerializerErrors.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
-            yield return data<TestAddress>(new { line = new string?[] { null, null }, _line = new string?[] { null } }, JsonSerializerErrors.PRIMITIVE_ARRAYS_BOTH_NULL, JsonSerializerErrors.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
+            yield return data<TestAddress>(new { line = "hi!" }, ERR.EXPECTED_START_OF_ARRAY);
+            yield return data<TestAddress>(new { line = Array.Empty<string>() }, ERR.ARRAYS_CANNOT_BE_EMPTY);
+            yield return data<TestAddress>(new { line = Array.Empty<string>(), _line = Array.Empty<string>() }, ERR.ARRAYS_CANNOT_BE_EMPTY, ERR.ARRAYS_CANNOT_BE_EMPTY);
+            yield return data<TestAddress>(new { line = Array.Empty<string>(), _line = new string?[] { null } }, ERR.ARRAYS_CANNOT_BE_EMPTY, ERR.PRIMITIVE_ARRAYS_ONLY_NULL);
+            yield return data<TestAddress>(new { line = new string?[] { null }, _line = new[] { new { id = "1" } } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL );
+            yield return data<TestAddress>(new { line = new[] { "Ewout" }, _line = new string?[] { null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL);
+            yield return data<TestAddress>(new { line = new string?[] { null }, _line = new string?[] { null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_BOTH_NULL, ERR.PRIMITIVE_ARRAYS_ONLY_NULL);
+            yield return data<TestAddress>(new { line = new string?[] { null }, _line = new string?[] { null, null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_BOTH_NULL, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
+            yield return data<TestAddress>(new { line = new string?[] { null, null }, _line = new string?[] { null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_BOTH_NULL, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
             yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" } }, checkName);
-            yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" }, _line = new[] { new { id = "1" } } }, checkId1AndName, JsonSerializerErrors.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
+            yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" }, _line = new[] { new { id = "1" } } }, checkId1AndName, ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
             yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" }, _line = new[] { new { id = "1" }, null } }, checkId1AndName); 
             yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" }, _line = new[] { new { id = "1" }, new { id = "2" } } }, checkAll);
             yield return data<TestAddress>(new { line = new[] { "Ewout", null }, _line = new[] { null, new { id = "2" } } });
-            yield return data<TestAddress>(new { line = new[] { "Ewout", null }, _line = new[] { new { id = "1" }, null } }, checkId1, JsonSerializerErrors.PRIMITIVE_ARRAYS_BOTH_NULL);
-            yield return data<TestAddress>(new { _line = new[] { new { id = "1" }, null } }, checkId1, JsonSerializerErrors.PRIMITIVE_ARRAYS_LONELY_NULL);
+            yield return data<TestAddress>(new { line = new[] { "Ewout", null }, _line = new[] { new { id = "1" }, null } }, checkId1, ERR.PRIMITIVE_ARRAYS_BOTH_NULL);
+            yield return data<TestAddress>(new { _line = new[] { new { id = "1" }, null } }, checkId1, ERR.PRIMITIVE_ARRAYS_LONELY_NULL);
             yield return data<TestAddress>(new { _line = new[] { new { id = "1" }, new { id = "2" } } }, checkIds);
 
             static void checkName(object parsed) => parsed.Should().BeOfType<TestAddress>().Which.Line.Should().BeEquivalentTo("Ewout", "Wouter");
@@ -469,8 +476,69 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 // ok!
             }
         }
+
+        [TestMethod]
+        public void TestRecovery()
+        {
+            var filename = Path.Combine("TestData", "fp-test-patient-errors.json");
+            var jsonInput = File.ReadAllText(filename);
+
+            // For now, deserialize with the existing deserializer, until we have completed
+            // the dynamicserializer too.
+            var options = new JsonSerializerOptions().ForFhir(typeof(TestPatient).Assembly);
+
+            try
+            {
+                var actual = JsonSerializer.Deserialize<TestPatient>(jsonInput, options);
+                Assert.Fail("Should have encountered errors.");
+            }
+            catch(DeserializationFailedException dfe)
+            {
+                Console.WriteLine(dfe.Message);
+                var recoveredActual = JsonSerializer.Serialize(dfe.PartialResult, options);
+                Console.WriteLine(recoveredActual);
+
+                var recoveredFilename = Path.Combine("TestData", "fp-test-patient-errors-recovered.json");
+                var recoveredExpected = File.ReadAllText(recoveredFilename);
+
+                List<string> errors = new();
+                JsonAssert.AreSame("fp-test-patient-json-errors/recovery", recoveredExpected, recoveredActual, errors);
+                errors.Should().BeEmpty();
+
+                assertErrors(dfe.InnerExceptions.Cast<JsonFhirException>(), new[] 
+                {
+                    ERR.STRING_ISNOTAN_INSTANT,
+                    ERR.RESOURCETYPE_UNEXPECTED,
+                    ERR.UNKNOWN_RESOURCE_TYPE,
+                    ERR.RESOURCE_TYPE_NOT_A_RESOURCE,
+                    ERR.RESOURCETYPE_SHOULD_BE_STRING,
+                    ERR.NO_RESOURCETYPE_PROPERTY,
+                    ERR.INCOMPATIBLE_SIMPLE_VALUE,
+                    ERR.EXPECTED_START_OF_ARRAY,
+                    ERR.UNKNOWN_PROPERTY_FOUND, // mother is not a property of HumanName
+                    ERR.EXPECTED_PRIMITIVE_NOT_ARRAY, // family is not an array,
+                    ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE, // given and _given not the same length
+                    ERR.EXPECTED_PRIMITIVE_NOT_NULL, // telecom use cannot be null
+                    ERR.EXPECTED_PRIMITIVE_NOT_OBJECT, // address.use is not an object
+                    ERR.PRIMITIVE_ARRAYS_BOTH_NULL, // address.line should not have a null at the same position in both arrays
+                    ERR.PRIMITIVE_ARRAYS_ONLY_NULL, // Questionnaire._subjectType cannot be just null
+                    ERR.EXPECTED_START_OF_OBJECT, // item.code is a complex object, not a boolean
+                    ERR.PRIMITIVE_ARRAYS_LONELY_NULL, // given cannot be the only array with a null
+                    ERR.UNEXPECTED_JSON_TOKEN, // telecom.rank should be a number, not a boolean
+                    ERR.USE_OF_UNDERSCORE_ILLEGAL, // should be extension.url, not extension._url
+                    ERR.UNEXPECTED_JSON_TOKEN, // gender.extension.valueCode should be a string, not a number
+                    ERR.CHOICE_ELEMENT_HAS_NO_TYPE, // extension.value is incorrect
+                    ERR.CHOICE_ELEMENT_HAS_UNKOWN_TYPE, // extension.valueSuperDecimal is incorrect
+                    ERR.UNEXPECTED_JSON_TOKEN, // deceasedBoolean should be a boolean not a string
+                    ERR.NUMBER_CANNOT_BE_PARSED, // multipleBirthInteger should not be a float (3.14)
+                    ERR.INCORRECT_BASE64_DATA,
+                    ERR.ARRAYS_CANNOT_BE_EMPTY,
+                    ERR.OBJECTS_CANNOT_BE_EMPTY
+                });                
+            }
+            
+        }
     }
 
-    // TODO: test recovery
 }
 #nullable restore
