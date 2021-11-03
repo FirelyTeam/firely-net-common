@@ -85,19 +85,16 @@ namespace Hl7.Fhir.Rest
         }
 
         internal static string BuildContentType(FhirClientSettings settings, string fhirVersion)
-            => BuildContentType(settings.PreferredFormat, fhirVersion);
-        //settings.UseFhirVersionHeader ? fhirVersion : String.Empty);
+            => BuildContentType(settings.PreferredFormat, settings.UseFhirVersionInAcceptHeader ? fhirVersion : String.Empty);
 
         public static string BuildContentType(ResourceFormat format, string fhirVersion)
         {
-            string contentType;
-
-            if (format == ResourceFormat.Json)
-                contentType = JSON_CONTENT_HEADER;
-            else if (format == ResourceFormat.Xml)
-                contentType = XML_CONTENT_HEADER;
-            else
-                throw new ArgumentException("Cannot determine content type for data format " + format);
+            string contentType = format switch
+            {
+                ResourceFormat.Json => JSON_CONTENT_HEADER,
+                ResourceFormat.Xml => XML_CONTENT_HEADER,
+                _ => throw new ArgumentException("Cannot determine content type for data format " + format),
+            };
 
             contentType += "; charset=" + Encoding.UTF8.WebName;
 
@@ -107,7 +104,6 @@ namespace Hl7.Fhir.Rest
                 contentType += "; " + VERSION_CONTENT_HEADER + majorMinor;
             }
             return contentType;
-
         }
 
 

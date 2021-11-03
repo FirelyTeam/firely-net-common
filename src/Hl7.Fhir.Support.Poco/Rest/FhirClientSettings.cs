@@ -23,9 +23,10 @@ namespace Hl7.Fhir.Rest
         public bool UseFormatParameter;
 
         /// <summary>
-        /// When passing the content preference, use the _format parameter instead of the request header
+        /// When <see langword="true"/> the MIME-type parameter fhirVersion will be added the Accept header. This is necessary 
+        /// when the FHIR server supports multiple FHIR versions.
         /// </summary>
-        public bool UseFhirVersionInAcceptHeader = true;
+        public bool UseFhirVersionInAcceptHeader = false;
 
         /// <summary>
         /// The timeout (in milliseconds) to be used when making calls to the FHIR server
