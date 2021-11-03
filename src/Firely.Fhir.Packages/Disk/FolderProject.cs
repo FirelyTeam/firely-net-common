@@ -22,11 +22,11 @@ namespace Firely.Fhir.Packages
         /// <summary>
         /// Reads the raw contents of the given file.
         /// </summary>
-        /// <param name="filename">The name of a file within the given <see cref="Folder"/>.</param>
+        /// <param name="filePath">The relative filePath compared to the given <see cref="Folder"/>.</param>
         /// <returns></returns>
-        public Task<string> GetFileContent(string filename)
+        public Task<string> GetFileContent(string filePath)
         {
-            var path = Path.Combine(Folder, filename);
+            var path = Path.Combine(Folder, filePath);
             return Task.FromResult(File.ReadAllText(path));
         }
 

@@ -28,31 +28,26 @@ namespace Firely.Fhir.Packages
 
         public static ResourceMetadata? GetFileMetadata(string folder, string filepath)
         {
-            try
-            {
-                var node = ElementNavigation.ParseToSourceNode(filepath);
-                if (node is null) return null;
-
-                string? canonical = node.GetString("url"); // node.Children("url").FirstOrDefault()?.Text;
-
-                return new ResourceMetadata
-                {
-                    FileName = GetRelativePath(folder, filepath),
-                    ResourceType = node.Name,
-                    Id = node.GetString("id"),
-                    Canonical = node.GetString("url"),
-                    Version = node.GetString("version"),
-                    Kind = node.GetString("kind"),
-                    Type = node.GetString("type"),
-                    FhirVersion = node.GetString("fhirVersion"),
-                    HasSnapshot = node.checkForSnapshot(),
-                    HasExpansion = node.checkForExpansion()
-                };
-            }
-            catch (Exception)
-            {
-                return null;
-            }
+            return ElementNavigation.TryParseToSourceNode(filepath, out var node)
+                    ? new ResourceMetadata
+                    {
+                        FileName = Path.GetFileName(filepath),
+                        FilePath = GetRelativePath(folder, filepath),
+                        ResourceType = node.Name,
+                        Id = node.GetString("id"),
+                        Canonical = node.GetString("url"),
+                        Version = node.GetString("version"),
+                        Kind = node.GetString("kind"),
+                        Type = node.GetString("type"),
+                        FhirVersion = node.GetString("fhirVersion"),
+                        HasSnapshot = node.checkForSnapshot(),
+                        HasExpansion = node.checkForExpansion()
+                    }
+                    : new ResourceMetadata
+                    {
+                        FileName = Path.GetFileName(filepath),
+                        FilePath = GetRelativePath(folder, filepath)
+                    };
         }
 
 

@@ -124,6 +124,12 @@ namespace Hl7.Fhir.Specification.Source
             var content = _context.GetFileContentByFileName(artifactName).Result;
             return content == null ? null : new MemoryStream(Encoding.UTF8.GetBytes(content));
         }
+
+        public Stream? LoadArtifactByPath(string artifactPath)
+        {
+            var content = _context.GetFileContentByFilePath(artifactPath).Result;
+            return content == null ? null : new MemoryStream(Encoding.UTF8.GetBytes(content));
+        }
     }
 }
 

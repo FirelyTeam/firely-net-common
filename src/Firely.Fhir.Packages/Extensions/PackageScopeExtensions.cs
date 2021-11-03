@@ -33,7 +33,7 @@ namespace Firely.Fhir.Packages
         public static async Task<string> GetFileContent(this PackageContext scope, PackageFileReference reference)
         {
             return !reference.Package.Found
-                ? await scope.Project.GetFileContent(reference.FileName)
+                ? await scope.Project.GetFileContent(reference.FilePath)
                 : await scope.Cache.GetFileContent(reference);
         }
 
@@ -123,5 +123,14 @@ namespace Firely.Fhir.Packages
             var content = await scope.GetFileContent(reference);
             return content;
         }
+        public static async Task<string> GetFileContentByFilePath(this PackageContext scope, string filePath)
+        {
+            var reference = scope.Index.Where(i => i.FilePath == filePath).FirstOrDefault();
+            if (reference is null) return null;
+
+            var content = await scope.GetFileContent(reference);
+            return content;
+        }
+
     }
 }
