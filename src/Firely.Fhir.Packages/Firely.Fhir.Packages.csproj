@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net5.0;net452;</TargetFrameworks>
+		<TargetFrameworks>net5.0;net452;netstandard2.0</TargetFrameworks>
 	</PropertyGroup>
 
 	<Import Project="..\firely-net-common.props" />
@@ -32,7 +32,6 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Hl7.Fhir.ElementModel\Hl7.Fhir.ElementModel.csproj" />
 		<ProjectReference Include="..\Hl7.Fhir.Serialization\Hl7.Fhir.Serialization.csproj" />
-		<ProjectReference Include="..\Hl7.Fhir.Support.Poco\Hl7.Fhir.Support.Poco.csproj" />
 	</ItemGroup>
 
 </Project>

@@ -22,8 +22,12 @@
 
 	<ItemGroup Condition=" '$(TargetFramework)' == 'net452'">
 		<Reference Include="System.ComponentModel.DataAnnotations" />
-    <Reference Include="System.Net.Http"/>
+    <Reference Include="System.Net.Http" />
   </ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="Firely.Fhir.Packages" Version="2.2.0-build-20211103-2" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\Hl7.Fhir.ElementModel\Hl7.Fhir.ElementModel.csproj" />

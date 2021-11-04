@@ -1,5 +1,6 @@
 ﻿using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Serialization;
+using System;
 using System.IO;
 
 namespace Firely.Fhir.Packages
@@ -32,6 +33,24 @@ namespace Firely.Fhir.Packages
             }
 
             return null;
+        }
+
+        internal static bool TryParseToSourceNode(string filepath, out ISourceNode node)
+        {
+            try
+            {
+                node = ParseToSourceNode(filepath);
+                if (node is null)
+                {
+                    return false;
+                }
+            }
+            catch (Exception)
+            {
+                node = null;
+                return false;
+            }
+            return true;
         }
 
         //public static IElementNavigator GetNavigatorForFile(string filepath)

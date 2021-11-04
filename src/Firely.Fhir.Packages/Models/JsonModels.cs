@@ -228,6 +228,9 @@ namespace Firely.Fhir.Packages
         [JsonProperty("filename")]
         public string FileName;
 
+        [JsonProperty("filepath")]
+        public string FilePath;
+
         [JsonProperty("resourceType")]
         public string ResourceType;
 
@@ -249,9 +252,18 @@ namespace Firely.Fhir.Packages
         [JsonProperty("fhirVersion")]
         public string? FhirVersion;
 
+        //Firely specific attribute used to make choices when multiple artifacts with the same canonical URL and version are found.
+        [JsonProperty("firely-hasSnapshot")]
+        public bool HasSnapshot;
+
+        //Firely specific attribute used to make choices when multiple artifacts with the same canonical URL and version are found.
+        [JsonProperty("firely-hasExpansion")]
+        public bool HasExpansion;
+
         public void CopyTo(ResourceMetadata other)
         {
             other.FileName = FileName;
+            other.FilePath = FilePath;
             other.ResourceType = ResourceType;
             other.Id = Id;
             other.Canonical = Canonical;
@@ -259,6 +271,8 @@ namespace Firely.Fhir.Packages
             other.Kind = Kind;
             other.Type = Type;
             other.FhirVersion = FhirVersion;
+            other.HasExpansion = HasExpansion;
+            other.HasSnapshot = HasSnapshot;
         }
     }
 

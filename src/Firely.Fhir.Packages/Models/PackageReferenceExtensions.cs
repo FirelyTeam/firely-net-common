@@ -4,11 +4,10 @@ namespace Firely.Fhir.Packages
 {
     public static class PackageReferenceExtensions
     {
-        
         public static Dictionary<string, string> ToDictionary(this IEnumerable<PackageReference> references)
         {
             var dict = new Dictionary<string, string>();
-            foreach(var reference in references)
+            foreach (var reference in references)
             {
                 dict.Add(reference.Name, reference.Version);
             }
@@ -28,7 +27,7 @@ namespace Firely.Fhir.Packages
         public static List<PackageReference> ToPackageReferences(this Dictionary<string, string> dict)
         {
             var list = new List<PackageReference>();
-            foreach(var item in dict)
+            foreach (var item in dict)
             {
                 list.Add(item); // implicit converion
             }
@@ -59,6 +58,5 @@ namespace Firely.Fhir.Packages
         {
             return (reference.Scope == null) ? reference.Name : $"@{reference.Scope}%2F{reference.Name}";
         }
-
     }
 }

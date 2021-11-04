@@ -33,16 +33,25 @@ namespace Firely.Fhir.Packages
         {
             var manifest = Packaging.ExtractManifestFromPackageFile(path);
             var reference = manifest.GetPackageReference();
-            var buffer = File.ReadAllBytes(path);
-            
-            await cache.Install(reference, buffer);
 
-            return reference; 
+            await cache.Install(reference, path);
+
+            return reference;
         }
+
+        public static async Task Install(this IPackageCache cache, PackageReference reference, string path)
+        {
+            if (!await cache.IsInstalled(reference))
+            {
+                var buffer = File.ReadAllBytes(path);
+                await cache.Install(reference, buffer);
+            }
+        }
+
 
         public static async Task<string> GetFileContent(this IPackageCache cache, PackageFileReference reference)
         {
-            return await cache.GetFileContent(reference.Package, reference.FileName);
+            return await cache.GetFileContent(reference.Package, reference.FilePath);
         }
 
         public static async Task<string> ReadPackageFhirVersion(this IPackageCache cache, PackageReference reference)
@@ -50,7 +59,7 @@ namespace Firely.Fhir.Packages
             var m = await cache.ReadManifest(reference);
             var fhirVersion = m.GetFhirVersion();
             return fhirVersion;
-        } 
+        }
 
     }
 }
