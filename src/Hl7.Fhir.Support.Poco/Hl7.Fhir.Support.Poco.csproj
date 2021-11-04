@@ -26,7 +26,10 @@
   </ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Firely.Fhir.Packages\Firely.Fhir.Packages.csproj" />
+	  <PackageReference Include="Firely.Fhir.Packages" Version="2.2.0-build-20211103-2" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\Hl7.Fhir.ElementModel\Hl7.Fhir.ElementModel.csproj" />
 		<ProjectReference Include="..\Hl7.Fhir.Support\Hl7.Fhir.Support.csproj" />
 		<ProjectReference Include="..\Hl7.Fhir.Serialization\Hl7.Fhir.Serialization.csproj" />
