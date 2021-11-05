@@ -173,7 +173,7 @@ namespace Hl7.Fhir.Serialization
                 bool b => XmlConvert.ToString(b),
                 DateTimeOffset dto => ElementModel.Types.DateTime.FormatDateTimeOffset(dto),
                 byte[] bytes => Convert.ToBase64String(bytes),
-                _ => throw new FormatException($"There is no know serialization for type {value.GetType()} into a Json primitive property value.")
+                _ => throw new FormatException($"There is no know serialization for type {value.GetType()} into an Xml primitive property value.")
             };
 
             writer.WriteAttributeString(elementName, ns: null, value: literal);
