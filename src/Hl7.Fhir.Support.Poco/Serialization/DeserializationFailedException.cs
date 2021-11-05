@@ -11,11 +11,18 @@
 using Hl7.Fhir.Model;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 #nullable enable
 
 namespace Hl7.Fhir.Serialization
 {
+    /// <summary>
+    /// A <see cref="AggregateException"/> that contains the list of errors detected while deserializing data into
+    /// .NET POCOs.
+    /// </summary>
+    /// <remarks>The deserializers will continue deserialization in the face of errors, and so will collect the full
+    /// set of errors detected using this aggregate exception.</remarks>
     public class DeserializationFailedException : AggregateException
     {
         public DeserializationFailedException(Base? partialResult, IEnumerable<Exception> innerExceptions) : base(innerExceptions)
@@ -23,7 +30,15 @@ namespace Hl7.Fhir.Serialization
             PartialResult = partialResult;
         }
 
+        /// <summary>
+        /// The best-effort result of deserialization. Maybe invalid or incomplete because of the errors encountered.
+        /// </summary>
         public Base? PartialResult { get; private set; }
+
+        // TODO: Would like to have this, but this should cover XML exceptions and Json exceptions (and whatever).
+        // Add an interface to the exceptionclasses?  Or create an exception class not based on System.Text.JsonException so
+        // it can be re-used for XML?
+        // public bool Recoverable => InnerExceptions.All(e => e.Recoverable);
     }
 }
 

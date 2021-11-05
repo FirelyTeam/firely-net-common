@@ -18,6 +18,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
     [TestClass]
     public class JsonFhirDeserializationTests
     {
+        //TODO: Now that we have constants for all of these errors, we could replace the string here.
         private const string NUMBER_CANNOT_BE_PARSED = "JSON108";
 
         [DataTestMethod]
@@ -205,14 +206,14 @@ namespace Hl7.Fhir.Support.Poco.Tests
             return reader;
         }
 
-        private static void assertErrors(IEnumerable<JsonFhirException> actual, JsonFhirException[] expected)
+        private static void assertErrors(IEnumerable<JsonFhirException> actual, string[] expected)
         {
             if (expected.Length > 0)
             {
                 actual.Should().NotBeEmpty();
 
-                string why = $"Not the same: actual - {string.Join(",", actual.Select(a => a.ErrorCode))} and expected {string.Join(";", expected.Select(a => a.ErrorCode) )}";
-                _ = actual.Zip(expected, (a, e) => a.ErrorCode.Should().Be(e.ErrorCode, because: why)).ToList();
+                string why = $"Not the same: actual - {string.Join(",", actual.Select(a => a.ErrorCode))} and expected {string.Join(";", expected)}";
+                _ = actual.Zip(expected, (a, e) => a.ErrorCode.Should().Be(e, because: why)).ToList();
                 actual.Count().Should().Be(expected.Length, because: why);
                 Console.WriteLine($"Found {string.Join(", ", actual.Select(a => a.Message))}");
             }
@@ -233,7 +234,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             var deserializer = new JsonDynamicDeserializer(typeof(TestPatient).Assembly);
             var aggregator = new ExceptionAggregator();
             _ = deserializer.DeserializeResourceInternal(ref reader, aggregator);
-            assertErrors(aggregator, errors);
+            assertErrors(aggregator, errors.Select(e => e.ErrorCode).ToArray());
             reader.TokenType.Should().Be(tokenAfterParsing);
         }
 
@@ -286,7 +287,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         {
             var aggregator = new ExceptionAggregator();
             var result = deserializeComplex(t, testObject, out var readerState, aggregator);
-            assertErrors(aggregator, errors);
+            assertErrors(aggregator, errors.Select(e => e.ErrorCode).ToArray());
             readerState.TokenType.Should().Be(token);
             var cdResult = result.Should().BeOfType(t);
             verify?.Invoke(result);
@@ -507,33 +508,34 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
                 assertErrors(dfe.InnerExceptions.Cast<JsonFhirException>(), new[] 
                 {
-                    ERR.STRING_ISNOTAN_INSTANT,
-                    ERR.RESOURCETYPE_UNEXPECTED,
-                    ERR.UNKNOWN_RESOURCE_TYPE,
-                    ERR.RESOURCE_TYPE_NOT_A_RESOURCE,
-                    ERR.RESOURCETYPE_SHOULD_BE_STRING,
-                    ERR.NO_RESOURCETYPE_PROPERTY,
-                    ERR.INCOMPATIBLE_SIMPLE_VALUE,
-                    ERR.EXPECTED_START_OF_ARRAY,
-                    ERR.UNKNOWN_PROPERTY_FOUND, // mother is not a property of HumanName
-                    ERR.EXPECTED_PRIMITIVE_NOT_ARRAY, // family is not an array,
-                    ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE, // given and _given not the same length
-                    ERR.EXPECTED_PRIMITIVE_NOT_NULL, // telecom use cannot be null
-                    ERR.EXPECTED_PRIMITIVE_NOT_OBJECT, // address.use is not an object
-                    ERR.PRIMITIVE_ARRAYS_BOTH_NULL, // address.line should not have a null at the same position in both arrays
-                    ERR.PRIMITIVE_ARRAYS_ONLY_NULL, // Questionnaire._subjectType cannot be just null
-                    ERR.EXPECTED_START_OF_OBJECT, // item.code is a complex object, not a boolean
-                    ERR.PRIMITIVE_ARRAYS_LONELY_NULL, // given cannot be the only array with a null
-                    ERR.UNEXPECTED_JSON_TOKEN, // telecom.rank should be a number, not a boolean
-                    ERR.USE_OF_UNDERSCORE_ILLEGAL, // should be extension.url, not extension._url
-                    ERR.UNEXPECTED_JSON_TOKEN, // gender.extension.valueCode should be a string, not a number
-                    ERR.CHOICE_ELEMENT_HAS_NO_TYPE, // extension.value is incorrect
-                    ERR.CHOICE_ELEMENT_HAS_UNKOWN_TYPE, // extension.valueSuperDecimal is incorrect
-                    ERR.UNEXPECTED_JSON_TOKEN, // deceasedBoolean should be a boolean not a string
-                    ERR.NUMBER_CANNOT_BE_PARSED, // multipleBirthInteger should not be a float (3.14)
-                    ERR.INCORRECT_BASE64_DATA,
-                    ERR.ARRAYS_CANNOT_BE_EMPTY,
-                    ERR.OBJECTS_CANNOT_BE_EMPTY
+                    ERR.STRING_ISNOTAN_INSTANT_CODE,
+                    ERR.RESOURCETYPE_UNEXPECTED_CODE,
+                    ERR.UNKNOWN_RESOURCE_TYPE_CODE,
+                    ERR.RESOURCE_TYPE_NOT_A_RESOURCE_CODE,
+                    ERR.RESOURCETYPE_SHOULD_BE_STRING_CODE,
+                    ERR.NO_RESOURCETYPE_PROPERTY_CODE,
+                    ERR.INCOMPATIBLE_SIMPLE_VALUE_CODE,
+                    ERR.EXPECTED_START_OF_ARRAY_CODE,
+                    ERR.UNKNOWN_PROPERTY_FOUND_CODE, // mother is not a property of HumanName
+                    ERR.EXPECTED_PRIMITIVE_NOT_ARRAY_CODE, // family is not an array,
+                    ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE_CODE, // given and _given not the same length
+                    ERR.EXPECTED_PRIMITIVE_NOT_NULL_CODE, // telecom use cannot be null
+                    ERR.EXPECTED_PRIMITIVE_NOT_OBJECT_CODE, // address.use is not an object
+                    ERR.PRIMITIVE_ARRAYS_BOTH_NULL_CODE, // address.line should not have a null at the same position in both arrays
+                    ERR.PRIMITIVE_ARRAYS_ONLY_NULL_CODE, // Questionnaire._subjectType cannot be just null
+                    ERR.CHOICE_ELEMENT_TYPE_NOT_ALLOWED_CODE,
+                    ERR.EXPECTED_START_OF_OBJECT_CODE, // item.code is a complex object, not a boolean
+                    ERR.PRIMITIVE_ARRAYS_LONELY_NULL_CODE, // given cannot be the only array with a null
+                    ERR.UNEXPECTED_JSON_TOKEN_CODE, // telecom.rank should be a number, not a boolean
+                    ERR.USE_OF_UNDERSCORE_ILLEGAL_CODE, // should be extension.url, not extension._url
+                    ERR.UNEXPECTED_JSON_TOKEN_CODE, // gender.extension.valueCode should be a string, not a number
+                    ERR.CHOICE_ELEMENT_HAS_NO_TYPE_CODE, // extension.value is incorrect
+                    ERR.CHOICE_ELEMENT_HAS_UNKOWN_TYPE_CODE, // extension.valueSuperDecimal is incorrect
+                    ERR.UNEXPECTED_JSON_TOKEN_CODE, // deceasedBoolean should be a boolean not a string
+                    ERR.NUMBER_CANNOT_BE_PARSED_CODE, // multipleBirthInteger should not be a float (3.14)
+                    ERR.INCORRECT_BASE64_DATA_CODE,
+                    ERR.ARRAYS_CANNOT_BE_EMPTY_CODE,
+                    ERR.OBJECTS_CANNOT_BE_EMPTY_CODE
                 });                
             }
             

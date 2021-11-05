@@ -23,13 +23,38 @@ using ERR = Hl7.Fhir.Serialization.JsonFhirException;
 namespace Hl7.Fhir.Serialization
 {
     /// <summary>
+    /// Specify the optional features for Json deserialization.
+    /// </summary>
+    public record JsonDynamicDeserializerOptions
+    {
+        /// <summary>
+        /// For performance reasons, validation of Xhtml again the rules specified in the FHIR
+        /// specification for Narrative (http://hl7.org/fhir/narrative.html#2.4.0) is turned off by
+        /// default. Set this property to true to perform this validation during serialization.
+        /// </summary>
+        public bool ValidateXhtml { get; init; }
+
+        /// <summary>
+        /// Validation of the string contents of Date, Time and DateTime is done during deserialization
+        /// but can be turned off for modest performance gains if necessary.
+        /// </summary>
+        public bool DisableDateTimeFormatValidation { get; init; }
+
+        /// <summary>
+        /// Validation of the string contents of required codes (which are mapped to a dotnet Enum) is
+        /// done during deserialization, but can be turned off for modest performance gains if necessary.
+        /// </summary>
+        public bool DisableEnumValidation { get; init; }
+    }
+
+    /// <summary>
     /// Deserializes a byte stream into FHIR POCO objects.
     /// </summary>
     /// <remarks>The serializer uses the format documented in https://www.hl7.org/fhir/json.html. </remarks>
     public class JsonDynamicDeserializer
     {
         /// <summary>
-        /// Initializes an instante of the deserializer.
+        /// Initializes an instance of the deserializer.
         /// </summary>
         /// <param name="assembly">Assembly containing the POCO classes to be used for deserialization.</param>
         public JsonDynamicDeserializer(Assembly assembly)
@@ -39,9 +64,26 @@ namespace Hl7.Fhir.Serialization
         }
 
         /// <summary>
+        /// Initializes an instance of the deserializer.
+        /// </summary>
+        /// <param name="assembly">Assembly containing the POCO classes to be used for deserialization.</param>
+        /// <param name="options">An options object to be used by this instance.</param>
+        public JsonDynamicDeserializer(Assembly assembly, JsonDynamicDeserializerOptions options)
+        {
+            Assembly = assembly ?? throw new ArgumentNullException(nameof(assembly));
+            Options = options;
+            _inspector = ModelInspector.ForAssembly(assembly);
+        }
+
+        /// <summary>
         /// Assembly containing the POCO classes the deserializer will use to deserialize data into.
         /// </summary>
         public Assembly Assembly { get; }
+
+        /// <summary>
+        /// The options that were set by the constructor.
+        /// </summary>
+        public JsonDynamicDeserializerOptions Options { get; } = new();
 
         private readonly ModelInspector _inspector;
 
@@ -289,7 +331,6 @@ namespace Hl7.Fhir.Serialization
 
             if (reader.TokenType != JsonTokenType.StartArray)
             {
-                //reader.Recover();        // skip property value completely
                 aggregator.Add(ERR.EXPECTED_START_OF_ARRAY.With(ref reader, propertyName));
                 oneshot = true;
             }
@@ -297,7 +338,6 @@ namespace Hl7.Fhir.Serialization
             {
                 // Read past start of array
                 reader.Read();
-
 
                 if (reader.TokenType == JsonTokenType.EndArray)
                     aggregator.Add(ERR.ARRAYS_CANNOT_BE_EMPTY.With(ref reader));
@@ -448,7 +488,7 @@ namespace Hl7.Fhir.Serialization
                 aggregator.Add(error);
                 targetPrimitive.ObjectValue = result;
 
-                //TODO: validate the targetPrimitive?
+                //TODO: validate the targetPrimitive? And the XHTML in narrative?
 
                 return targetPrimitive;
             }
@@ -481,7 +521,8 @@ namespace Hl7.Fhir.Serialization
 
                 if (error is not null && result is not null)
                 {
-                    // Signal the fact that we're throwing away data here
+                    // Signal the fact that we're throwing away data here, as we cannot put
+                    // "raw" data into a simple property like Id and Url.
                     aggregator.Add(ERR.INCOMPATIBLE_SIMPLE_VALUE.With(ref reader, error, error.Message));
                     return null;
                 }
@@ -698,20 +739,18 @@ namespace Hl7.Fhir.Serialization
             {
                 string typeSuffix = propertyName[propertyMapping.Name.Length..];
 
-                return string.IsNullOrEmpty(typeSuffix)
+                var typeSuffixMapping = string.IsNullOrEmpty(typeSuffix)
                     ? throw ERR.CHOICE_ELEMENT_HAS_NO_TYPE.With(ref r, propertyMapping.Name)
                     : inspector.FindClassMapping(typeSuffix) ??
                     throw ERR.CHOICE_ELEMENT_HAS_UNKOWN_TYPE.With(ref r, propertyMapping.Name, typeSuffix);
 
-                //TODO: Check whether the type is allowed here?
+                if (!propertyMapping.FhirType.Any(ft => ft.IsAssignableFrom(typeSuffixMapping.NativeType)))
+                    throw ERR.CHOICE_ELEMENT_TYPE_NOT_ALLOWED.With(ref r, propertyMapping.Name, typeSuffix);
+
+                return typeSuffixMapping;
             }
         }
-
-        //TODO: check & guard direct casts
-        //TODO: report error before doing recovery (because of position)
     }
-
-
 }
 
 #nullable restore
