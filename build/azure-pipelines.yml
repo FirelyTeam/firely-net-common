@@ -108,6 +108,10 @@ stages:
     displayName: Tests common test projects
     steps:
       - checkout: none
+      - task: UseDotNet@2
+        displayName: 'Use .NET Core sdk $(NET_CORE_SDK)'
+        inputs:
+          version: $(NET_CORE_SDK)
       - template: templates/test-job-template.yml
         parameters:
           testRunTitle: Tests common test projects
