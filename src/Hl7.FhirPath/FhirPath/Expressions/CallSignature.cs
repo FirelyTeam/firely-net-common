@@ -41,7 +41,7 @@ namespace Hl7.FhirPath.Expressions
         public bool DynamicExactMatches(string functionName, IEnumerable<object> arguments)
         {
             return functionName == Name && arguments.Count() == ArgumentTypes.Count() &&
-                   arguments.Zip(ArgumentTypes, (call, sig) => Typecasts.IsOfType(call, sig)).All(r => r == true);
+                   arguments.Zip(ArgumentTypes, (call, sig) => Typecasts.IsOfExactType(call, sig)).All(r => r == true);
         }
 
         public bool Matches(string functionName, int argCount)

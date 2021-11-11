@@ -137,30 +137,39 @@ namespace Hl7.Fhir.ElementModel.Types
             return success;
         }
 
-        public static Date operator +(Date me, Quantity value)
+        public static Date operator +(Date dateValue, Quantity addValue)
         {
-            var dto = me._parsedValue;
-            switch (value.Unit)
+            if (dateValue is null) throw new ArgumentNullException(nameof(dateValue));
+            if (addValue is null) throw new ArgumentNullException(nameof(addValue));
+
+            var dto = dateValue._parsedValue;
+            switch (addValue.Unit)
             {
                 // we can ignore precision, as the precision will "trim" it anyway, and if we add 13 months, then the year can tick over nicely
                 case "a": // UCUM
                 case "years":
                 case "year":
-                    dto = me._parsedValue.AddYears((int)value.Value);
+                    dto = dateValue._parsedValue.AddYears((int)addValue.Value);
                     break;
                 case "mo": // UCUM
                 case "month":
                 case "months":
-                    dto = me._parsedValue.AddMonths((int)value.Value);
+                    dto = dateValue._parsedValue.AddMonths((int)addValue.Value);
                     break;
                 case "d": // UCUM
                 case "day":
                 case "days":
-                    dto = me._parsedValue.AddDays((int)value.Value);
+                    dto = dateValue._parsedValue.AddDays((int)addValue.Value);
                     break;
+                case "week":
+                case "weeks":
+                    dto = dateValue._parsedValue.AddDays(((int)addValue.Value) * 7);
+                    break;
+                default:
+                    throw new ArgumentException($"'{addValue.Unit}' is not a valid time-valued unit", nameof(addValue));
             }
 
-            var result = Date.FromDateTimeOffset(dto, me.Precision);
+            var result = Date.FromDateTimeOffset(dto, dateValue.Precision);
             return result;
         }
 

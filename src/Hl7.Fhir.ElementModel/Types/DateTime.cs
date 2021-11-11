@@ -54,26 +54,33 @@ namespace Hl7.Fhir.ElementModel.Types
         public int? Seconds => Precision >= DateTimePrecision.Second ? _parsedValue.Second : (int?)null;
         public int? Millis => Precision >= DateTimePrecision.Fraction ? _parsedValue.Millisecond : (int?)null;
 
-        public static DateTime operator +(DateTime me, Quantity value)
+        public static DateTime operator +(DateTime dateTimeValue, Quantity addValue)
         {
-            var dto = me._parsedValue;
-            switch (value.Unit)
+            if (dateTimeValue is null) throw new ArgumentNullException(nameof(dateTimeValue));
+            if (addValue is null) throw new ArgumentNullException(nameof(addValue));
+
+            var dto = dateTimeValue._parsedValue;
+            switch (addValue.Unit)
             {
                 // we can ignore precision, as the precision will "trim" it anyway, and if we add 13 months, then the year can tick over nicely
                 case "a": // UCUM
                 case "years":
                 case "year":
-                    dto = me._parsedValue.AddYears((int)value.Value);
+                    dto = dateTimeValue._parsedValue.AddYears((int)addValue.Value);
                     break;
                 case "mo": // UCUM
                 case "month":
                 case "months":
-                    dto = me._parsedValue.AddMonths((int)value.Value);
+                    dto = dateTimeValue._parsedValue.AddMonths((int)addValue.Value);
                     break;
                 case "d": // UCUM
                 case "day":
                 case "days":
-                    dto = me._parsedValue.AddDays((int)value.Value);
+                    dto = dateTimeValue._parsedValue.AddDays((int)addValue.Value);
+                    break;
+                case "week":
+                case "weeks":
+                    dto = dateTimeValue._parsedValue.AddDays(((int)addValue.Value)*7);
                     break;
 
                 // NOT ignoring precision on time based stuff if there is no time component
@@ -81,38 +88,40 @@ namespace Hl7.Fhir.ElementModel.Types
                 case "h":
                 case "hour":
                 case "hours":
-                    if (me.Precision > DateTimePrecision.Day)
-                        dto = me._parsedValue.AddHours((double)value.Value);
+                    if (dateTimeValue.Precision > DateTimePrecision.Day)
+                        dto = dateTimeValue._parsedValue.AddHours((double)addValue.Value);
                     break;
                 case "min":
                 case "minute":
                 case "minutes":
-                    if (me.Precision > DateTimePrecision.Day)
-                        dto = me._parsedValue.AddMinutes((double)value.Value);
+                    if (dateTimeValue.Precision > DateTimePrecision.Day)
+                        dto = dateTimeValue._parsedValue.AddMinutes((double)addValue.Value);
                     break;
                 case "s":
                 case "second":
                 case "seconds":
-                    if (me.Precision > DateTimePrecision.Day)
-                        dto = me._parsedValue.AddSeconds((double)value.Value);
+                    if (dateTimeValue.Precision > DateTimePrecision.Day)
+                        dto = dateTimeValue._parsedValue.AddSeconds((double)addValue.Value);
                     break;
                 case "ms":
                 case "millisecond":
                 case "milliseconds":
-                    if (me.Precision > DateTimePrecision.Day)
-                        dto = me._parsedValue.AddMilliseconds((double)value.Value);
+                    if (dateTimeValue.Precision > DateTimePrecision.Day)
+                        dto = dateTimeValue._parsedValue.AddMilliseconds((double)addValue.Value);
                     break;
+                default:
+                    throw new ArgumentException($"'{addValue.Unit}' is not a valid time-valued unit", nameof(addValue));
             }
 
             string representation = dto.ToString(FMT_FULL);
-            if (representation.Length > me._original.Length)
+            if (representation.Length > dateTimeValue._original.Length)
             {
                 // need to trim appropriately.
-                if (me.Precision <= DateTimePrecision.Minute)
-                    representation = representation.Substring(0, me._original.Length);
+                if (dateTimeValue.Precision <= DateTimePrecision.Minute)
+                    representation = representation.Substring(0, dateTimeValue._original.Length);
                 else
                 {
-                    if (!me.HasOffset)
+                    if (!dateTimeValue.HasOffset)
                     {
                         // trim the offset from it
                         representation = dto.ToString("yyyy-MM-dd'T'HH:mm:ss.FFFFFFF");
@@ -120,7 +129,7 @@ namespace Hl7.Fhir.ElementModel.Types
                 }
             }
 
-            var result = new DateTime(representation, dto, me.Precision, me.HasOffset);
+            var result = new DateTime(representation, dto, dateTimeValue.Precision, dateTimeValue.HasOffset);
             return result;
         }
 

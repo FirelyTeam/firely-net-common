@@ -145,7 +145,7 @@ namespace Hl7.FhirPath.Expressions
             return from == null ? to.IsNullable() : getImplicitCast(from, to) != null;
         }
 
-        public static bool IsOfType(object source, Type to)
+        internal static bool IsOfExactType(object source, Type to)
         {
             if (source == null)
                 return to.IsNullable();
