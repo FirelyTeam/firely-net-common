@@ -154,12 +154,20 @@ namespace Hl7.Fhir.ElementModel.Types
                 case "mo": // UCUM
                 case "month":
                 case "months":
-                    dto = dateValue._parsedValue.AddMonths((int)addValue.Value);
+                    if (dateValue.Precision == DateTimePrecision.Year)
+                        dto = dateValue._parsedValue.AddYears((int)(addValue.Value / 12));
+                    else
+                        dto = dateValue._parsedValue.AddMonths((int)addValue.Value);
                     break;
                 case "d": // UCUM
                 case "day":
                 case "days":
-                    dto = dateValue._parsedValue.AddDays((int)addValue.Value);
+                    if (dateValue.Precision == DateTimePrecision.Year)
+                        dto = dateValue._parsedValue.AddYears((int)(addValue.Value / 365));
+                    else if (dateValue.Precision == DateTimePrecision.Month)
+                        dto = dateValue._parsedValue.AddMonths((int)(addValue.Value / 30));
+                    else
+                        dto = dateValue._parsedValue.AddDays((int)addValue.Value);
                     break;
                 case "week":
                 case "weeks":
