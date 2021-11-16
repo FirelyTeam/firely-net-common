@@ -70,6 +70,11 @@ namespace Hl7.Fhir.Introspection
         public bool InSummary { get; private set; }
 
         /// <summary>
+        /// Weather the element has five ws
+        /// </summary>
+        public System.Collections.Generic.List<string> FiveWs { get; private set; }
+
+        /// <summary>
         /// Whether the element has a cardinality higher than 0.
         /// </summary>
         public bool IsMandatoryElement { get; private set; }
@@ -216,6 +221,7 @@ namespace Hl7.Fhir.Introspection
                 IsMandatoryElement = cardinalityAttr?.Min > 0,
                 IsPrimitive = isPrimitive,
                 RepresentsValueElement = isPrimitive && isPrimitiveValueElement(elementAttr, prop),
+                FiveWs = elementAttr.FiveWs,
             };
 
             return true;
