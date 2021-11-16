@@ -70,7 +70,7 @@ namespace Hl7.Fhir.Introspection
         public bool InSummary { get; private set; }
 
         /// <summary>
-        /// Weather the element has five ws
+        /// Five W's mappings of the element.
         /// </summary>
         public System.Collections.Generic.List<string> FiveWs { get; private set; }
 
