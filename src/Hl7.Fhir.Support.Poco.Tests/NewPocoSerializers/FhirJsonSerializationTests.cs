@@ -12,7 +12,7 @@ using System.Text.Json;
 namespace Hl7.Fhir.Support.Poco.Tests
 {
     [TestClass]
-    public class JsonFhirSerializationTests
+    public class FhirJsonSerializationTests
     {
         public JsonSerializerOptions BaseOptions = new JsonSerializerOptions().ForFhir(typeof(TestPatient).Assembly);
 

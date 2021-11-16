@@ -22,7 +22,7 @@ namespace Hl7.Fhir.Serialization
     /// with the Json itself, but issues in the data with regards to the rules for FHIR Json format described
     /// in http://hl7.org/fhir/json.html.
     /// </summary>
-    public class JsonFhirException : JsonException
+    public class FhirJsonException : JsonException
     {
         // TODO: Document each of these errors, based on the text for the error.
         public const string EXPECTED_START_OF_OBJECT_CODE = "JSON101";
@@ -52,32 +52,32 @@ namespace Hl7.Fhir.Serialization
         public const string INCOMPATIBLE_SIMPLE_VALUE_CODE = "JSON126";
         public const string CHOICE_ELEMENT_TYPE_NOT_ALLOWED_CODE = "JSON127";
 
-        internal static readonly JsonFhirException EXPECTED_START_OF_OBJECT = new(EXPECTED_START_OF_OBJECT_CODE, "Expected start of object, but found {0}.");
-        internal static readonly JsonFhirException RESOURCETYPE_SHOULD_BE_STRING = new(RESOURCETYPE_SHOULD_BE_STRING_CODE, "Property 'resourceType' should be a string, but found {0}.");
-        internal static readonly JsonFhirException NO_RESOURCETYPE_PROPERTY = new(NO_RESOURCETYPE_PROPERTY_CODE, "Resource has no 'resourceType' property.");
-        internal static readonly JsonFhirException EXPECTED_PRIMITIVE_NOT_OBJECT = new(EXPECTED_PRIMITIVE_NOT_OBJECT_CODE, "Expected a primitive value, not a json object.");
-        internal static readonly JsonFhirException EXPECTED_PRIMITIVE_NOT_ARRAY = new(EXPECTED_PRIMITIVE_NOT_ARRAY_CODE, "Expected a primitive value, not the start of an array.");
-        internal static readonly JsonFhirException INCORRECT_BASE64_DATA = new(INCORRECT_BASE64_DATA_CODE, "Encountered incorrectly encoded base64 data.");
-        internal static readonly JsonFhirException STRING_ISNOTAN_INSTANT = new(STRING_ISNOTAN_INSTANT_CODE, "Literal string '{0}' cannot be parsed as an instant.");
-        internal static readonly JsonFhirException NUMBER_CANNOT_BE_PARSED = new(NUMBER_CANNOT_BE_PARSED_CODE, "Json number '{0}' cannot be parsed as a {1}.");
-        internal static readonly JsonFhirException EXPECTED_PRIMITIVE_NOT_NULL = new(EXPECTED_PRIMITIVE_NOT_NULL_CODE, "Expected a primitive value, not a json null.");
-        internal static readonly JsonFhirException UNEXPECTED_JSON_TOKEN = new(UNEXPECTED_JSON_TOKEN_CODE, "Expecting a {0}, but found a json {1} with value '{2}'.");
-        internal static readonly JsonFhirException EXPECTED_START_OF_ARRAY = new(EXPECTED_START_OF_ARRAY_CODE, "Expected start of array since '{0}' is a repeating element.");
-        internal static readonly JsonFhirException USE_OF_UNDERSCORE_ILLEGAL = new(USE_OF_UNDERSCORE_ILLEGAL_CODE, "Element '{0}' is not a FHIR primitive, so it should not use an underscore in the '{1}' property.");
-        internal static readonly JsonFhirException CHOICE_ELEMENT_HAS_NO_TYPE = new(CHOICE_ELEMENT_HAS_NO_TYPE_CODE, "Choice element '{0}' is not suffixed with a type.");
-        internal static readonly JsonFhirException CHOICE_ELEMENT_HAS_UNKOWN_TYPE = new(CHOICE_ELEMENT_HAS_UNKOWN_TYPE_CODE, "Choice element '{0}' is suffixed with an unrecognized type '{1}'.");
-        internal static readonly JsonFhirException UNKNOWN_RESOURCE_TYPE = new(UNKNOWN_RESOURCE_TYPE_CODE, "Unknown type '{0}' found in 'resourceType' property.");
-        internal static readonly JsonFhirException RESOURCE_TYPE_NOT_A_RESOURCE = new(RESOURCE_TYPE_NOT_A_RESOURCE_CODE, "Data type '{0}' in property 'resourceType' is not a type of resource.");
-        internal static readonly JsonFhirException UNKNOWN_PROPERTY_FOUND = new(UNKNOWN_PROPERTY_FOUND_CODE, "Encountered unrecognized property '{0}'.");
-        internal static readonly JsonFhirException RESOURCETYPE_UNEXPECTED = new(RESOURCETYPE_UNEXPECTED_CODE, "The 'resourceType' property should only be used in resources.");
-        internal static readonly JsonFhirException OBJECTS_CANNOT_BE_EMPTY = new(OBJECTS_CANNOT_BE_EMPTY_CODE, "An object needs to have at least one property.");
-        internal static readonly JsonFhirException ARRAYS_CANNOT_BE_EMPTY = new(ARRAYS_CANNOT_BE_EMPTY_CODE, "An array needs to have at least one element.");
-        internal static readonly JsonFhirException PRIMITIVE_ARRAYS_INCOMPAT_SIZE = new(PRIMITIVE_ARRAYS_INCOMPAT_SIZE_CODE, "Primitive arrays split in two properties should have the same size.");
-        internal static readonly JsonFhirException PRIMITIVE_ARRAYS_BOTH_NULL = new(PRIMITIVE_ARRAYS_BOTH_NULL_CODE, "Primitive arrays split in two properties should not both have a null at the same position.");
-        internal static readonly JsonFhirException PRIMITIVE_ARRAYS_LONELY_NULL = new(PRIMITIVE_ARRAYS_LONELY_NULL_CODE, "Property '{0}' is a single primitive array and should not contain a null.");
-        internal static readonly JsonFhirException PRIMITIVE_ARRAYS_ONLY_NULL = new(PRIMITIVE_ARRAYS_ONLY_NULL_CODE, "If present, property '{0}' should not only contain nulls.");
-        internal static readonly JsonFhirException INCOMPATIBLE_SIMPLE_VALUE = new(INCOMPATIBLE_SIMPLE_VALUE_CODE, "Found a json primitive value that does not match the expected type of the primitive property. Details: {0}");
-        internal static readonly JsonFhirException CHOICE_ELEMENT_TYPE_NOT_ALLOWED = new(CHOICE_ELEMENT_TYPE_NOT_ALLOWED_CODE, "Choice element '{0}' is suffixed with type '{1}', which is not allowed here.");
+        internal static readonly FhirJsonException EXPECTED_START_OF_OBJECT = new(EXPECTED_START_OF_OBJECT_CODE, "Expected start of object, but found {0}.");
+        internal static readonly FhirJsonException RESOURCETYPE_SHOULD_BE_STRING = new(RESOURCETYPE_SHOULD_BE_STRING_CODE, "Property 'resourceType' should be a string, but found {0}.");
+        internal static readonly FhirJsonException NO_RESOURCETYPE_PROPERTY = new(NO_RESOURCETYPE_PROPERTY_CODE, "Resource has no 'resourceType' property.");
+        internal static readonly FhirJsonException EXPECTED_PRIMITIVE_NOT_OBJECT = new(EXPECTED_PRIMITIVE_NOT_OBJECT_CODE, "Expected a primitive value, not a json object.");
+        internal static readonly FhirJsonException EXPECTED_PRIMITIVE_NOT_ARRAY = new(EXPECTED_PRIMITIVE_NOT_ARRAY_CODE, "Expected a primitive value, not the start of an array.");
+        internal static readonly FhirJsonException INCORRECT_BASE64_DATA = new(INCORRECT_BASE64_DATA_CODE, "Encountered incorrectly encoded base64 data.");
+        internal static readonly FhirJsonException STRING_ISNOTAN_INSTANT = new(STRING_ISNOTAN_INSTANT_CODE, "Literal string '{0}' cannot be parsed as an instant.");
+        internal static readonly FhirJsonException NUMBER_CANNOT_BE_PARSED = new(NUMBER_CANNOT_BE_PARSED_CODE, "Json number '{0}' cannot be parsed as a {1}.");
+        internal static readonly FhirJsonException EXPECTED_PRIMITIVE_NOT_NULL = new(EXPECTED_PRIMITIVE_NOT_NULL_CODE, "Expected a primitive value, not a json null.");
+        internal static readonly FhirJsonException UNEXPECTED_JSON_TOKEN = new(UNEXPECTED_JSON_TOKEN_CODE, "Expecting a {0}, but found a json {1} with value '{2}'.");
+        internal static readonly FhirJsonException EXPECTED_START_OF_ARRAY = new(EXPECTED_START_OF_ARRAY_CODE, "Expected start of array since '{0}' is a repeating element.");
+        internal static readonly FhirJsonException USE_OF_UNDERSCORE_ILLEGAL = new(USE_OF_UNDERSCORE_ILLEGAL_CODE, "Element '{0}' is not a FHIR primitive, so it should not use an underscore in the '{1}' property.");
+        internal static readonly FhirJsonException CHOICE_ELEMENT_HAS_NO_TYPE = new(CHOICE_ELEMENT_HAS_NO_TYPE_CODE, "Choice element '{0}' is not suffixed with a type.");
+        internal static readonly FhirJsonException CHOICE_ELEMENT_HAS_UNKOWN_TYPE = new(CHOICE_ELEMENT_HAS_UNKOWN_TYPE_CODE, "Choice element '{0}' is suffixed with an unrecognized type '{1}'.");
+        internal static readonly FhirJsonException UNKNOWN_RESOURCE_TYPE = new(UNKNOWN_RESOURCE_TYPE_CODE, "Unknown type '{0}' found in 'resourceType' property.");
+        internal static readonly FhirJsonException RESOURCE_TYPE_NOT_A_RESOURCE = new(RESOURCE_TYPE_NOT_A_RESOURCE_CODE, "Data type '{0}' in property 'resourceType' is not a type of resource.");
+        internal static readonly FhirJsonException UNKNOWN_PROPERTY_FOUND = new(UNKNOWN_PROPERTY_FOUND_CODE, "Encountered unrecognized property '{0}'.");
+        internal static readonly FhirJsonException RESOURCETYPE_UNEXPECTED = new(RESOURCETYPE_UNEXPECTED_CODE, "The 'resourceType' property should only be used in resources.");
+        internal static readonly FhirJsonException OBJECTS_CANNOT_BE_EMPTY = new(OBJECTS_CANNOT_BE_EMPTY_CODE, "An object needs to have at least one property.");
+        internal static readonly FhirJsonException ARRAYS_CANNOT_BE_EMPTY = new(ARRAYS_CANNOT_BE_EMPTY_CODE, "An array needs to have at least one element.");
+        internal static readonly FhirJsonException PRIMITIVE_ARRAYS_INCOMPAT_SIZE = new(PRIMITIVE_ARRAYS_INCOMPAT_SIZE_CODE, "Primitive arrays split in two properties should have the same size.");
+        internal static readonly FhirJsonException PRIMITIVE_ARRAYS_BOTH_NULL = new(PRIMITIVE_ARRAYS_BOTH_NULL_CODE, "Primitive arrays split in two properties should not both have a null at the same position.");
+        internal static readonly FhirJsonException PRIMITIVE_ARRAYS_LONELY_NULL = new(PRIMITIVE_ARRAYS_LONELY_NULL_CODE, "Property '{0}' is a single primitive array and should not contain a null.");
+        internal static readonly FhirJsonException PRIMITIVE_ARRAYS_ONLY_NULL = new(PRIMITIVE_ARRAYS_ONLY_NULL_CODE, "If present, property '{0}' should not only contain nulls.");
+        internal static readonly FhirJsonException INCOMPATIBLE_SIMPLE_VALUE = new(INCOMPATIBLE_SIMPLE_VALUE_CODE, "Found a json primitive value that does not match the expected type of the primitive property. Details: {0}");
+        internal static readonly FhirJsonException CHOICE_ELEMENT_TYPE_NOT_ALLOWED = new(CHOICE_ELEMENT_TYPE_NOT_ALLOWED_CODE, "Choice element '{0}' is suffixed with type '{1}', which is not allowed here.");
 
         /// <summary>
         /// The set of errors for which the deserializer is able to retain the data present in the json file, even when the data
@@ -122,23 +122,23 @@ namespace Hl7.Fhir.Serialization
         /// <remarks>Developers can assume that these codes will not change in future versions.</remarks>
         public string ErrorCode { get; private set; }
 
-        public JsonFhirException(string code, string message) :
+        public FhirJsonException(string code, string message) :
             this(code, message, lineNumber: null, bytePositionInLine: null, innerException: null)
         {
         }
 
-        public JsonFhirException(string code, string message, Exception? innerException) :
+        public FhirJsonException(string code, string message, Exception? innerException) :
             this(code, message, lineNumber: null, bytePositionInLine: null, innerException)
         {
 
         }
 
-        public JsonFhirException(string code, string message, long? lineNumber, long? bytePositionInLine) :
+        public FhirJsonException(string code, string message, long? lineNumber, long? bytePositionInLine) :
             this(code, message, lineNumber, bytePositionInLine, innerException: null)
         {
         }
 
-        public JsonFhirException(string code, string message, long? lineNumber, long? bytePositionInLine, Exception? innerException) : base(message, path: null, lineNumber, bytePositionInLine, innerException)
+        public FhirJsonException(string code, string message, long? lineNumber, long? bytePositionInLine, Exception? innerException) : base(message, path: null, lineNumber, bytePositionInLine, innerException)
         {
             ErrorCode = code;
         }
@@ -149,17 +149,17 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public bool Recoverable => RECOVERABLE_ERROR_CODES.Contains(ErrorCode);
 
-        internal JsonFhirException With(ref Utf8JsonReader reader, params object?[] parameters) =>
+        internal FhirJsonException With(ref Utf8JsonReader reader, params object?[] parameters) =>
             With(ref reader, inner: null, parameters);
 
-        internal JsonFhirException With(ref Utf8JsonReader reader, JsonFhirException? inner, params object?[] parameters)
+        internal FhirJsonException With(ref Utf8JsonReader reader, FhirJsonException? inner, params object?[] parameters)
         {
             var formattedMessage = string.Format(CultureInfo.InvariantCulture, Message, parameters);
 
             var location = reader.GenerateLocationMessage(out var lineNumber, out var position);
             var message = formattedMessage + location;            
 
-            return new JsonFhirException(ErrorCode, message, lineNumber, position, inner);
+            return new FhirJsonException(ErrorCode, message, lineNumber, position, inner);
         }
     }
 }

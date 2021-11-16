@@ -17,8 +17,18 @@ namespace Hl7.Fhir.Serialization
 {
     internal static class SystemTextJsonParsingExtensions
     {
+        internal static string GetRawText(this ref Utf8JsonReader reader)
+        {
+            var doc = JsonDocument.ParseValue(ref reader);
+            return doc.RootElement.GetRawText();
+        }
+
         internal static (long lineNumber, long position) GetLocation(this ref Utf8JsonReader reader)
         {
+            // While we are waiting for this https://github.com/dotnet/runtime/issues/28482,
+            // there's no other option than to just force our way to these valuable properties.
+            // Note: linenumber/position are 0 based, so adding 1 position here.
+
             var lineNumber = ((long)typeof(JsonReaderState)
                 .GetField("_lineNumber", BindingFlags.NonPublic | BindingFlags.Instance)!
                 .GetValue(reader.CurrentState)!) + 1;
@@ -34,9 +44,6 @@ namespace Hl7.Fhir.Serialization
 
         internal static string GenerateLocationMessage(this ref Utf8JsonReader reader, out long lineNumber, out long position)
         {
-            // While we are waiting for this https://github.com/dotnet/runtime/issues/28482,
-            // there's no other option than to just force our way to these valuable properties.
-            // Note: linenumber/position are 0 based, so adding 1 position here.
             (lineNumber, position) = reader.GetLocation();
             return $" Line {lineNumber}, position {position}.";
         }

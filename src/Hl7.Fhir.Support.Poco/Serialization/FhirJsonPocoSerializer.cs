@@ -28,7 +28,7 @@ namespace Hl7.Fhir.Serialization
     /// <remarks>The serializer uses the format documented in https://www.hl7.org/fhir/json.html. Since all POCOs included
     /// in the SDK implement IReadOnlyDictionary, these methods can be used to serialize POCOs to Json.
     /// </remarks>
-    public class JsonFhirDictionarySerializer
+    public class FhirJsonPocoSerializer
     {
         /// <summary>
         /// The release of FHIR for which this serializer is configured.
@@ -38,7 +38,7 @@ namespace Hl7.Fhir.Serialization
         /// <summary>
         /// Construct a new serializer for a specific release of FHIR.
         /// </summary>
-        public JsonFhirDictionarySerializer(FhirRelease release)
+        public FhirJsonPocoSerializer(FhirRelease release)
         {
             Release = release;
         }

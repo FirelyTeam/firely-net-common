@@ -25,7 +25,7 @@ namespace Hl7.Fhir.Serialization
     /// <summary>
     /// Common resource converter to support polymorphic deserialization.
     /// </summary>
-    public class JsonFhirConverter : JsonConverter<Base>
+    public class FhirJsonConverter : JsonConverter<Base>
     {
         /// <summary>
         /// Constructs a <see cref="JsonConverter{T}"/> that (de)serializes FHIR json for the 
@@ -33,12 +33,12 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         /// <param name="assembly">The assembly containing classes to be used for deserialization.</param>
         /// <param name="filter">A filter that determines which elements to include when serializing a summary.</param>
-        public JsonFhirConverter(Assembly assembly, SerializationFilter? filter = default)
+        public FhirJsonConverter(Assembly assembly, SerializationFilter? filter = default)
         {
             ModelInspector inspector = ModelInspector.ForAssembly(assembly);
 
-             _deserializer = new JsonDynamicDeserializer(assembly);
-            _serializer = new JsonFhirDictionarySerializer(inspector.FhirRelease);
+             _deserializer = new FhirJsonPocoDeserializer(assembly);
+            _serializer = new FhirJsonPocoSerializer(inspector.FhirRelease);
             SerializationFilter = filter;
         }
 
@@ -52,7 +52,7 @@ namespace Hl7.Fhir.Serialization
         /// <remarks>Since the standard serializer/deserializer will allow you to override its behaviour to produce
         /// custom behaviour, this constructor will allow the developer to use such custom serializers/deserializers instead
         /// of the defaults.</remarks>
-        public JsonFhirConverter(JsonDynamicDeserializer deserializer, JsonFhirDictionarySerializer serializer, SerializationFilter? filter = default)
+        public FhirJsonConverter(FhirJsonPocoDeserializer deserializer, FhirJsonPocoSerializer serializer, SerializationFilter? filter = default)
         {
             _deserializer = deserializer;
             _serializer = serializer;
@@ -64,8 +64,8 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public override bool CanConvert(Type objectType) => typeof(Base).IsAssignableFrom(objectType);
 
-        private readonly JsonDynamicDeserializer _deserializer;
-        private readonly JsonFhirDictionarySerializer _serializer;
+        private readonly FhirJsonPocoDeserializer _deserializer;
+        private readonly FhirJsonPocoSerializer _serializer;
 
         /// <summary>
         /// The filter used to serialize a summary of the resource.

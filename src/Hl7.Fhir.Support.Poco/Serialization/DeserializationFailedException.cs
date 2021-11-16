@@ -34,11 +34,6 @@ namespace Hl7.Fhir.Serialization
         /// The best-effort result of deserialization. Maybe invalid or incomplete because of the errors encountered.
         /// </summary>
         public Base? PartialResult { get; private set; }
-
-        // TODO: Would like to have this, but this should cover XML exceptions and Json exceptions (and whatever).
-        // Add an interface to the exceptionclasses?  Or create an exception class not based on System.Text.JsonException so
-        // it can be re-used for XML?
-        // public bool Recoverable => InnerExceptions.All(e => e.Recoverable);
     }
 }
 

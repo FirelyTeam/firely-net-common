@@ -20,14 +20,14 @@ using System.Text.Json;
 namespace Hl7.Fhir.Serialization
 {
     /// <summary>
-    /// This class is used by the <see cref="JsonDynamicDeserializer"/> to collect errors while performing deserialization.
+    /// This class is used by the <see cref="JsonPocoDeserializer"/> to collect errors while performing deserialization.
     /// </summary>
     /// <remarks>Is probably going to be used by the (future)XmlDynamicDeserializer too.</remarks>
-    internal class ExceptionAggregator : IEnumerable<JsonFhirException>
+    internal class ExceptionAggregator : IEnumerable<FhirJsonException>
     {
-        public List<JsonFhirException> _aggregated = new();
+        public List<FhirJsonException> _aggregated = new();
 
-        public void Add(JsonFhirException? e)
+        public void Add(FhirJsonException? e)
         {
             if(e is not null)
                 _aggregated.Add(e);
@@ -35,7 +35,7 @@ namespace Hl7.Fhir.Serialization
 
         public bool HasExceptions => _aggregated.Count > 0;
 
-        public IEnumerator<JsonFhirException> GetEnumerator() => ((IEnumerable<JsonFhirException>)_aggregated).GetEnumerator();
+        public IEnumerator<FhirJsonException> GetEnumerator() => ((IEnumerable<FhirJsonException>)_aggregated).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)_aggregated).GetEnumerator();
     }
 

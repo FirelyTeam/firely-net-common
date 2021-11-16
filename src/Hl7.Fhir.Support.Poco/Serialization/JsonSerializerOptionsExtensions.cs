@@ -31,14 +31,14 @@ namespace Hl7.Fhir.Serialization
                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             };
 
-            result.Converters.Add(new JsonFhirConverter(modelAssembly, filter));
+            result.Converters.Add(new FhirJsonConverter(modelAssembly, filter));
             return result;
         }
 
         /// <summary>
         /// Initialize the options to serialize using the JsonFhirConverter, producing compact output without whitespace.
         /// </summary>
-        public static JsonSerializerOptions ForFhir(this JsonSerializerOptions options, JsonFhirConverter converter)
+        public static JsonSerializerOptions ForFhir(this JsonSerializerOptions options, FhirJsonConverter converter)
         {
             var result = new JsonSerializerOptions(options)
             {
