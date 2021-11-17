@@ -37,13 +37,13 @@ namespace Hl7.Fhir.Validation
             {
                 var list = value as IList;
                 foreach(var elem in list)
-                   if(elem == null) return DotNetAttributeValidation.BuildResult(validationContext,"Repeating element cannot have empty/null values");
+                   if(elem == null) return DotNetAttributeValidation.BuildResult(validationContext,"Repeating element cannot have empty/null values.");
                 count = list.Count;
             }
 
-            if (count < Min) return DotNetAttributeValidation.BuildResult(validationContext,"Element has {0} elements, but min. cardinality is {1}", count, Min);
+            if (count < Min) return DotNetAttributeValidation.BuildResult(validationContext,"Element has {0} elements, but min. cardinality is {1}.", count, Min);
 
-            if (Max != -1 && count > Max) return DotNetAttributeValidation.BuildResult(validationContext,"Element has {0} elements, but max. cardinality is {1}", count, Max);
+            if (Max != -1 && count > Max) return DotNetAttributeValidation.BuildResult(validationContext,"Element has {0} elements, but max. cardinality is {1}.", count, Max);
 
             return ValidationResult.Success;
         }

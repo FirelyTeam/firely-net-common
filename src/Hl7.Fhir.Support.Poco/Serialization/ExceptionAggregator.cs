@@ -35,6 +35,8 @@ namespace Hl7.Fhir.Serialization
 
         public bool HasExceptions => _aggregated.Count > 0;
 
+        public int Count => _aggregated.Count;
+
         public IEnumerator<FhirJsonException> GetEnumerator() => ((IEnumerable<FhirJsonException>)_aggregated).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)_aggregated).GetEnumerator();
     }

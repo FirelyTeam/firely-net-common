@@ -11,6 +11,7 @@
 
 #nullable enable
 
+using Hl7.Fhir.Model;
 using Hl7.Fhir.Utility;
 using System;
 using System.Text.Json;
@@ -33,12 +34,13 @@ namespace Hl7.Fhir.Serialization
         /// Validation of the string contents of Date, Time and DateTime is done during deserialization
         /// but can be turned off for modest performance gains if necessary.
         /// </summary>
-        public bool AllowInvalidDateTimeValues { get; init; } = false;
+        public bool SkipDateTimeValidation { get; init; } = false;
 
         /// <summary>
-        /// Do not produce an error when encountering values not parseable as a member of an enumeration.
+        /// If the caller will not access base64 data in the deserialized resources, base64 decoding
+        /// of <see cref="Base64Binary"/> values can be turned off to increase performance.
         /// </summary>
-        public bool AllowUnrecognizedEnums { get; set; } = false;
+        public bool DisableBase64Decoding { get; init; } = false;
 
         /// <summary>
         /// If set, this delegate is called when the deserializer fails to parse a primitive json value.

@@ -22,9 +22,10 @@ namespace Hl7.Fhir.Utility
     public static class EnumUtility
     {
         /// <summary>
-        /// Retrieves the literal value for the code represented by this enum value, or <c>null</c> if there is no literal value defined.
+        /// Retrieves the literal value for the code represented by this enum value, or the member name itself if there
+        /// is no literal value defined.
         /// </summary>
-        public static string? GetLiteral(this Enum e) => getEnumMapping(e.GetType()).GetLiteral(e);
+        public static string GetLiteral(this Enum e) => getEnumMapping(e.GetType()).GetLiteral(e);
 
         /// <summary>
         /// Retrieves the system canonical for the code represented by this enum value, or <c>null</c> if there is no system defined.
@@ -32,9 +33,8 @@ namespace Hl7.Fhir.Utility
         public static string? GetSystem(this Enum e) => e.GetAttributeOnEnum<EnumLiteralAttribute>()?.System;
 
         /// <summary>
-        /// Retrieves the description for this enum value.
+        /// Retrieves the description for this enum value or the enumeration value itself if there is no description defined.
         /// </summary>
-        /// <remarks>Returns the enumeration value itself if there is no description defined.</remarks>
         public static string GetDocumentation(this Enum e) =>
             e.GetAttributeOnEnum<DescriptionAttribute>()?.Description ?? e.ToString();
 
@@ -83,11 +83,10 @@ namespace Hl7.Fhir.Utility
             private readonly Dictionary<string, Enum> _lowercaseLiteralToEnum = new();
             private readonly Dictionary<Enum, string> _enumToLiteral = new();
 
-            public string? GetLiteral(Enum value)
-            {
-                _enumToLiteral.TryGetValue(value, out string? result);
-                return result;
-            }
+            public string GetLiteral(Enum value) => 
+                !_enumToLiteral.TryGetValue(value, out string? result)
+                    ? throw new InvalidOperationException($"Should only pass enum values that are member of the given enum: {value} is not a member of {Name}.")
+                    : result;
 
             public Enum? ParseLiteral(string literal, bool ignoreCase)
             {
@@ -115,7 +114,7 @@ namespace Hl7.Fhir.Utility
                 foreach (var enumValue in ReflectionHelper.FindEnumFields(enumType))
                 {
                     var attr = ReflectionHelper.GetAttribute<EnumLiteralAttribute>(enumValue);
-                    var literal = attr?.Literal ?? enumValue.Name;
+                    string literal = attr?.Literal ?? enumValue.Name;
                     var value = (Enum)enumValue.GetValue(null)!;
 
                     result._enumToLiteral.Add(value, literal);

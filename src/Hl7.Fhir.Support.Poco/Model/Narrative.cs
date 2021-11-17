@@ -137,7 +137,7 @@ namespace Hl7.Fhir.Model
         /// Limited xhtml content
         /// </summary>
         [FhirElement("div", XmlSerialization = XmlRepresentation.XHtml, InSummary = true, Order = 40)]
-        [DeclaredType(Type = typeof(SystemPrimitive.String))]  // I think this should be XHtml, EK 20210730
+        [DeclaredType(Type = typeof(XHtml))]  // I think this should be XHtml, EK 20210730
         [Cardinality(Min = 1, Max = 1)]
         [NarrativeXhtmlPattern]
         [DataMember]

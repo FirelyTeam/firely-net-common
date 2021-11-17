@@ -29,7 +29,7 @@ namespace Hl7.Fhir.Validation
             if (Oid.IsValidValue(value as string))
                 return ValidationResult.Success;
             else
-                return DotNetAttributeValidation.BuildResult(validationContext, "{0} is not a correctly formatted Oid", (string)value);
+                return DotNetAttributeValidation.BuildResult(validationContext, "'{0}' is not a correct value for an Oid.", (string)value);
         }
 
     }

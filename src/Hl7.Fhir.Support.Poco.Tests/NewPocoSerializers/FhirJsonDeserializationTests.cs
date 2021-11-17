@@ -89,7 +89,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
 #pragma warning restore CS0642 // Possible mistaken empty statement
             else
             {
-                if(error is null)
+                if (error is null)
                     result.Should().Be(data);
                 else
                     result.Should().Be(data is not null ? PrimitiveTypeConverter.ConvertTo<string>(data) : null);
@@ -118,7 +118,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 _ = test(41);
                 Assert.Fail();
             }
-            catch(InvalidOperationException) 
+            catch (InvalidOperationException)
             {
             }
 
@@ -187,7 +187,8 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [DataRow("hi!", typeof(Base64Binary), "JSON106", "hi!")]
         [DataRow(4, typeof(Base64Binary), "JSON110", "4")]
 
-        [DataRow("2007-", typeof(FhirDateTime), null, "2007-")]
+        [DataRow("2007-04", typeof(FhirDateTime), null, "2007-04")]
+        [DataRow("2007-", typeof(FhirDateTime), ERR.VALIDATION_FAILED_CODE, "2007-")]
         [DataRow(4.45, typeof(FhirDateTime), "JSON110", "4.45")]
 
         [DataRow("female", typeof(Code), null, "female")]
@@ -197,6 +198,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
         [DataRow("hi!", typeof(Instant), "JSON107")]
         [DataRow("2007-02-03", typeof(Instant), null, 2007)]
+
         public void ParsePrimitiveValue(object value, Type targetType, string errorcode, object? expectedObjectValue = null)
         {
             ExceptionAggregator aggregator = new();
@@ -221,6 +223,10 @@ namespace Hl7.Fhir.Support.Poco.Tests
                     aggregator.Single().Should().BeOfType<FhirJsonException>().Which.ErrorCode.Should().Be(errorcode);
                 else
                     throw aggregator.Single();
+            }
+            else
+            {
+                errorcode.Should().BeNull();
             }
 
             if (expectedObjectValue is not null)
@@ -333,6 +339,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [DynamicData(nameof(CatchesIncorrectlyStructuredComplexData), DynamicDataSourceType.Method)]
         [DynamicData(nameof(TestNormalArrayData), DynamicDataSourceType.Method)]
         [DynamicData(nameof(TestPrimitiveData), DynamicDataSourceType.Method)]
+        [DynamicData(nameof(TestValidatePrimitiveData), DynamicDataSourceType.Method)]
         public void TestData(Type t, object testObject, JsonTokenType token, Action<object>? verify, params FhirJsonException[] errors)
         {
             var aggregator = new ExceptionAggregator();
@@ -416,6 +423,15 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 checkName(parsed);
                 checkId(parsed);
             }
+        }
+
+        public static IEnumerable<object?[]> TestValidatePrimitiveData()
+        {
+            yield return data<Narrative>(new { div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>correct</p></div>" });
+            yield return data<Narrative>(new { div = "<puinhoop />" }, ERR.VALIDATION_FAILED);
+
+            yield return data<TestCodeSystem>(new { url = "urn:oid:1.3.6.1.4.1.343" });
+            yield return data<TestCodeSystem>(new { url = "urn:oid:1" }, ERR.VALIDATION_FAILED);
         }
 
         public static IEnumerable<object?[]> TestPrimitiveArrayData()
@@ -556,7 +572,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 JsonAssert.AreSame("fp-test-patient-json-errors/recovery", recoveredExpected, recoveredActual, errors);
                 errors.Should().BeEmpty();
 
-                assertErrors(dfe.InnerExceptions.Cast<FhirJsonException>(), new[]
+                assertErrors(dfe.InnerExceptions.Cast<FhirJsonException>(), new string[]
                 {
                     ERR.STRING_ISNOTAN_INSTANT_CODE,
                     ERR.RESOURCETYPE_UNEXPECTED_CODE,
@@ -575,6 +591,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
                     ERR.PRIMITIVE_ARRAYS_ONLY_NULL_CODE, // Questionnaire._subjectType cannot be just null
                     ERR.CHOICE_ELEMENT_TYPE_NOT_ALLOWED_CODE,
                     ERR.EXPECTED_START_OF_OBJECT_CODE, // item.code is a complex object, not a boolean
+                    ERR.VALIDATION_FAILED_CODE, // incorrect oid
                     ERR.PRIMITIVE_ARRAYS_LONELY_NULL_CODE, // given cannot be the only array with a null
                     ERR.UNEXPECTED_JSON_TOKEN_CODE, // telecom.rank should be a number, not a boolean
                     ERR.USE_OF_UNDERSCORE_ILLEGAL_CODE, // should be extension.url, not extension._url

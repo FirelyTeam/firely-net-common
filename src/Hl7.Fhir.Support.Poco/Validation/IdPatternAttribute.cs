@@ -29,7 +29,7 @@ namespace Hl7.Fhir.Validation
             if (Id.IsValidValue(value as string))
                 return ValidationResult.Success;
             else
-                return DotNetAttributeValidation.BuildResult(validationContext, "{0} is not a correctly formatted Id", value as string);
+                return DotNetAttributeValidation.BuildResult(validationContext, "'{0}' is not a correct value for an Id.", value as string);
         }
     }
 }

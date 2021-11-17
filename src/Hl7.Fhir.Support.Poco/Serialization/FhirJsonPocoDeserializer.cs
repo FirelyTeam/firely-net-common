@@ -11,9 +11,11 @@
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Utility;
+using Hl7.Fhir.Validation;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
@@ -249,26 +251,20 @@ namespace Hl7.Fhir.Serialization
             ExceptionAggregator aggregator
             )
         {
+            object? result;
+            var oldErrorCount = aggregator.Count;
+
             if (propertyValueMapping.IsFhirPrimitive)
             {
                 // There might be an existing value, since FhirPrimitives may be spread out over two properties
                 // (one with, and one without the '_')
                 var existingValue = propertyMapping.GetValue(target);
 
-                if (propertyMapping.IsCollection)
-                {
-                    // Note that the POCO model will always allocate a new list if the property had not been set before,
-                    // so there is always an existingValue;
-                    var result = deserializeFhirPrimitiveList((IList)existingValue!, propertyName, propertyValueMapping, ref reader, plps, aggregator);
-                    propertyMapping.SetValue(target, result);
-                    return;
-                }
-                else
-                {
-                    var result = DeserializeFhirPrimitive(existingValue as PrimitiveType, propertyName, propertyValueMapping, ref reader, aggregator);
-                    propertyMapping.SetValue(target, result);
-                    return;
-                }
+                // Note that the POCO model will always allocate a new list if the property had not been set before,
+                // so there is always an existingValue for IList                
+                result = propertyMapping.IsCollection ?
+                    deserializeFhirPrimitiveList((IList)existingValue!, propertyName, propertyValueMapping, ref reader, plps, aggregator) :
+                    DeserializeFhirPrimitive(existingValue as PrimitiveType, propertyName, propertyValueMapping, ref reader, aggregator);
             }
             else
             {
@@ -277,12 +273,35 @@ namespace Hl7.Fhir.Serialization
                     aggregator.Add(ERR.USE_OF_UNDERSCORE_ILLEGAL.With(ref reader, propertyMapping.Name, propertyName));
 
                 // Note that repeating simple elements (like Extension.url) do not currently exist in the FHIR serialization
-                object? result = propertyMapping.IsCollection
+                result = propertyMapping.IsCollection
                     ? deserializeNormalList(propertyName, propertyValueMapping, ref reader, aggregator)
                     : deserializeSingleValue(ref reader, propertyValueMapping, aggregator);
+            }
 
-                propertyMapping.SetValue(target, result);
-                return;
+            propertyMapping.SetValue(target, result);
+
+            // Only do validation when no parse errors were encountered, otherwise we'll just
+            // produce spurious messages.
+            if (oldErrorCount == aggregator.Count)
+                validateValue(ref reader, result, propertyMapping, aggregator);
+
+            return;
+        }
+
+
+        private static void validateValue(ref Utf8JsonReader reader, object? value, PropertyMapping propertyMapping, ExceptionAggregator aggregator)
+        {
+            foreach (var va in propertyMapping.ValidationAttributes)
+            {
+                // The ElementAttribute does not add to this elements validation - it's only used
+                // to extend .NETs property validation into nested values (which we have already validated
+                // while parsing bottom up).
+                if (va is not FhirElementAttribute)
+                {
+                    var validationResult = DotNetAttributeValidation.GetValidationResult(value, va);
+                    if (validationResult is not null)
+                        aggregator.Add(ERR.VALIDATION_FAILED.With(ref reader, validationResult.ErrorMessage));
+                }
             }
         }
 
@@ -460,10 +479,14 @@ namespace Hl7.Fhir.Serialization
                         $"but {propertyValueMapping.Name} has not. " + reader.GenerateLocationMessage());
 
                 var (result, error) = DeserializePrimitiveValue(ref reader, Settings.OnPrimitiveParseFailed, primitiveValueProperty.ImplementingType);
-                aggregator.Add(error);
                 targetPrimitive.ObjectValue = result;
 
-                //TODO: validate the targetPrimitive? And the XHTML in narrative?
+                aggregator.Add(error);
+
+                // Only do validation when no parse errors were encountered, otherwise we'll just
+                // produce spurious messages.
+                if (error is null)
+                    validateValue(ref reader, result, primitiveValueProperty, aggregator);
 
                 return targetPrimitive;
             }
@@ -543,7 +566,7 @@ namespace Hl7.Fhir.Serialization
                 JsonTokenType.String when requiredType == typeof(string) => new(reader.GetString(), null),
                 JsonTokenType.String when requiredType == typeof(byte[]) => readBase64(ref reader),
                 JsonTokenType.String when requiredType == typeof(DateTimeOffset) => readDateTimeOffset(ref reader),
-                JsonTokenType.String when requiredType.IsEnum => new(reader.GetString(), null),
+                JsonTokenType.String when requiredType.IsEnum => readEnum(ref reader, requiredType),
                 JsonTokenType.String => unexpectedToken(ref reader, reader.GetString(), requiredType.Name, "string"),
                 JsonTokenType.Number => tryGetMatchingNumber(ref reader, requiredType),
                 JsonTokenType.True or JsonTokenType.False when requiredType == typeof(bool) => new(reader.GetBoolean(), null),
@@ -596,9 +619,9 @@ namespace Hl7.Fhir.Serialization
             {
                 var contents = reader.GetString()!;
                 var enumValue = EnumUtility.ParseLiteral(contents, enumType);
-                
+
                 return enumValue is not null
-                    ? (enumValue, null)
+                    ? (contents, null)
                     : (contents, ERR.CODED_VALUE_NOT_IN_ENUM.With(ref reader, contents, EnumUtility.GetName(enumType)));
             }
         }
@@ -647,7 +670,7 @@ namespace Hl7.Fhir.Serialization
             else
             {
                 var rawValue = reader.GetRawText();
-                return new(rawValue, ERR.NUMBER_CANNOT_BE_PARSED.With(ref reader, rawValue, requiredType.Name)) ;
+                return new(rawValue, ERR.NUMBER_CANNOT_BE_PARSED.With(ref reader, rawValue, requiredType.Name));
             }
         }
 

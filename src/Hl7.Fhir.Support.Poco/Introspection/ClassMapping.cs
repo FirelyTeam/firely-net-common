@@ -249,9 +249,11 @@ namespace Hl7.Fhir.Introspection
             }            
         }
 
-        internal static T? GetAttribute<T>(MemberInfo t, FhirRelease version) where T : Attribute
+        internal static T? GetAttribute<T>(MemberInfo t, FhirRelease version) where T : Attribute => GetAttributes<T>(t, version).LastOrDefault();
+
+        internal static IEnumerable<T> GetAttributes<T>(MemberInfo t, FhirRelease version) where T : Attribute
         {
-            return ReflectionHelper.GetAttributes<T>(t).LastOrDefault(isRelevant);
+            return ReflectionHelper.GetAttributes<T>(t).Where(isRelevant);
 
             bool isRelevant(Attribute a) => a is not IFhirVersionDependent vd || a.AppliesToRelease(version);
         }

@@ -29,7 +29,7 @@ namespace Hl7.Fhir.Validation
             if (FhirDateTime.IsValidValue(value as string))
                 return ValidationResult.Success;
             else
-                return DotNetAttributeValidation.BuildResult(validationContext, "{0} is not a correctly formatted DateTime", value as string);
+                return DotNetAttributeValidation.BuildResult(validationContext, "'{0}' is not a correct value for a DateTime.", value as string);
         }
     }
 }

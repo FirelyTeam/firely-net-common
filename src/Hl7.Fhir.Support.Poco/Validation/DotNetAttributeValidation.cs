@@ -6,48 +6,38 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using Hl7.Fhir.Model;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
 
 namespace Hl7.Fhir.Validation
 {
     public static class DotNetAttributeValidation
     {
-        public static ValidationContext BuildContext(object value=null)
+        public static ValidationResult GetValidationResult(object value, ValidationAttribute va, bool recurse = false)
         {
-#if NET40
-            return new ValidationContext(value, null, null);
-#else
-            return new ValidationContext(value);
-#endif
+            var validationContext = buildContext(value);
+            validationContext.SetValidateRecursively(recurse);
+
+            return va.GetValidationResult(value, validationContext);
         }
 
-        public static void Validate(object value, bool recurse = false, Func<string, Resource> resolver = null)
+        public static void Validate(object value, bool recurse = false)
         {
-            if (value == null) throw new ArgumentNullException("value");
-            //    assertSupportedInstanceType(value);
-
-            var validationContext = BuildContext(value);
+            var validationContext = buildContext(value);
             validationContext.SetValidateRecursively(recurse);
-            validationContext.SetResolver(resolver);
 
             Validator.ValidateObject(value, validationContext, true);
         }
 
-        public static bool TryValidate(object value, ICollection<ValidationResult> validationResults = null, bool recurse = false, Func<string,Resource> resolver=null)
+        public static bool TryValidate(object value, ICollection<ValidationResult> validationResults = null, bool recurse = false)
         {
-            if (value == null) throw new ArgumentNullException("value");
-          // assertSupportedInstanceType(value);
-
             var results = validationResults ?? new List<ValidationResult>();
-            var validationContext = BuildContext(value);
+            var validationContext = buildContext(value);
             validationContext.SetValidateRecursively(recurse);
-            validationContext.SetResolver(resolver);
-            return Validator.TryValidateObject(value, validationContext, results, true);
+
+            // Validate the object, also calling the validators on each child property.
+            return Validator.TryValidateObject(value, validationContext, results, validateAllProperties: true);
 
             // Note, if you pass a null validationResults, you will *not* get results (it's not an out param!)
         }
@@ -62,6 +52,16 @@ namespace Hl7.Fhir.Validation
             else
                 return new ValidationResult(resultMessage);
         }
+
+        private static ValidationContext buildContext(object value = null)
+        {
+            #if NET40
+                return new ValidationContext(value, null, null);
+            #else
+                return new ValidationContext(value);
+            #endif
+        }
+
     }
 
 }
