@@ -169,6 +169,7 @@ namespace Hl7.Fhir.ElementModel.Types
                     else
                         dto = dateValue._parsedValue.AddDays((int)addValue.Value);
                     break;
+                case "wk": // UCUM
                 case "week":
                 case "weeks":
                     if (dateValue.Precision == DateTimePrecision.Year)
