@@ -32,7 +32,7 @@ namespace Hl7.Fhir.Model
 
         /// <summary>
         /// The value of the primitive, stored as an object. Will generally contain the same value as the
-        /// `Value` property but allows the user to retrieve a primitive value regardless of actual type.
+        /// `Value` property and allows the user to retrieve a primitive value regardless of actual type.
         /// </summary>
         /// <remarks>Both <c>Value</c> and <c>ObjectValue</c> may contain invalid values according to the 
         /// primitive's official domain. E.g. <c>Value</c> is a <c>string</c> for <see cref="FhirDateTime"/>,

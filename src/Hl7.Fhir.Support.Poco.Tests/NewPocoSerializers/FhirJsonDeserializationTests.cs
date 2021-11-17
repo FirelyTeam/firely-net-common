@@ -30,7 +30,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [DataRow("hi!", typeof(byte[]), "JSON106")]
         [DataRow("hi!", typeof(DateTimeOffset), "JSON107")]
         [DataRow("2007-02-03", typeof(DateTimeOffset), null)]
-        [DataRow("enumvalue", typeof(UriFormat), null)]
+        [DataRow("enumvalue", typeof(UriFormat), ERR.CODED_VALUE_NOT_IN_ENUM_CODE)]
         [DataRow(true, typeof(Enum), "JSON110")]
         [DataRow("hi!", typeof(int), "JSON110")]
 
@@ -88,7 +88,12 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 ; // nothing to check
 #pragma warning restore CS0642 // Possible mistaken empty statement
             else
-                result.Should().Be(data);
+            {
+                if(error is null)
+                    result.Should().Be(data);
+                else
+                    result.Should().Be(data is not null ? PrimitiveTypeConverter.ConvertTo<string>(data) : null);
+            }
         }
 
         [TestMethod]
@@ -101,11 +106,11 @@ namespace Hl7.Fhir.Support.Poco.Tests
             result.Should().Be(true);
 
             (result, error) = test(21);
-            result.Should().Be(21);
+            result.Should().Be("21");
             error?.ErrorCode.Should().Be(FhirJsonException.ARRAYS_CANNOT_BE_EMPTY_CODE);
 
             (result, error) = test(31);
-            result.Should().Be(31);
+            result.Should().Be("31");
             error?.ErrorCode.Should().Be(FhirJsonException.UNEXPECTED_JSON_TOKEN_CODE);
 
             try
@@ -180,15 +185,15 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
         [DataRow("SGkh", typeof(Base64Binary), null, new byte[] { 72, 105, 33 })]
         [DataRow("hi!", typeof(Base64Binary), "JSON106", "hi!")]
-        [DataRow(4, typeof(Base64Binary), "JSON110", 4)]
+        [DataRow(4, typeof(Base64Binary), "JSON110", "4")]
 
         [DataRow("2007-", typeof(FhirDateTime), null, "2007-")]
-        [DataRow(4.45, typeof(FhirDateTime), "JSON110", 4.45)]
+        [DataRow(4.45, typeof(FhirDateTime), "JSON110", "4.45")]
 
         [DataRow("female", typeof(Code), null, "female")]
         [DataRow("is-a", typeof(Code<FilterOperator>), null, "is-a")]
-        [DataRow("female", typeof(Code<FilterOperator>), null, "female")]
-        [DataRow(true, typeof(Code), "JSON110", true)]
+        [DataRow("female", typeof(Code<FilterOperator>), ERR.CODED_VALUE_NOT_IN_ENUM_CODE, "female")]
+        [DataRow(true, typeof(Code), ERR.UNEXPECTED_JSON_TOKEN_CODE, "true")]
 
         [DataRow("hi!", typeof(Instant), "JSON107")]
         [DataRow("2007-02-03", typeof(Instant), null, 2007)]

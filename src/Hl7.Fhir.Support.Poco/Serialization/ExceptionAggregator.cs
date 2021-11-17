@@ -20,7 +20,7 @@ using System.Text.Json;
 namespace Hl7.Fhir.Serialization
 {
     /// <summary>
-    /// This class is used by the <see cref="JsonPocoDeserializer"/> to collect errors while performing deserialization.
+    /// This class is used by the <see cref="FhirJsonPocoDeserializer"/> to collect errors while performing deserialization.
     /// </summary>
     /// <remarks>Is probably going to be used by the (future)XmlDynamicDeserializer too.</remarks>
     internal class ExceptionAggregator : IEnumerable<FhirJsonException>

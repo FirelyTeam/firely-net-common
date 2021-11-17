@@ -13,6 +13,7 @@
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Specification;
+using Hl7.Fhir.Utility;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -279,6 +280,7 @@ namespace Hl7.Fhir.Serialization
                 case string s: writer.WriteStringValue(s); break;
                 case bool b: writer.WriteBooleanValue(b); break;
                 case DateTimeOffset dto: writer.WriteStringValue(ElementModel.Types.DateTime.FormatDateTimeOffset(dto)); break;
+                case Enum e: writer.WriteStringValue(e.GetLiteral()); break;
                 case byte[] bytes: writer.WriteStringValue(Convert.ToBase64String(bytes)); break;
                 case null: writer.WriteNullValue(); break;
                 default:

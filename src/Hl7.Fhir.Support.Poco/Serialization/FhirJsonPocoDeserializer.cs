@@ -547,7 +547,7 @@ namespace Hl7.Fhir.Serialization
                 JsonTokenType.String => unexpectedToken(ref reader, reader.GetString(), requiredType.Name, "string"),
                 JsonTokenType.Number => tryGetMatchingNumber(ref reader, requiredType),
                 JsonTokenType.True or JsonTokenType.False when requiredType == typeof(bool) => new(reader.GetBoolean(), null),
-                JsonTokenType.True or JsonTokenType.False => unexpectedToken(ref reader, reader.GetBoolean(), requiredType.Name, "boolean"),
+                JsonTokenType.True or JsonTokenType.False => unexpectedToken(ref reader, reader.GetRawText(), requiredType.Name, "boolean"),
 
                 _ =>
                     // This would be an internal logic error, since our callers should have made sure we're
@@ -591,9 +591,19 @@ namespace Hl7.Fhir.Serialization
                     new(parsed.ToDateTimeOffset(TimeSpan.Zero), null) :
                     new(contents, ERR.STRING_ISNOTAN_INSTANT.With(ref reader, contents));
             }
+
+            static (object?, FhirJsonException?) readEnum(ref Utf8JsonReader reader, Type enumType)
+            {
+                var contents = reader.GetString()!;
+                var enumValue = EnumUtility.ParseLiteral(contents, enumType);
+                
+                return enumValue is not null
+                    ? (enumValue, null)
+                    : (contents, ERR.CODED_VALUE_NOT_IN_ENUM.With(ref reader, contents, EnumUtility.GetName(enumType)));
+            }
         }
 
-        private static (object?, FhirJsonException) unexpectedToken(ref Utf8JsonReader reader, object? value, string expected, string actual) =>
+        private static (object?, FhirJsonException) unexpectedToken(ref Utf8JsonReader reader, string? value, string expected, string actual) =>
             new(value, ERR.UNEXPECTED_JSON_TOKEN.With(ref reader, expected, actual, value));
 
         /// <summary>
@@ -625,8 +635,8 @@ namespace Hl7.Fhir.Serialization
                 success = reader.TryGetDouble(out double dbl) && double.IsNormal(dbl) && (value = dbl) is { };
             else
             {
-                _ = reader.TryGetNumber(out value);
-                return unexpectedToken(ref reader, value, requiredType.Name, "number");
+                var rawValue = reader.GetRawText();
+                return unexpectedToken(ref reader, rawValue, requiredType.Name, "number");
             }
 
             // We expected a number, we found a json number, but they don't match (e.g. precision etc)
@@ -636,8 +646,8 @@ namespace Hl7.Fhir.Serialization
             }
             else
             {
-                var gotValue = reader.TryGetNumber(out value);
-                return new(value, ERR.NUMBER_CANNOT_BE_PARSED.With(ref reader, gotValue ? value! : "(unreadable number)", requiredType.Name));
+                var rawValue = reader.GetRawText();
+                return new(rawValue, ERR.NUMBER_CANNOT_BE_PARSED.With(ref reader, rawValue, requiredType.Name)) ;
             }
         }
 

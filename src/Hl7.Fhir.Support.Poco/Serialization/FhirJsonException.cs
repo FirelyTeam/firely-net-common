@@ -51,6 +51,7 @@ namespace Hl7.Fhir.Serialization
         public const string PRIMITIVE_ARRAYS_ONLY_NULL_CODE = "JSON125";
         public const string INCOMPATIBLE_SIMPLE_VALUE_CODE = "JSON126";
         public const string CHOICE_ELEMENT_TYPE_NOT_ALLOWED_CODE = "JSON127";
+        public const string CODED_VALUE_NOT_IN_ENUM_CODE = "JSON128";
 
         internal static readonly FhirJsonException EXPECTED_START_OF_OBJECT = new(EXPECTED_START_OF_OBJECT_CODE, "Expected start of object, but found {0}.");
         internal static readonly FhirJsonException RESOURCETYPE_SHOULD_BE_STRING = new(RESOURCETYPE_SHOULD_BE_STRING_CODE, "Property 'resourceType' should be a string, but found {0}.");
@@ -78,6 +79,7 @@ namespace Hl7.Fhir.Serialization
         internal static readonly FhirJsonException PRIMITIVE_ARRAYS_ONLY_NULL = new(PRIMITIVE_ARRAYS_ONLY_NULL_CODE, "If present, property '{0}' should not only contain nulls.");
         internal static readonly FhirJsonException INCOMPATIBLE_SIMPLE_VALUE = new(INCOMPATIBLE_SIMPLE_VALUE_CODE, "Found a json primitive value that does not match the expected type of the primitive property. Details: {0}");
         internal static readonly FhirJsonException CHOICE_ELEMENT_TYPE_NOT_ALLOWED = new(CHOICE_ELEMENT_TYPE_NOT_ALLOWED_CODE, "Choice element '{0}' is suffixed with type '{1}', which is not allowed here.");
+        internal static readonly FhirJsonException CODED_VALUE_NOT_IN_ENUM = new(CODED_VALUE_NOT_IN_ENUM_CODE, "Literal string '{0}' is not a member of valueset '{1}'.");
 
         /// <summary>
         /// The set of errors for which the deserializer is able to retain the data present in the json file, even when the data
@@ -113,7 +115,10 @@ namespace Hl7.Fhir.Serialization
             PRIMITIVE_ARRAYS_INCOMPAT_SIZE_CODE,
             
             // This leaves the incorrect nulls in place, no change in data.
-            PRIMITIVE_ARRAYS_BOTH_NULL_CODE, PRIMITIVE_ARRAYS_LONELY_NULL_CODE, PRIMITIVE_ARRAYS_ONLY_NULL_CODE
+            PRIMITIVE_ARRAYS_BOTH_NULL_CODE, PRIMITIVE_ARRAYS_LONELY_NULL_CODE, PRIMITIVE_ARRAYS_ONLY_NULL_CODE,
+
+            // The value cannot be found in an enum, but the raw data is retained in the POCO
+            CODED_VALUE_NOT_IN_ENUM_CODE
         };
 
         /// <summary>
