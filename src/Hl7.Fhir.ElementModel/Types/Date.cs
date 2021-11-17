@@ -171,7 +171,12 @@ namespace Hl7.Fhir.ElementModel.Types
                     break;
                 case "week":
                 case "weeks":
-                    dto = dateValue._parsedValue.AddDays(((int)addValue.Value) * 7);
+                    if (dateValue.Precision == DateTimePrecision.Year)
+                        dto = dateValue._parsedValue.AddYears((int)(addValue.Value / 52));
+                    else if (dateValue.Precision == DateTimePrecision.Month)
+                        dto = dateValue._parsedValue.AddMonths((int)(addValue.Value * 7 / 30));
+                    else
+                        dto = dateValue._parsedValue.AddDays(((int)addValue.Value) * 7);
                     break;
                 default:
                     throw new ArgumentException($"'{addValue.Unit}' is not a valid time-valued unit", nameof(addValue));

@@ -88,7 +88,12 @@ namespace Hl7.Fhir.ElementModel.Types
                     break;
                 case "week":
                 case "weeks":
-                    dto = dateTimeValue._parsedValue.AddDays(((int)addValue.Value)*7);
+                    if (dateTimeValue.Precision == DateTimePrecision.Year)
+                        dto = dateTimeValue._parsedValue.AddYears((int)(addValue.Value / 52));
+                    else if (dateTimeValue.Precision == DateTimePrecision.Month)
+                        dto = dateTimeValue._parsedValue.AddMonths((int)(addValue.Value * 7 / 30));
+                    else
+                        dto = dateTimeValue._parsedValue.AddDays(((int)addValue.Value) * 7);
                     break;
 
                 // NOT ignoring precision on time based stuff if there is no time component
