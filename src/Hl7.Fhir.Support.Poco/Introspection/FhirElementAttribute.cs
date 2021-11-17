@@ -74,7 +74,7 @@ namespace Hl7.Fhir.Introspection
 
         public bool InSummary { get; set; }
 
-        public List<string> FiveWs { get; set; }
+        public string[] FiveWs { get; set; }
 
         // This attribute is a subclass of ValidationAttribute so that IsValid() is called on every 
         // FhirElement while validating. This allows us to extend validation into each FhirElement,

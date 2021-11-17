@@ -72,7 +72,7 @@ namespace Hl7.Fhir.Introspection
         /// <summary>
         /// Five W's mappings of the element.
         /// </summary>
-        public System.Collections.Generic.List<string> FiveWs { get; private set; }
+        public string[] FiveWs { get; private set; }
 
         /// <summary>
         /// Whether the element has a cardinality higher than 0.
