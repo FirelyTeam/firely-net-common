@@ -6,26 +6,30 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
+using Hl7.Fhir.Model;
 using System;
 using System.ComponentModel.DataAnnotations;
-using Hl7.Fhir.Model;
+
+#nullable enable
 
 namespace Hl7.Fhir.Validation
 {
+    /// <summary>
+    /// Validates an xhtml value against the FHIR rules for xhtml.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
     public class NarrativeXhtmlPatternAttribute : ValidationAttribute
     {
-		protected override ValidationResult IsValid(object value, ValidationContext validationContext)
-        {
-            if (value == null) return ValidationResult.Success;
-
-            if (value.GetType() != typeof(string))
-                throw new ArgumentException("CodePatternAttribute can only be applied to string properties");
-
-            if(XHtml.IsValidValue(value as string))
-                return ValidationResult.Success;
-            else 
-                return DotNetAttributeValidation.BuildResult(validationContext, "Xml can not be parsed or is not valid according to the (limited) FHIR scheme");
-        }
-	}
+        /// <inheritdoc />
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext) =>
+            value switch
+            {
+                null => ValidationResult.Success,
+                string s when XHtml.IsValidValue(s) => ValidationResult.Success,
+                string _ => DotNetAttributeValidation.BuildResult(validationContext, "Xml can not be parsed or is not valid according to the (limited) FHIR scheme."),
+                _ => throw new ArgumentException("CodePatternAttribute can only be applied to string properties.")
+            };
+    }
 }
+
+#nullable restore

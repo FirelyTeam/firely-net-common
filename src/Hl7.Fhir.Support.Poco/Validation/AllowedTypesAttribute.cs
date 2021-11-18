@@ -6,14 +6,19 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using Hl7.Fhir.Utility;
 using System;
 using System.Collections;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Reflection;
+
+#nullable enable
 
 namespace Hl7.Fhir.Validation
 {
+    /// <summary>
+    /// Validates the type of a property against the allowed type choices.
+    /// </summary>
     [CLSCompliant(false)]
     [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
     public class AllowedTypesAttribute : ValidationAttribute
@@ -23,13 +28,17 @@ namespace Hl7.Fhir.Validation
             Types = types;
         }
 
+        /// <summary>
+        /// The list of types that are allowed for the instance.
+        /// </summary>
         public Type[] Types { get; set; }
 
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        /// <inheritdoc />
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
         {
-            if (value == null) return ValidationResult.Success;
+            if (value is null) return ValidationResult.Success;
 
-            ValidationResult result = ValidationResult.Success;
+            var result = ValidationResult.Success;
 
             // Avoid interpreting this as a collection just because string is IEnumerable<char>.
             if (value is ICollection list && value is not string)
@@ -48,9 +57,9 @@ namespace Hl7.Fhir.Validation
             return result;
         }
 
-        private ValidationResult validateValue(object item, ValidationContext context)
+        private ValidationResult? validateValue(object? item, ValidationContext context)
         {
-            if (item != null)
+            if (item is not null)
             {
                 if (!IsAllowedType(item.GetType()))
                     return DotNetAttributeValidation.BuildResult(context, "Value is of type {0}, which is not an allowed choice.", item.GetType());
@@ -59,6 +68,11 @@ namespace Hl7.Fhir.Validation
             return ValidationResult.Success;
         }
 
-        public bool IsAllowedType(Type t) => Types.Any(type => type.IsAssignableFrom(t));
+        /// <summary>
+        /// Determine whether the given type is allowed according to this attribute.
+        /// </summary>
+        public bool IsAllowedType(Type t) => Types.Any(type => type.GetTypeInfo().IsAssignableFrom(t));
     }
 }
+
+#nullable restore

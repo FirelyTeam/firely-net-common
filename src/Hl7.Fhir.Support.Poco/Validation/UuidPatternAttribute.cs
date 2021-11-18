@@ -8,29 +8,28 @@
 
 using Hl7.Fhir.Model;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
+
+#nullable enable
 
 namespace Hl7.Fhir.Validation
 {
+    /// <summary>
+    /// Validates an Uuid value against the FHIR rules for Uuid.
+    /// </summary>
+
     [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
     public class UuidPatternAttribute : ValidationAttribute
     {
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
-        {
-            if (value == null) return ValidationResult.Success;
-
-            if (value.GetType() != typeof(string))
-                throw new ArgumentException("UuidPatternAttribute can only be applied to string properties");
-
-            if (Uuid.IsValidValue(value as string))
-                return ValidationResult.Success;
-            else
-                return DotNetAttributeValidation.BuildResult(validationContext, "'{0}' is not a correct value for a Uuid.", (string)value);
-        }
-
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext) =>
+            value switch
+            {
+                null => ValidationResult.Success,
+                string s when Uuid.IsValidValue(s) => ValidationResult.Success,
+                string s => DotNetAttributeValidation.BuildResult(validationContext, "'{0}' is not a correct value for a Uuid.", s),
+                _ => throw new ArgumentException("UuidPatternAttribute can only be applied to string properties")
+            };
     }
 }
+
+#nullable restore

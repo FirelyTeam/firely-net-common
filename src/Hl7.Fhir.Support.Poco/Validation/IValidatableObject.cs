@@ -6,16 +6,23 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
+
+#nullable enable
 
 namespace Hl7.Fhir.Validation
 {
+    /// <summary>
+    /// Interface used by the <see cref="InvokeIValidatableObjectAttribute" /> to start nested validation.
+    /// </summary>
     public interface IValidatableObject
     {
+        /// <summary>
+        /// Invoke validation on an object that implements this interface.
+        /// </summary>
         IEnumerable<ValidationResult> Validate(ValidationContext validationContext);
     }
 }
+
+#nullable restore

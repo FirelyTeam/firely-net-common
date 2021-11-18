@@ -6,30 +6,29 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using Hl7.Fhir.Model;
+using System;
+using System.ComponentModel.DataAnnotations;
+
+#nullable enable
 
 namespace Hl7.Fhir.Validation
 {
+    /// <summary>
+    /// Validates an Uri value against the FHIR rules for Uri.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
     public class UriPatternAttribute : ValidationAttribute
     {
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
-        {
-            if (value == null) return ValidationResult.Success;
-
-            if (value.GetType() != typeof(string))
-                throw new ArgumentException("UriPatternAttribute can only be applied to .NET Uri properties");
-
-            if (!FhirUri.IsValidValue(value as string))
-                return DotNetAttributeValidation.BuildResult(validationContext, "Uri uses a 'urn:oid' or 'urn:uuid' scheme, but the syntax '{0}' is incorrect.", value as string);
-            else
-                return ValidationResult.Success;
-        }
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext) =>
+            value switch
+            {
+                null => ValidationResult.Success,
+                string s when FhirUri.IsValidValue(s) => ValidationResult.Success,
+                string s => DotNetAttributeValidation.BuildResult(validationContext, "Uri uses a 'urn:oid' or 'urn:uuid' scheme, but the syntax '{0}' is incorrect.", s),
+                _ => throw new ArgumentException("UriPatternAttribute can only be applied to .NET Uri properties"),
+            };
     }
 }
+
+#nullable restore
