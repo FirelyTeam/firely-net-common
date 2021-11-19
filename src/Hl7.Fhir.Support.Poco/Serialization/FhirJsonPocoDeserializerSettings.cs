@@ -43,7 +43,7 @@ namespace Hl7.Fhir.Serialization
         /// of <see cref="Base64Binary"/> values can be turned off to increase performance.
         /// </summary>
         /// <remarks>The <see cref="Base64Binary" /> element's <see cref="PrimitiveType.ObjectValue" /> will
-        /// still contain the unparsed base64 data.</remarks>
+        /// still contain the unparsed base64 data and will therefore be retained and round-tripped.</remarks>
         public bool DisableBase64Decoding { get; init; } = false;
 
         /// <summary>

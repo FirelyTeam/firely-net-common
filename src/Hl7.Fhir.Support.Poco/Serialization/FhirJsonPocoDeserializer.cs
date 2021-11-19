@@ -490,7 +490,7 @@ namespace Hl7.Fhir.Serialization
                     throw new InvalidOperationException($"All subclasses of {nameof(PrimitiveType)} should have a value property, " +
                         $"but {propertyValueMapping.Name} has not. " + reader.GenerateLocationMessage());
 
-                var (result, error) = DeserializePrimitiveValue(ref reader, Settings.OnPrimitiveParseFailed, primitiveValueProperty.ImplementingType);
+                var (result, error) = DeserializePrimitiveValue(ref reader, primitiveValueProperty.ImplementingType);
                 targetPrimitive.ObjectValue = result;
 
                 aggregator.Add(error);
@@ -527,7 +527,7 @@ namespace Hl7.Fhir.Serialization
             // needs to handle PrimitiveType.ObjectValue & dual properties.
             else if (propertyValueMapping.IsPrimitive)
             {
-                var (result, error) = DeserializePrimitiveValue(ref reader, Settings.OnPrimitiveParseFailed, propertyValueMapping.NativeType);
+                var (result, error) = DeserializePrimitiveValue(ref reader, propertyValueMapping.NativeType);
 
                 if (error is not null && result is not null)
                 {
@@ -559,7 +559,7 @@ namespace Hl7.Fhir.Serialization
         /// <returns>A value without an error if the data could be parsed to the required type, and a value with an error if the
         /// value could not be parsed - in which case the value returned is the raw value coming in from the reader.</returns>
         /// <remarks>Upon completion, the reader will be positioned on the token after the primitive.</remarks>
-        internal static (object?, FhirJsonException?) DeserializePrimitiveValue(ref Utf8JsonReader reader, PrimitiveParseHandler? recovery, Type requiredType)
+        internal (object?, FhirJsonException?) DeserializePrimitiveValue(ref Utf8JsonReader reader, Type requiredType)
         {
             // Check for unexpected non-value types.
             if (reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)
@@ -576,7 +576,8 @@ namespace Hl7.Fhir.Serialization
             {
                 JsonTokenType.Null => new(null, ERR.EXPECTED_PRIMITIVE_NOT_NULL.With(ref reader)),
                 JsonTokenType.String when requiredType == typeof(string) => new(reader.GetString(), null),
-                JsonTokenType.String when requiredType == typeof(byte[]) => readBase64(ref reader),
+                JsonTokenType.String when requiredType == typeof(byte[]) =>
+                                !Settings.DisableBase64Decoding ? readBase64(ref reader) : new(reader.GetString(), null),
                 JsonTokenType.String when requiredType == typeof(DateTimeOffset) => readDateTimeOffset(ref reader),
                 JsonTokenType.String when requiredType.IsEnum => readEnum(ref reader, requiredType),
                 JsonTokenType.String => unexpectedToken(ref reader, reader.GetString(), requiredType.Name, "string"),
@@ -595,11 +596,11 @@ namespace Hl7.Fhir.Serialization
 
 
             // If there is a failure, and we have a handler installed, call it
-            if (recovery is not null && result.error is not null)
+            if (Settings.OnPrimitiveParseFailed is not null && result.error is not null)
             {
                 try
                 {
-                    var newPartial = recovery(ref reader, requiredType, result.error);
+                    var newPartial = Settings.OnPrimitiveParseFailed(ref reader, requiredType, result.error);
                     result = (newPartial, null);
                 }
                 catch (FhirJsonException fje)

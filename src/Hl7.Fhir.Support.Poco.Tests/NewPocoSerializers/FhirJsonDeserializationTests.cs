@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using ERR = Hl7.Fhir.Serialization.FhirJsonException;
 
@@ -61,7 +62,8 @@ namespace Hl7.Fhir.Support.Poco.Tests
             var reader = constructReader(data);
             reader.Read();
 
-            var (result, error) = FhirJsonPocoDeserializer.DeserializePrimitiveValue(ref reader, null, expected);
+            var deserializer = getTestDeserializer(new());
+            var (result, error) = deserializer.DeserializePrimitiveValue(ref reader, expected);
 
             if (code is not null)
                 error?.ErrorCode.Should().Be(code);
@@ -95,6 +97,9 @@ namespace Hl7.Fhir.Support.Poco.Tests
                     result.Should().Be(data is not null ? PrimitiveTypeConverter.ConvertTo<string>(data) : null);
             }
         }
+
+        private static FhirJsonPocoDeserializer getTestDeserializer(FhirJsonPocoDeserializerSettings settings) =>
+            new FhirJsonPocoDeserializer(typeof(TestPatient).Assembly, settings);
 
         [TestMethod]
         public void TestCustomRecovery()
@@ -137,7 +142,8 @@ namespace Hl7.Fhir.Support.Poco.Tests
             static (object?, FhirJsonException?) test(int number)
             {
                 var reader = constructReader(number); reader.Read();
-                return FhirJsonPocoDeserializer.DeserializePrimitiveValue(ref reader, correctIntToBool, typeof(bool));
+                var deserializer = getTestDeserializer(new() { OnPrimitiveParseFailed = correctIntToBool });
+                return deserializer.DeserializePrimitiveValue(ref reader, typeof(bool));
             }
         }
 
@@ -238,13 +244,17 @@ namespace Hl7.Fhir.Support.Poco.Tests
             }
         }
 
-        private static Base deserializeComplex(Type objectType, object testObject, out Utf8JsonReader readerState, ExceptionAggregator aggregator)
+        private static Base deserializeComplex(Type objectType, object testObject, out Utf8JsonReader readerState,
+                ExceptionAggregator aggregator) => deserializeComplex(objectType, testObject, out readerState, aggregator, new());
+
+
+        private static Base deserializeComplex(Type objectType, object testObject, out Utf8JsonReader readerState,
+            ExceptionAggregator aggregator, FhirJsonPocoDeserializerSettings settings)
         {
             var inspector = ModelInspector.ForAssembly(typeof(TestPatient).Assembly);
 
             // For the tests, enable full XHML validation so we can test it when necessary.
-            var deserializer = new FhirJsonPocoDeserializer(typeof(TestPatient).Assembly,
-                new() { ValidateNarrative = Validation.NarrativeValidationKind.FhirXhtml });
+            var deserializer = new FhirJsonPocoDeserializer(typeof(TestPatient).Assembly, settings);
             var mapping = inspector.ImportType(objectType)!;
 
             Utf8JsonReader reader = constructReader(testObject);
@@ -340,7 +350,10 @@ namespace Hl7.Fhir.Support.Poco.Tests
         public void TestData(Type t, object testObject, JsonTokenType token, Action<object>? verify, params FhirJsonException[] errors)
         {
             var aggregator = new ExceptionAggregator();
-            var result = deserializeComplex(t, testObject, out var readerState, aggregator);
+
+            // Enable full narrative validation so we can test for it
+            var result = deserializeComplex(t, testObject, out var readerState, aggregator, new() { ValidateNarrative = Validation.NarrativeValidationKind.FhirXhtml });
+
             assertErrors(aggregator, errors.Select(e => e.ErrorCode).ToArray());
             readerState.TokenType.Should().Be(token);
             var cdResult = result.Should().BeOfType(t);
@@ -604,6 +617,25 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 });
             }
 
+        }
+
+        [TestMethod]
+        public void TestDisableBase64Parsing()
+        {
+            var attachment = deserializeAttachment(new());
+            Encoding.ASCII.GetString(attachment.Data).Should().Be("Hi!");
+
+            attachment = deserializeAttachment(new() { DisableBase64Decoding = true });
+            attachment.DataElement.ObjectValue.Should().BeOfType<string>().And.Subject.Should().Be("SGkh");
+
+            TestAttachment deserializeAttachment(FhirJsonPocoDeserializerSettings settings)
+            {
+                ExceptionAggregator aggregator = new();
+                var attachment = (TestAttachment)deserializeComplex(typeof(TestAttachment), new { data = "SGkh" }, out _, aggregator, settings);
+                aggregator.HasExceptions.Should().BeFalse();
+
+                return attachment;
+            }
         }
     }
 
