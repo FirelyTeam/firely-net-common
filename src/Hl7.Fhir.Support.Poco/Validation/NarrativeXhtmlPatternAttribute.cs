@@ -22,14 +22,35 @@ namespace Hl7.Fhir.Validation
     {
         /// <inheritdoc />
         protected override ValidationResult? IsValid(object? value, ValidationContext validationContext) =>
-            value switch
+            IsValid(value, NarrativeValidationKind.FhirXhtml, validationContext);
+
+        /// <summary>
+        /// Validates whether the value is a string of well-formatted Xml.
+        /// </summary>
+        public ValidationResult? IsValid(object? value, NarrativeValidationKind kind, ValidationContext validationContext)
+        {
+            if (value is null) return ValidationResult.Success;
+
+            if (value is string xml)
             {
-                null => ValidationResult.Success,
-                string s when XHtml.IsValidValue(s) => ValidationResult.Success,
-                string _ => DotNetAttributeValidation.BuildResult(validationContext, "Xml can not be parsed or is not valid according to the (limited) FHIR scheme."),
-                _ => throw new ArgumentException("CodePatternAttribute can only be applied to string properties.")
-            };
+                return kind switch
+                {
+                    NarrativeValidationKind.None => ValidationResult.Success,
+                    NarrativeValidationKind.Xml => XHtml.IsValidXml(xml, out var error) ?
+                            ValidationResult.Success :
+                            DotNetAttributeValidation.BuildResult(validationContext, "Value is not well-formatted Xml: " + error),
+                    NarrativeValidationKind.FhirXhtml => XHtml.IsValidNarrativeXhtml(xml, out var errors) ?
+                                ValidationResult.Success :
+                                DotNetAttributeValidation.BuildResult(validationContext,
+                                    "Xml can not be parsed or is not valid according to the (limited) FHIR scheme: " + string.Join(", ", errors)),
+                    _ => throw new NotSupportedException($"Encountered unknown narrative validation kind {kind}.")
+                };
+            }
+            else
+                throw new ArgumentException($"{nameof(NarrativeXhtmlPatternAttribute)} attributes can only be applied to string properties.");
+        }
     }
 }
+
 
 #nullable restore

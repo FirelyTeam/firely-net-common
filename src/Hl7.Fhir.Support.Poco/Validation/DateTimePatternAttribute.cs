@@ -27,7 +27,7 @@ namespace Hl7.Fhir.Validation
                 null => ValidationResult.Success,
                 string s when FhirDateTime.IsValidValue(s) => ValidationResult.Success,
                 string s => DotNetAttributeValidation.BuildResult(validationContext, "'{0}' is not a correct value for a DateTime.", s),
-                _ => throw new ArgumentException("DateTimePatternAttribute can only be applied to string properties.")
+                _ => throw new ArgumentException($"{nameof(DateTimePatternAttribute)} attributes can only be applied to string properties.")
             };
     }
 }

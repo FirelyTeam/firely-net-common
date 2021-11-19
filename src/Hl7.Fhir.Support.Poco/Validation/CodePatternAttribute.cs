@@ -27,7 +27,7 @@ namespace Hl7.Fhir.Validation
                 null => ValidationResult.Success,
                 string s when Code.IsValidValue(s) => ValidationResult.Success,
                 string s => DotNetAttributeValidation.BuildResult(validationContext, "'{0}' is not a correct value for a Code.", s),
-                _ => throw new ArgumentException("CodePatternAttribute can only be applied to string properties.")
+                _ => throw new ArgumentException($"{nameof(CodePatternAttribute)} attributes can only be applied to string properties.")
             };
     }
 }

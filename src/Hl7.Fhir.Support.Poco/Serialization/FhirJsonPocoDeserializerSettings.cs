@@ -13,11 +13,13 @@
 
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Utility;
+using Hl7.Fhir.Validation;
 using System;
 using System.Text.Json;
 
 namespace Hl7.Fhir.Serialization
 {
+
     /// <summary>
     /// Specify the optional features for Json deserialization.
     /// </summary>
@@ -28,7 +30,7 @@ namespace Hl7.Fhir.Serialization
         /// specification for Narrative (http://hl7.org/fhir/narrative.html#2.4.0) is turned off by
         /// default. Set this property to true to perform this validation during serialization.
         /// </summary>
-        public bool ValidateFhirXhtml { get; init; } = false;
+        public NarrativeValidationKind ValidateNarrative { get; init; } = NarrativeValidationKind.None;
 
         /// <summary>
         /// Validation of the string contents of Date, Time and DateTime is done during deserialization
@@ -40,6 +42,8 @@ namespace Hl7.Fhir.Serialization
         /// If the caller will not access base64 data in the deserialized resources, base64 decoding
         /// of <see cref="Base64Binary"/> values can be turned off to increase performance.
         /// </summary>
+        /// <remarks>The <see cref="Base64Binary" /> element's <see cref="PrimitiveType.ObjectValue" /> will
+        /// still contain the unparsed base64 data.</remarks>
         public bool DisableBase64Decoding { get; init; } = false;
 
         /// <summary>

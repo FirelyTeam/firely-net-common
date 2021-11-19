@@ -289,17 +289,29 @@ namespace Hl7.Fhir.Serialization
         }
 
 
-        private static void validateValue(ref Utf8JsonReader reader, object? value, PropertyMapping propertyMapping, ExceptionAggregator aggregator)
+        private void validateValue(ref Utf8JsonReader reader, object? value, PropertyMapping propertyMapping, ExceptionAggregator aggregator)
         {
+            if (value is null) return;
+
             foreach (var va in propertyMapping.ValidationAttributes)
             {
-                // The ElementAttribute does not add to this elements validation - it's only used
-                // to extend .NETs property validation into nested values (which we have already validated
-                // while parsing bottom up).
-                if (va is not FhirElementAttribute)
+                if (va is FhirElementAttribute)
                 {
-                    var validationResult = DotNetAttributeValidation.GetValidationResult(value, va);
-                    if (validationResult is not null)
+                    // The ElementAttribute does not add to this elements validation - it's only used
+                    // to extend .NETs property validation into nested values (which we have already validated
+                    // while parsing bottom up).
+                    ;
+                }
+                else if (va is NarrativeXhtmlPatternAttribute xhtmla)
+                {
+                    // We should call the appropriate validation on this attribute depending
+                    // on what kind of XML validation we need in Settings.ValidateNarrative.
+                    if (xhtmla.IsValid(value, Settings.ValidateNarrative, new ValidationContext(value)) is { } validationResult)
+                        aggregator.Add(ERR.VALIDATION_FAILED.With(ref reader, validationResult.ErrorMessage));
+                }
+                else
+                {
+                    if (DotNetAttributeValidation.GetValidationResult(value, va) is { } validationResult)
                         aggregator.Add(ERR.VALIDATION_FAILED.With(ref reader, validationResult.ErrorMessage));
                 }
             }
@@ -547,7 +559,7 @@ namespace Hl7.Fhir.Serialization
         /// <returns>A value without an error if the data could be parsed to the required type, and a value with an error if the
         /// value could not be parsed - in which case the value returned is the raw value coming in from the reader.</returns>
         /// <remarks>Upon completion, the reader will be positioned on the token after the primitive.</remarks>
-        static internal (object?, FhirJsonException?) DeserializePrimitiveValue(ref Utf8JsonReader reader, PrimitiveParseHandler? recovery, Type requiredType)
+        internal static (object?, FhirJsonException?) DeserializePrimitiveValue(ref Utf8JsonReader reader, PrimitiveParseHandler? recovery, Type requiredType)
         {
             // Check for unexpected non-value types.
             if (reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)

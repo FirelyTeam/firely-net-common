@@ -26,7 +26,7 @@ namespace Hl7.Fhir.Validation
                 null => ValidationResult.Success,
                 string s when FhirUri.IsValidValue(s) => ValidationResult.Success,
                 string s => DotNetAttributeValidation.BuildResult(validationContext, "Uri uses a 'urn:oid' or 'urn:uuid' scheme, but the syntax '{0}' is incorrect.", s),
-                _ => throw new ArgumentException("UriPatternAttribute can only be applied to .NET Uri properties"),
+                _ => throw new ArgumentException($"{nameof(UriPatternAttribute)} attributes can only be applied to string properties.")
             };
     }
 }

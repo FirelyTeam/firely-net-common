@@ -241,7 +241,10 @@ namespace Hl7.Fhir.Support.Poco.Tests
         private static Base deserializeComplex(Type objectType, object testObject, out Utf8JsonReader readerState, ExceptionAggregator aggregator)
         {
             var inspector = ModelInspector.ForAssembly(typeof(TestPatient).Assembly);
-            var deserializer = new FhirJsonPocoDeserializer(typeof(TestPatient).Assembly);
+
+            // For the tests, enable full XHML validation so we can test it when necessary.
+            var deserializer = new FhirJsonPocoDeserializer(typeof(TestPatient).Assembly,
+                new() { ValidateNarrative = Validation.NarrativeValidationKind.FhirXhtml });
             var mapping = inspector.ImportType(objectType)!;
 
             Utf8JsonReader reader = constructReader(testObject);
@@ -264,19 +267,13 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
         private static void assertErrors(IEnumerable<FhirJsonException> actual, string[] expected)
         {
-            if (expected.Length > 0)
-            {
-                actual.Should().NotBeEmpty();
+            if (expected.Length == 0 && !actual.Any())
+                return;
 
-                string why = $"Not the same: actual - {string.Join(",", actual.Select(a => a.ErrorCode))} and expected {string.Join(";", expected)}";
-                _ = actual.Zip(expected, (a, e) => a.ErrorCode.Should().Be(e, because: why)).ToList();
-                actual.Count().Should().Be(expected.Length, because: why);
-                Console.WriteLine($"Found {string.Join(", ", actual.Select(a => a.Message))}");
-            }
-            else
-            {
-                actual.Should().BeEmpty();
-            }
+            string why = $"Should be the same: actual [{string.Join(",", actual.Select(a => a.ErrorCode))}] and expected [{string.Join(";", expected)}]";
+            expected.Length.Should().Be(actual.Count(), because: why);
+            _ = actual.Zip(expected, (a, e) => a.ErrorCode.Should().Be(e, because: why)).ToList();
+            Console.WriteLine($"Found {string.Join(", ", actual.Select(a => a.Message))}");
         }
 
         [TestMethod]
@@ -428,6 +425,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         public static IEnumerable<object?[]> TestValidatePrimitiveData()
         {
             yield return data<Narrative>(new { div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>correct</p></div>" });
+            yield return data<Narrative>(new { div = "this isn't xml" }, ERR.VALIDATION_FAILED);
             yield return data<Narrative>(new { div = "<puinhoop />" }, ERR.VALIDATION_FAILED);
 
             yield return data<TestCodeSystem>(new { url = "urn:oid:1.3.6.1.4.1.343" });
