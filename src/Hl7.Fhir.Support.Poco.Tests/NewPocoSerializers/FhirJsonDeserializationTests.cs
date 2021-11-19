@@ -207,7 +207,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
         public void ParsePrimitiveValue(object value, Type targetType, string errorcode, object? expectedObjectValue = null)
         {
-            ExceptionAggregator aggregator = new();
+            var state = new FhirJsonPocoDeserializerState();
 
             PrimitiveType test()
             {
@@ -218,17 +218,17 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 var reader = constructReader(value);
                 reader.Read();
 
-                return deserializer.DeserializeFhirPrimitive(null, "dummy", mapping, ref reader, aggregator);
+                return deserializer.DeserializeFhirPrimitive(null, "dummy", mapping, ref reader, state);
             }
 
             var result = test();
 
-            if (aggregator.HasExceptions)
+            if (state.Errors.HasExceptions)
             {
                 if (errorcode is not null)
-                    aggregator.Single().Should().BeOfType<FhirJsonException>().Which.ErrorCode.Should().Be(errorcode);
+                    state.Errors.Single().Should().BeOfType<FhirJsonException>().Which.ErrorCode.Should().Be(errorcode);
                 else
-                    throw aggregator.Single();
+                    throw state.Errors.Single();
             }
             else
             {
@@ -245,13 +245,10 @@ namespace Hl7.Fhir.Support.Poco.Tests
         }
 
         private static Base deserializeComplex(Type objectType, object testObject, out Utf8JsonReader readerState,
-                ExceptionAggregator aggregator) => deserializeComplex(objectType, testObject, out readerState, aggregator, new());
-
-
-        private static Base deserializeComplex(Type objectType, object testObject, out Utf8JsonReader readerState,
-            ExceptionAggregator aggregator, FhirJsonPocoDeserializerSettings settings)
+            out FhirJsonPocoDeserializerState state, FhirJsonPocoDeserializerSettings settings)
         {
             var inspector = ModelInspector.ForAssembly(typeof(TestPatient).Assembly);
+            state = new();
 
             // For the tests, enable full XHML validation so we can test it when necessary.
             var deserializer = new FhirJsonPocoDeserializer(typeof(TestPatient).Assembly, settings);
@@ -260,12 +257,21 @@ namespace Hl7.Fhir.Support.Poco.Tests
             Utf8JsonReader reader = constructReader(testObject);
             reader.Read();
 
-            Base newObject = (Base)mapping.Factory();
+            Base? result = null;
 
-            deserializer.DeserializeObjectInto(newObject, mapping, ref reader, inResource: false, aggregator);
+            if (objectType.IsAssignableTo(typeof(Resource)))
+            {
+                result = deserializer.DeserializeResource(ref reader);
+            }
+            else
+            {
+                result = (Base)mapping.Factory();
+                deserializer.DeserializeObjectInto(result, mapping, ref reader, inResource: false, state);
+            }
+
             readerState = reader; // copy
 
-            return newObject;
+            return result;
         }
 
         private static Utf8JsonReader constructReader(object testObject)
@@ -295,9 +301,9 @@ namespace Hl7.Fhir.Support.Poco.Tests
             reader.Read();
 
             var deserializer = new FhirJsonPocoDeserializer(typeof(TestPatient).Assembly);
-            var aggregator = new ExceptionAggregator();
-            _ = deserializer.DeserializeResourceInternal(ref reader, aggregator);
-            assertErrors(aggregator, errors.Select(e => e.ErrorCode).ToArray());
+            var state = new FhirJsonPocoDeserializerState();
+            _ = deserializer.DeserializeResourceInternal(ref reader, state);
+            assertErrors(state.Errors, errors.Select(e => e.ErrorCode).ToArray());
             reader.TokenType.Should().Be(tokenAfterParsing);
         }
 
@@ -349,12 +355,11 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [DynamicData(nameof(TestValidatePrimitiveData), DynamicDataSourceType.Method)]
         public void TestData(Type t, object testObject, JsonTokenType token, Action<object>? verify, params FhirJsonException[] errors)
         {
-            var aggregator = new ExceptionAggregator();
-
             // Enable full narrative validation so we can test for it
-            var result = deserializeComplex(t, testObject, out var readerState, aggregator, new() { ValidateNarrative = Validation.NarrativeValidationKind.FhirXhtml });
+            var result = deserializeComplex(t, testObject, out var readerState, out var state,
+                new() { ValidateNarrative = Validation.NarrativeValidationKind.FhirXhtml });
 
-            assertErrors(aggregator, errors.Select(e => e.ErrorCode).ToArray());
+            assertErrors(state.Errors, errors.Select(e => e.ErrorCode).ToArray());
             readerState.TokenType.Should().Be(token);
             var cdResult = result.Should().BeOfType(t);
             verify?.Invoke(result);
@@ -441,8 +446,8 @@ namespace Hl7.Fhir.Support.Poco.Tests
             yield return data<Narrative>(new { div = "this isn't xml" }, ERR.VALIDATION_FAILED);
             yield return data<Narrative>(new { div = "<puinhoop />" }, ERR.VALIDATION_FAILED);
 
-            yield return data<TestCodeSystem>(new { url = "urn:oid:1.3.6.1.4.1.343" });
-            yield return data<TestCodeSystem>(new { url = "urn:oid:1" }, ERR.VALIDATION_FAILED);
+            yield return data<TestAttachment>(new { url = "urn:oid:1.3.6.1.4.1.343" });
+            yield return data<TestAttachment>(new { url = "urn:oid:1" }, ERR.VALIDATION_FAILED);
         }
 
         public static IEnumerable<object?[]> TestPrimitiveArrayData()
@@ -630,13 +635,66 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
             TestAttachment deserializeAttachment(FhirJsonPocoDeserializerSettings settings)
             {
-                ExceptionAggregator aggregator = new();
-                var attachment = (TestAttachment)deserializeComplex(typeof(TestAttachment), new { data = "SGkh" }, out _, aggregator, settings);
-                aggregator.HasExceptions.Should().BeFalse();
+                var attachment = (TestAttachment)deserializeComplex(typeof(TestAttachment), new { data = "SGkh" }, out _, out var state, settings);
+                state.Errors.HasExceptions.Should().BeFalse();
 
                 return attachment;
             }
         }
+
+        [TestMethod]
+        public void TestUpdateComplexValue()
+        {
+            var patient = (TestPatient)deserializeComplex(typeof(TestPatient), new { resourceType = "Patient", deceasedDateTime = "2070-01-01T12:01:02Z" },
+                        out _, out var state, new() { OnUpdateValue = updateValue });
+            state.Errors.HasExceptions.Should().BeFalse();
+
+            patient.Deceased.Should().BeOfType<FhirDateTime>().Which.Value.Should().EndWith("+00");
+
+            static object? updateValue(object? candidateValue, DeserializationContext deserializationContext)
+            {
+                if (candidateValue is not FhirDateTime f) return candidateValue;
+                if (deserializationContext.GetPath() != "Patient.deceased") return candidateValue;
+
+                deserializationContext.TargetObjectMapping.Name.Should().Be("Patient");
+                deserializationContext.PropertyName.Should().Be("deceasedDateTime");
+                deserializationContext.ElementMapping.Name.Should().Be("deceased");
+                deserializationContext.ValueType.Should().Be(typeof(FhirDateTime));
+
+                // Invalid value, but since this value has already been validated during
+                // deserialization of the FhirDateTime, validation will not be triggered!
+                if (f.Value.EndsWith("Z")) f.Value = f.Value.TrimEnd('Z') + "+00";
+
+                return candidateValue;
+            }
+        }
+
+        [TestMethod]
+        public void TestUpdatePrimitiveValue()
+        {
+            var patient = (TestPatient)deserializeComplex(typeof(TestPatient), new { resourceType = "Patient", deceasedDateTime = "2070-01-01T12:01:02Z" },
+                        out _, out var state, new() { OnUpdateValue = updateValue });
+            state.Errors.HasExceptions.Should().BeFalse();
+
+            patient.Deceased.Should().BeOfType<FhirDateTime>().Which.Value.Should().EndWith("+00:00");
+
+            static object? updateValue(object? candidateValue, DeserializationContext deserializationContext)
+            {
+                if (candidateValue is string s &&
+                    deserializationContext.TargetObjectMapping.Name == "dateTime" &&
+                    deserializationContext.ElementMapping.Name == "value")
+                {
+                    deserializationContext.ValueType.Should().Be(typeof(string));
+
+                    if (s.EndsWith("Z")) s = s.TrimEnd('Z') + "+00:00";
+                    return s;
+                }
+                else
+                    return candidateValue;
+            }
+        }
+
+
     }
 
 }

@@ -50,7 +50,23 @@ namespace Hl7.Fhir.Serialization
         /// If set, this delegate is called when the deserializer fails to parse a primitive json value.
         /// </summary>
         public PrimitiveParseHandler? OnPrimitiveParseFailed { get; init; } = null;
+
+        /// <summary>
+        /// If set, this delegate is called after a value was deserialized, but before it is set on
+        /// the POCO property under construction and before validation is done.
+        /// </summary>
+        public ValueUpdater? OnUpdateValue { get; init; } = null;
     }
+
+
+    /// <summary>
+    /// A delegate for a function that can implement custom logic to update deserialized values before
+    /// they are validated and used to initialize the deserialized object.
+    /// </summary>
+    /// <param name="candidateValue">The preliminary value that would be used if no custom logic was invoked.</param>
+    /// <param name="deserializationContext">The current context of deserialization, like the path and the type under deserialization.</param>
+    /// <returns></returns>
+    public delegate object? ValueUpdater(object? candidateValue, DeserializationContext deserializationContext);
 
     /// <summary>
     /// A delegate for a function that can handle parsing failures for primitive types.
@@ -60,7 +76,7 @@ namespace Hl7.Fhir.Serialization
     /// <param name="targetType">The .NET type the deserializer needs this handler to return to be able to update the POCO under construction.</param>
     /// <remarks>Returns an object if this handler succeeded in parsing, otherwise the delegate must throw an exception (which might
     /// be the <c>originalException</c>).</remarks>
-    public delegate object PrimitiveParseHandler(ref Utf8JsonReader reader, Type targetType, FhirJsonException originalException);
+    public delegate object? PrimitiveParseHandler(ref Utf8JsonReader reader, Type targetType, FhirJsonException originalException);
 }
 
 #nullable restore
