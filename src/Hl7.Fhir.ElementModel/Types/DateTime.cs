@@ -54,6 +54,93 @@ namespace Hl7.Fhir.ElementModel.Types
         public int? Seconds => Precision >= DateTimePrecision.Second ? _parsedValue.Second : (int?)null;
         public int? Millis => Precision >= DateTimePrecision.Fraction ? _parsedValue.Millisecond : (int?)null;
 
+        public static DateTime operator +(DateTime dateTimeValue, Quantity addValue)
+        {
+            if (dateTimeValue is null) throw new ArgumentNullException(nameof(dateTimeValue));
+            if (addValue is null) throw new ArgumentNullException(nameof(addValue));
+
+            var dto = dateTimeValue._parsedValue;
+            switch (addValue.Unit)
+            {
+                // we can ignore precision, as the precision will "trim" it anyway, and if we add 13 months, then the year can tick over nicely
+                case "years":
+                case "year":
+                    dto = dateTimeValue._parsedValue.AddYears((int)addValue.Value);
+                    break;
+                case "month":
+                case "months":
+                    if (dateTimeValue.Precision == DateTimePrecision.Year)
+                        dto = dateTimeValue._parsedValue.AddYears((int)(addValue.Value/12));
+                    else
+                        dto = dateTimeValue._parsedValue.AddMonths((int)addValue.Value);
+                    break;
+                case "day":
+                case "days":
+                    if (dateTimeValue.Precision == DateTimePrecision.Year)
+                        dto = dateTimeValue._parsedValue.AddYears((int)(addValue.Value / 365));
+                    else if (dateTimeValue.Precision == DateTimePrecision.Month)
+                        dto = dateTimeValue._parsedValue.AddMonths((int)(addValue.Value / 30));
+                    else
+                        dto = dateTimeValue._parsedValue.AddDays((int)addValue.Value);
+                    break;
+                case "week":
+                case "weeks":
+                    if (dateTimeValue.Precision == DateTimePrecision.Year)
+                        dto = dateTimeValue._parsedValue.AddYears((int)(addValue.Value / 52));
+                    else if (dateTimeValue.Precision == DateTimePrecision.Month)
+                        dto = dateTimeValue._parsedValue.AddMonths((int)(addValue.Value * 7 / 30));
+                    else
+                        dto = dateTimeValue._parsedValue.AddDays(((int)addValue.Value) * 7);
+                    break;
+
+                // NOT ignoring precision on time based stuff if there is no time component
+                // if no time component, don't modify result
+                case "hour":
+                case "hours":
+                    if (dateTimeValue.Precision > DateTimePrecision.Day)
+                        dto = dateTimeValue._parsedValue.AddHours((double)addValue.Value);
+                    break;
+                case "minute":
+                case "minutes":
+                    if (dateTimeValue.Precision > DateTimePrecision.Day)
+                        dto = dateTimeValue._parsedValue.AddMinutes((double)addValue.Value);
+                    break;
+                case "s":
+                case "second":
+                case "seconds":
+                    if (dateTimeValue.Precision > DateTimePrecision.Day)
+                        dto = dateTimeValue._parsedValue.AddSeconds((double)addValue.Value);
+                    break;
+                case "ms":
+                case "millisecond":
+                case "milliseconds":
+                    if (dateTimeValue.Precision > DateTimePrecision.Day)
+                        dto = dateTimeValue._parsedValue.AddMilliseconds((double)addValue.Value);
+                    break;
+                default:
+                    throw new ArgumentException($"'{addValue.Unit}' is not a valid time-valued unit", nameof(addValue));
+            }
+
+            string representation = dto.ToString(FMT_FULL);
+            if (representation.Length > dateTimeValue._original.Length)
+            {
+                // need to trim appropriately.
+                if (dateTimeValue.Precision <= DateTimePrecision.Minute)
+                    representation = representation.Substring(0, dateTimeValue._original.Length);
+                else
+                {
+                    if (!dateTimeValue.HasOffset)
+                    {
+                        // trim the offset from it
+                        representation = dto.ToString("yyyy-MM-dd'T'HH:mm:ss.FFFFFFF");
+                    }
+                }
+            }
+
+            var result = new DateTime(representation, dto, dateTimeValue.Precision, dateTimeValue.HasOffset);
+            return result;
+        }
+
         /// <summary>
         /// The span of time ahead/behind UTC
         /// </summary>

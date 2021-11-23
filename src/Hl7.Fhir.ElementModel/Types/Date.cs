@@ -137,6 +137,52 @@ namespace Hl7.Fhir.ElementModel.Types
             return success;
         }
 
+        public static Date operator +(Date dateValue, Quantity addValue)
+        {
+            if (dateValue is null) throw new ArgumentNullException(nameof(dateValue));
+            if (addValue is null) throw new ArgumentNullException(nameof(addValue));
+
+            var dto = dateValue._parsedValue;
+            switch (addValue.Unit)
+            {
+                // we can ignore precision, as the precision will "trim" it anyway, and if we add 13 months, then the year can tick over nicely
+                case "years":
+                case "year":
+                    dto = dateValue._parsedValue.AddYears((int)addValue.Value);
+                    break;
+                case "month":
+                case "months":
+                    if (dateValue.Precision == DateTimePrecision.Year)
+                        dto = dateValue._parsedValue.AddYears((int)(addValue.Value / 12));
+                    else
+                        dto = dateValue._parsedValue.AddMonths((int)addValue.Value);
+                    break;
+                case "day":
+                case "days":
+                    if (dateValue.Precision == DateTimePrecision.Year)
+                        dto = dateValue._parsedValue.AddYears((int)(addValue.Value / 365));
+                    else if (dateValue.Precision == DateTimePrecision.Month)
+                        dto = dateValue._parsedValue.AddMonths((int)(addValue.Value / 30));
+                    else
+                        dto = dateValue._parsedValue.AddDays((int)addValue.Value);
+                    break;
+                case "week":
+                case "weeks":
+                    if (dateValue.Precision == DateTimePrecision.Year)
+                        dto = dateValue._parsedValue.AddYears((int)(addValue.Value / 52));
+                    else if (dateValue.Precision == DateTimePrecision.Month)
+                        dto = dateValue._parsedValue.AddMonths((int)(addValue.Value * 7 / 30));
+                    else
+                        dto = dateValue._parsedValue.AddDays(((int)addValue.Value) * 7);
+                    break;
+                default:
+                    throw new ArgumentException($"'{addValue.Unit}' is not a valid time-valued unit", nameof(addValue));
+            }
+
+            var result = Date.FromDateTimeOffset(dto, dateValue.Precision);
+            return result;
+        }
+
         /// <summary>
         /// Determines if two dates are equal according to CQL equality rules.
         /// </summary>
