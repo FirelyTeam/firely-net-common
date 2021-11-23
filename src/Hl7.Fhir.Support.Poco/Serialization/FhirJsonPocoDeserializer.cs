@@ -58,7 +58,7 @@ namespace Hl7.Fhir.Serialization
         public Assembly Assembly { get; }
 
         /// <summary>
-        /// The options that were set by the constructor.
+        /// The settings that were passed to the constructor.
         /// </summary>
         public FhirJsonPocoDeserializerSettings Settings { get; }
 

@@ -58,7 +58,9 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 }
                 ));
 
-            var options = new JsonSerializerOptions().ForFhir(typeof(TestPatient).Assembly, filter).Pretty();
+            var options = new JsonSerializerOptions()
+                .ForFhir(typeof(TestPatient).Assembly, new FhirJsonPocoSerializerSettings() { SummaryFilter = filter })
+                .Pretty();
             string actual = JsonSerializer.Serialize(b, options);
 
             // Root bundle should not have been filtered at all
@@ -142,12 +144,14 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 traverse(full.StatusElement).Count());
         }
 
-        (T full, T summarized) runSummarize<T>(string filename, SerializationFilter filter) where T : Resource
+        private (T full, T summarized) runSummarize<T>(string filename, SerializationFilter filter) where T : Resource
         {
             var fullXml = File.ReadAllText(Path.Combine("TestData", filename));
             var full = TypedSerialization.ToPoco<T>(FhirXmlNode.Parse(fullXml));
 
-            var options = new JsonSerializerOptions().ForFhir(typeof(TestPatient).Assembly, filter).Pretty();
+            var options = new JsonSerializerOptions()
+                .ForFhir(typeof(TestPatient).Assembly, new FhirJsonPocoSerializerSettings { SummaryFilter = filter })
+                .Pretty();
             string summarizedJson = JsonSerializer.Serialize(full, options);
 
             var summarized = TypedSerialization.ToPoco<T>(FhirJsonNode.Parse(summarizedJson));

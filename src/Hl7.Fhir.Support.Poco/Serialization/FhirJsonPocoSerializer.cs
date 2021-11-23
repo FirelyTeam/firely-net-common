@@ -32,23 +32,37 @@ namespace Hl7.Fhir.Serialization
     public class FhirJsonPocoSerializer
     {
         /// <summary>
+        /// Construct a new serializer for a specific release of FHIR.
+        /// </summary>
+        public FhirJsonPocoSerializer(FhirRelease release) : this(release, new())
+        {
+            // nothing
+        }
+
+        /// <summary>
+        /// Construct a new serializer for a specific release of FHIR.
+        /// </summary>
+        public FhirJsonPocoSerializer(FhirRelease release, FhirJsonPocoSerializerSettings settings)
+        {
+            Release = release;
+            Settings = settings;
+        }
+
+        /// <summary>
         /// The release of FHIR for which this serializer is configured.
         /// </summary>
         public FhirRelease Release { get; }
 
         /// <summary>
-        /// Construct a new serializer for a specific release of FHIR.
+        /// The settings that were passed to the constructor.
         /// </summary>
-        public FhirJsonPocoSerializer(FhirRelease release)
-        {
-            Release = release;
-        }
+        public FhirJsonPocoSerializerSettings Settings { get; }
 
         /// <summary>
         /// Serializes the given dictionary with FHIR data into Json.
         /// </summary>
-        public void Serialize(IReadOnlyDictionary<string, object> members, Utf8JsonWriter writer, SerializationFilter? summary = default) =>
-            serializeInternal(members, writer, skipValue: false, summary);
+        public void Serialize(IReadOnlyDictionary<string, object> members, Utf8JsonWriter writer) =>
+            serializeInternal(members, writer, skipValue: false);
 
         /// <summary>
         /// Serializes the given dictionary with FHIR data into Json, optionally skipping the "value" element.
@@ -58,10 +72,10 @@ namespace Hl7.Fhir.Serialization
         private void serializeInternal(
             IReadOnlyDictionary<string, object> members,
             Utf8JsonWriter writer,
-            bool skipValue,
-            SerializationFilter? filter)
+            bool skipValue)
         {
             writer.WriteStartObject();
+            var filter = Settings.SummaryFilter;
 
             if (members is Resource r)
                 writer.WriteString("resourceType", r.TypeName);
@@ -98,12 +112,12 @@ namespace Hl7.Fhir.Serialization
                         writer.WriteStartArray();
 
                         foreach (var value in coll)
-                            serializeMemberValue(value, writer, filter);
+                            serializeMemberValue(value, writer);
 
                         writer.WriteEndArray();
                     }
                     else
-                        serializeMemberValue(member.Value, writer, filter);
+                        serializeMemberValue(member.Value, writer);
                 }
 
                 filter?.LeaveMember(member.Key, member.Value, propertyMapping);
@@ -126,10 +140,10 @@ namespace Hl7.Fhir.Serialization
         }
 
 
-        private void serializeMemberValue(object value, Utf8JsonWriter writer, SerializationFilter? filter)
+        private void serializeMemberValue(object value, Utf8JsonWriter writer)
         {
             if (value is IReadOnlyDictionary<string, object> complex)
-                serializeInternal(complex, writer, skipValue: false, filter);
+                serializeInternal(complex, writer, skipValue: false);
             else
                 SerializePrimitiveValue(value, writer);
         }
@@ -198,7 +212,7 @@ namespace Hl7.Fhir.Serialization
                         writeStartArray("_" + elementName, numNullsMissed, writer);
                     }
 
-                    serializeInternal(value, writer, skipValue: true, filter);
+                    serializeInternal(value, writer, skipValue: true);
                 }
                 else
                 {
@@ -241,7 +255,7 @@ namespace Hl7.Fhir.Serialization
             {
                 // Write a property with '_elementName'
                 writer.WritePropertyName("_" + elementName);
-                serializeInternal(value, writer, skipValue: true, filter);
+                serializeInternal(value, writer, skipValue: true);
             }
         }
 

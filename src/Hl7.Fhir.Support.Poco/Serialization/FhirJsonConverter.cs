@@ -32,14 +32,17 @@ namespace Hl7.Fhir.Serialization
         /// POCOs in a given assembly.
         /// </summary>
         /// <param name="assembly">The assembly containing classes to be used for deserialization.</param>
-        /// <param name="filter">A filter that determines which elements to include when serializing a summary.</param>
-        public FhirJsonConverter(Assembly assembly, SerializationFilter? filter = default)
+        /// <param name="serializerSettings">The optional features used during serialization.</param>
+        /// <param name="deserializerSettings">The optional features used during deserialization.</param>
+        public FhirJsonConverter(
+            Assembly assembly,
+            FhirJsonPocoSerializerSettings serializerSettings,
+            FhirJsonPocoDeserializerSettings deserializerSettings)
         {
             ModelInspector inspector = ModelInspector.ForAssembly(assembly);
 
-             _deserializer = new FhirJsonPocoDeserializer(assembly);
-            _serializer = new FhirJsonPocoSerializer(inspector.FhirRelease);
-            SerializationFilter = filter;
+            _deserializer = new FhirJsonPocoDeserializer(assembly, deserializerSettings);
+            _serializer = new FhirJsonPocoSerializer(inspector.FhirRelease, serializerSettings);
         }
 
         /// <summary>
@@ -48,15 +51,13 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         /// <param name="deserializer">A custom deserializer to be used by the json converter.</param>
         /// <param name="serializer">A customer serializer to be used by the json converter.</param>
-        /// <param name="filter">A filter that determines which elements to include when serializing a summary.</param>
         /// <remarks>Since the standard serializer/deserializer will allow you to override its behaviour to produce
         /// custom behaviour, this constructor will allow the developer to use such custom serializers/deserializers instead
         /// of the defaults.</remarks>
-        public FhirJsonConverter(FhirJsonPocoDeserializer deserializer, FhirJsonPocoSerializer serializer, SerializationFilter? filter = default)
+        public FhirJsonConverter(FhirJsonPocoDeserializer deserializer, FhirJsonPocoSerializer serializer)
         {
             _deserializer = deserializer;
             _serializer = serializer;
-            SerializationFilter = filter;
         }
 
         /// <summary>
@@ -77,7 +78,7 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public override void Write(Utf8JsonWriter writer, Base poco, JsonSerializerOptions options)
         {
-            _serializer.Serialize(poco, writer, SerializationFilter);
+            _serializer.Serialize(poco, writer);
         }
 
         /// <summary>
