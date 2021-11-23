@@ -22,12 +22,12 @@ namespace Hl7.Fhir.Validation
     {
         /// <inheritdoc />
         protected override ValidationResult? IsValid(object? value, ValidationContext validationContext) =>
-            IsValid(value, NarrativeValidationKind.FhirXhtml, validationContext);
+            IsValid(value, NarrativeValidationKind.FhirXhtml);
 
         /// <summary>
         /// Validates whether the value is a string of well-formatted Xml.
         /// </summary>
-        public ValidationResult? IsValid(object? value, NarrativeValidationKind kind, ValidationContext validationContext)
+        public ValidationResult? IsValid(object? value, NarrativeValidationKind kind)
         {
             if (value is null) return ValidationResult.Success;
 
@@ -38,11 +38,11 @@ namespace Hl7.Fhir.Validation
                     NarrativeValidationKind.None => ValidationResult.Success,
                     NarrativeValidationKind.Xml => XHtml.IsValidXml(xml, out var error) ?
                             ValidationResult.Success :
-                            DotNetAttributeValidation.BuildResult(validationContext, "Value is not well-formatted Xml: " + error),
+                            new ValidationResult("Value is not well-formatted Xml: " + error),
                     NarrativeValidationKind.FhirXhtml => XHtml.IsValidNarrativeXhtml(xml, out var errors) ?
                                 ValidationResult.Success :
-                                DotNetAttributeValidation.BuildResult(validationContext,
-                                    "Xml can not be parsed or is not valid according to the (limited) FHIR scheme: " + string.Join(", ", errors)),
+                                new ValidationResult("Xml can not be parsed or is not valid according to the (limited) FHIR scheme: " +
+                                string.Join(", ", errors)),
                     _ => throw new NotSupportedException($"Encountered unknown narrative validation kind {kind}.")
                 };
             }

@@ -19,7 +19,7 @@ namespace Hl7.Fhir.Serialization
     /// Contains information of the location in the POCO that is currently being deserialized and is passed 
     /// to delegate methods implementing parts of user-definable deserialization and validation logic.
     /// </summary>
-    public class DeserializationContext
+    public readonly struct DeserializationContext
     {
         internal DeserializationContext(
             PathStack ps,

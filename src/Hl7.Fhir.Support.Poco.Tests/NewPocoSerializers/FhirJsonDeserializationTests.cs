@@ -99,7 +99,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         }
 
         private static FhirJsonPocoDeserializer getTestDeserializer(FhirJsonPocoDeserializerSettings settings) =>
-            new FhirJsonPocoDeserializer(typeof(TestPatient).Assembly, settings);
+            new(typeof(TestPatient).Assembly, settings);
 
         [TestMethod]
         public void TestCustomRecovery()
@@ -633,7 +633,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             attachment = deserializeAttachment(new() { DisableBase64Decoding = true });
             attachment.DataElement.ObjectValue.Should().BeOfType<string>().And.Subject.Should().Be("SGkh");
 
-            TestAttachment deserializeAttachment(FhirJsonPocoDeserializerSettings settings)
+            static TestAttachment deserializeAttachment(FhirJsonPocoDeserializerSettings settings)
             {
                 var attachment = (TestAttachment)deserializeComplex(typeof(TestAttachment), new { data = "SGkh" }, out _, out var state, settings);
                 state.Errors.HasExceptions.Should().BeFalse();
@@ -651,7 +651,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
             patient.Deceased.Should().BeOfType<FhirDateTime>().Which.Value.Should().EndWith("+00");
 
-            static object? updateValue(object? candidateValue, DeserializationContext deserializationContext)
+            static object? updateValue(object? candidateValue, in DeserializationContext deserializationContext)
             {
                 if (candidateValue is not FhirDateTime f) return candidateValue;
                 if (deserializationContext.GetPath() != "Patient.deceased") return candidateValue;
@@ -678,7 +678,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
             patient.Deceased.Should().BeOfType<FhirDateTime>().Which.Value.Should().EndWith("+00:00");
 
-            static object? updateValue(object? candidateValue, DeserializationContext deserializationContext)
+            static object? updateValue(object? candidateValue, in DeserializationContext deserializationContext)
             {
                 if (candidateValue is string s &&
                     deserializationContext.TargetObjectMapping.Name == "dateTime" &&

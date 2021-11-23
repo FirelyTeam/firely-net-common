@@ -21,37 +21,32 @@ namespace Hl7.Fhir.Validation
         /// <summary>
         /// Validate a value against a specific <see cref="ValidationAttribute" />.
         /// </summary>
-        public static ValidationResult? GetValidationResult(object value, ValidationAttribute va, bool recurse = false)
+        public static ValidationResult? GetValidationResult(object? value, ValidationAttribute va, bool recurse = false)
         {
-            var validationContext = buildContext(value);
-            validationContext.SetValidateRecursively(recurse);
-
+            var validationContext = buildContext(recurse, null);
             return va.GetValidationResult(value, validationContext);
         }
 
         /// <summary>
-        /// Validate a value, and its members against any <see cref="ValidationAttribute" />s present. 
+        /// Validate and object and its members against any <see cref="ValidationAttribute" />s present. 
         /// Will throw when a validation error is encountered.
         /// </summary>
         public static void Validate(object value, bool recurse = false)
         {
-            var validationContext = buildContext(value);
-            validationContext.SetValidateRecursively(recurse);
-
+            var validationContext = buildContext(recurse, value);
             Validator.ValidateObject(value, validationContext, true);
         }
 
         /// <summary>
-        /// Validate a value, and its members against any <see cref="ValidationAttribute" />s present. 
+        /// Validate an object and its members against any <see cref="ValidationAttribute" />s present. 
         /// </summary>
         /// <remarks>If <paramref name="validationResults"/> is <c>null</c>, no errors will be returned.</remarks>
         public static bool TryValidate(object value, ICollection<ValidationResult>? validationResults = null, bool recurse = false)
         {
-            var results = validationResults ?? new List<ValidationResult>();
-            var validationContext = buildContext(value);
-            validationContext.SetValidateRecursively(recurse);
+            var validationContext = buildContext(recurse, value);
 
             // Validate the object, also calling the validators on each child property.
+            var results = validationResults ?? new List<ValidationResult>();
             return Validator.TryValidateObject(value, validationContext, results, validateAllProperties: true);
         }
 
@@ -67,13 +62,17 @@ namespace Hl7.Fhir.Validation
                 : new ValidationResult(resultMessage);
         }
 
-        private static ValidationContext buildContext(object value)
+        private static ValidationContext buildContext(bool recurse, object? instance)
         {
+            ValidationContext newContext =
 #if NET40
-                return new ValidationContext(value, null, null);
+                new ValidationContext(instance ?? new object(), null, null);
 #else
-            return new ValidationContext(value);
+                new(instance ?? new object());
 #endif
+
+            newContext.SetValidateRecursively(recurse);
+            return newContext;
         }
 
     }
