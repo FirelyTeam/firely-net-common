@@ -63,12 +63,10 @@ namespace Hl7.Fhir.ElementModel.Types
             switch (addValue.Unit)
             {
                 // we can ignore precision, as the precision will "trim" it anyway, and if we add 13 months, then the year can tick over nicely
-                case "a": // UCUM
                 case "years":
                 case "year":
                     dto = dateTimeValue._parsedValue.AddYears((int)addValue.Value);
                     break;
-                case "mo": // UCUM
                 case "month":
                 case "months":
                     if (dateTimeValue.Precision == DateTimePrecision.Year)
@@ -76,7 +74,6 @@ namespace Hl7.Fhir.ElementModel.Types
                     else
                         dto = dateTimeValue._parsedValue.AddMonths((int)addValue.Value);
                     break;
-                case "d": // UCUM
                 case "day":
                 case "days":
                     if (dateTimeValue.Precision == DateTimePrecision.Year)
@@ -86,7 +83,6 @@ namespace Hl7.Fhir.ElementModel.Types
                     else
                         dto = dateTimeValue._parsedValue.AddDays((int)addValue.Value);
                     break;
-                case "wk": // UCUM
                 case "week":
                 case "weeks":
                     if (dateTimeValue.Precision == DateTimePrecision.Year)
@@ -99,13 +95,11 @@ namespace Hl7.Fhir.ElementModel.Types
 
                 // NOT ignoring precision on time based stuff if there is no time component
                 // if no time component, don't modify result
-                case "h":
                 case "hour":
                 case "hours":
                     if (dateTimeValue.Precision > DateTimePrecision.Day)
                         dto = dateTimeValue._parsedValue.AddHours((double)addValue.Value);
                     break;
-                case "min":
                 case "minute":
                 case "minutes":
                     if (dateTimeValue.Precision > DateTimePrecision.Day)

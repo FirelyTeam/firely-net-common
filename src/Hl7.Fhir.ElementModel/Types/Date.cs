@@ -146,12 +146,10 @@ namespace Hl7.Fhir.ElementModel.Types
             switch (addValue.Unit)
             {
                 // we can ignore precision, as the precision will "trim" it anyway, and if we add 13 months, then the year can tick over nicely
-                case "a": // UCUM
                 case "years":
                 case "year":
                     dto = dateValue._parsedValue.AddYears((int)addValue.Value);
                     break;
-                case "mo": // UCUM
                 case "month":
                 case "months":
                     if (dateValue.Precision == DateTimePrecision.Year)
@@ -159,7 +157,6 @@ namespace Hl7.Fhir.ElementModel.Types
                     else
                         dto = dateValue._parsedValue.AddMonths((int)addValue.Value);
                     break;
-                case "d": // UCUM
                 case "day":
                 case "days":
                     if (dateValue.Precision == DateTimePrecision.Year)
@@ -169,7 +166,6 @@ namespace Hl7.Fhir.ElementModel.Types
                     else
                         dto = dateValue._parsedValue.AddDays((int)addValue.Value);
                     break;
-                case "wk": // UCUM
                 case "week":
                 case "weeks":
                     if (dateValue.Precision == DateTimePrecision.Year)

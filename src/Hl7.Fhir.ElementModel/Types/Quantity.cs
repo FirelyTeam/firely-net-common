@@ -142,29 +142,35 @@ namespace Hl7.Fhir.ElementModel.Types
                     case "year":
                     case "years":
                         isCalendarUnit = true;
-                        return "year"; // calendar unit year
+                        return "year";
                     case "month":
                     case "months":
                         isCalendarUnit = true;
-                        return "month";   // calendar unit month
+                        return "month";
                     case "week":
                     case "weeks":
-                        return "wk";  // UCUM week
+                        isCalendarUnit = true;
+                        return "week";
                     case "day":
                     case "days":
-                        return "d";   // UCUM day
+                        isCalendarUnit = true;
+                        return "day";
                     case "hour":
                     case "hours":
-                        return "h";   // UCUM hour
+                        isCalendarUnit = true;
+                        return "hour";
                     case "minute":
                     case "minutes":
-                        return "min";   // UCUM minute
+                        isCalendarUnit = true;
+                        return "minute";
                     case "second":
                     case "seconds":
-                        return "s";    // UCUM second
+                        isCalendarUnit = true;
+                        return "second";
                     case "millisecond":
                     case "milliseconds":
-                        return "ms";    // UCUM millisecond
+                        isCalendarUnit = true;
+                        return "millisecond";
                     default:
                         return null;
                 }
@@ -201,7 +207,10 @@ namespace Hl7.Fhir.ElementModel.Types
             var l = this;
             var r = otherQ;
 
-            if (comparisonType.HasFlag(QuantityComparison.CompareCalendarUnits))
+            // https://hl7.org/fhirpath/#quantity
+            if (comparisonType.HasFlag(QuantityComparison.CompareCalendarUnits) 
+                || l.System == QuantityUnitSystem.CalendarDuration && (l.Unit == "second" || l.Unit == "millisecond")
+                || r.System == QuantityUnitSystem.CalendarDuration && (r.Unit == "second" || r.Unit == "millisecond"))
             {
                 l = calendarUnitToUcum(l);
                 r = calendarUnitToUcum(r);
@@ -265,11 +274,13 @@ namespace Hl7.Fhir.ElementModel.Types
             {
                 "year" => "a",
                 "month" => "mo",
-                //"week" => "wk",
-                //"day" => "d",
-                //"hour" => "h",
-                //"minute" => "min",
-                _ => throw new InvalidOperationException($"'{orig.Unit}' is not a valid calendar unit. Only 'year' and 'month' are.")
+                "week" => "wk",
+                "day" => "d",
+                "hour" => "h",
+                "minute" => "min",
+                "second" => "s",
+                "millisecond" => "ms",
+                _ => throw new InvalidOperationException($"'{orig.Unit}' is not a valid calendar unit.")
             };
 
             return new Quantity(orig.Value, ucumUnit, QuantityUnitSystem.UCUM);

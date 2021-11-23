@@ -41,6 +41,15 @@ namespace HL7.FhirPath.Tests
                     ("(@2012-02-13T10:45:31.1 + 13 'ms') = @2012-02-13T10:45:31.113", true, false),
                     ("(@2012-02-13T10:45:31.1 + 10 'ms') = @2012-02-13T10:45:31.110", true, false),
 
+                    // https://hl7.org/fhirpath/#time-valued-quantities
+                    ("'1 year'.toQuantity() = 1 'a'", false, false),
+                    ("'1 day'.toQuantity() = 1 'd'", false, false),
+                    ("'1 second'.toQuantity() = 1 's'", true, false),
+
+                    ("'1 year'.toQuantity() ~ 1 'a'", true, false),
+                    ("'1 day'.toQuantity() ~ 1 'd'", true, false),
+                    ("'1 second'.toQuantity() ~ 1 's'", true, false),
+
                     ("@2012 = @2012", true, false),
                     ("@2012 = @2013", false, false),
                     ("(@2012-01 = @2012).empty()", true, false),
