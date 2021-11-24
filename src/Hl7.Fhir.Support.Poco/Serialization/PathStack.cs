@@ -11,6 +11,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+#nullable enable
+
 namespace Hl7.Fhir.Serialization
 {
     /// <summary>
@@ -81,3 +83,5 @@ namespace Hl7.Fhir.Serialization
         }
     }
 }
+
+#nullable restore

@@ -12,9 +12,9 @@
 #nullable enable
 
 using Hl7.Fhir.Model;
-using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation;
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 
 namespace Hl7.Fhir.Serialization
@@ -51,38 +51,13 @@ namespace Hl7.Fhir.Serialization
         public PrimitiveParseHandler? OnPrimitiveParseFailed { get; init; } = null;
 
         /// <summary>
-        /// If set, this delegate is called after a value was deserialized, but before it is set on
-        /// the POCO property under construction and before validation is done.
+        /// If set, this validator is invoked before the value is set in the object under construction to validate
+        /// and possibly alter the value. Setting this property
+        /// to <c>null</c> will disable validation completely for a modest performance gain.
         /// </summary>
-        public ValueUpdater? OnUpdateValue { get; init; } = null;
-
-        /// <summary>
-        /// This delegate is called after <see cref="OnUpdateValue"/> has been run and before the
-        /// value is set in the object under construction to validate the value.
-        /// </summary>
-        public DeserializationValidator OnValidate { get; init; } =
-             FhirJsonPocoDeserializer.DotNetAttributeDeserializationValidator;
+        public IDeserializationValidator? CustomValidator { get; init; } = null;
     }
 
-
-    /// <summary>
-    /// A callback that implements validation logic to be run just before the value is used to initialize
-    /// the deserialized object.
-    /// </summary>
-    /// <param name="value">The value to be validated</param>
-    /// <param name="settings">The settings as passed to the deserializer.</param>
-    /// <param name="context">The current context of deserialization, like the path and the type under deserialization.</param>
-    /// <returns>An array with zero or more formatted strings detailing the validation issues.</returns>
-    public delegate string[] DeserializationValidator(object? value, FhirJsonPocoDeserializerSettings settings, in DeserializationContext context);
-
-    /// <summary>
-    /// A callback that can implement custom logic to update deserialized values before
-    /// they are validated and used to initialize the deserialized object.
-    /// </summary>
-    /// <param name="candidateValue">The preliminary value that would be used if no custom logic was invoked.</param>
-    /// <param name="context">The current context of deserialization, like the path and the type under deserialization.</param>
-    /// <returns></returns>
-    public delegate object? ValueUpdater(object? candidateValue, in DeserializationContext context);
 
     /// <summary>
     /// A callback that can handle parsing failures for primitive types.

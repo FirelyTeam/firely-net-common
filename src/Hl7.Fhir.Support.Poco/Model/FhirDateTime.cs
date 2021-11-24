@@ -39,22 +39,22 @@ namespace Hl7.Fhir.Model
     public partial class FhirDateTime
     {
         /// <summary>
-        /// A <see cref="string.Format(IFormatProvider?, string, object?)"/> pattern to use when formatting a full datetime with timezone.
+        /// A <c>string.Format</c> pattern to use when formatting a full datetime with timezone.
         /// </summary>
         public const string FMT_FULL = "yyyy-MM-dd'T'HH:mm:ssK";
 
         /// <summary>
-        /// A <see cref="string.Format(IFormatProvider?, string, object?)"/> pattern to use when formatting a year.
+        /// A <c>string.Format</c> pattern to use when formatting a year.
         /// </summary>
         public const string FMT_YEAR = "{0:D4}";
 
         /// <summary>
-        /// A <see cref="string.Format(IFormatProvider?, string, object?)"/> pattern to use when formatting a year and month.
+        /// A <c>string.Format</c> pattern to use when formatting a year and month.
         /// </summary>
         public const string FMT_YEARMONTH = "{0:D4}-{1:D2}";
 
         /// <summary>
-        /// A <see cref="string.Format(IFormatProvider?, string, object?)"/> pattern to use when formatting a date.
+        /// A <c>string.Format</c> pattern to use when formatting a date.
         /// </summary>
         public const string FMT_YEARMONTHDAY = "{0:D4}-{1:D2}-{2:D2}";
 

@@ -18,14 +18,16 @@ namespace Hl7.Fhir.Validation
     public static class ValidationContextExtensions
     {
         private const string RECURSE_ITEM_KEY = "__dotnetapi_recurse__";
+        private const string NARRATIVE_VALIDATION_KIND_ITEM_KEY = "__dotnetapi_narrative_validation_kind__";
 
         /// <summary>
         /// Alters the ValidationContext to indicate that validation should or should not recurse into nested objects
         /// (i.e. validate members of the validated objects complex members recursively)
         /// </summary>
-        public static void SetValidateRecursively(this ValidationContext ctx, bool recursively)
+        public static ValidationContext SetValidateRecursively(this ValidationContext ctx, bool recursively)
         {
             ctx.Items[RECURSE_ITEM_KEY] = recursively;
+            return ctx;
         }
 
         /// <summary>
@@ -35,6 +37,24 @@ namespace Hl7.Fhir.Validation
         /// <returns></returns>
         public static bool ValidateRecursively(this ValidationContext ctx) =>
             ctx.Items.TryGetValue(RECURSE_ITEM_KEY, out var result) && result is bool b && b;
+
+        /// <summary>
+        /// Alters the ValidationContext to indicate the kind of narrative validation the
+        /// <see cref="NarrativeXhtmlPatternAttribute"/> should perform.
+        /// </summary>
+        public static ValidationContext SetNarrativeValidationKind(this ValidationContext ctx, NarrativeValidationKind kind)
+        {
+            ctx.Items[NARRATIVE_VALIDATION_KIND_ITEM_KEY] = kind;
+            return ctx;
+        }
+
+        /// <summary>
+        /// Gets the kind of narrative validation the <see cref="NarrativeXhtmlPatternAttribute"/> should perform
+        /// from the ValidationContext.
+        /// </summary>
+        public static NarrativeValidationKind GetNarrativeValidationKind(this ValidationContext ctx) =>
+            ctx.Items.TryGetValue(NARRATIVE_VALIDATION_KIND_ITEM_KEY, out var result) && result is NarrativeValidationKind k ?
+                    k : NarrativeValidationKind.FhirXhtml;
     }
 }
 

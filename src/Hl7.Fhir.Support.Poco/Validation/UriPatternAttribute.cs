@@ -9,6 +9,7 @@
 using Hl7.Fhir.Model;
 using System;
 using System.ComponentModel.DataAnnotations;
+using DAVE = Hl7.Fhir.Validation.DataAnnotationValidationException;
 
 #nullable enable
 
@@ -25,7 +26,7 @@ namespace Hl7.Fhir.Validation
             {
                 null => ValidationResult.Success,
                 string s when FhirUri.IsValidValue(s) => ValidationResult.Success,
-                string s => DotNetAttributeValidation.BuildResult(validationContext, "Uri uses a 'urn:oid' or 'urn:uuid' scheme, but the syntax '{0}' is incorrect.", s),
+                string s => DAVE.URI_LITERAL_INVALID.With(s).AsResult(),
                 _ => throw new ArgumentException($"{nameof(UriPatternAttribute)} attributes can only be applied to string properties.")
             };
     }

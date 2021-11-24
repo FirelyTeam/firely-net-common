@@ -16,19 +16,19 @@ using DAVE = Hl7.Fhir.Validation.DataAnnotationValidationException;
 namespace Hl7.Fhir.Validation
 {
     /// <summary>
-    /// Validates an Oid value against the FHIR rules for oid.
+    /// Validates a datetime value against the FHIR rules for time.
     /// </summary>
     [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
-    public class OidPatternAttribute : ValidationAttribute
+    public class TimePatternAttribute : ValidationAttribute
     {
-        /// <inheritdoc />
+        /// <inheritdoc/>
         protected override ValidationResult? IsValid(object? value, ValidationContext validationContext) =>
             value switch
             {
                 null => ValidationResult.Success,
-                string s when Oid.IsValidValue(s) => ValidationResult.Success,
-                string s => DAVE.OID_LITERAL_INVALID.With(s).AsResult(),
-                _ => throw new ArgumentException($"{nameof(OidPatternAttribute)} attributes can only be applied to string properties.")
+                string s when Time.IsValidValue(s) => ValidationResult.Success,
+                string s => DAVE.TIME_LITERAL_INVALID.With(s).AsResult(),
+                _ => throw new ArgumentException($"{nameof(TimePatternAttribute)} attributes can only be applied to string properties.")
             };
     }
 }

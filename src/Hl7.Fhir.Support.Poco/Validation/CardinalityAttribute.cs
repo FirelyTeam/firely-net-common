@@ -11,6 +11,7 @@ using System;
 using System.Collections;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using DAVE = Hl7.Fhir.Validation.DataAnnotationValidationException;
 
 #nullable enable
 
@@ -43,20 +44,21 @@ namespace Hl7.Fhir.Validation
         {
             if (value is null)
                 return (Min == 0) ? ValidationResult.Success :
-                    DotNetAttributeValidation.BuildResult(validationContext, "Element with min. cardinality {0} cannot be null.", Min);
+                    DAVE.MANDATORY_ELEMENT_CANNOT_BE_NULL.With(Min).AsResult();
 
             var count = 1;
 
             if (value is IList list && !ReflectionHelper.IsArray(value))
             {
                 if (list.Cast<object>().Any(item => item is null))
-                    return DotNetAttributeValidation.BuildResult(validationContext, "Repeating element cannot have empty/null values.");
+                    return DAVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL.AsResult();
                 count = list.Count;
             }
 
-            if (count < Min) return DotNetAttributeValidation.BuildResult(validationContext, "Element has {0} elements, but min. cardinality is {1}.", count, Min);
-
-            if (Max != -1 && count > Max) return DotNetAttributeValidation.BuildResult(validationContext, "Element has {0} elements, but max. cardinality is {1}.", count, Max);
+            if (count < Min)
+                return DAVE.INCORRECT_CARDINALITY_MIN.With(count, Min).AsResult();
+            if (Max != -1 && count > Max)
+                return DAVE.INCORRECT_CARDINALITY_MAX.With(count, Max).AsResult();
 
             return ValidationResult.Success;
         }

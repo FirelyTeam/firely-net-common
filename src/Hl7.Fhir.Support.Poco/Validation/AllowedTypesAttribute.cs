@@ -12,6 +12,7 @@ using System.Collections;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
+using DAVE = Hl7.Fhir.Validation.DataAnnotationValidationException;
 
 #nullable enable
 
@@ -61,8 +62,9 @@ namespace Hl7.Fhir.Validation
         private ValidationResult? validateValue(object? item, ValidationContext context) =>
             item is null || IsAllowedType(item.GetType())
                 ? ValidationResult.Success
-                : DotNetAttributeValidation.BuildResult(context, "Value is of type '{0}', which is not an allowed choice.",
-                        ModelInspector.GetClassMappingForType(item.GetType())?.Name ?? item.GetType().Name);
+                : DAVE.CHOICE_TYPE_NOT_ALLOWED
+                    .With(ModelInspector.GetClassMappingForType(item.GetType())?.Name ?? item.GetType().Name)
+                    .AsResult();
 
         /// <summary>
         /// Determine whether the given type is allowed according to this attribute.

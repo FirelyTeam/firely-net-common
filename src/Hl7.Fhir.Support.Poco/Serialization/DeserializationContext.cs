@@ -7,7 +7,6 @@
  */
 
 
-#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
 using Hl7.Fhir.Introspection;
 using System;
 
@@ -36,7 +35,7 @@ namespace Hl7.Fhir.Serialization
             ValueType = valueType;
         }
 
-        internal PathStack PathStack { get; init; }
+        internal PathStack PathStack { get; }
 
         /// <inheritdoc cref="PathStack.GetPath"/>
         public string GetPath() => PathStack.GetPath();
@@ -44,24 +43,23 @@ namespace Hl7.Fhir.Serialization
         /// <summary>
         /// The metadata for the type of which the current property is part of.
         /// </summary>
-        public ClassMapping TargetObjectMapping { get; init; }
+        public ClassMapping TargetObjectMapping { get; }
 
         /// <summary>
         /// The property name for which an instance is currently being deserialized.
         /// </summary>
-        public string PropertyName { get; init; }
+        public string PropertyName { get; }
 
         /// <summary>
         /// The metadata for the element that is currently being deserialized.
         /// </summary>
-        public PropertyMapping ElementMapping { get; init; }
+        public PropertyMapping ElementMapping { get; }
 
         /// <summary>
         /// The type of the instance currently being deserialized.
         /// </summary>
-        public Type ValueType { get; init; }
+        public Type ValueType { get; }
     }
 }
 
 #nullable restore
-#endif

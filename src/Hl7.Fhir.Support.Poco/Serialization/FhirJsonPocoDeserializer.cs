@@ -301,73 +301,25 @@ namespace Hl7.Fhir.Serialization
                     : deserializeSingleValue(ref reader, propertyValueMapping, state);
             }
 
-            var deserializationContext = new DeserializationContext(
-                state.Path,
-                propertyName,
-                targetMapping,
-                propertyMapping,
-                propertyValueMapping.NativeType);
+            // Only do validation when no parse errors were encountered, otherwise we'll just
+            // produce spurious messages.
+            if (Settings.CustomValidator is not null && oldErrorCount == state.Errors.Count)
+            {
+                var deserializationContext = new DeserializationContext(
+                    state.Path,
+                    propertyName,
+                    targetMapping,
+                    propertyMapping,
+                    propertyValueMapping.NativeType);
 
-            // Invoke custom logic to update the value before we use it to update the target and validate it.
-            if (Settings.OnUpdateValue is not null)
-                result = Settings.OnUpdateValue(result, deserializationContext);
+                Settings.CustomValidator.Validate(result, deserializationContext, out var errors, out var finalValue);
+                state.Errors.Add(errors);
+                result = finalValue;
+            }
 
             propertyMapping.SetValue(target, result);
 
-            // Only do validation when no parse errors were encountered, otherwise we'll just
-            // produce spurious messages.
-            if (oldErrorCount == state.Errors.Count)
-                validateValue(ref reader, result, deserializationContext, state.Errors);
-
             return;
-        }
-
-        public static string[] DotNetAttributeDeserializationValidator(
-            object? value,
-            FhirJsonPocoDeserializerSettings settings,
-            in DeserializationContext context)
-        {
-            // Avoid allocation of a list for every validation until we really have something to report.
-            List<string>? errors = null;
-
-            foreach (var va in context.ElementMapping.ValidationAttributes)
-            {
-                if (va is FhirElementAttribute)
-                {
-                    // The ElementAttribute does not add to this elements validation - it's only used
-                    // to extend .NETs property validation into nested values (which we have already validated
-                    // while parsing bottom up).
-                    ;
-                }
-                else if (va is NarrativeXhtmlPatternAttribute xhtmla)
-                {
-                    // We should call the appropriate validation on this attribute depending
-                    // on what kind of XML validation we need in Settings.ValidateNarrative.
-                    if (xhtmla.IsValid(value, settings.ValidateNarrative) is { } validationResult)
-                        addError(validationResult.ErrorMessage);
-                }
-                else
-                {
-                    if (DotNetAttributeValidation.GetValidationResult(value, va) is { } validationResult)
-                        addError(validationResult.ErrorMessage);
-                }
-
-                void addError(string? message)
-                {
-                    if (message is null) return;
-                    if (errors is null) errors = new();
-                    errors.Add(message);
-                }
-            }
-
-            return errors?.ToArray() ?? Array.Empty<string>();
-        }
-
-        private void validateValue(ref Utf8JsonReader reader, object? value, DeserializationContext context, ExceptionAggregator aggregator)
-        {
-            var errors = Settings.OnValidate(value, Settings, context);
-            foreach (var error in errors)
-                aggregator.Add(ERR.VALIDATION_FAILED.With(ref reader, error));
         }
 
         /// <summary>
@@ -545,28 +497,25 @@ namespace Hl7.Fhir.Serialization
 
                 var (result, error) = DeserializePrimitiveValue(ref reader, primitiveValueProperty.ImplementingType);
 
-                var propertyValueContext = new DeserializationContext(
-                    state.Path,
-                    propertyName,
-                    propertyValueMapping,
-                    primitiveValueProperty,
-                    primitiveValueProperty.ImplementingType);
-
-                // Invoke custom logic to update the value before we use it to update the target and validate it.
-                if (Settings.OnUpdateValue is not null)
-                {
-                    result = Settings.OnUpdateValue(result, propertyValueContext);
-                }
-
-                targetPrimitive.ObjectValue = result;
-
                 // Only do validation when no parse errors were encountered, otherwise we'll just
                 // produce spurious messages.
                 if (error is not null)
                     state.Errors.Add(error);
-                else
-                    validateValue(ref reader, result, propertyValueContext, state.Errors);
+                else if (Settings.CustomValidator is not null)
+                {
+                    var propertyValueContext = new DeserializationContext(
+                        state.Path,
+                        propertyName,
+                        propertyValueMapping,
+                        primitiveValueProperty,
+                        primitiveValueProperty.ImplementingType);
 
+                    Settings.CustomValidator.Validate(result, propertyValueContext, out var errors, out var finalValue);
+                    state.Errors.Add(errors);
+                    result = finalValue;
+                }
+
+                targetPrimitive.ObjectValue = result;
                 return targetPrimitive;
             }
             else

@@ -281,8 +281,10 @@ namespace Hl7.Fhir.Support.Poco.Tests
             return reader;
         }
 
-        private static void assertErrors(IEnumerable<FhirJsonException> actual, string[] expected)
+        private static void assertErrors(IEnumerable<Exception> actualE, string[] expected)
         {
+            var actual = actualE.OfType<FhirJsonException>();
+
             if (expected.Length == 0 && !actual.Any())
                 return;
 
@@ -642,60 +644,76 @@ namespace Hl7.Fhir.Support.Poco.Tests
             }
         }
 
-        [TestMethod]
-        public void TestUpdateComplexValue()
+        private class CustomComplexValidator : IDeserializationValidator
         {
-            var patient = (TestPatient)deserializeComplex(typeof(TestPatient), new { resourceType = "Patient", deceasedDateTime = "2070-01-01T12:01:02Z" },
-                        out _, out var state, new() { OnUpdateValue = updateValue });
-            state.Errors.HasExceptions.Should().BeFalse();
-
-            patient.Deceased.Should().BeOfType<FhirDateTime>().Which.Value.Should().EndWith("+00");
-
-            static object? updateValue(object? candidateValue, in DeserializationContext deserializationContext)
+            public void Validate(object? candidateValue, in DeserializationContext context, out Exception[]? reportedErrors, out object? validatedValue)
             {
-                if (candidateValue is not FhirDateTime f) return candidateValue;
-                if (deserializationContext.GetPath() != "Patient.deceased") return candidateValue;
+                validatedValue = candidateValue;
+                reportedErrors = null;
 
-                deserializationContext.TargetObjectMapping.Name.Should().Be("Patient");
-                deserializationContext.PropertyName.Should().Be("deceasedDateTime");
-                deserializationContext.ElementMapping.Name.Should().Be("deceased");
-                deserializationContext.ValueType.Should().Be(typeof(FhirDateTime));
+                if (candidateValue is not FhirDateTime f) return;
+                if (context.GetPath() != "Patient.deceased") return;
+
+                context.TargetObjectMapping.Name.Should().Be("Patient");
+                context.PropertyName.Should().Be("deceasedDateTime");
+                context.ElementMapping.Name.Should().Be("deceased");
+                context.ValueType.Should().Be(typeof(FhirDateTime));
 
                 // Invalid value, but since this value has already been validated during
                 // deserialization of the FhirDateTime, validation will not be triggered!
-                if (f.Value.EndsWith("Z")) f.Value = f.Value.TrimEnd('Z') + "+00";
+                if (f.Value.EndsWith("Z")) f.Value = f.Value.TrimEnd('Z') + "+00:00";
 
-                return candidateValue;
+                validatedValue = f;
+                reportedErrors = new[] { new InvalidCastException("Had to correct Z to +00:00.") };
+            }
+
+        }
+
+        private class CustomDataTypeValidator : IDeserializationValidator
+        {
+            public void Validate(object? candidateValue, in DeserializationContext context, out Exception[]? reportedErrors, out object? validatedValue)
+            {
+                if (candidateValue is string s &&
+                    context.TargetObjectMapping.Name == "dateTime" &&
+                    context.ElementMapping.Name == "value")
+                {
+                    context.ValueType.Should().Be(typeof(string));
+
+                    if (s.EndsWith("Z")) s = s.TrimEnd('Z') + "+00:00";
+                    validatedValue = s;
+                    reportedErrors = new[] { new InvalidCastException("Had to correct Z to +00:00.") };
+                }
+                else
+                {
+                    validatedValue = candidateValue;
+                    reportedErrors = null;
+                }
             }
         }
 
         [TestMethod]
         public void TestUpdatePrimitiveValue()
         {
-            var patient = (TestPatient)deserializeComplex(typeof(TestPatient), new { resourceType = "Patient", deceasedDateTime = "2070-01-01T12:01:02Z" },
-                        out _, out var state, new() { OnUpdateValue = updateValue });
-            state.Errors.HasExceptions.Should().BeFalse();
+            test(new CustomComplexValidator());
+            test(new CustomDataTypeValidator());
 
-            patient.Deceased.Should().BeOfType<FhirDateTime>().Which.Value.Should().EndWith("+00:00");
-
-            static object? updateValue(object? candidateValue, in DeserializationContext deserializationContext)
+            static void test(IDeserializationValidator validator)
             {
-                if (candidateValue is string s &&
-                    deserializationContext.TargetObjectMapping.Name == "dateTime" &&
-                    deserializationContext.ElementMapping.Name == "value")
+                try
                 {
-                    deserializationContext.ValueType.Should().Be(typeof(string));
-
-                    if (s.EndsWith("Z")) s = s.TrimEnd('Z') + "+00:00";
-                    return s;
+                    _ = (TestPatient)deserializeComplex(typeof(TestPatient), new { resourceType = "Patient", deceasedDateTime = "2070-01-01T12:01:02Z" },
+                            out _, out _, new() { CustomValidator = validator });
+                    Assert.Fail();
                 }
-                else
-                    return candidateValue;
+                catch (DeserializationFailedException dfe)
+                {
+                    dfe.InnerExceptions.Should().ContainSingle(e => e.Message.StartsWith("Had to correct"));
+                    dfe.PartialResult.Should().BeOfType<TestPatient>()
+                        .Which.Deceased.Should().BeOfType<FhirDateTime>()
+                        .Which.Value.Should().EndWith("+00:00");
+                }
             }
         }
-
-
     }
-
 }
 #nullable restore

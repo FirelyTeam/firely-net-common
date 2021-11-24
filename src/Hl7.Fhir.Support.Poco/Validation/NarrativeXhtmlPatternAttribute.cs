@@ -9,6 +9,7 @@
 using Hl7.Fhir.Model;
 using System;
 using System.ComponentModel.DataAnnotations;
+using DAVE = Hl7.Fhir.Validation.DataAnnotationValidationException;
 
 #nullable enable
 
@@ -22,7 +23,7 @@ namespace Hl7.Fhir.Validation
     {
         /// <inheritdoc />
         protected override ValidationResult? IsValid(object? value, ValidationContext validationContext) =>
-            IsValid(value, NarrativeValidationKind.FhirXhtml);
+            IsValid(value, validationContext.GetNarrativeValidationKind());
 
         /// <summary>
         /// Validates whether the value is a string of well-formatted Xml.
@@ -36,13 +37,12 @@ namespace Hl7.Fhir.Validation
                 return kind switch
                 {
                     NarrativeValidationKind.None => ValidationResult.Success,
-                    NarrativeValidationKind.Xml => XHtml.IsValidXml(xml, out var error) ?
-                            ValidationResult.Success :
-                            new ValidationResult("Value is not well-formatted Xml: " + error),
-                    NarrativeValidationKind.FhirXhtml => XHtml.IsValidNarrativeXhtml(xml, out var errors) ?
-                                ValidationResult.Success :
-                                new ValidationResult("Xml can not be parsed or is not valid according to the (limited) FHIR scheme: " +
-                                string.Join(", ", errors)),
+                    NarrativeValidationKind.Xml => XHtml.IsValidXml(xml, out var error)
+                            ? ValidationResult.Success
+                            : DAVE.NARRATIVE_XML_IS_MALFORMED.With(error).AsResult(),
+                    NarrativeValidationKind.FhirXhtml => XHtml.IsValidNarrativeXhtml(xml, out var errors)
+                            ? ValidationResult.Success
+                            : DAVE.NARRATIVE_XML_IS_INVALID.With(string.Join(", ", errors)).AsResult(),
                     _ => throw new NotSupportedException($"Encountered unknown narrative validation kind {kind}.")
                 };
             }

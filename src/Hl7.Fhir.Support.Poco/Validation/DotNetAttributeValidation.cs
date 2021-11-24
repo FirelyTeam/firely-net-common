@@ -19,15 +19,6 @@ namespace Hl7.Fhir.Validation
     public static class DotNetAttributeValidation
     {
         /// <summary>
-        /// Validate a value against a specific <see cref="ValidationAttribute" />.
-        /// </summary>
-        public static ValidationResult? GetValidationResult(object? value, ValidationAttribute va, bool recurse = false)
-        {
-            var validationContext = buildContext(recurse, null);
-            return va.GetValidationResult(value, validationContext);
-        }
-
-        /// <summary>
         /// Validate and object and its members against any <see cref="ValidationAttribute" />s present. 
         /// Will throw when a validation error is encountered.
         /// </summary>
