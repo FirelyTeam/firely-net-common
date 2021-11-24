@@ -100,7 +100,7 @@ namespace Hl7.Fhir.Serialization
             // If the stream has just been opened, move to the first token.
             if (reader.TokenType == JsonTokenType.None) reader.Read();
 
-            var mapping = FindClassMapping(_inspector, targetType) ??
+            var mapping = _inspector.FindOrImportClassMapping(targetType) ??
                 throw new ArgumentException($"Type '{targetType}' could not be located in model assembly '{Assembly}' and can " +
                     $"therefore not be used for deserialization. " + reader.GenerateLocationMessage(), nameof(targetType));
 
@@ -807,9 +807,6 @@ namespace Hl7.Fhir.Serialization
             }
         }
 
-        internal static ClassMapping? FindClassMapping(ModelInspector inspector, Type nativeType) =>
-            inspector.FindClassMapping(nativeType) ?? inspector.ImportType(nativeType);
-
         /// <summary>
         /// Given a possibly suffixed property name (as encountered in the serialized form), lookup the
         /// mapping for the property and the mapping for the value of the property.
@@ -830,7 +827,7 @@ namespace Hl7.Fhir.Serialization
 
             ClassMapping propertyValueMapping = propertyMapping.Choice switch
             {
-                ChoiceType.None or ChoiceType.ResourceChoice => FindClassMapping(inspector, propertyMapping.ImplementingType) ??
+                ChoiceType.None or ChoiceType.ResourceChoice => inspector.FindOrImportClassMapping(propertyMapping.ImplementingType) ??
                         throw new InvalidOperationException($"Encountered property type {propertyMapping.ImplementingType} for which no mapping was found in the model assemblies."),
                 ChoiceType.DatatypeChoice => getChoiceClassMapping(ref reader),
                 _ => throw new NotImplementedException("Unknown choice type in property mapping.")
@@ -846,9 +843,6 @@ namespace Hl7.Fhir.Serialization
                     ? throw ERR.CHOICE_ELEMENT_HAS_NO_TYPE.With(ref r, propertyMapping.Name)
                     : inspector.FindClassMapping(typeSuffix) ??
                     throw ERR.CHOICE_ELEMENT_HAS_UNKOWN_TYPE.With(ref r, propertyMapping.Name, typeSuffix);
-
-                if (!propertyMapping.FhirType.Any(ft => ft.IsAssignableFrom(typeSuffixMapping.NativeType)))
-                    throw ERR.CHOICE_ELEMENT_TYPE_NOT_ALLOWED.With(ref r, propertyMapping.Name, typeSuffix);
 
                 return typeSuffixMapping;
             }

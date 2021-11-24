@@ -70,7 +70,7 @@ namespace Hl7.Fhir.Serialization
 
             ClassMapping mapping = prop.Choice == ChoiceType.DatatypeChoice
                 ? getMappingForType(memberName, _current.InstanceType)
-                : _inspector.ImportType(prop.ImplementingType);
+                : _inspector.FindOrImportClassMapping(prop.ImplementingType);
 
             // Handle other Choices having any datatype or a list of datatypes
 

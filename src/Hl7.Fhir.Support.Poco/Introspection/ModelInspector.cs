@@ -31,7 +31,18 @@ namespace Hl7.Fhir.Introspection
     {
         private static readonly ConcurrentDictionary<string, ModelInspector> _inspectedAssemblies = new();
 
+        /// <summary>
+        /// Removes all known mappings from the inspector.
+        /// </summary>
         public static void Clear() => _inspectedAssemblies.Clear();
+
+        /// <summary>
+        /// Finds or creates the <see cref="ClassMapping"/> for a given type.
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
+        public static ClassMapping? GetClassMappingForType(Type t) =>
+            ForAssembly(t.GetTypeInfo().Assembly).FindOrImportClassMapping(t);
 
         /// <summary>
         /// Returns a fully configured <see cref="ModelInspector"/> with the
@@ -132,6 +143,14 @@ namespace Hl7.Fhir.Introspection
             if (mapping.Canonical is not null)
                 _classMappingsByCanonical[mapping.Canonical] = mapping;
         }
+
+        /// <summary>
+        /// Tries to retrieve an already imported <see cref="ClassMapping"/> and will import
+        /// it when not found.
+        /// </summary>
+        /// <returns>May return <c>null</c> if the type cannot be imported.</returns>
+        public ClassMapping? FindOrImportClassMapping(Type nativeType) =>
+            FindClassMapping(nativeType) ?? ImportType(nativeType);
 
         /// <summary>
         /// Retrieves an already imported <see cref="ClassMapping" /> given a FHIR type name.

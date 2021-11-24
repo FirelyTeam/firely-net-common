@@ -27,11 +27,26 @@
 
 */
 
+#nullable enable
+
+using System.Text.RegularExpressions;
+
 namespace Hl7.Fhir.Model
 {
     public partial class Oid
     {
-        public FhirUri AsUri() => new FhirUri(Value);
+        /// <summary>
+        /// Creates a new <see cref="FhirUri"/> based on this oid.
+        /// </summary>
+        /// <returns></returns>
+        public FhirUri AsUri() => new(Value);
+
+        /// <summary>
+        /// Checks whether the given literal is correctly formatted.
+        /// </summary>
+        public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
     }
 
 }
+
+#nullable restore

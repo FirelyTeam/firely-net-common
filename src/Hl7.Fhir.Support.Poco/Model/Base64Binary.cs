@@ -28,23 +28,29 @@
 
 */
 
-#nullable enable
+using System;
 
-using System.Text.RegularExpressions;
+#nullable enable
 
 namespace Hl7.Fhir.Model
 {
-    public partial class Code
+    public partial class Base64Binary
     {
-        /// <summary>
-        /// Creates a <see cref="ElementModel.Types.Code"/> from an instance of a <see cref="Code"/>.
-        /// </summary>
-        public ElementModel.Types.Code ToSystemCode() => new(system: null, code: Value, display: null, version: null);
-
         /// <summary>
         /// Checks whether the given literal is correctly formatted.
         /// </summary>
-        public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
+        public static bool IsValidValue(string value)
+        {
+            try
+            {
+                _ = Convert.FromBase64String(value);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }
 

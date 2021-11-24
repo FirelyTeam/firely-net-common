@@ -581,13 +581,6 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 var recoveredActual = JsonSerializer.Serialize(dfe.PartialResult, options);
                 Console.WriteLine(recoveredActual);
 
-                var recoveredFilename = Path.Combine("TestData", "fp-test-patient-errors-recovered.json");
-                var recoveredExpected = File.ReadAllText(recoveredFilename);
-
-                List<string> errors = new();
-                JsonAssert.AreSame("fp-test-patient-json-errors/recovery", recoveredExpected, recoveredActual, errors);
-                errors.Should().BeEmpty();
-
                 assertErrors(dfe.InnerExceptions.Cast<FhirJsonException>(), new string[]
                 {
                     ERR.STRING_ISNOTAN_INSTANT_CODE,
@@ -605,7 +598,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
                     ERR.EXPECTED_PRIMITIVE_NOT_OBJECT_CODE, // address.use is not an object
                     ERR.PRIMITIVE_ARRAYS_BOTH_NULL_CODE, // address.line should not have a null at the same position in both arrays
                     ERR.PRIMITIVE_ARRAYS_ONLY_NULL_CODE, // Questionnaire._subjectType cannot be just null
-                    ERR.CHOICE_ELEMENT_TYPE_NOT_ALLOWED_CODE,
+                    ERR.VALIDATION_FAILED_CODE,   // incorrect use of valueBoolean in option.
                     ERR.EXPECTED_START_OF_OBJECT_CODE, // item.code is a complex object, not a boolean
                     ERR.VALIDATION_FAILED_CODE, // incorrect oid
                     ERR.PRIMITIVE_ARRAYS_LONELY_NULL_CODE, // given cannot be the only array with a null
@@ -620,6 +613,13 @@ namespace Hl7.Fhir.Support.Poco.Tests
                     ERR.ARRAYS_CANNOT_BE_EMPTY_CODE,
                     ERR.OBJECTS_CANNOT_BE_EMPTY_CODE
                 });
+
+                var recoveredFilename = Path.Combine("TestData", "fp-test-patient-errors-recovered.json");
+                var recoveredExpected = File.ReadAllText(recoveredFilename);
+
+                List<string> errors = new();
+                JsonAssert.AreSame("fp-test-patient-json-errors/recovery", recoveredExpected, recoveredActual, errors);
+                errors.Should().BeEmpty();
             }
 
         }

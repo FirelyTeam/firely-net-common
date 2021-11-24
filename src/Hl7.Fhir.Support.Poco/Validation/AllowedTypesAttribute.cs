@@ -6,6 +6,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
+using Hl7.Fhir.Introspection;
 using System;
 using System.Collections;
 using System.ComponentModel.DataAnnotations;
@@ -57,16 +58,11 @@ namespace Hl7.Fhir.Validation
             return result;
         }
 
-        private ValidationResult? validateValue(object? item, ValidationContext context)
-        {
-            if (item is not null)
-            {
-                if (!IsAllowedType(item.GetType()))
-                    return DotNetAttributeValidation.BuildResult(context, "Value is of type {0}, which is not an allowed choice.", item.GetType());
-            }
-
-            return ValidationResult.Success;
-        }
+        private ValidationResult? validateValue(object? item, ValidationContext context) =>
+            item is null || IsAllowedType(item.GetType())
+                ? ValidationResult.Success
+                : DotNetAttributeValidation.BuildResult(context, "Value is of type '{0}', which is not an allowed choice.",
+                        ModelInspector.GetClassMappingForType(item.GetType())?.Name ?? item.GetType().Name);
 
         /// <summary>
         /// Determine whether the given type is allowed according to this attribute.

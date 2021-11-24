@@ -30,21 +30,14 @@
 
 #nullable enable
 
-using System.Text.RegularExpressions;
-
 namespace Hl7.Fhir.Model
 {
-    public partial class Code
+    public partial class UnsignedInt
     {
-        /// <summary>
-        /// Creates a <see cref="ElementModel.Types.Code"/> from an instance of a <see cref="Code"/>.
-        /// </summary>
-        public ElementModel.Types.Code ToSystemCode() => new(system: null, code: Value, display: null, version: null);
-
         /// <summary>
         /// Checks whether the given literal is correctly formatted.
         /// </summary>
-        public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
+        public static bool IsValidValue(string value) => ElementModel.Types.Integer.TryParse(value, out var parsed) && parsed.Value > 0;
     }
 }
 

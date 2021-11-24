@@ -50,10 +50,8 @@ namespace Hl7.Fhir.Serialization
         public const string PRIMITIVE_ARRAYS_LONELY_NULL_CODE = "JSON124";
         public const string PRIMITIVE_ARRAYS_ONLY_NULL_CODE = "JSON125";
         public const string INCOMPATIBLE_SIMPLE_VALUE_CODE = "JSON126";
-        public const string CHOICE_ELEMENT_TYPE_NOT_ALLOWED_CODE = "JSON127";
         public const string CODED_VALUE_NOT_IN_ENUM_CODE = "JSON128";
         public const string VALIDATION_FAILED_CODE = "JSON129";
-
 
         // ==========================================
         // Unrecoverable Errors
@@ -69,15 +67,14 @@ namespace Hl7.Fhir.Serialization
         internal static readonly FhirJsonException RESOURCE_TYPE_NOT_A_RESOURCE = new(RESOURCE_TYPE_NOT_A_RESOURCE_CODE, "Data type '{0}' in property 'resourceType' is not a type of resource.", false);
         internal static readonly FhirJsonException UNKNOWN_PROPERTY_FOUND = new(UNKNOWN_PROPERTY_FOUND_CODE, "Encountered unrecognized property '{0}'.", false);
         internal static readonly FhirJsonException INCOMPATIBLE_SIMPLE_VALUE = new(INCOMPATIBLE_SIMPLE_VALUE_CODE, "Found a json primitive value that does not match the expected type of the primitive property. Details: {0}", false);
-        internal static readonly FhirJsonException CHOICE_ELEMENT_TYPE_NOT_ALLOWED = new(CHOICE_ELEMENT_TYPE_NOT_ALLOWED_CODE, "Choice element '{0}' is suffixed with type '{1}', which is not allowed here.", false);
 
         // ==========================================
         // Recoverable Errors
         // ==========================================
-        
+
         // The serialization contained a json null where it is not allowed, but a null does not contain data anyway.
         internal static readonly FhirJsonException EXPECTED_PRIMITIVE_NOT_NULL = new(EXPECTED_PRIMITIVE_NOT_NULL_CODE, "Expected a primitive value, not a json null.", true);
-        
+
         // These errors signal parsing errors, but the original raw data is retained in the POCO so no data is lost.
         internal static readonly FhirJsonException INCORRECT_BASE64_DATA = new(INCORRECT_BASE64_DATA_CODE, "Encountered incorrectly encoded base64 data.", true);
         internal static readonly FhirJsonException STRING_ISNOTAN_INSTANT = new(STRING_ISNOTAN_INSTANT_CODE, "Literal string '{0}' cannot be parsed as an instant.", true);
@@ -154,7 +151,7 @@ namespace Hl7.Fhir.Serialization
             var formattedMessage = string.Format(CultureInfo.InvariantCulture, Message, parameters);
 
             var location = reader.GenerateLocationMessage(out var lineNumber, out var position);
-            var message = formattedMessage + location;            
+            var message = formattedMessage + location;
 
             return new FhirJsonException(ErrorCode, message, Recoverable, lineNumber, position, inner);
         }

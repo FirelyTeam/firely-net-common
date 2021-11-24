@@ -10,6 +10,7 @@ using Hl7.Fhir.Utility;
 using System;
 using System.Collections;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 
 #nullable enable
 
@@ -48,8 +49,8 @@ namespace Hl7.Fhir.Validation
 
             if (value is IList list && !ReflectionHelper.IsArray(value))
             {
-                foreach (var elem in list)
-                    if (elem == null) return DotNetAttributeValidation.BuildResult(validationContext, "Repeating element cannot have empty/null values.");
+                if (list.Cast<object>().Any(item => item is null))
+                    return DotNetAttributeValidation.BuildResult(validationContext, "Repeating element cannot have empty/null values.");
                 count = list.Count;
             }
 

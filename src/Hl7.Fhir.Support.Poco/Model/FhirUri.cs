@@ -28,6 +28,7 @@
 
 */
 
+#nullable enable
 using System;
 
 namespace Hl7.Fhir.Model
@@ -39,13 +40,16 @@ namespace Hl7.Fhir.Model
             Value = uri.OriginalString;
         }
 
+        /// <summary>
+        /// Checks whether the given literal is correctly formatted.
+        /// </summary>
         public static bool IsValidValue(string value)
         {
-            Uri uri = null;
+            Uri uri;
 
             try
             {
-                uri = new Uri((string)value, UriKind.RelativeOrAbsolute);
+                uri = new Uri(value, UriKind.RelativeOrAbsolute);
             }
             catch
             {
@@ -66,3 +70,5 @@ namespace Hl7.Fhir.Model
         }
     }
 }
+
+#nullable restore

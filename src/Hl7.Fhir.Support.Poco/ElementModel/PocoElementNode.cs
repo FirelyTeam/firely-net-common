@@ -30,7 +30,7 @@ namespace Hl7.Fhir.ElementModel
         {
             Current = root;
             _inspector = inspector;
-            _myClassMapping = _inspector.ImportType(root.GetType());
+            _myClassMapping = _inspector.FindOrImportClassMapping(root.GetType());
 
             InstanceType = ((IStructureDefinitionSummary)_myClassMapping).TypeName;
             Definition = ElementDefinitionSummary.ForRoot(_myClassMapping, rootName ?? root.TypeName);
@@ -46,7 +46,7 @@ namespace Hl7.Fhir.ElementModel
 
             var instanceType = definition.Choice != ChoiceType.None ?
                         instance.GetType() : determineInstanceType(definition);
-            _myClassMapping = _inspector.ImportType(instanceType);
+            _myClassMapping = _inspector.FindOrImportClassMapping(instanceType);
             InstanceType = ((IStructureDefinitionSummary)_myClassMapping).TypeName;
             Definition = definition ?? throw Error.ArgumentNull(nameof(definition));
 
@@ -179,7 +179,7 @@ namespace Hl7.Fhir.ElementModel
                     case PrimitiveType prim:
                         return prim.ObjectValue;
                     default:
-                            return null;
+                        return null;
                 }
             }
             catch (FormatException)

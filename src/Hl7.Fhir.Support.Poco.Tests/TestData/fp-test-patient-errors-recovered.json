@@ -73,7 +73,9 @@
           "linkId": "1",
           "text": "Cancer Quality Forum Questionnaire 2012",
           "type": "display",
-          "option": [ {} ],
+          "option": [
+            { "valueBoolean": true }
+          ],
           "item": [
             {
               "linkId": "1.1",
