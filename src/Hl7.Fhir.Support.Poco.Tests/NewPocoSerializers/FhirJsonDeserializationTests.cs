@@ -3,6 +3,8 @@ using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Tests;
+using Hl7.Fhir.Utility;
+using Hl7.Fhir.Validation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -10,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using DAVE = Hl7.Fhir.Validation.CodedValidationException;
 using ERR = Hl7.Fhir.Serialization.FhirJsonException;
 
 #nullable enable
@@ -194,7 +197,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [DataRow(4, typeof(Base64Binary), "JSON110", "4")]
 
         [DataRow("2007-04", typeof(FhirDateTime), null, "2007-04")]
-        [DataRow("2007-", typeof(FhirDateTime), ERR.VALIDATION_FAILED_CODE, "2007-")]
+        [DataRow("2007-", typeof(FhirDateTime), DAVE.DATETIME_LITERAL_INVALID_CODE, "2007-")]
         [DataRow(4.45, typeof(FhirDateTime), "JSON110", "4.45")]
 
         [DataRow("female", typeof(Code), null, "female")]
@@ -226,9 +229,9 @@ namespace Hl7.Fhir.Support.Poco.Tests
             if (state.Errors.HasExceptions)
             {
                 if (errorcode is not null)
-                    state.Errors.Single().Should().BeOfType<FhirJsonException>().Which.ErrorCode.Should().Be(errorcode);
+                    state.Errors.Should().OnlyContain(ce => ce.ErrorCode == errorcode);
                 else
-                    throw state.Errors.Single();
+                    throw state.Errors.Single().Exception;
             }
             else
             {
@@ -281,10 +284,8 @@ namespace Hl7.Fhir.Support.Poco.Tests
             return reader;
         }
 
-        private static void assertErrors(IEnumerable<Exception> actualE, string[] expected)
+        private static void assertErrors(IEnumerable<ICodedException> actual, string[] expected)
         {
-            var actual = actualE.OfType<FhirJsonException>();
-
             if (expected.Length == 0 && !actual.Any())
                 return;
 
@@ -297,7 +298,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [TestMethod]
         [DynamicData(nameof(TestDeserializeResourceData))]
         [DynamicData(nameof(TestDeserializeNestedResource))]
-        public void TestDeserializeResource(object testObject, JsonTokenType tokenAfterParsing, params FhirJsonException[] errors)
+        public void TestDeserializeResource(object testObject, JsonTokenType tokenAfterParsing, params ICodedException[] errors)
         {
             var reader = constructReader(testObject);
             reader.Read();
@@ -305,7 +306,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             var deserializer = new FhirJsonPocoDeserializer(typeof(TestPatient).Assembly);
             var state = new FhirJsonPocoDeserializerState();
             _ = deserializer.DeserializeResourceInternal(ref reader, state);
-            assertErrors(state.Errors, errors.Select(e => e.ErrorCode).ToArray());
+            assertErrors(state.Errors.OfType<ICodedException>(), errors.Select(e => e.ErrorCode).ToArray());
             reader.TokenType.Should().Be(tokenAfterParsing);
         }
 
@@ -355,13 +356,13 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [DynamicData(nameof(TestNormalArrayData), DynamicDataSourceType.Method)]
         [DynamicData(nameof(TestPrimitiveData), DynamicDataSourceType.Method)]
         [DynamicData(nameof(TestValidatePrimitiveData), DynamicDataSourceType.Method)]
-        public void TestData(Type t, object testObject, JsonTokenType token, Action<object>? verify, params FhirJsonException[] errors)
+        public void TestData(Type t, object testObject, JsonTokenType token, Action<object>? verify, params ICodedException[] errors)
         {
             // Enable full narrative validation so we can test for it
             var result = deserializeComplex(t, testObject, out var readerState, out var state,
-                new() { ValidateNarrative = Validation.NarrativeValidationKind.FhirXhtml });
+                new() { Validator = new DataAnnotationDeserialzationValidator(narrativeValidation: Validation.NarrativeValidationKind.FhirXhtml) });
 
-            assertErrors(state.Errors, errors.Select(e => e.ErrorCode).ToArray());
+            assertErrors(state.Errors.OfType<ICodedException>(), errors.Select(e => e.ErrorCode).ToArray());
             readerState.TokenType.Should().Be(token);
             var cdResult = result.Should().BeOfType(t);
             verify?.Invoke(result);
@@ -445,11 +446,11 @@ namespace Hl7.Fhir.Support.Poco.Tests
         public static IEnumerable<object?[]> TestValidatePrimitiveData()
         {
             yield return data<Narrative>(new { div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>correct</p></div>" });
-            yield return data<Narrative>(new { div = "this isn't xml" }, ERR.VALIDATION_FAILED);
-            yield return data<Narrative>(new { div = "<puinhoop />" }, ERR.VALIDATION_FAILED);
+            yield return data<Narrative>(new { div = "this isn't xml" }, DAVE.NARRATIVE_XML_IS_MALFORMED);
+            yield return data<Narrative>(new { div = "<puinhoop />" }, DAVE.NARRATIVE_XML_IS_INVALID);
 
             yield return data<TestAttachment>(new { url = "urn:oid:1.3.6.1.4.1.343" });
-            yield return data<TestAttachment>(new { url = "urn:oid:1" }, ERR.VALIDATION_FAILED);
+            yield return data<TestAttachment>(new { url = "urn:oid:1" }, DAVE.URI_LITERAL_INVALID);
         }
 
         public static IEnumerable<object?[]> TestPrimitiveArrayData()
@@ -583,7 +584,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 var recoveredActual = JsonSerializer.Serialize(dfe.PartialResult, options);
                 Console.WriteLine(recoveredActual);
 
-                assertErrors(dfe.InnerExceptions.Cast<FhirJsonException>(), new string[]
+                assertErrors(dfe.Exceptions, new string[]
                 {
                     ERR.STRING_ISNOTAN_INSTANT_CODE,
                     ERR.RESOURCETYPE_UNEXPECTED_CODE,
@@ -600,9 +601,9 @@ namespace Hl7.Fhir.Support.Poco.Tests
                     ERR.EXPECTED_PRIMITIVE_NOT_OBJECT_CODE, // address.use is not an object
                     ERR.PRIMITIVE_ARRAYS_BOTH_NULL_CODE, // address.line should not have a null at the same position in both arrays
                     ERR.PRIMITIVE_ARRAYS_ONLY_NULL_CODE, // Questionnaire._subjectType cannot be just null
-                    ERR.VALIDATION_FAILED_CODE,   // incorrect use of valueBoolean in option.
+                    DAVE.CHOICE_TYPE_NOT_ALLOWED_CODE,   // incorrect use of valueBoolean in option.
                     ERR.EXPECTED_START_OF_OBJECT_CODE, // item.code is a complex object, not a boolean
-                    ERR.VALIDATION_FAILED_CODE, // incorrect oid
+                    DAVE.URI_LITERAL_INVALID_CODE, // incorrect oid
                     ERR.PRIMITIVE_ARRAYS_LONELY_NULL_CODE, // given cannot be the only array with a null
                     ERR.UNEXPECTED_JSON_TOKEN_CODE, // telecom.rank should be a number, not a boolean
                     ERR.USE_OF_UNDERSCORE_ILLEGAL_CODE, // should be extension.url, not extension._url
@@ -646,7 +647,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
         private class CustomComplexValidator : IDeserializationValidator
         {
-            public void Validate(object? candidateValue, in DeserializationContext context, out Exception[]? reportedErrors, out object? validatedValue)
+            public void Validate(object? candidateValue, in DeserializationContext context, out CodedValidationException[]? reportedErrors, out object? validatedValue)
             {
                 validatedValue = candidateValue;
                 reportedErrors = null;
@@ -664,14 +665,14 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 if (f.Value.EndsWith("Z")) f.Value = f.Value.TrimEnd('Z') + "+00:00";
 
                 validatedValue = f;
-                reportedErrors = new[] { new InvalidCastException("Had to correct Z to +00:00.") };
+                reportedErrors = new[] { DAVE.DATETIME_LITERAL_INVALID };
             }
 
         }
 
         private class CustomDataTypeValidator : IDeserializationValidator
         {
-            public void Validate(object? candidateValue, in DeserializationContext context, out Exception[]? reportedErrors, out object? validatedValue)
+            public void Validate(object? candidateValue, in DeserializationContext context, out CodedValidationException[]? reportedErrors, out object? validatedValue)
             {
                 if (candidateValue is string s &&
                     context.TargetObjectMapping.Name == "dateTime" &&
@@ -681,7 +682,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
                     if (s.EndsWith("Z")) s = s.TrimEnd('Z') + "+00:00";
                     validatedValue = s;
-                    reportedErrors = new[] { new InvalidCastException("Had to correct Z to +00:00.") };
+                    reportedErrors = new[] { DAVE.DATETIME_LITERAL_INVALID };
                 }
                 else
                 {
@@ -701,13 +702,15 @@ namespace Hl7.Fhir.Support.Poco.Tests
             {
                 try
                 {
-                    _ = (TestPatient)deserializeComplex(typeof(TestPatient), new { resourceType = "Patient", deceasedDateTime = "2070-01-01T12:01:02Z" },
-                            out _, out _, new() { CustomValidator = validator });
+                    _ = (TestPatient)deserializeComplex(typeof(TestPatient),
+                        new { resourceType = "Patient", deceasedDateTime = "2070-01-01T12:01:02Z" },
+                            out _, out _, new() { Validator = validator });
                     Assert.Fail();
                 }
                 catch (DeserializationFailedException dfe)
                 {
-                    dfe.InnerExceptions.Should().ContainSingle(e => e.Message.StartsWith("Had to correct"));
+                    dfe.Exceptions.Should().AllBeOfType<DAVE>()
+                        .And.ContainSingle(e => ((DAVE)e).ErrorCode == DAVE.DATETIME_LITERAL_INVALID_CODE);
                     dfe.PartialResult.Should().BeOfType<TestPatient>()
                         .Which.Deceased.Should().BeOfType<FhirDateTime>()
                         .Which.Value.Should().EndWith("+00:00");

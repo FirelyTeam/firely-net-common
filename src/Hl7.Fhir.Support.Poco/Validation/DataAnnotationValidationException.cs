@@ -6,11 +6,12 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
+using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
-using DAVE = Hl7.Fhir.Validation.DataAnnotationValidationException;
+using DAVE = Hl7.Fhir.Validation.CodedValidationException;
 #nullable enable
 
 namespace Hl7.Fhir.Validation
@@ -18,7 +19,7 @@ namespace Hl7.Fhir.Validation
     /// <summary>
     /// An error found during validation of POCO's using the <see cref="ValidationAttribute"/> validators.
     /// </summary>
-    public class DataAnnotationValidationException : Exception
+    public class CodedValidationException : Exception, ICodedException
     {
         public const string CHOICE_TYPE_NOT_ALLOWED_CODE = "PVAL101";
         public const string INCORRECT_CARDINALITY_MIN_CODE = "PVAL102";
@@ -45,8 +46,8 @@ namespace Hl7.Fhir.Validation
         internal static readonly DAVE DATE_LITERAL_INVALID = new(DATE_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for a date.");
         internal static readonly DAVE DATETIME_LITERAL_INVALID = new(DATETIME_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for a dateTime.");
         internal static readonly DAVE ID_LITERAL_INVALID = new(ID_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for an id.");
-        internal static readonly DAVE NARRATIVE_XML_IS_MALFORMED = new(NARRATIVE_XML_IS_MALFORMED_CODE, "Value is not well-formatted Xml: {0}.");
-        internal static readonly DAVE NARRATIVE_XML_IS_INVALID = new(NARRATIVE_XML_IS_INVALID_CODE, "Value is not well-formed Xml adhering to the FHIR schema for Narrative: {0}.");
+        internal static readonly DAVE NARRATIVE_XML_IS_MALFORMED = new(NARRATIVE_XML_IS_MALFORMED_CODE, "Value is not well-formatted Xml: {0}");
+        internal static readonly DAVE NARRATIVE_XML_IS_INVALID = new(NARRATIVE_XML_IS_INVALID_CODE, "Value is not well-formed Xml adhering to the FHIR schema for Narrative: {0}");
         internal static readonly DAVE OID_LITERAL_INVALID = new(OID_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for an oid.");
         internal static readonly DAVE TIME_LITERAL_INVALID = new(TIME_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for a time.");
         internal static readonly DAVE URI_LITERAL_INVALID = new(URI_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for an uri.");
@@ -58,7 +59,9 @@ namespace Hl7.Fhir.Validation
         /// <remarks>Developers can assume that these codes will not change in future versions.</remarks>
         public string ErrorCode { get; private set; }
 
-        public DataAnnotationValidationException(string code, string message) : base(message)
+        public Exception Exception => this;
+
+        public CodedValidationException(string code, string message) : base(message)
         {
             ErrorCode = code;
         }
@@ -75,14 +78,14 @@ namespace Hl7.Fhir.Validation
 
     public class CodedValidationResult : ValidationResult
     {
-        public DataAnnotationValidationException ValidationException { get; set; }
+        public CodedValidationException ValidationException { get; set; }
 
-        public CodedValidationResult(DataAnnotationValidationException validationException) : base(validationException.Message)
+        public CodedValidationResult(CodedValidationException validationException) : base(validationException.Message)
         {
             ValidationException = validationException;
         }
 
-        public CodedValidationResult(DataAnnotationValidationException validationException, IEnumerable<string>? memberNames)
+        public CodedValidationResult(CodedValidationException validationException, IEnumerable<string>? memberNames)
             : base(validationException.Message, memberNames)
         {
             ValidationException = validationException;

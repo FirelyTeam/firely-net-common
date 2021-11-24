@@ -9,7 +9,7 @@
 using Hl7.Fhir.Model;
 using System;
 using System.ComponentModel.DataAnnotations;
-using DAVE = Hl7.Fhir.Validation.DataAnnotationValidationException;
+using DAVE = Hl7.Fhir.Validation.CodedValidationException;
 
 #nullable enable
 

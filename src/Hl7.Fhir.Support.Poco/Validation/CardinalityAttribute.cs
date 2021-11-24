@@ -11,7 +11,7 @@ using System;
 using System.Collections;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using DAVE = Hl7.Fhir.Validation.DataAnnotationValidationException;
+using DAVE = Hl7.Fhir.Validation.CodedValidationException;
 
 #nullable enable
 

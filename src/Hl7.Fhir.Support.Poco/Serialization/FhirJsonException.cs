@@ -8,6 +8,7 @@
 
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
+using Hl7.Fhir.Utility;
 using System;
 using System.Globalization;
 using System.Linq;
@@ -22,7 +23,7 @@ namespace Hl7.Fhir.Serialization
     /// with the Json itself, but issues in the data with regards to the rules for FHIR Json format described
     /// in http://hl7.org/fhir/json.html.
     /// </summary>
-    public class FhirJsonException : JsonException
+    public class FhirJsonException : JsonException, ICodedException
     {
         // TODO: Document each of these errors, based on the text for the error.
         public const string EXPECTED_START_OF_OBJECT_CODE = "JSON101";
@@ -51,7 +52,6 @@ namespace Hl7.Fhir.Serialization
         public const string PRIMITIVE_ARRAYS_ONLY_NULL_CODE = "JSON125";
         public const string INCOMPATIBLE_SIMPLE_VALUE_CODE = "JSON126";
         public const string CODED_VALUE_NOT_IN_ENUM_CODE = "JSON128";
-        public const string VALIDATION_FAILED_CODE = "JSON129";
 
         // ==========================================
         // Unrecoverable Errors
@@ -105,9 +105,6 @@ namespace Hl7.Fhir.Serialization
         // The value cannot be found in an enum, but the raw data is retained in the POCO
         internal static readonly FhirJsonException CODED_VALUE_NOT_IN_ENUM = new(CODED_VALUE_NOT_IN_ENUM_CODE, "Literal string '{0}' is not a member of valueset '{1}'.", true);
 
-        // The value fails validation, but is already stored in the POCO
-        internal static readonly FhirJsonException VALIDATION_FAILED = new(VALIDATION_FAILED_CODE, "Validation failed: {0}", true);
-
         /// <summary>
         /// The unique and permanent code for this error.
         /// </summary>
@@ -138,6 +135,8 @@ namespace Hl7.Fhir.Serialization
         /// content. Proceed with care.
         /// </remarks>
         public bool Recoverable { get; private set; }
+
+        public Exception Exception => this;
 
         internal FhirJsonException With(ref Utf8JsonReader reader, params object?[] parameters) =>
             With(ref reader, inner: null, parameters);

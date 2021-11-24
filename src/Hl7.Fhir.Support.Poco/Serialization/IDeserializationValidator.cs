@@ -9,7 +9,7 @@
 
 #nullable enable
 
-using System;
+using Hl7.Fhir.Validation;
 
 namespace Hl7.Fhir.Serialization
 {
@@ -30,7 +30,7 @@ namespace Hl7.Fhir.Serialization
         void Validate(
             object? candidateValue,
             in DeserializationContext context,
-            out Exception[]? reportedErrors,
+            out CodedValidationException[]? reportedErrors,
             out object? validatedValue);
     }
 }

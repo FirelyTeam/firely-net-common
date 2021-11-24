@@ -7,7 +7,7 @@
  */
 
 
-using System;
+using Hl7.Fhir.Utility;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -19,17 +19,17 @@ namespace Hl7.Fhir.Serialization
     /// This class is used by the deserializers to collect errors while performing deserialization.
     /// </summary>
     /// <remarks>Is probably going to be used by the (future)XmlDynamicDeserializer too.</remarks>
-    internal class ExceptionAggregator : IEnumerable<Exception>
+    internal class ExceptionAggregator : IEnumerable<ICodedException>
     {
-        public List<Exception> _aggregated = new();
+        public List<ICodedException> _aggregated = new();
 
-        public void Add(Exception? e)
+        public void Add(ICodedException? e)
         {
             if (e is not null)
                 _aggregated.Add(e);
         }
 
-        public void Add(IEnumerable<Exception>? es)
+        public void Add(IEnumerable<ICodedException>? es)
         {
             if (es is not null)
                 _aggregated.AddRange(es);
@@ -39,7 +39,7 @@ namespace Hl7.Fhir.Serialization
 
         public int Count => _aggregated.Count;
 
-        public IEnumerator<Exception> GetEnumerator() => ((IEnumerable<Exception>)_aggregated).GetEnumerator();
+        public IEnumerator<ICodedException> GetEnumerator() => ((IEnumerable<ICodedException>)_aggregated).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)_aggregated).GetEnumerator();
     }
 

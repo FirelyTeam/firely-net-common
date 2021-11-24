@@ -7,9 +7,11 @@
  */
 
 using Hl7.Fhir.Model;
+using Hl7.Fhir.Utility;
 using System;
 using System.ComponentModel.DataAnnotations;
-using DAVE = Hl7.Fhir.Validation.DataAnnotationValidationException;
+using System.Linq;
+using DAVE = Hl7.Fhir.Validation.CodedValidationException;
 
 #nullable enable
 
@@ -40,17 +42,35 @@ namespace Hl7.Fhir.Validation
                     NarrativeValidationKind.Xml => XHtml.IsValidXml(xml, out var error)
                             ? ValidationResult.Success
                             : DAVE.NARRATIVE_XML_IS_MALFORMED.With(error).AsResult(),
-                    NarrativeValidationKind.FhirXhtml => XHtml.IsValidNarrativeXhtml(xml, out var errors)
-                            ? ValidationResult.Success
-                            : DAVE.NARRATIVE_XML_IS_INVALID.With(string.Join(", ", errors)).AsResult(),
+                    NarrativeValidationKind.FhirXhtml => runValidateXhtmlSchema(xml),
                     _ => throw new NotSupportedException($"Encountered unknown narrative validation kind {kind}.")
                 };
             }
             else
                 throw new ArgumentException($"{nameof(NarrativeXhtmlPatternAttribute)} attributes can only be applied to string properties.");
         }
+
+        private static ValidationResult runValidateXhtmlSchema(string text)
+        {
+            try
+            {
+                var doc = SerializationUtil.XDocumentFromXmlText(text);
+
+#if NETSTANDARD1_6
+                var errors = new string[0];
+#else
+                var errors = SerializationUtil.RunFhirXhtmlSchemaValidation(doc);
+#endif
+                return errors.Any() ? DAVE.NARRATIVE_XML_IS_INVALID.With(string.Join(", ", errors)).AsResult() : ValidationResult.Success!;
+            }
+            catch (FormatException fe)
+            {
+                return DAVE.NARRATIVE_XML_IS_MALFORMED.With(fe.Message).AsResult();
+            }
+        }
     }
 }
+
 
 
 #nullable restore

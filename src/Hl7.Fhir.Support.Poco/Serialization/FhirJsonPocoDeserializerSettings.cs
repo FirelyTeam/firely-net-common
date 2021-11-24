@@ -25,19 +25,6 @@ namespace Hl7.Fhir.Serialization
     public record FhirJsonPocoDeserializerSettings
     {
         /// <summary>
-        /// For performance reasons, validation of Xhtml again the rules specified in the FHIR
-        /// specification for Narrative (http://hl7.org/fhir/narrative.html#2.4.0) is turned off by
-        /// default. Set this property to true to perform this validation during serialization.
-        /// </summary>
-        public NarrativeValidationKind ValidateNarrative { get; init; } = NarrativeValidationKind.None;
-
-        /// <summary>
-        /// Validation of the string contents of Date, Time and DateTime is done during deserialization
-        /// but can be turned off for modest performance gains if necessary.
-        /// </summary>
-        public bool SkipDateTimeValidation { get; init; } = false;
-
-        /// <summary>
         /// If the caller will not access base64 data in the deserialized resources, base64 decoding
         /// of <see cref="Base64Binary"/> values can be turned off to increase performance.
         /// </summary>
@@ -52,12 +39,10 @@ namespace Hl7.Fhir.Serialization
 
         /// <summary>
         /// If set, this validator is invoked before the value is set in the object under construction to validate
-        /// and possibly alter the value. Setting this property
-        /// to <c>null</c> will disable validation completely for a modest performance gain.
+        /// and possibly alter the value. Setting this property to <c>null</c> will disable validation completely.
         /// </summary>
-        public IDeserializationValidator? CustomValidator { get; init; } = null;
+        public IDeserializationValidator? Validator { get; init; } = DataAnnotationDeserialzationValidator.Default;
     }
-
 
     /// <summary>
     /// A callback that can handle parsing failures for primitive types.

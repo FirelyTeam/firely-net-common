@@ -303,7 +303,7 @@ namespace Hl7.Fhir.Serialization
 
             // Only do validation when no parse errors were encountered, otherwise we'll just
             // produce spurious messages.
-            if (Settings.CustomValidator is not null && oldErrorCount == state.Errors.Count)
+            if (Settings.Validator is not null && oldErrorCount == state.Errors.Count)
             {
                 var deserializationContext = new DeserializationContext(
                     state.Path,
@@ -312,14 +312,20 @@ namespace Hl7.Fhir.Serialization
                     propertyMapping,
                     propertyValueMapping.NativeType);
 
-                Settings.CustomValidator.Validate(result, deserializationContext, out var errors, out var finalValue);
-                state.Errors.Add(errors);
-                result = finalValue;
+                result = doValidation(result, deserializationContext, state);
             }
 
             propertyMapping.SetValue(target, result);
 
             return;
+        }
+
+        private object? doValidation(object? result, DeserializationContext deserializationContext, FhirJsonPocoDeserializerState state)
+        {
+            Settings.Validator!.Validate(result, deserializationContext, out var errors, out var finalValue);
+            state.Errors.Add(errors);
+
+            return finalValue;
         }
 
         /// <summary>
@@ -501,7 +507,7 @@ namespace Hl7.Fhir.Serialization
                 // produce spurious messages.
                 if (error is not null)
                     state.Errors.Add(error);
-                else if (Settings.CustomValidator is not null)
+                else if (Settings.Validator is not null)
                 {
                     var propertyValueContext = new DeserializationContext(
                         state.Path,
@@ -510,9 +516,7 @@ namespace Hl7.Fhir.Serialization
                         primitiveValueProperty,
                         primitiveValueProperty.ImplementingType);
 
-                    Settings.CustomValidator.Validate(result, propertyValueContext, out var errors, out var finalValue);
-                    state.Errors.Add(errors);
-                    result = finalValue;
+                    result = doValidation(result, propertyValueContext, state);
                 }
 
                 targetPrimitive.ObjectValue = result;

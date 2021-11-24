@@ -12,7 +12,7 @@ using System.Collections;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
-using DAVE = Hl7.Fhir.Validation.DataAnnotationValidationException;
+using DAVE = Hl7.Fhir.Validation.CodedValidationException;
 
 #nullable enable
 
