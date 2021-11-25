@@ -38,9 +38,11 @@ namespace Hl7.Fhir.Introspection
 
         /// <summary>
         /// Finds or creates the <see cref="ClassMapping"/> for a given type.
+        /// Calling this function repeatedly for the same type will return the same ClassMapping.
         /// </summary>
-        /// <param name="t"></param>
-        /// <returns></returns>
+        /// <remarks>If the type given is FHIR Release specific, the returned mapping will contain
+        /// metadata for that release only. If the type is from the common assembly, it will contain
+        /// metadata for that type from the most recent release of the common assembly.</remarks>
         public static ClassMapping? GetClassMappingForType(Type t) =>
             ForAssembly(t.GetTypeInfo().Assembly).FindOrImportClassMapping(t);
 

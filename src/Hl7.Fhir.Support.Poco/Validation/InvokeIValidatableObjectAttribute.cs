@@ -6,7 +6,6 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using Hl7.Fhir.Introspection;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -19,7 +18,7 @@ namespace Hl7.Fhir.Validation
     /// This attribute is used to trigger nested validation. I think :-).
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-    public class InvokeIValidatableObjectAttribute : VersionedValidationAttribute
+    public class InvokeIValidatableObjectAttribute : ValidationAttribute
     {
         /// <inheritdoc />
         protected override ValidationResult? IsValid(object? value, ValidationContext validationContext) =>

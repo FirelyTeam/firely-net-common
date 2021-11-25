@@ -59,6 +59,12 @@ namespace Hl7.Fhir.Model
             Value = value;
         }
 
+
+        private T? _enumValue = null;
+        private object _lastObjectValue = null;
+
+        public bool HasValidValue { get; private set; } = true;
+
         // Primitive value of element
         [FhirElement("value", IsPrimitiveValue = true, XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 30)]
         [DataMember]
@@ -66,16 +72,33 @@ namespace Hl7.Fhir.Model
         {
             get
             {
-                if (ObjectValue is null) return null;
-                var enumString = (string)ObjectValue;
+                if (!ReferenceEquals(_lastObjectValue, ObjectValue))
+                {
+                    _lastObjectValue = ObjectValue;
 
-                return EnumUtility.ParseLiteral<T>(enumString) ?? throw new InvalidCastException($"String '{enumString}' cannot be cast to a member of enumeration {typeof(T).Name}.");
+                    if (ObjectValue is string s && EnumUtility.ParseLiteral<T>(s) is T e)
+                    {
+                        _enumValue = e;
+                        HasValidValue = true;
+                    }
+                    else
+                    {
+                        HasValidValue = false;
+                        _enumValue = null;
+                    }
+                }
+
+                return HasValidValue
+                    ? _enumValue
+                    : throw new InvalidCastException($"Value '{ObjectValue}' cannot be cast to a member of enumeration {typeof(T).Name}.");
             }
+            set
+            {
+                _enumValue = value;
+                _lastObjectValue = ObjectValue = value?.GetLiteral();
+                HasValidValue = true;
 
-            set 
-            { 
-                ObjectValue = value?.GetLiteral();
-                OnPropertyChanged("Value"); 
+                OnPropertyChanged("Value");
             }
         }
 
