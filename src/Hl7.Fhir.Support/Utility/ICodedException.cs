@@ -16,5 +16,7 @@ namespace Hl7.Fhir.Utility
         string Message { get; }
 
         Exception Exception { get; }
+
+        ICodedException WithMessage(string message);
     }
 }

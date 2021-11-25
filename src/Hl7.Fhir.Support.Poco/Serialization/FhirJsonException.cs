@@ -150,10 +150,13 @@ namespace Hl7.Fhir.Serialization
             var formattedMessage = string.Format(CultureInfo.InvariantCulture, Message, parameters);
 
             var location = reader.GenerateLocationMessage(out var lineNumber, out var position);
-            var message = formattedMessage + location;
+            var message = formattedMessage + " " + location;
 
             return new FhirJsonException(ErrorCode, message, Recoverable, lineNumber, position, inner);
         }
+
+        public ICodedException WithMessage(string message) =>
+           new FhirJsonException(ErrorCode, message, Recoverable, LineNumber, BytePositionInLine, InnerException);
     }
 }
 

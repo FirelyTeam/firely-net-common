@@ -8,7 +8,6 @@
 
 using Hl7.Fhir.Utility;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using DAVE = Hl7.Fhir.Validation.CodedValidationException;
@@ -73,30 +72,9 @@ namespace Hl7.Fhir.Validation
         }
 
         internal CodedValidationResult AsResult() => new(this);
+        public ICodedException WithMessage(string message) =>
+            new CodedValidationException(ErrorCode, message);
     }
-
-
-    public class CodedValidationResult : ValidationResult
-    {
-        public CodedValidationException ValidationException { get; set; }
-
-        public CodedValidationResult(CodedValidationException validationException) : base(validationException.Message)
-        {
-            ValidationException = validationException;
-        }
-
-        public CodedValidationResult(CodedValidationException validationException, IEnumerable<string>? memberNames)
-            : base(validationException.Message, memberNames)
-        {
-            ValidationException = validationException;
-        }
-
-        protected CodedValidationResult(CodedValidationResult validationResult) : base(validationResult)
-        {
-            ValidationException = validationResult.ValidationException;
-        }
-    }
-
 }
 
 #nullable restore

@@ -33,9 +33,9 @@ namespace Hl7.Fhir.Serialization
 
         private static string generateMessage(IEnumerable<ICodedException> exceptions)
         {
-            string b = new("One or more errors occurred.");
+            string b = "One or more errors occurred.";
             if (exceptions.Any())
-                b += string.Join(" ", exceptions.Select(e => $"({e.Message})"));
+                b += " " + string.Join(" ", exceptions.Select(e => $"({e.Message})"));
 
             return b;
         }

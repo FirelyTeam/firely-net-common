@@ -276,6 +276,7 @@ namespace Hl7.Fhir.Serialization
         {
             object? result;
             var oldErrorCount = state.Errors.Count;
+            var (line, pos) = reader.CurrentState.GetLocation();
 
             if (propertyValueMapping.IsFhirPrimitive)
             {
@@ -312,7 +313,7 @@ namespace Hl7.Fhir.Serialization
                     propertyMapping,
                     propertyValueMapping.NativeType);
 
-                result = doValidation(result, deserializationContext, state);
+                result = doValidation(result, line, pos, deserializationContext, state);
             }
 
             propertyMapping.SetValue(target, result);
@@ -320,10 +321,17 @@ namespace Hl7.Fhir.Serialization
             return;
         }
 
-        private object? doValidation(object? result, DeserializationContext deserializationContext, FhirJsonPocoDeserializerState state)
+        private object? doValidation(object? result, long line, long pos, DeserializationContext deserializationContext, FhirJsonPocoDeserializerState state)
         {
             Settings.Validator!.Validate(result, deserializationContext, out var errors, out var finalValue);
-            state.Errors.Add(errors);
+
+            if (errors?.Any() == true)
+            {
+                var locationMessage = $" At {deserializationContext.PathStack.GetPath()} before line {line}, position {pos}.";
+                var errorsWithLocation = errors.Select(err => err.WithMessage(err.Message + locationMessage));
+
+                state.Errors.Add(errorsWithLocation);
+            }
 
             return finalValue;
         }
@@ -483,7 +491,7 @@ namespace Hl7.Fhir.Serialization
         /// <summary>
         /// Deserializes a FHIR primitive, which can be a name or _name property.
         /// </summary>
-        /// <remarks>Upon completion, reader will be located at the next token afther the FHIR primitive.</remarks>
+        /// <remarks>Upon completion, reader will be located at the next token after the FHIR primitive.</remarks>
         internal PrimitiveType DeserializeFhirPrimitive(
             PrimitiveType? existingPrimitive,
             string propertyName,
@@ -501,6 +509,7 @@ namespace Hl7.Fhir.Serialization
                     throw new InvalidOperationException($"All subclasses of {nameof(PrimitiveType)} should have a property representing the value element, " +
                         $"but {propertyValueMapping.Name} has not. " + reader.GenerateLocationMessage());
 
+                var (line, pos) = reader.CurrentState.GetLocation();
                 var (result, error) = DeserializePrimitiveValue(ref reader, primitiveValueProperty.ImplementingType);
 
                 // Only do validation when no parse errors were encountered, otherwise we'll just
@@ -516,7 +525,7 @@ namespace Hl7.Fhir.Serialization
                         primitiveValueProperty,
                         primitiveValueProperty.ImplementingType);
 
-                    result = doValidation(result, propertyValueContext, state);
+                    result = doValidation(result, line, pos, propertyValueContext, state);
                 }
 
                 targetPrimitive.ObjectValue = result;
@@ -781,9 +790,9 @@ namespace Hl7.Fhir.Serialization
             ClassMapping propertyValueMapping = propertyMapping.Choice switch
             {
                 ChoiceType.None or ChoiceType.ResourceChoice => inspector.FindOrImportClassMapping(propertyMapping.ImplementingType) ??
-                        throw new InvalidOperationException($"Encountered property type {propertyMapping.ImplementingType} for which no mapping was found in the model assemblies."),
+                        throw new InvalidOperationException($"Encountered property type {propertyMapping.ImplementingType} for which no mapping was found in the model assemblies. " + reader.GenerateLocationMessage()),
                 ChoiceType.DatatypeChoice => getChoiceClassMapping(ref reader),
-                _ => throw new NotImplementedException("Unknown choice type in property mapping.")
+                _ => throw new NotImplementedException("Unknown choice type in property mapping. " + reader.GenerateLocationMessage())
             };
 
             return (propertyMapping, propertyValueMapping);
