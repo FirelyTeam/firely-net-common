@@ -62,7 +62,7 @@ namespace Hl7.Fhir.Serialization
         }
 
 
-        public static void Recover(this ref Utf8JsonReader reader)
+        public static void Recover(this ref Utf8JsonReader reader, ReadHandler? extraReader)
         {
             switch (reader.TokenType)
             {
@@ -74,14 +74,14 @@ namespace Hl7.Fhir.Serialization
                     reader.Read();
                     return;
                 case JsonTokenType.PropertyName:
-                    SkipTo(ref reader, JsonTokenType.PropertyName);
+                    SkipTo(ref reader, JsonTokenType.PropertyName, extraReader);
                     return;
                 case JsonTokenType.StartArray:
-                    SkipTo(ref reader, JsonTokenType.EndArray);
+                    SkipTo(ref reader, JsonTokenType.EndArray, extraReader);
                     reader.Read();
                     return;
                 case JsonTokenType.StartObject:
-                    SkipTo(ref reader, JsonTokenType.EndObject);
+                    SkipTo(ref reader, JsonTokenType.EndObject, extraReader);
                     reader.Read();
                     return;
                 default:
@@ -90,11 +90,11 @@ namespace Hl7.Fhir.Serialization
             }
         }
 
-        public static void SkipTo(this ref Utf8JsonReader reader, JsonTokenType tt)
+        public static void SkipTo(this ref Utf8JsonReader reader, JsonTokenType tt, ReadHandler? extraReader)
         {
             var depth = reader.CurrentDepth;
 
-            while (reader.Read() && reader.CurrentDepth >= depth)
+            while (FhirJsonPocoDeserializer.read(ref reader, extraReader) && reader.CurrentDepth >= depth)
             {
                 if (reader.CurrentDepth == depth && reader.TokenType == tt) break;
             }

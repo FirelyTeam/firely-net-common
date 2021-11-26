@@ -61,7 +61,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             var reader = constructReader(data);
             reader.Read();
 
-            var (result, error) = FhirJsonPocoDeserializer.DeserializePrimitiveValue(ref reader, null, expected);
+            var (result, error) = FhirJsonPocoDeserializer.DeserializePrimitiveValue(ref reader, null, null, expected);
 
             if (code is not null)
                 error?.ErrorCode.Should().Be(code);
@@ -113,7 +113,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 _ = test(41);
                 Assert.Fail();
             }
-            catch(InvalidOperationException) 
+            catch (InvalidOperationException)
             {
             }
 
@@ -132,7 +132,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             static (object?, FhirJsonException?) test(int number)
             {
                 var reader = constructReader(number); reader.Read();
-                return FhirJsonPocoDeserializer.DeserializePrimitiveValue(ref reader, correctIntToBool, typeof(bool));
+                return FhirJsonPocoDeserializer.DeserializePrimitiveValue(ref reader, correctIntToBool, null, typeof(bool));
             }
         }
 
@@ -169,7 +169,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 var reader = new Utf8JsonReader(jsonBytes);
                 reader.Read();
 
-                return FhirJsonPocoDeserializer.DetermineClassMappingFromInstance(ref reader, inspector);
+                return FhirJsonPocoDeserializer.DetermineClassMappingFromInstance(ref reader, inspector, null);
             }
         }
 
@@ -238,7 +238,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
             Base newObject = (Base)mapping.Factory();
 
-            deserializer.DeserializeObjectInto(newObject, mapping, ref reader, inResource: false, aggregator);
+            deserializer.DeserializeObjectInto(newObject, mapping, ref reader, null, inResource: false, aggregator);
             readerState = reader; // copy
 
             return newObject;
@@ -585,6 +585,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             }
 
         }
+
     }
 
 }

@@ -44,6 +44,7 @@ namespace Hl7.Fhir.Serialization
         /// If set, this delegate is called when the deserializer fails to parse a primitive json value.
         /// </summary>
         public PrimitiveParseHandler? OnPrimitiveParseFailed { get; init; } = null;
+        public ReadHandler? OnRead { get; init; } = null;
     }
 
     /// <summary>
@@ -55,6 +56,9 @@ namespace Hl7.Fhir.Serialization
     /// <remarks>Returns an object if this handler succeeded in parsing, otherwise the delegate must throw an exception (which might
     /// be the <c>originalException</c>).</remarks>
     public delegate object PrimitiveParseHandler(ref Utf8JsonReader reader, Type targetType, FhirJsonException originalException);
+
+    public delegate void ReadHandler(ref Utf8JsonReader reader);
+
 }
 
 #nullable restore
