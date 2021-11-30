@@ -45,7 +45,7 @@ namespace Hl7.Fhir.ElementModel.Types
             return Parse(representation);
         }
 
-        public DateTime ToDateTime() => new DateTime(_original, _parsedValue, Precision, HasOffset);
+        public DateTime ToDateTime() => new(_original, _parsedValue, Precision, HasOffset);
 
 
         public static Date Today(bool includeOffset = false) => FromDateTimeOffset(DateTimeOffset.Now, includeOffset: includeOffset);
@@ -74,7 +74,7 @@ namespace Hl7.Fhir.ElementModel.Types
 
         private static readonly string DATEFORMAT =
             $"(?<year>[0-9]{{4}}) ((?<month>-[0-9][0-9]) ((?<day>-[0-9][0-9]) )?)? {Time.OFFSETFORMAT}?";
-        public static readonly Regex PARTIALDATEREGEX = new Regex("^" + DATEFORMAT + "$",
+        public static readonly Regex PARTIALDATEREGEX = new("^" + DATEFORMAT + "$",
                 RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
 
         /// <summary>
@@ -98,7 +98,7 @@ namespace Hl7.Fhir.ElementModel.Types
         /// <param name="defaultOffset">Offset used when the datetime does not specify one.</param>
         /// <returns></returns>
         public DateTimeOffset ToDateTimeOffset(int hours, int minutes, int seconds, int milliseconds, TimeSpan defaultOffset) =>
-                new DateTimeOffset(_parsedValue.Year, _parsedValue.Month, _parsedValue.Day, hours, minutes, seconds, milliseconds,
+                new(_parsedValue.Year, _parsedValue.Month, _parsedValue.Day, hours, minutes, seconds, milliseconds,
                         HasOffset ? _parsedValue.Offset : defaultOffset);
 
         /// <summary>
@@ -142,44 +142,32 @@ namespace Hl7.Fhir.ElementModel.Types
             if (dateValue is null) throw new ArgumentNullException(nameof(dateValue));
             if (addValue is null) throw new ArgumentNullException(nameof(addValue));
 
-            var dto = dateValue._parsedValue;
-            switch (addValue.Unit)
+            // Based on the discussion on equality/comparisons here:
+            // https://chat.fhir.org/#narrow/stream/179266-fhirpath/topic/Date.2FTime.20comparison.20vs.20equality
+            // We have also allowed addition to use the definitve UCUM units of 'wk', 'd' as if they are a calendar unit of
+            // 'week'/'day' respectively.
+            var dto = addValue.Unit switch
             {
                 // we can ignore precision, as the precision will "trim" it anyway, and if we add 13 months, then the year can tick over nicely
-                case "years":
-                case "year":
-                    dto = dateValue._parsedValue.AddYears((int)addValue.Value);
-                    break;
-                case "month":
-                case "months":
-                    if (dateValue.Precision == DateTimePrecision.Year)
-                        dto = dateValue._parsedValue.AddYears((int)(addValue.Value / 12));
-                    else
-                        dto = dateValue._parsedValue.AddMonths((int)addValue.Value);
-                    break;
-                case "day":
-                case "days":
-                    if (dateValue.Precision == DateTimePrecision.Year)
-                        dto = dateValue._parsedValue.AddYears((int)(addValue.Value / 365));
-                    else if (dateValue.Precision == DateTimePrecision.Month)
-                        dto = dateValue._parsedValue.AddMonths((int)(addValue.Value / 30));
-                    else
-                        dto = dateValue._parsedValue.AddDays((int)addValue.Value);
-                    break;
-                case "week":
-                case "weeks":
-                    if (dateValue.Precision == DateTimePrecision.Year)
-                        dto = dateValue._parsedValue.AddYears((int)(addValue.Value / 52));
-                    else if (dateValue.Precision == DateTimePrecision.Month)
-                        dto = dateValue._parsedValue.AddMonths((int)(addValue.Value * 7 / 30));
-                    else
-                        dto = dateValue._parsedValue.AddDays(((int)addValue.Value) * 7);
-                    break;
-                default:
-                    throw new ArgumentException($"'{addValue.Unit}' is not a valid time-valued unit", nameof(addValue));
-            }
-
-            var result = Date.FromDateTimeOffset(dto, dateValue.Precision);
+                "years" or "year" => dateValue._parsedValue.AddYears((int)addValue.Value),
+                "month" or "months" => dateValue.Precision == DateTimePrecision.Year
+                    ? dateValue._parsedValue.AddYears((int)(addValue.Value / 12))
+                    : dateValue._parsedValue.AddMonths((int)addValue.Value),
+                "week" or "weeks" or "wk" => dateValue.Precision switch
+                {
+                    DateTimePrecision.Year => dateValue._parsedValue.AddYears((int)(addValue.Value / 52)),
+                    DateTimePrecision.Month => dateValue._parsedValue.AddMonths((int)(addValue.Value * 7 / 30)),
+                    _ => dateValue._parsedValue.AddDays(((int)addValue.Value) * 7)
+                },
+                "day" or "days" or "d" => dateValue.Precision switch
+                {
+                    DateTimePrecision.Year => dateValue._parsedValue.AddYears((int)(addValue.Value / 365)),
+                    DateTimePrecision.Month => dateValue._parsedValue.AddMonths((int)(addValue.Value / 30)),
+                    _ => dateValue._parsedValue.AddDays((int)addValue.Value)
+                },
+                _ => throw new ArgumentException($"'{addValue.Unit}' is not a valid time-valued unit", nameof(addValue)),
+            };
+            var result = FromDateTimeOffset(dto, dateValue.Precision);
             return result;
         }
 

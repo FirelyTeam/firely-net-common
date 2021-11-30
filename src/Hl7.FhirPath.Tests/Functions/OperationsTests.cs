@@ -20,7 +20,7 @@ namespace HL7.FhirPath.Tests
                  }.Select(t => new object[] { t.expression, t.expected, t.invalid });
 
         private static IEnumerable<object[]> EqualityOperatorTestcases() =>
-            new (string expression, bool expected, bool invalid)[]
+            new (string expression, bool? expected, bool invalid)[]
                  {
                     ("(@2012 + 1 year) = @2013", true, false),
                     ("(@2012-02 + 1 year) = @2013-02", true, false),
@@ -42,8 +42,8 @@ namespace HL7.FhirPath.Tests
                     ("(@2012-02-13T10:45:31.1 + 10 'ms') = @2012-02-13T10:45:31.110", true, false),
 
                     // https://hl7.org/fhirpath/#time-valued-quantities
-                    ("'1 year'.toQuantity() = 1 'a'", false, false),
-                    ("'1 day'.toQuantity() = 1 'd'", false, false),
+                    ("'1 year'.toQuantity() = 1 'a'", null, false),
+                    ("'1 day'.toQuantity() = 1 'd'", true, false),
                     ("'1 second'.toQuantity() = 1 's'", true, false),
 
                     ("'1 year'.toQuantity() ~ 1 'a'", true, false),
@@ -199,18 +199,23 @@ namespace HL7.FhirPath.Tests
 
         [DataTestMethod]
         [DynamicData(nameof(AllFunctionTestcases), DynamicDataSourceType.Method)]
-        public void AssertTestcases(string expression, bool expected, bool invalid = false)
+        public void AssertTestcases(string expression, bool? expected, bool invalid = false)
         {
             ITypedElement dummy = ElementNode.ForPrimitive(true);
 
             if (invalid)
             {
-                Action act = () => dummy.IsBoolean(expression, expected);
+                Action act = () => dummy.IsBoolean(expression, expected.Value);
                 act.Should().Throw<Exception>();
+            }
+            if (expected is null)
+            {
+                dummy.Scalar(expression).Should().BeNull();
             }
             else
             {
-                dummy.IsBoolean(expression, expected).Should().BeTrue();
+                dummy.IsBoolean(expression, expected.Value)
+                    .Should().BeTrue(because: $"The expression was supposed to result in {expected}.");
             }
         }
     }

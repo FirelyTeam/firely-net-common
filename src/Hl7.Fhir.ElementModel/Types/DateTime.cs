@@ -59,67 +59,46 @@ namespace Hl7.Fhir.ElementModel.Types
             if (dateTimeValue is null) throw new ArgumentNullException(nameof(dateTimeValue));
             if (addValue is null) throw new ArgumentNullException(nameof(addValue));
 
-            var dto = dateTimeValue._parsedValue;
-            switch (addValue.Unit)
+            // Based on the discussion on equality/comparisons here:
+            // https://chat.fhir.org/#narrow/stream/179266-fhirpath/topic/Date.2FTime.20comparison.20vs.20equality
+            // We have also allowed addition to use the definitve UCUM units of 'wk', 'd', 'h', 'min'  as if they are a calendar unit of
+            // 'week'/'day'/'hour'/'minute' respectively.
+            var dto = addValue.Unit switch
             {
                 // we can ignore precision, as the precision will "trim" it anyway, and if we add 13 months, then the year can tick over nicely
-                case "years":
-                case "year":
-                    dto = dateTimeValue._parsedValue.AddYears((int)addValue.Value);
-                    break;
-                case "month":
-                case "months":
-                    if (dateTimeValue.Precision == DateTimePrecision.Year)
-                        dto = dateTimeValue._parsedValue.AddYears((int)(addValue.Value/12));
-                    else
-                        dto = dateTimeValue._parsedValue.AddMonths((int)addValue.Value);
-                    break;
-                case "day":
-                case "days":
-                    if (dateTimeValue.Precision == DateTimePrecision.Year)
-                        dto = dateTimeValue._parsedValue.AddYears((int)(addValue.Value / 365));
-                    else if (dateTimeValue.Precision == DateTimePrecision.Month)
-                        dto = dateTimeValue._parsedValue.AddMonths((int)(addValue.Value / 30));
-                    else
-                        dto = dateTimeValue._parsedValue.AddDays((int)addValue.Value);
-                    break;
-                case "week":
-                case "weeks":
-                    if (dateTimeValue.Precision == DateTimePrecision.Year)
-                        dto = dateTimeValue._parsedValue.AddYears((int)(addValue.Value / 52));
-                    else if (dateTimeValue.Precision == DateTimePrecision.Month)
-                        dto = dateTimeValue._parsedValue.AddMonths((int)(addValue.Value * 7 / 30));
-                    else
-                        dto = dateTimeValue._parsedValue.AddDays(((int)addValue.Value) * 7);
-                    break;
+                "years" or "year" => dateTimeValue._parsedValue.AddYears((int)addValue.Value),
+                "month" or "months" => dateTimeValue.Precision == DateTimePrecision.Year
+                    ? dateTimeValue._parsedValue.AddYears((int)(addValue.Value / 12))
+                    : dateTimeValue._parsedValue.AddMonths((int)addValue.Value),
+                "week" or "weeks" or "wk" => dateTimeValue.Precision switch
+                {
+                    DateTimePrecision.Year => dateTimeValue._parsedValue.AddYears((int)(addValue.Value / 52)),
+                    DateTimePrecision.Month => dateTimeValue._parsedValue.AddMonths((int)(addValue.Value * 7 / 30)),
+                    _ => dateTimeValue._parsedValue.AddDays(((int)addValue.Value) * 7)
+                },
+                "day" or "days" or "d" => dateTimeValue.Precision switch
+                {
+                    DateTimePrecision.Year => dateTimeValue._parsedValue.AddYears((int)(addValue.Value / 365)),
+                    DateTimePrecision.Month => dateTimeValue._parsedValue.AddMonths((int)(addValue.Value / 30)),
+                    _ => dateTimeValue._parsedValue.AddDays((int)addValue.Value)
+                },
 
                 // NOT ignoring precision on time based stuff if there is no time component
                 // if no time component, don't modify result
-                case "hour":
-                case "hours":
-                    if (dateTimeValue.Precision > DateTimePrecision.Day)
-                        dto = dateTimeValue._parsedValue.AddHours((double)addValue.Value);
-                    break;
-                case "minute":
-                case "minutes":
-                    if (dateTimeValue.Precision > DateTimePrecision.Day)
-                        dto = dateTimeValue._parsedValue.AddMinutes((double)addValue.Value);
-                    break;
-                case "s":
-                case "second":
-                case "seconds":
-                    if (dateTimeValue.Precision > DateTimePrecision.Day)
-                        dto = dateTimeValue._parsedValue.AddSeconds((double)addValue.Value);
-                    break;
-                case "ms":
-                case "millisecond":
-                case "milliseconds":
-                    if (dateTimeValue.Precision > DateTimePrecision.Day)
-                        dto = dateTimeValue._parsedValue.AddMilliseconds((double)addValue.Value);
-                    break;
-                default:
-                    throw new ArgumentException($"'{addValue.Unit}' is not a valid time-valued unit", nameof(addValue));
-            }
+                "hour" or "hours" or "h" => dateTimeValue.Precision > DateTimePrecision.Day
+                                        ? dateTimeValue._parsedValue.AddHours((double)addValue.Value)
+                                        : dateTimeValue._parsedValue,
+                "minute" or "minutes" or "min" => dateTimeValue.Precision > DateTimePrecision.Day
+                    ? dateTimeValue._parsedValue.AddMinutes((double)addValue.Value)
+                    : dateTimeValue._parsedValue,
+                "s" or "second" or "seconds" => dateTimeValue.Precision > DateTimePrecision.Day
+                                        ? dateTimeValue._parsedValue.AddSeconds((double)addValue.Value)
+                                        : dateTimeValue._parsedValue,
+                "ms" or "millisecond" or "milliseconds" => dateTimeValue.Precision > DateTimePrecision.Day
+                                        ? dateTimeValue._parsedValue.AddMilliseconds((double)addValue.Value)
+                                        : dateTimeValue._parsedValue,
+                _ => throw new ArgumentException($"'{addValue.Unit}' is not a valid time-valued unit", nameof(addValue)),
+            };
 
             string representation = dto.ToString(FMT_FULL);
             if (representation.Length > dateTimeValue._original.Length)
@@ -162,7 +141,7 @@ namespace Hl7.Fhir.ElementModel.Types
         private static readonly string DATETIMEFORMAT =
             $"(?<year>[0-9]{{4}}) ((?<month>-[0-9][0-9]) ((?<day>-[0-9][0-9]) (T{Time.TIMEFORMAT})?)?)? {Time.OFFSETFORMAT}?";
         private static readonly Regex DATETIMEREGEX =
-                new Regex("^" + DATETIMEFORMAT + "$",
+                new("^" + DATETIMEFORMAT + "$",
                 RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
 
         /// <summary>
@@ -171,7 +150,7 @@ namespace Hl7.Fhir.ElementModel.Types
         /// <param name="defaultOffset">Offset used when the datetime does not specify one.</param>
         /// <returns></returns>
         public DateTimeOffset ToDateTimeOffset(TimeSpan defaultOffset) =>
-             new DateTimeOffset(_parsedValue.Year, _parsedValue.Month, _parsedValue.Day,
+             new(_parsedValue.Year, _parsedValue.Month, _parsedValue.Day,
                  _parsedValue.Hour, _parsedValue.Minute, _parsedValue.Second, _parsedValue.Millisecond,
                     HasOffset ? _parsedValue.Offset : defaultOffset);
 

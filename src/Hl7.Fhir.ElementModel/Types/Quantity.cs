@@ -48,7 +48,7 @@ namespace Hl7.Fhir.ElementModel.Types
         public Quantity(decimal value, string? unit = UCUM_UNIT)
             : this(value, unit, QuantityUnitSystem.UCUM)
         {
-            //
+            // nothing
         }
 
         public Quantity(decimal value, string? unit, QuantityUnitSystem system)
@@ -66,20 +66,19 @@ namespace Hl7.Fhir.ElementModel.Types
         /// <returns></returns>
         public static Quantity ForCalendarDuration(decimal value, string calendarUnit)
         {
-            if (calendarUnit is null)
-                throw new ArgumentNullException(nameof(calendarUnit));
-
-            return new Quantity(value, calendarUnit, QuantityUnitSystem.CalendarDuration);
+            return calendarUnit is not null
+                ? new Quantity(value, calendarUnit, QuantityUnitSystem.CalendarDuration)
+                : throw new ArgumentNullException(nameof(calendarUnit));
         }
 
         private static readonly string QUANTITY_BASE_REGEX =
            @"(?'value'(\+|-)?\d+(\.\d+)?)\s*(('(?'unit'[^\']+)')|(?'time'[a-zA-Z]+))";
 
         public static readonly Regex QUANTITYREGEX =
-           new Regex(QUANTITY_BASE_REGEX, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
+           new(QUANTITY_BASE_REGEX, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
 
         internal static readonly Regex QUANTITYREGEX_FOR_PARSE =
-            new Regex($"^{QUANTITY_BASE_REGEX}?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled);
+            new($"^{QUANTITY_BASE_REGEX}?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled);
 
         public static Quantity Parse(string representation) =>
                 TryParse(representation, out var result) ? result : throw new FormatException($"String '{representation}' was not recognized as a valid quantity.");
@@ -105,7 +104,7 @@ namespace Hl7.Fhir.ElementModel.Types
             {
                 if (TryParseTimeUnit(result.Groups["time"].Value, out var tv, out var isCalendarUnit))
                 {
-                    quantity = isCalendarUnit ? Quantity.ForCalendarDuration(value!, tv!)
+                    quantity = isCalendarUnit ? ForCalendarDuration(value!, tv!)
                         : new Quantity(value!, tv!);
                     return true;
                 }
@@ -200,24 +199,8 @@ namespace Hl7.Fhir.ElementModel.Types
         /// </summary>
         /// <remarks>For time-valued quantities, the comparison of
         /// calendar durations and definite quantity durations above seconds is determined by the <paramref name="comparisonType"/></remarks>
-        public Result<bool> TryEquals(Any other, QuantityComparison comparisonType)
-        {
-            if (!(other is Quantity otherQ)) return false;
-
-            var l = this;
-            var r = otherQ;
-
-            // https://hl7.org/fhirpath/#quantity
-            if (comparisonType.HasFlag(QuantityComparison.CompareCalendarUnits) 
-                || l.System == QuantityUnitSystem.CalendarDuration && (l.Unit == "second" || l.Unit == "millisecond")
-                || r.System == QuantityUnitSystem.CalendarDuration && (r.Unit == "second" || r.Unit == "millisecond"))
-            {
-                l = calendarUnitToUcum(l);
-                r = calendarUnitToUcum(r);
-            }
-
-            return l.TryCompareTo(r).Select(r => r == 0);
-        }
+        public Result<bool> TryEquals(Any other, QuantityComparison comparisonType) => other is Quantity ?
+            TryCompareTo(other, comparisonType).Select(i => i == 0) : false;
 
         public static bool operator ==(Quantity a, Quantity b) => Equals(a, b);
         public static bool operator !=(Quantity a, Quantity b) => !Equals(a, b);
@@ -227,7 +210,7 @@ namespace Hl7.Fhir.ElementModel.Types
         /// </summary>
         /// <remarks>See <see cref="TryCompareTo(Any)"/> for more details.</remarks>
         public int CompareTo(object? obj) => obj is Quantity q ?
-            TryCompareTo(q).ValueOrThrow() : throw NotSameTypeComparison(this, obj);
+            TryCompareTo(q, CQL_EQUIVALENCE_COMPARISON).ValueOrThrow() : throw NotSameTypeComparison(this, obj);
 
         public static bool operator <(Quantity a, Quantity b) => a.CompareTo(b) < 0;
         public static bool operator <=(Quantity a, Quantity b) => a.CompareTo(b) <= 0;
@@ -237,54 +220,81 @@ namespace Hl7.Fhir.ElementModel.Types
         /// <summary>
         /// Compares two quantities according to CQL ordering rules.
         /// </summary> 
-        /// <param name="other"></param>
         /// <returns>the result of the comparison: 0 if this and other are equal, 
         /// -1 if this is smaller than other and +1 if this is bigger than other.</returns>
         /// <remarks>the dimensions of each quantity must be the same, but not necessarily the unit. For example, units of 'cm' and 'm' can be compared, 
         /// but units of 'cm2' and 'cm' cannot. The comparison will be made using the most granular unit of either input. 
-        /// Quantities with invalid units cannot be compared.</remarks>
-        public Result<int> TryCompareTo(Any other)
+        /// Quantities with invalid units cannot be compared. 
+        /// NOTE: in the current normative specification, there is a difference between comparing incompatible duration units (result: {}) 
+        /// and performing the equals operator on incompatible units (result: false). This is going to be corrected
+        /// (see https://jira.hl7.org/browse/FHIR-28144), and this code already reflects this decision.</remarks>
+        public Result<int> TryCompareTo(Any other, QuantityComparison comparisonType)
         {
             if (other is null) return 1; // as defined by the .NET framework guidelines
-            if (!(other is Quantity otherQ)) throw NotSameTypeComparison(this, other);
+            if (other is not Quantity otherQ) throw NotSameTypeComparison(this, other);
 
             // Need to use our metrics library here, but for now, we'll just refuse to compare
             // if the units are not the same.
-            // If we DO implement it, make sure comparison of time-valued quantities (i.e. minutes), 
-            // calendar durations (i.e. year) and definite quantity durations ('a', annum) cannot be
-            // compared (and thus this function returns failure) (though seconds and miliseconds can). 
-            // See http://hl7.org/fhirpath/#quantity and http://hl7.org/fhirpath/#comparison for more details.
-            // Throw not supported now, in the future we will need to turn this into a Fail()
+            // Throw NotSupported now, in the future we will need to turn this into a Fail()
             // result for units that can really not be compared according to UCUM.
             if (Unit != otherQ.Unit || System != otherQ.System)
             {
-                return Fail<int>(Error.NotSupported("Comparing quantities with different units is not yet supported"));
+                return IsDuration && otherQ.IsDuration
+                    ? doDurationComparison(otherQ, comparisonType)
+                    : Fail<int>(Error.NotSupported("Comparing quantities with different units is not yet supported"));
             }
 
             return decimal.Compare(Math.Round(Value, 8), Math.Round(otherQ.Value, 8));   // aligns with Decimal
         }
 
-
-        private Quantity calendarUnitToUcum(Quantity orig)
+        private Result<int> doDurationComparison(Quantity other, QuantityComparison comparisonType)
         {
-            // Only normalize calendar units
-            if (orig.System == QuantityUnitSystem.UCUM) return orig;
+            var l = normalizeToUcum(this);
+            var r = normalizeToUcum(other);
 
-            var ucumUnit = orig.Unit switch
+            if (l.Unit != r.Unit)
+                return Fail<int>(Error.InvalidOperation($"Durations of {l.Unit} and {r.Unit} cannot be compared,"));
+            else
+                return decimal.Compare(Math.Round(l.Value, 8), Math.Round(r.Value, 8));   // aligns with Decimal
+
+            Quantity normalizeToUcum(Quantity orig)
             {
-                "year" => "a",
-                "month" => "mo",
-                "week" => "wk",
-                "day" => "d",
-                "hour" => "h",
-                "minute" => "min",
-                "second" => "s",
-                "millisecond" => "ms",
-                _ => throw new InvalidOperationException($"'{orig.Unit}' is not a valid calendar unit.")
-            };
+                // UCUM definite durations are already in their comparable form
+                if (orig.IsDefiniteDuration) return orig;
 
-            return new Quantity(orig.Value, ucumUnit, QuantityUnitSystem.UCUM);
+                var ucumUnit = orig.Unit switch
+                {
+                    "year" when comparisonType == QuantityComparison.CompareCalendarUnits => "a",
+                    "year" => "year",
+                    "month" when comparisonType == QuantityComparison.CompareCalendarUnits => "mo",
+                    "month" => "month",
+                    "week" => "wk",
+                    "day" => "d",
+                    "hour" => "h",
+                    "minute" => "min",
+                    "second" => "s",
+                    "millisecond" => "ms",
+                    _ => throw new InvalidOperationException($"Unit '{orig.Unit}' is not a known calendar duration.")
+                };
+
+                return new(orig.Value, ucumUnit, QuantityUnitSystem.UCUM);
+            }
         }
+
+        // The UCUM library probably has a more generic method for doing this.
+        public bool IsDefiniteDuration => Unit is "a" or "mo" or "wk" or "d" or "h" or "min" or "s" or "ms";
+
+        public bool IsCalendarDuration => System == QuantityUnitSystem.CalendarDuration;
+
+        public bool IsDuration => IsDefiniteDuration || IsCalendarDuration;
+
+        /// <summary>
+        /// Compares two quantities according to CQL ordering rules.
+        /// </summary> 
+        /// <remarks>By default, calendar units (except year and month) are considered comparable to
+        /// definite time units (execpt y and mo). Use the <see cref="TryCompareTo(Any, QuantityComparison)"/> overload
+        /// to specify comparison behaviour for date comparisons.</remarks>
+        public Result<int> TryCompareTo(Any other) => TryCompareTo(other, CQL_EQUIVALENCE_COMPARISON);
 
         public static bool operator +(Quantity a, Quantity b) => throw Error.NotSupported("Adding two quantites is not yet supported");
         public static bool operator -(Quantity a, Quantity b) => throw Error.NotSupported("Subtracting two quantites is not yet supported");
