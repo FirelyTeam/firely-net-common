@@ -10,8 +10,6 @@ using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Collections;
-using Hl7.Fhir.Specification;
 
 namespace Hl7.Fhir.ElementModel
 {
@@ -96,7 +94,7 @@ namespace Hl7.Fhir.ElementModel
         {
             return type == typeof(SourceNode) || type == typeof(ISourceNode) || type == typeof(IResourceTypeSupplier)
                 ? (new[] { this })
-                : AnnotationsInternal.OfType(type);
+                : HasAnnotations ? AnnotationsInternal.OfType(type) : Enumerable.Empty<object>();
         }
 
         public string Location
