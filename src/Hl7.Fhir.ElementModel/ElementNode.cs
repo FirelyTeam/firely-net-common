@@ -31,7 +31,7 @@ namespace Hl7.Fhir.ElementModel
             return value switch
             {
                 P.Quantity q => PrimitiveElement.ForQuantity(q),
-                _ => new PrimitiveElement(value, useFullTypeName:true)
+                _ => new PrimitiveElement(value, useFullTypeName: true)
             };
         }
 
@@ -89,12 +89,12 @@ namespace Hl7.Fhir.ElementModel
         /// </summary>
         /// <param name="values"></param>
         /// <returns></returns>
-        public static IEnumerable<ITypedElement> CreateList(params object[] values) => 
+        public static IEnumerable<ITypedElement> CreateList(params object[] values) =>
             values != null
-                ? values.Select(value => value == null 
-                    ? null 
+                ? values.Select(value => value == null
+                    ? null
                     : value is ITypedElement element
-                        ? element 
+                        ? element
                         : ForPrimitive(value))
                 : EmptyList;
 
@@ -172,7 +172,7 @@ namespace Hl7.Fhir.ElementModel
         /// <summary>
         /// Will update the child to reflect it being a child of this element, but will not yet add the child at any position within this element
         /// </summary>
-        private void importChild(IStructureDefinitionSummaryProvider provider, ElementNode child, string name, int? position=null)
+        private void importChild(IStructureDefinitionSummaryProvider provider, ElementNode child, string name, int? position = null)
         {
             child.Name = name ?? child.Name;
             if (child.Name == null) throw Error.Argument($"The ElementNode given should have its Name property set or the '{nameof(name)}' parameter should be given.");
@@ -180,7 +180,7 @@ namespace Hl7.Fhir.ElementModel
             // Remove this child from the current parent (if any), then reassign to me
             if (child.Parent != null) child.Parent.Remove(child);
             child.Parent = this;
-            
+
             // If we add a child, we better overwrite it's definition with what
             // we think it should be - this way you can safely first create a node representing
             // an independently created root for a resource of datatype, and then add it to the tree.
@@ -213,14 +213,14 @@ namespace Hl7.Fhir.ElementModel
                     child.InstanceType = child.Definition.Type.Single().GetTypeName();
             }
 
-            if(position == null || position >= ChildList.Count)
+            if (position == null || position >= ChildList.Count)
                 ChildList.Add(child);
             else
                 ChildList.Insert(position.Value, child);
 
         }
 
-        public static ElementNode Root(IStructureDefinitionSummaryProvider provider, string type, string name=null, object value=null)
+        public static ElementNode Root(IStructureDefinitionSummaryProvider provider, string type, string name = null, object value = null)
         {
             if (provider == null) throw Error.ArgumentNull(nameof(provider));
             if (type == null) throw Error.ArgumentNull(nameof(type));
@@ -296,7 +296,7 @@ namespace Hl7.Fhir.ElementModel
             if (type == null) throw new ArgumentNullException(nameof(type));
             return (type == typeof(ElementNode) || type == typeof(ITypedElement) || type == typeof(IShortPathGenerator))
                 ? (new[] { this })
-                : AnnotationsInternal.OfType(type);
+                : HasAnnotations ? AnnotationsInternal.OfType(type) : Enumerable.Empty<object>();
         }
 
         public string Location

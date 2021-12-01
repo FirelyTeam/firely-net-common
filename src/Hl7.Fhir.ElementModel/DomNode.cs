@@ -10,6 +10,7 @@ using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace Hl7.Fhir.ElementModel
 {
@@ -17,7 +18,13 @@ namespace Hl7.Fhir.ElementModel
     {
         public string Name { get; set; }
 
-        protected List<T> ChildList = new List<T>();
+        private List<T> _childList = null;
+
+        protected List<T> ChildList
+        {
+            get => LazyInitializer.EnsureInitialized(ref _childList, () => new());
+            set => _childList = value;
+        }
 
         internal IEnumerable<T> ChildrenInternal(string name = null) =>
             name == null ? ChildList : ChildList.Where(c => c.Name.MatchesPrefix(name));
@@ -29,11 +36,10 @@ namespace Hl7.Fhir.ElementModel
         public T this[int index] => ChildList[index];
 
         #region << Annotations >>
-        private readonly Lazy<AnnotationList> _annotations = new Lazy<AnnotationList>(() => new AnnotationList());
-        protected AnnotationList AnnotationsInternal { get { return _annotations.Value; } }
+        private AnnotationList _annotations = null;
+        protected AnnotationList AnnotationsInternal => LazyInitializer.EnsureInitialized(ref _annotations, () => new());
 
-        protected bool HasAnnotations =>
-            _annotations.IsValueCreated == true && _annotations.Value.IsEmpty == false;
+        protected bool HasAnnotations => _annotations is not null && !_annotations.IsEmpty;
 
         public void AddAnnotation(object annotation)
         {
