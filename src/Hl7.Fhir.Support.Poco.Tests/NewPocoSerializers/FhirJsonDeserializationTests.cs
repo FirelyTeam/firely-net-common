@@ -647,7 +647,9 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
         private class CustomComplexValidator : IDeserializationValidator
         {
-            public void Validate(object? candidateValue, in DeserializationContext context, out CodedValidationException[]? reportedErrors, out object? validatedValue)
+            public void ValidateInstance(object? candidateInstance, in InstanceDeserializationContext context, out DAVE[]? reportedErrors) => throw new NotImplementedException();
+
+            public void ValidateProperty(object? candidateValue, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors, out object? validatedValue)
             {
                 validatedValue = candidateValue;
                 reportedErrors = null;
@@ -672,12 +674,15 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
         private class CustomDataTypeValidator : IDeserializationValidator
         {
-            public void Validate(object? candidateValue, in DeserializationContext context, out CodedValidationException[]? reportedErrors, out object? validatedValue)
+            public void ValidateInstance(object? candidateInstance, in InstanceDeserializationContext context, out DAVE[]? reportedErrors) => throw new NotImplementedException();
+
+            public void ValidateProperty(object? candidateValue, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors, out object? validatedValue)
             {
                 if (candidateValue is string s &&
                     context.TargetObjectMapping.Name == "dateTime" &&
                     context.ElementMapping.Name == "value")
                 {
+                    context.PropertyName.Should().Be("value");
                     context.ValueType.Should().Be(typeof(string));
 
                     if (s.EndsWith("Z")) s = s.TrimEnd('Z') + "+00:00";

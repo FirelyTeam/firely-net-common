@@ -15,18 +15,17 @@ using System;
 namespace Hl7.Fhir.Serialization
 {
     /// <summary>
-    /// Contains information of the location in the POCO that is currently being deserialized and is passed 
+    /// Contains contextual information for the property that is currently being deserialized and is passed 
     /// to delegate methods implementing parts of user-definable deserialization and validation logic.
     /// </summary>
-    public readonly struct DeserializationContext
+    public readonly struct PropertyDeserializationContext
     {
-        internal DeserializationContext(
+        internal PropertyDeserializationContext(
             PathStack ps,
             string propertyName,
             ClassMapping targetMapping,
             PropertyMapping propMapping,
-            Type valueType
-            )
+            Type valueType)
         {
             PathStack = ps;
             PropertyName = propertyName;
@@ -59,6 +58,33 @@ namespace Hl7.Fhir.Serialization
         /// The type of the instance currently being deserialized.
         /// </summary>
         public Type ValueType { get; }
+    }
+
+
+
+    /// <summary>
+    /// Contains contextual information for the instance that is currently being deserialized and is passed 
+    /// to delegate methods implementing parts of user-definable deserialization and validation logic.
+    /// </summary>
+    public readonly struct InstanceDeserializationContext
+    {
+        internal InstanceDeserializationContext(
+            PathStack ps,
+            ClassMapping targetMapping)
+        {
+            PathStack = ps;
+            TargetObjectMapping = targetMapping;
+        }
+
+        internal PathStack PathStack { get; }
+
+        /// <inheritdoc cref="PathStack.GetPath"/>
+        public string GetPath() => PathStack.GetPath();
+
+        /// <summary>
+        /// The metadata for the type of which the current property is part of.
+        /// </summary>
+        public ClassMapping TargetObjectMapping { get; }
     }
 }
 

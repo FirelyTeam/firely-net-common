@@ -44,7 +44,7 @@ namespace Hl7.Fhir.Model
     [FhirType("Base", "http://hl7.org/fhir/StructureDefinition/Base")]
     [DataContract]
     public abstract class Base : IDeepCopyable, IDeepComparable,
-        IAnnotated, IAnnotatable, INotifyPropertyChanged, IReadOnlyDictionary<string, object>
+        IAnnotated, IAnnotatable, IValidatableObject, INotifyPropertyChanged, IReadOnlyDictionary<string, object>
     {
         public virtual bool IsExactly(IDeepComparable other) => other is Base;
 

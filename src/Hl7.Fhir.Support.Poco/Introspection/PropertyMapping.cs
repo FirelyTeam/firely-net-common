@@ -41,11 +41,6 @@ namespace Hl7.Fhir.Introspection
             ImplementingType = implementingType;
             FhirType = fhirTypes;
             PropertyTypeMapping = propertyTypeMapping;
-#if NET45
-            ValidationAttributes = new ValidationAttribute[0];
-#else
-            ValidationAttributes = Array.Empty<ValidationAttribute>();            
-#endif
         }
 
         /// <summary>
@@ -149,7 +144,13 @@ namespace Hl7.Fhir.Introspection
         /// The collection of zero or more <see cref="ValidationAttribute"/> (or subclasses) declared
         /// on this property.
         /// </summary>
-        public ValidationAttribute[] ValidationAttributes { get; private set; }
+        public ValidationAttribute[] ValidationAttributes { get; private set; } =
+#if NET45
+            new ValidationAttribute[0];
+#else
+            Array.Empty<ValidationAttribute>();
+#endif
+
 
         /// <summary>
         /// The original <see cref="PropertyInfo"/> the metadata was obtained from.
@@ -217,7 +218,7 @@ namespace Hl7.Fhir.Introspection
                 allowedTypes.Types : new[] { fhirType };
 
             var isPrimitive = isAllowedNativeTypeForDataTypeValue(implementingType);
-            
+
             result = new PropertyMapping(elementAttr.Name, prop, implementingType, propertyTypeMapping!, fhirTypes, release)
             {
                 InSummary = elementAttr.InSummary,
@@ -229,7 +230,7 @@ namespace Hl7.Fhir.Introspection
                 IsPrimitive = isPrimitive,
                 RepresentsValueElement = isPrimitive && isPrimitiveValueElement(elementAttr, prop),
                 ValidationAttributes = ClassMapping.GetAttributes<ValidationAttribute>(prop, release).ToArray()
-        };
+            };
 
             return true;
         }
@@ -271,7 +272,7 @@ namespace Hl7.Fhir.Introspection
 
         private Action<object, object?>? _setter;
 
-#region IElementDefinitionSummary members
+        #region IElementDefinitionSummary members
         string IElementDefinitionSummary.ElementName => this.Name;
 
         bool IElementDefinitionSummary.IsCollection => this.IsCollection;
@@ -357,7 +358,7 @@ namespace Hl7.Fhir.Introspection
             public string ReferredType { get; private set; }
         }
 
-#endregion
+        #endregion
     }
 }
 

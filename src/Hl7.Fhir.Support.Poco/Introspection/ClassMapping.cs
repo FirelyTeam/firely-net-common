@@ -15,6 +15,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -94,7 +95,8 @@ namespace Hl7.Fhir.Introspection
                 IsFhirPrimitive = typeof(PrimitiveType).IsAssignableFrom(type),
                 IsNestedType = typeAttribute.IsNestedType,
                 _mappingInitializer = () => inspectProperties(type, release),
-                Canonical = typeAttribute.Canonical
+                Canonical = typeAttribute.Canonical,
+                ValidationAttributes = GetAttributes<ValidationAttribute>(type.GetTypeInfo(), release).ToArray()
             };
 
             return true;
@@ -189,6 +191,17 @@ namespace Hl7.Fhir.Introspection
             }
         }
 
+        /// <summary>
+        /// The collection of zero or more <see cref="ValidationAttribute"/> (or subclasses) declared
+        /// on this class.
+        /// </summary>
+        public ValidationAttribute[] ValidationAttributes { get; private set; } =
+#if NET45
+            new ValidationAttribute[0];
+#else
+            Array.Empty<ValidationAttribute>();
+#endif
+
         private PropertyMappingCollection? _mappings;
         private Func<PropertyMappingCollection> _mappingInitializer;
 
@@ -237,16 +250,16 @@ namespace Hl7.Fhir.Introspection
                 .Where(m => name.StartsWith(m.Name)).ToList();
 
             // Loop through possible matches and return the longest match.
-            if(matches.Any())
+            if (matches.Any())
             {
-                return (matches.Count == 1) 
-                        ? matches[0] 
+                return (matches.Count == 1)
+                        ? matches[0]
                         : matches.Aggregate((l, r) => l.Name.Length > r.Name.Length ? l : r);
             }
             else
             {
                 return null;
-            }            
+            }
         }
 
         internal static T? GetAttribute<T>(MemberInfo t, FhirRelease version) where T : Attribute => GetAttributes<T>(t, version).LastOrDefault();

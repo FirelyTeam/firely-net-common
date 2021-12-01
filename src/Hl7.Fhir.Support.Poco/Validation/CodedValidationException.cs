@@ -35,6 +35,7 @@ namespace Hl7.Fhir.Validation
         public const string UUID_LITERAL_INVALID_CODE = "PVAL113";
         public const string NARRATIVE_XML_IS_MALFORMED_CODE = "PVAL114";
         public const string NARRATIVE_XML_IS_INVALID_CODE = "PVAL115";
+        public const string INVALID_CODED_VALUE_CODE = "PVAL116";
 
         internal static readonly DAVE CHOICE_TYPE_NOT_ALLOWED = new(CHOICE_TYPE_NOT_ALLOWED_CODE, "Value is of type '{0}', which is not an allowed choice.");
         internal static readonly DAVE INCORRECT_CARDINALITY_MIN = new(INCORRECT_CARDINALITY_MIN_CODE, "Element has {0} elements, but minium cardinality is {1}.");
@@ -51,6 +52,7 @@ namespace Hl7.Fhir.Validation
         internal static readonly DAVE TIME_LITERAL_INVALID = new(TIME_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for a time.");
         internal static readonly DAVE URI_LITERAL_INVALID = new(URI_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for an uri.");
         internal static readonly DAVE UUID_LITERAL_INVALID = new(UUID_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for a uuid.");
+        internal static readonly DAVE INVALID_CODED_VALUE = new(INVALID_CODED_VALUE_CODE, "'{0}' is not a correct code for enumeration '{1}'.");
 
         /// <summary>
         /// The unique and permanent code for this error.

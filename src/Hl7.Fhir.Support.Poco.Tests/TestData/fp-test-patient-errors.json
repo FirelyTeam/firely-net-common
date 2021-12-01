@@ -1,12 +1,8 @@
 {
   "resourceType": "Patient",
-  "id": "pat1-with-errors",
-  "meta":  {
-    "lastUpdated": "not a valid instant"
-  },
   "text": {
     "resourceType": "Narrative",
-    "status": "generated",
+    "status": "generatedX",
     "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Patient Donald DUCK @ Acme Healthcare, Inc. MR = 654321</p></div>"
   },
   "contained": [
@@ -75,7 +71,7 @@
       "resourceType": "Questionnaire",
       "id": "3141",
       "text": {
-        "status": "generated",
+        "status": "generatedY",
         "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><pre>\r\n            Comorbidity? YES\r\n            Cardial Comorbidity? YES\r\n            Angina? YES\r\n            MI? NO\r\n            Vascular Comorbidity?\r\n            (no answers)\r\n            ...\r\n            Histopathology\r\n            Abdominal\r\n            pT category: 1a\r\n            ...\r\n          </pre></div>"
       },
       "status": "draft",

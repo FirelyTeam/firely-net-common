@@ -76,7 +76,11 @@ namespace Hl7.Fhir.Serialization
                 if (part[0] != RESOURCEPREFIX[0])
                     b.Append(part);
                 else
+                {
+                    // Start again at each (contained) resource boundary
+                    b.Clear();
                     b.Append(part.Substring(1));
+                }
             }
 
             return b.ToString();

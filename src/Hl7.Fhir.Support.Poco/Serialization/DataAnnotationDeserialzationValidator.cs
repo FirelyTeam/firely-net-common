@@ -17,6 +17,11 @@ using System.Linq;
 
 namespace Hl7.Fhir.Serialization
 {
+    /// <summary>
+    /// This validator uses the System.ComponentModel.DataAnnotations attributes to validate an instance,
+    /// but simulates Validator.ValidateObject(), to avoid using reflection and use the cached reflection
+    /// information on <see cref="ClassMapping"/> and <see cref="PropertyMapping"/>.
+    /// </summary>
     public class DataAnnotationDeserialzationValidator : IDeserializationValidator
     {
         public static readonly DataAnnotationDeserialzationValidator Default = new();
@@ -43,46 +48,72 @@ namespace Hl7.Fhir.Serialization
             Excludes = excludes;
         }
 
-        /// <inheritdoc cref="IDeserializationValidator.Validate(object?, in DeserializationContext, out CodedValidationException[], out object?)"/>
-        public void Validate(object? candidateValue, in DeserializationContext context, out CodedValidationException[]? reportedErrors, out object? validatedValue)
+        /// <inheritdoc cref="IDeserializationValidator.ValidateProperty(object?, in PropertyDeserializationContext, out CodedValidationException[], out object?)"/>
+        public void ValidateProperty(object? candidateValue, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors, out object? validatedValue)
         {
             // We are not rewriting the value, so set it immediately
             validatedValue = candidateValue;
 
+            var validationContext = new ValidationContext(candidateValue ?? new object()) { MemberName = context.PropertyName }
+                .SetValidateRecursively(false)    // Don't go deeper - we've already validated the children because we're parsing bottom-up.
+                .SetNarrativeValidationKind(NarrativeValidation);
+
+            reportedErrors = runAttributeValidation(candidateValue, context.ElementMapping.ValidationAttributes, validationContext);
+        }
+
+        /// <inheritdoc />
+        public void ValidateInstance(object? instance, in InstanceDeserializationContext context, out CodedValidationException[]? reportedErrors)
+        {
+            var validationContext = new ValidationContext(instance ?? new object())
+                .SetValidateRecursively(false)    // Don't go deeper - we've already validated the children because we're parsing bottom-up.
+                .SetNarrativeValidationKind(NarrativeValidation);
+
+            reportedErrors = runAttributeValidation(instance, context.TargetObjectMapping.ValidationAttributes, validationContext);
+
+            // Now, just like Validator.Validate, run the IValidatableObject if applicable
+            if (instance is IValidatableObject ivo)
+            {
+                var extraErrors = ivo.Validate(validationContext).ToList();
+                if (extraErrors is not null && extraErrors.Any(e => e != ValidationResult.Success))
+                {
+                    var codedErrors = extraErrors.OfType<CodedValidationResult>().Select(cvr => cvr.ValidationException);
+                    if (codedErrors.Count() != extraErrors.Count())
+                        throw new InvalidOperationException($"Validation attributes should return a {nameof(CodedValidationResult)}.");
+
+                    reportedErrors = (reportedErrors is not null ? reportedErrors.Concat(codedErrors) : codedErrors).ToArray();
+                }
+            }
+        }
+
+        private CodedValidationException[]? runAttributeValidation(
+            object? candidateValue,
+            ValidationAttribute[] attributes,
+            ValidationContext validationContext)
+        {
+
             // Avoid allocation of a list for every validation until we really have something to report.
             List<CodedValidationException>? errors = null;
 
-            var validationContext = new ValidationContext(candidateValue ?? new object())
-                .SetValidateRecursively(false)
-                .SetNarrativeValidationKind(NarrativeValidation);
-
-            foreach (var va in context.ElementMapping.ValidationAttributes)
+            foreach (var va in attributes)
             {
-                // The ElementAttribute does not add to this elements validation - it's only used
-                // to extend .NETs property validation into nested values (which we have already validated
-                // while parsing bottom up).
-                var skip = va is FhirElementAttribute ||
-                    Excludes?.Contains(va.GetType()) == true;
+                if (Excludes?.Contains(va.GetType()) == true) continue;
 
-                if (!skip)
+                if (va.GetValidationResult(candidateValue, validationContext) is object vr)
                 {
-                    if (va.GetValidationResult(candidateValue, validationContext) is object vr)
-                    {
-                        if (vr is CodedValidationResult cvr)
-                            addError(cvr.ValidationException);
-                        else
-                            throw new InvalidOperationException($"Validation attributes should return a {nameof(CodedValidationResult)}.");
+                    if (vr is CodedValidationResult cvr)
+                        addError(cvr.ValidationException);
+                    else
+                        throw new InvalidOperationException($"Validation attributes should return a {nameof(CodedValidationResult)}.");
 
-                        void addError(CodedValidationException e)
-                        {
-                            if (errors is null) errors = new();
-                            errors.Add(e);
-                        }
+                    void addError(CodedValidationException e)
+                    {
+                        if (errors is null) errors = new();
+                        errors.Add(e);
                     }
                 }
             }
 
-            reportedErrors = errors?.ToArray();
+            return errors?.ToArray();
         }
     }
 }

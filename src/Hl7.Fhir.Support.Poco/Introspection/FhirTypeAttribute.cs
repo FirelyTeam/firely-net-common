@@ -28,10 +28,7 @@
 
 */
 
-using Hl7.Fhir.Model;
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
 
 #nullable enable
 
@@ -41,7 +38,7 @@ namespace Hl7.Fhir.Introspection
     /// This attribute is applied to classes that represent FHIR datatypes and resources.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-    public sealed class FhirTypeAttribute : VersionedValidationAttribute
+    public sealed class FhirTypeAttribute : VersionedAttribute
     {
         public FhirTypeAttribute(string name)
         {
@@ -73,10 +70,6 @@ namespace Hl7.Fhir.Introspection
         /// The canonical of the StructureDefinition defining this type.
         /// </summary>
         public string? Canonical { get; set; }
-
-        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext) =>
-            (value is Base b) ? b.Validate(validationContext).FirstOrDefault() : null;
-
     }
 }
 

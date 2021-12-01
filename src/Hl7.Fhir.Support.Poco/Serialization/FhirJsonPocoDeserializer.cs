@@ -193,6 +193,8 @@ namespace Hl7.Fhir.Serialization
 
             var empty = true;
             var plps = new FhirPrimitiveListParsingState();
+            var oldErrorCount = state.Errors.Count;
+            var (line, pos) = reader.GetLocation();
 
             while (reader.TokenType != JsonTokenType.EndObject)
             {
@@ -245,6 +247,14 @@ namespace Hl7.Fhir.Serialization
 
             // do not allow empty complex objects.
             if (empty) state.Errors.Add(ERR.OBJECTS_CANNOT_BE_EMPTY.With(ref reader));
+
+            // Only run instance validation when deserialization yielded no errors
+            // to avoid spurious error messages.
+            if (state.Errors.Count == oldErrorCount)
+            {
+                var context = new InstanceDeserializationContext(state.Path, mapping);
+                doInstanceValidation(target, line, pos, context, state.Errors);
+            }
 
             return;
         }
@@ -306,14 +316,14 @@ namespace Hl7.Fhir.Serialization
             // produce spurious messages.
             if (Settings.Validator is not null && oldErrorCount == state.Errors.Count)
             {
-                var deserializationContext = new DeserializationContext(
+                var deserializationContext = new PropertyDeserializationContext(
                     state.Path,
                     propertyName,
                     targetMapping,
                     propertyMapping,
                     propertyValueMapping.NativeType);
 
-                result = doValidation(result, line, pos, deserializationContext, state);
+                result = doPropertyValidation(result, line, pos, deserializationContext, state.Errors);
             }
 
             propertyMapping.SetValue(target, result);
@@ -321,20 +331,36 @@ namespace Hl7.Fhir.Serialization
             return;
         }
 
-        private object? doValidation(object? result, long line, long pos, DeserializationContext deserializationContext, FhirJsonPocoDeserializerState state)
+        private object? doPropertyValidation(object? instance, long line, long pos, PropertyDeserializationContext context, ExceptionAggregator aggregator)
         {
-            Settings.Validator!.Validate(result, deserializationContext, out var errors, out var finalValue);
+            Settings.Validator!.ValidateProperty(instance, context, out var errors, out var finalValue);
 
             if (errors?.Any() == true)
             {
-                var locationMessage = $" At {deserializationContext.PathStack.GetPath()} before line {line}, position {pos}.";
+                var locationMessage = $" At {context.PathStack.GetPath()} before line {line}, position {pos}.";
                 var errorsWithLocation = errors.Select(err => err.WithMessage(err.Message + locationMessage));
 
-                state.Errors.Add(errorsWithLocation);
+                aggregator.Add(errorsWithLocation);
             }
 
             return finalValue;
         }
+
+        private void doInstanceValidation(object? instance, long line, long pos, InstanceDeserializationContext context, ExceptionAggregator aggregator)
+        {
+            Settings.Validator!.ValidateInstance(instance, context, out var errors);
+
+            if (errors?.Any() == true)
+            {
+                var locationMessage = $" At {context.PathStack.GetPath()} before line {line}, position {pos}.";
+                var errorsWithLocation = errors.Select(err => err.WithMessage(err.Message + locationMessage));
+
+                aggregator.Add(errorsWithLocation);
+            }
+
+            return;
+        }
+
 
         /// <summary>
         /// Reads the content of a list with non-FHIR-primitive content (so, no name/_name pairs to be dealt with). Note
@@ -476,9 +502,8 @@ namespace Hl7.Fhir.Serialization
             }
 
             if (onlyNulls == true)
-            {
                 state.Errors.Add(ERR.PRIMITIVE_ARRAYS_ONLY_NULL.With(ref reader, propertyName));
-            }
+
             if (originalSize > 0 && elementIndex != originalSize)
                 state.Errors.Add(ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE.With(ref reader));
 
@@ -518,17 +543,26 @@ namespace Hl7.Fhir.Serialization
                     state.Errors.Add(error);
                 else if (Settings.Validator is not null)
                 {
-                    var propertyValueContext = new DeserializationContext(
+                    var propertyValueContext = new PropertyDeserializationContext(
                         state.Path,
-                        propertyName,
+                        "value",
                         propertyValueMapping,
                         primitiveValueProperty,
                         primitiveValueProperty.ImplementingType);
 
-                    result = doValidation(result, line, pos, propertyValueContext, state);
+                    result = doPropertyValidation(result, line, pos, propertyValueContext, state.Errors);
                 }
 
                 targetPrimitive.ObjectValue = result;
+
+                // Only do validation when no parse errors were encountered, otherwise we'll just
+                // produce spurious messages.
+                if (error is not null)
+                {
+                    var context = new InstanceDeserializationContext(state.Path, propertyValueMapping);
+                    doInstanceValidation(targetPrimitive, line, pos, context, state.Errors);
+                }
+
                 return targetPrimitive;
             }
             else

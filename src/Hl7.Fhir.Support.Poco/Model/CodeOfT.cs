@@ -33,7 +33,11 @@ using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Runtime.Serialization;
+using DAVE = Hl7.Fhir.Validation.CodedValidationException;
 using S = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Model
@@ -107,5 +111,22 @@ namespace Hl7.Fhir.Model
         string ISystemAndCode.Code => Value?.GetLiteral();
 
         public S.Code ToSystemCode() => new(Value?.GetSystem(), Value?.GetLiteral(), display: null, version: null);
+
+        public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            var baseResults = base.Validate(validationContext);
+
+            if (HasValidValue)
+                return baseResults;
+            else
+            {
+                var result = DAVE.INVALID_CODED_VALUE.With(ObjectValue, EnumUtility.GetName<T>()).AsResult(validationContext);
+#if NET45
+                return baseResults.Concat(new[] { result });
+#else
+                return baseResults.Append(result);
+#endif
+            }
+        }
     }
 }
