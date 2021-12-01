@@ -409,6 +409,14 @@ namespace Hl7.Fhir.Utility
 
         internal static IEnumerable<FieldInfo> FindEnumFields(Type t) => t.GetTypeInfo().DeclaredFields.Where(a => a.IsPublic && a.IsStatic);
 
+        public static bool IsRepeatingElement(object value) => IsRepeatingElement(value, out _);
+
+        public static bool IsRepeatingElement(object value, out ICollection element)
+        {
+            element = value as ICollection;
+            return element is not null && !element.GetType().IsArray;
+        }
+
         public static bool IsArray(object value) => value.GetType().IsArray;
 
         public static string PrettyTypeName(Type t)

@@ -8,7 +8,6 @@
 
 using Hl7.Fhir.Utility;
 using System;
-using System.Collections;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using DAVE = Hl7.Fhir.Validation.CodedValidationException;
@@ -44,21 +43,21 @@ namespace Hl7.Fhir.Validation
         {
             if (value is null)
                 return (Min == 0) ? ValidationResult.Success :
-                    DAVE.MANDATORY_ELEMENT_CANNOT_BE_NULL.With(Min).AsResult();
+                    DAVE.MANDATORY_ELEMENT_CANNOT_BE_NULL.With(Min).AsResult(validationContext);
 
             var count = 1;
 
-            if (value is IList list && !ReflectionHelper.IsArray(value))
+            if (ReflectionHelper.IsRepeatingElement(value, out var list))
             {
                 if (list.Cast<object>().Any(item => item is null))
-                    return DAVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL.AsResult();
+                    return DAVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL.AsResult(validationContext);
                 count = list.Count;
             }
 
             if (count < Min)
-                return DAVE.INCORRECT_CARDINALITY_MIN.With(count, Min).AsResult();
+                return DAVE.INCORRECT_CARDINALITY_MIN.With(count, Min).AsResult(validationContext);
             if (Max != -1 && count > Max)
-                return DAVE.INCORRECT_CARDINALITY_MAX.With(count, Max).AsResult();
+                return DAVE.INCORRECT_CARDINALITY_MAX.With(count, Max).AsResult(validationContext);
 
             return ValidationResult.Success;
         }

@@ -27,7 +27,7 @@ namespace Hl7.Fhir.Validation
             {
                 null => ValidationResult.Success,
                 string s when Date.IsValidValue(s) => ValidationResult.Success,
-                string s => DAVE.DATE_LITERAL_INVALID.With(s).AsResult(),
+                string s => DAVE.DATE_LITERAL_INVALID.With(s).AsResult(validationContext),
                 _ => throw new ArgumentException($"{nameof(DatePatternAttribute)} attributes can only be applied to string properties.")
             };
     }

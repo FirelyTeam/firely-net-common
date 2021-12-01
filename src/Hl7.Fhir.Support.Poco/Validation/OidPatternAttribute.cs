@@ -27,7 +27,7 @@ namespace Hl7.Fhir.Validation
             {
                 null => ValidationResult.Success,
                 string s when Oid.IsValidValue(s) => ValidationResult.Success,
-                string s => DAVE.OID_LITERAL_INVALID.With(s).AsResult(),
+                string s => DAVE.OID_LITERAL_INVALID.With(s).AsResult(validationContext),
                 _ => throw new ArgumentException($"{nameof(OidPatternAttribute)} attributes can only be applied to string properties.")
             };
     }

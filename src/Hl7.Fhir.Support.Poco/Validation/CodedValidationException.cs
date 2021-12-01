@@ -60,10 +60,7 @@ namespace Hl7.Fhir.Validation
 
         public Exception Exception => this;
 
-        public CodedValidationException(string code, string message) : base(message)
-        {
-            ErrorCode = code;
-        }
+        public CodedValidationException(string code, string message) : base(message) => ErrorCode = code;
 
         internal DAVE With(params object?[] parameters)
         {
@@ -71,9 +68,12 @@ namespace Hl7.Fhir.Validation
             return new(ErrorCode, formattedMessage);
         }
 
-        internal CodedValidationResult AsResult() => new(this);
-        public ICodedException WithMessage(string message) =>
-            new CodedValidationException(ErrorCode, message);
+        internal CodedValidationResult AsResult(ValidationContext context) =>
+            context.MemberName is string mn
+                ? new(this, memberNames: new[] { mn })
+                : new(this);
+
+        public ICodedException WithMessage(string message) => new DAVE(ErrorCode, message);
     }
 }
 

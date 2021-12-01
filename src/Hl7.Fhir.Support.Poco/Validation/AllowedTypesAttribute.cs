@@ -7,8 +7,8 @@
  */
 
 using Hl7.Fhir.Introspection;
+using Hl7.Fhir.Utility;
 using System;
-using System.Collections;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
@@ -42,8 +42,7 @@ namespace Hl7.Fhir.Validation
 
             var result = ValidationResult.Success;
 
-            // Avoid interpreting this as a collection just because string is IEnumerable<char>.
-            if (value is ICollection list && value is not string)
+            if (ReflectionHelper.IsRepeatingElement(value, out var list))
             {
                 foreach (var item in list)
                 {
@@ -64,7 +63,7 @@ namespace Hl7.Fhir.Validation
                 ? ValidationResult.Success
                 : DAVE.CHOICE_TYPE_NOT_ALLOWED
                     .With(ModelInspector.GetClassMappingForType(item.GetType())?.Name ?? item.GetType().Name)
-                    .AsResult();
+                    .AsResult(context);
 
         /// <summary>
         /// Determine whether the given type is allowed according to this attribute.

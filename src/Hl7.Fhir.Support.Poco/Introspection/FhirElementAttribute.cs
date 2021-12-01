@@ -29,9 +29,9 @@
 */
 
 using Hl7.Fhir.Specification;
+using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -98,8 +98,7 @@ namespace Hl7.Fhir.Introspection
 
             var result = new List<ValidationResult>();
 
-            // If value is an enumerated type, validate all elements of the list
-            if (value is ICollection list)
+            if (ReflectionHelper.IsRepeatingElement(value, out var list))
             {
                 foreach (var element in list)
                 {
@@ -117,10 +116,8 @@ namespace Hl7.Fhir.Introspection
             return result.FirstOrDefault();
         }
 
-        private static void validateElement(object value, ValidationContext validationContext, List<ValidationResult> result)
-        {
+        private static void validateElement(object value, ValidationContext validationContext, List<ValidationResult> result) =>
             DotNetAttributeValidation.TryValidate(value, result, validationContext.ValidateRecursively());
-        }
     }
 }
 

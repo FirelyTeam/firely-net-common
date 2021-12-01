@@ -25,12 +25,12 @@ namespace Hl7.Fhir.Validation
     {
         /// <inheritdoc />
         protected override ValidationResult? IsValid(object? value, ValidationContext validationContext) =>
-            IsValid(value, validationContext.GetNarrativeValidationKind());
+            IsValid(value, validationContext.GetNarrativeValidationKind(), validationContext);
 
         /// <summary>
         /// Validates whether the value is a string of well-formatted Xml.
         /// </summary>
-        public ValidationResult? IsValid(object? value, NarrativeValidationKind kind)
+        public ValidationResult? IsValid(object? value, NarrativeValidationKind kind, ValidationContext context)
         {
             if (value is null) return ValidationResult.Success;
 
@@ -41,8 +41,8 @@ namespace Hl7.Fhir.Validation
                     NarrativeValidationKind.None => ValidationResult.Success,
                     NarrativeValidationKind.Xml => XHtml.IsValidXml(xml, out var error)
                             ? ValidationResult.Success
-                            : DAVE.NARRATIVE_XML_IS_MALFORMED.With(error).AsResult(),
-                    NarrativeValidationKind.FhirXhtml => runValidateXhtmlSchema(xml),
+                            : DAVE.NARRATIVE_XML_IS_MALFORMED.With(error).AsResult(context),
+                    NarrativeValidationKind.FhirXhtml => runValidateXhtmlSchema(xml, context),
                     _ => throw new NotSupportedException($"Encountered unknown narrative validation kind {kind}.")
                 };
             }
@@ -50,7 +50,7 @@ namespace Hl7.Fhir.Validation
                 throw new ArgumentException($"{nameof(NarrativeXhtmlPatternAttribute)} attributes can only be applied to string properties.");
         }
 
-        private static ValidationResult runValidateXhtmlSchema(string text)
+        private static ValidationResult runValidateXhtmlSchema(string text, ValidationContext context)
         {
             try
             {
@@ -61,11 +61,11 @@ namespace Hl7.Fhir.Validation
 #else
                 var errors = SerializationUtil.RunFhirXhtmlSchemaValidation(doc);
 #endif
-                return errors.Any() ? DAVE.NARRATIVE_XML_IS_INVALID.With(string.Join(", ", errors)).AsResult() : ValidationResult.Success!;
+                return errors.Any() ? DAVE.NARRATIVE_XML_IS_INVALID.With(string.Join(", ", errors)).AsResult(context) : ValidationResult.Success!;
             }
             catch (FormatException fe)
             {
-                return DAVE.NARRATIVE_XML_IS_MALFORMED.With(fe.Message).AsResult();
+                return DAVE.NARRATIVE_XML_IS_MALFORMED.With(fe.Message).AsResult(context);
             }
         }
     }
