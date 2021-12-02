@@ -8,7 +8,6 @@
 
 
 using Hl7.Fhir.Introspection;
-using System;
 
 #nullable enable
 
@@ -23,26 +22,17 @@ namespace Hl7.Fhir.Serialization
         internal PropertyDeserializationContext(
             PathStack ps,
             string propertyName,
-            ClassMapping targetMapping,
-            PropertyMapping propMapping,
-            Type valueType)
+            PropertyMapping propMapping)
         {
             PathStack = ps;
             PropertyName = propertyName;
-            TargetObjectMapping = targetMapping;
             ElementMapping = propMapping;
-            ValueType = valueType;
         }
 
         internal PathStack PathStack { get; }
 
         /// <inheritdoc cref="PathStack.GetPath"/>
         public string GetPath() => PathStack.GetPath();
-
-        /// <summary>
-        /// The metadata for the type of which the current property is part of.
-        /// </summary>
-        public ClassMapping TargetObjectMapping { get; }
 
         /// <summary>
         /// The property name for which an instance is currently being deserialized.
@@ -53,11 +43,6 @@ namespace Hl7.Fhir.Serialization
         /// The metadata for the element that is currently being deserialized.
         /// </summary>
         public PropertyMapping ElementMapping { get; }
-
-        /// <summary>
-        /// The type of the instance currently being deserialized.
-        /// </summary>
-        public Type ValueType { get; }
     }
 
 
@@ -70,10 +55,10 @@ namespace Hl7.Fhir.Serialization
     {
         internal InstanceDeserializationContext(
             PathStack ps,
-            ClassMapping targetMapping)
+            ClassMapping instanceMapping)
         {
             PathStack = ps;
-            TargetObjectMapping = targetMapping;
+            InstanceMapping = instanceMapping;
         }
 
         internal PathStack PathStack { get; }
@@ -84,7 +69,7 @@ namespace Hl7.Fhir.Serialization
         /// <summary>
         /// The metadata for the type of which the current property is part of.
         /// </summary>
-        public ClassMapping TargetObjectMapping { get; }
+        public ClassMapping InstanceMapping { get; }
     }
 }
 

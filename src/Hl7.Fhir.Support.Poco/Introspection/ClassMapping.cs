@@ -87,17 +87,19 @@ namespace Hl7.Fhir.Introspection
             // Now continue with the normal algorithm, types adorned with the [FhirTypeAttribute]
             if (GetAttribute<FhirTypeAttribute>(type.GetTypeInfo(), release) is not { } typeAttribute) return false;
 
-            result = new ClassMapping(collectTypeName(typeAttribute, type), type, release)
+            var newMapping = new ClassMapping(collectTypeName(typeAttribute, type), type, release)
             {
                 IsResource = typeAttribute.IsResource || type.CanBeTreatedAsType(typeof(Resource)),
                 IsCodeOfT = ReflectionHelper.IsClosedGenericType(type) &&
                                 ReflectionHelper.IsConstructedFromGenericTypeDefinition(type, typeof(Code<>)),
                 IsFhirPrimitive = typeof(PrimitiveType).IsAssignableFrom(type),
                 IsNestedType = typeAttribute.IsNestedType,
-                _mappingInitializer = () => inspectProperties(type, release),
                 Canonical = typeAttribute.Canonical,
                 ValidationAttributes = GetAttributes<ValidationAttribute>(type.GetTypeInfo(), release).ToArray()
             };
+
+            newMapping._mappingInitializer = () => inspectProperties(type, newMapping, release);
+            result = newMapping;
 
             return true;
         }
@@ -318,13 +320,13 @@ namespace Hl7.Fhir.Introspection
 
         // Enumerate this class' properties using reflection, create PropertyMappings
         // for them and add them to the PropertyMappings.
-        private static PropertyMappingCollection inspectProperties(Type nativeType, FhirRelease fhirVersion)
+        private static PropertyMappingCollection inspectProperties(Type nativeType, ClassMapping declaringClass, FhirRelease fhirVersion)
         {
             var byName = new Dictionary<string, PropertyMapping>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var property in ReflectionHelper.FindPublicProperties(nativeType))
             {
-                if (!PropertyMapping.TryCreate(property, out var propMapping, fhirVersion)) continue;
+                if (!PropertyMapping.TryCreate(property, out var propMapping, declaringClass, fhirVersion)) continue;
 
                 var propKey = propMapping!.Name;
 

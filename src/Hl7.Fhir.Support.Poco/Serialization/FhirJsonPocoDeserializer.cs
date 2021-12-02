@@ -208,34 +208,32 @@ namespace Hl7.Fhir.Serialization
                 }
 
                 empty = false;
-                PropertyMapping? propMapping;
-                ClassMapping? propValueMapping;
 
-                try
+                // Lookup the metadata for this property by its name to determine the expected type of the value
+                var (propMapping, propValueMapping, error) = tryGetMappedElementMetadata(_inspector, mapping, ref reader, currentPropertyName);
+
+                if (error is not null)
                 {
-                    // Lookup the metadata for this property by its name to determine the expected type of the value
-                    (propMapping, propValueMapping) = getMappedElementMetadata(_inspector, mapping, ref reader, currentPropertyName);
-                }
-                catch (FhirJsonException jfe)
-                {
-                    state.Errors.Add(jfe);
+                    state.Errors.Add(error);
 
                     // try to recover by skipping to the next property.
                     reader.SkipTo(JsonTokenType.PropertyName);
                     continue;
                 }
-
-                // read past the property name into the value
-                reader.Read();
-
-                try
+                else
                 {
-                    state.Path.EnterElement(propMapping.Name);
-                    deserializePropertyValueInto(target, currentPropertyName, mapping, propMapping, propValueMapping, ref reader, plps, state);
-                }
-                finally
-                {
-                    state.Path.ExitElement();
+                    // read past the property name into the value
+                    reader.Read();
+
+                    try
+                    {
+                        state.Path.EnterElement(propMapping!.Name);
+                        deserializePropertyValueInto(target, currentPropertyName, mapping, propMapping, propValueMapping!, ref reader, plps, state);
+                    }
+                    finally
+                    {
+                        state.Path.ExitElement();
+                    }
                 }
             }
 
@@ -319,9 +317,7 @@ namespace Hl7.Fhir.Serialization
                 var deserializationContext = new PropertyDeserializationContext(
                     state.Path,
                     propertyName,
-                    targetMapping,
-                    propertyMapping,
-                    propertyValueMapping.NativeType);
+                    propertyMapping);
 
                 result = doPropertyValidation(result, line, pos, deserializationContext, state.Errors);
             }
@@ -546,9 +542,7 @@ namespace Hl7.Fhir.Serialization
                     var propertyValueContext = new PropertyDeserializationContext(
                         state.Path,
                         "value",
-                        propertyValueMapping,
-                        primitiveValueProperty,
-                        primitiveValueProperty.ImplementingType);
+                        primitiveValueProperty);
 
                     result = doPropertyValidation(result, line, pos, propertyValueContext, state.Errors);
                 }
@@ -657,20 +651,9 @@ namespace Hl7.Fhir.Serialization
                         reader.GenerateLocationMessage()),
             };
 
-
             // If there is a failure, and we have a handler installed, call it
             if (Settings.OnPrimitiveParseFailed is not null && result.error is not null)
-            {
-                try
-                {
-                    var newPartial = Settings.OnPrimitiveParseFailed(ref reader, requiredType, result.error);
-                    result = (newPartial, null);
-                }
-                catch (FhirJsonException fje)
-                {
-                    result = (result.partial, fje);
-                }
-            }
+                result = Settings.OnPrimitiveParseFailed(ref reader, requiredType, result.partial, result.error);
 
             // Read past the value
             reader.Read();
@@ -813,36 +796,42 @@ namespace Hl7.Fhir.Serialization
         /// <see cref="ClassMapping"/>, otherwise the <see cref="PropertyMapping.ImplementingType"/> is used. As well,
         /// since the property name is from the serialized form it may also be prefixed by '_'.
         /// </remarks>
-        private static (PropertyMapping propMapping, ClassMapping propValueMapping)
-            getMappedElementMetadata(ModelInspector inspector, ClassMapping parentMapping, ref Utf8JsonReader reader, string propertyName)
+        private static (PropertyMapping? propMapping, ClassMapping? propValueMapping, FhirJsonException? error) tryGetMappedElementMetadata(
+            ModelInspector inspector,
+            ClassMapping parentMapping,
+            ref Utf8JsonReader reader,
+            string propertyName)
         {
             bool startsWithUnderscore = propertyName[0] == '_';
             var elementName = startsWithUnderscore ? propertyName[1..] : propertyName;
 
             var propertyMapping = parentMapping.FindMappedElementByName(elementName)
-                ?? parentMapping.FindMappedElementByChoiceName(propertyName)
-                ?? throw ERR.UNKNOWN_PROPERTY_FOUND.With(ref reader, propertyName);
+                ?? parentMapping.FindMappedElementByChoiceName(propertyName);
 
-            ClassMapping propertyValueMapping = propertyMapping.Choice switch
+            if (propertyMapping is null)
+                return (null, null, ERR.UNKNOWN_PROPERTY_FOUND.With(ref reader, propertyName));
+
+            (ClassMapping? propertyValueMapping, FhirJsonException? error) = propertyMapping.Choice switch
             {
-                ChoiceType.None or ChoiceType.ResourceChoice => inspector.FindOrImportClassMapping(propertyMapping.ImplementingType) ??
-                        throw new InvalidOperationException($"Encountered property type {propertyMapping.ImplementingType} for which no mapping was found in the model assemblies. " + reader.GenerateLocationMessage()),
+                ChoiceType.None or ChoiceType.ResourceChoice =>
+                    inspector.FindOrImportClassMapping(propertyMapping.ImplementingType) is ClassMapping m
+                        ? (m, null)
+                        : throw new InvalidOperationException($"Encountered property type {propertyMapping.ImplementingType} for which no mapping was found in the model assemblies. " + reader.GenerateLocationMessage()),
                 ChoiceType.DatatypeChoice => getChoiceClassMapping(ref reader),
                 _ => throw new NotImplementedException("Unknown choice type in property mapping. " + reader.GenerateLocationMessage())
             };
 
-            return (propertyMapping, propertyValueMapping);
+            return (propertyMapping, propertyValueMapping, error);
 
-            ClassMapping getChoiceClassMapping(ref Utf8JsonReader r)
+            (ClassMapping?, FhirJsonException?) getChoiceClassMapping(ref Utf8JsonReader r)
             {
                 string typeSuffix = propertyName[propertyMapping.Name.Length..];
 
-                var typeSuffixMapping = string.IsNullOrEmpty(typeSuffix)
-                    ? throw ERR.CHOICE_ELEMENT_HAS_NO_TYPE.With(ref r, propertyMapping.Name)
-                    : inspector.FindClassMapping(typeSuffix) ??
-                    throw ERR.CHOICE_ELEMENT_HAS_UNKOWN_TYPE.With(ref r, propertyMapping.Name, typeSuffix);
-
-                return typeSuffixMapping;
+                return string.IsNullOrEmpty(typeSuffix)
+                    ? (null, ERR.CHOICE_ELEMENT_HAS_NO_TYPE.With(ref r, propertyMapping.Name))
+                    : inspector.FindClassMapping(typeSuffix) is ClassMapping cm
+                        ? (cm, null)
+                        : (default, ERR.CHOICE_ELEMENT_HAS_UNKOWN_TYPE.With(ref r, propertyMapping.Name, typeSuffix));
             }
         }
     }

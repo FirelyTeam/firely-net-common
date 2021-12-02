@@ -34,18 +34,10 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public NarrativeValidationKind NarrativeValidation { get; } = NarrativeValidationKind.None;
 
-        /// <summary>
-        /// A list of types (generally subclasses of <see cref="ValidationAttribute"/>) for the attributes
-        /// that should not be invoked while doing validation.
-        /// </summary>
-        public Type[]? Excludes { get; } = null;
-
         public DataAnnotationDeserialzationValidator(
-            NarrativeValidationKind narrativeValidation = NarrativeValidationKind.None,
-            Type[]? excludes = null)
+            NarrativeValidationKind narrativeValidation = NarrativeValidationKind.None)
         {
             NarrativeValidation = narrativeValidation;
-            Excludes = excludes;
         }
 
         /// <inheritdoc cref="IDeserializationValidator.ValidateProperty(object?, in PropertyDeserializationContext, out CodedValidationException[], out object?)"/>
@@ -68,7 +60,7 @@ namespace Hl7.Fhir.Serialization
                 .SetValidateRecursively(false)    // Don't go deeper - we've already validated the children because we're parsing bottom-up.
                 .SetNarrativeValidationKind(NarrativeValidation);
 
-            reportedErrors = runAttributeValidation(instance, context.TargetObjectMapping.ValidationAttributes, validationContext);
+            reportedErrors = runAttributeValidation(instance, context.InstanceMapping.ValidationAttributes, validationContext);
 
             // Now, just like Validator.Validate, run the IValidatableObject if applicable
             if (instance is IValidatableObject ivo)
@@ -77,7 +69,7 @@ namespace Hl7.Fhir.Serialization
                 if (extraErrors is not null && extraErrors.Any(e => e != ValidationResult.Success))
                 {
                     var codedErrors = extraErrors.OfType<CodedValidationResult>().Select(cvr => cvr.ValidationException);
-                    if (codedErrors.Count() != extraErrors.Count())
+                    if (codedErrors.Count() != extraErrors.Count)
                         throw new InvalidOperationException($"Validation attributes should return a {nameof(CodedValidationResult)}.");
 
                     reportedErrors = (reportedErrors is not null ? reportedErrors.Concat(codedErrors) : codedErrors).ToArray();
@@ -96,8 +88,6 @@ namespace Hl7.Fhir.Serialization
 
             foreach (var va in attributes)
             {
-                if (Excludes?.Contains(va.GetType()) == true) continue;
-
                 if (va.GetValidationResult(candidateValue, validationContext) is object vr)
                 {
                     if (vr is CodedValidationResult cvr)

@@ -48,11 +48,17 @@ namespace Hl7.Fhir.Serialization
     /// A callback that can handle parsing failures for primitive types.
     /// </summary>
     /// <param name="reader">A json reader positioned on the primitive value that failed to parse.</param>
-    /// <param name="originalException">The exception that the deserializer would have raised if this handler was not installed.</param>
     /// <param name="targetType">The .NET type the deserializer needs this handler to return to be able to update the POCO under construction.</param>
-    /// <remarks>Returns an object if this handler succeeded in parsing, otherwise the delegate must throw an exception (which might
-    /// be the <c>originalException</c>).</remarks>
-    public delegate object? PrimitiveParseHandler(ref Utf8JsonReader reader, Type targetType, FhirJsonException originalException);
+    /// <param name="originalValue">The value the deserializer would have returned if this handler was not installed.</param>
+    /// <param name="originalException">The exception the deserializer would have raised if this handler was not installed.</param>
+    /// <remarks>Returns an object, an error or both depending on whether the handler succeeded in parsing. The returned exception
+    /// may be the <c>originalException</c> and the returned value the <c>originalValue</c>.
+    /// If both are returned, the parsing is considered to have failed, with the returned object as the partially parsed result.</remarks>
+    public delegate (object?, FhirJsonException?) PrimitiveParseHandler(
+        ref Utf8JsonReader reader,
+        Type targetType,
+        object? originalValue,
+        FhirJsonException originalException);
 }
 
 #nullable restore

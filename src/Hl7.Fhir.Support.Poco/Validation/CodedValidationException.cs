@@ -11,6 +11,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using DAVE = Hl7.Fhir.Validation.CodedValidationException;
+
 #nullable enable
 
 namespace Hl7.Fhir.Validation
@@ -36,6 +37,8 @@ namespace Hl7.Fhir.Validation
         public const string NARRATIVE_XML_IS_MALFORMED_CODE = "PVAL114";
         public const string NARRATIVE_XML_IS_INVALID_CODE = "PVAL115";
         public const string INVALID_CODED_VALUE_CODE = "PVAL116";
+        public const string CONTAINED_RESOURCE_CANNOT_HAVE_NARRATIVE_CODE = "PVAL117";
+        public const string CONTAINED_RESOURCES_CANNOT_BE_NESTED_CODE = "PVAL118";
 
         internal static readonly DAVE CHOICE_TYPE_NOT_ALLOWED = new(CHOICE_TYPE_NOT_ALLOWED_CODE, "Value is of type '{0}', which is not an allowed choice.");
         internal static readonly DAVE INCORRECT_CARDINALITY_MIN = new(INCORRECT_CARDINALITY_MIN_CODE, "Element has {0} elements, but minium cardinality is {1}.");
@@ -53,6 +56,8 @@ namespace Hl7.Fhir.Validation
         internal static readonly DAVE URI_LITERAL_INVALID = new(URI_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for an uri.");
         internal static readonly DAVE UUID_LITERAL_INVALID = new(UUID_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for a uuid.");
         internal static readonly DAVE INVALID_CODED_VALUE = new(INVALID_CODED_VALUE_CODE, "Value '{0}' is not a correct code for valueset '{1}'.");
+        internal static readonly DAVE CONTAINED_RESOURCE_CANNOT_HAVE_NARRATIVE = new(CONTAINED_RESOURCE_CANNOT_HAVE_NARRATIVE_CODE, "Resource has contained resources with narrative, which is not allowed.");
+        internal static readonly DAVE CONTAINED_RESOURCES_CANNOT_BE_NESTED = new(CONTAINED_RESOURCES_CANNOT_BE_NESTED_CODE, "It is not allowed for a resource to contain resources which themselves contain resources.");
 
         /// <summary>
         /// The unique and permanent code for this error.

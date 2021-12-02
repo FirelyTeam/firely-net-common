@@ -118,7 +118,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             error?.ErrorCode.Should().Be(FhirJsonException.ARRAYS_CANNOT_BE_EMPTY_CODE);
 
             (result, error) = test(31);
-            result.Should().Be("31");
+            result.Should().BeNull();
             error?.ErrorCode.Should().Be(FhirJsonException.UNEXPECTED_JSON_TOKEN_CODE);
 
             try
@@ -130,14 +130,17 @@ namespace Hl7.Fhir.Support.Poco.Tests
             {
             }
 
-            static object correctIntToBool(ref Utf8JsonReader reader, Type targetType, FhirJsonException originalException)
+            static (object?, FhirJsonException?) correctIntToBool(ref Utf8JsonReader reader,
+                                                                  Type targetType,
+                                                                  object? originalValue,
+                                                                  FhirJsonException originalException)
             {
                 return reader.GetInt32() switch
                 {
-                    < 10 => false,
-                    < 20 => true,
-                    < 30 => throw ERR.ARRAYS_CANNOT_BE_EMPTY,
-                    < 40 => throw originalException,
+                    < 10 => (false, null),
+                    < 20 => (true, null),
+                    < 30 => (originalValue, ERR.ARRAYS_CANNOT_BE_EMPTY),
+                    < 40 => (null, originalException),
                     _ => throw new InvalidOperationException("Something")
                 };
             }
@@ -659,10 +662,9 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 if (candidateValue is not FhirDateTime f) return;
                 if (context.GetPath() != "Patient.deceased") return;
 
-                context.TargetObjectMapping.Name.Should().Be("Patient");
+                context.ElementMapping.DeclaringClass.Name.Should().Be("Patient");
                 context.PropertyName.Should().Be("deceasedDateTime");
                 context.ElementMapping.Name.Should().Be("deceased");
-                context.ValueType.Should().Be(typeof(FhirDateTime));
 
                 // Invalid value, but since this value has already been validated during
                 // deserialization of the FhirDateTime, validation will not be triggered!
@@ -676,29 +678,25 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
         private class CustomDataTypeValidator : IDeserializationValidator
         {
-            public void ValidateInstance(object? candidateInstance, in InstanceDeserializationContext context, out DAVE[]? reportedErrors)
+            public void ValidateInstance(object? instance, in InstanceDeserializationContext context, out DAVE[]? reportedErrors)
             {
-                reportedErrors = null;
-            }
-
-            public void ValidateProperty(object? candidateValue, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors, out object? validatedValue)
-            {
-                if (candidateValue is string s &&
-                    context.TargetObjectMapping.Name == "dateTime" &&
-                    context.ElementMapping.Name == "value")
+                if (context.InstanceMapping.Name == "dateTime")
                 {
-                    context.PropertyName.Should().Be("value");
-                    context.ValueType.Should().Be(typeof(string));
+                    var dt = instance.Should().BeOfType<FhirDateTime>().Subject;
 
-                    if (s.EndsWith("Z")) s = s.TrimEnd('Z') + "+00:00";
-                    validatedValue = s;
+                    if (dt.Value.EndsWith("Z")) dt.Value = dt.Value.TrimEnd('Z') + "+00:00";
                     reportedErrors = new[] { DAVE.DATETIME_LITERAL_INVALID };
                 }
                 else
                 {
-                    validatedValue = candidateValue;
                     reportedErrors = null;
                 }
+            }
+
+            public void ValidateProperty(object? candidateValue, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors, out object? validatedValue)
+            {
+                reportedErrors = null;
+                validatedValue = candidateValue;
             }
         }
 
