@@ -63,47 +63,34 @@ namespace Hl7.Fhir.Model
             Value = value;
         }
 
-
-        private T? _enumValue = null;
-        private object _lastObjectValue = null;
-
-        public bool HasValidValue { get; private set; } = true;
-
         // Primitive value of element
         [FhirElement("value", IsPrimitiveValue = true, XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 30)]
         [DataMember]
         public T? Value
         {
-            get
-            {
-                if (!ReferenceEquals(_lastObjectValue, ObjectValue))
-                {
-                    _lastObjectValue = ObjectValue;
-
-                    if (ObjectValue is string s && EnumUtility.ParseLiteral<T>(s) is T e)
-                    {
-                        _enumValue = e;
-                        HasValidValue = true;
-                    }
-                    else
-                    {
-                        HasValidValue = false;
-                        _enumValue = null;
-                    }
-                }
-
-                return HasValidValue
-                    ? _enumValue
+            get => TryParseObjectValue(out var value)
+                    ? value
                     : throw new InvalidCastException($"Value '{ObjectValue}' cannot be cast to a member of enumeration {typeof(T).Name}.");
-            }
             set
             {
-                _enumValue = value;
-                _lastObjectValue = ObjectValue = value?.GetLiteral();
-                HasValidValue = true;
-
+                ObjectValue = value?.GetLiteral();
                 OnPropertyChanged("Value");
             }
+        }
+
+        internal bool TryParseObjectValue(out T? value)
+        {
+            value = default;
+
+            if (ObjectValue is string s && EnumUtility.ParseLiteral<T>(s) is T parsed)
+            {
+                value = parsed;
+                return true;
+            }
+            else if (ObjectValue is null)
+                return true;
+            else
+                return false;
         }
 
         string ISystemAndCode.System => Value?.GetSystem();
@@ -116,7 +103,7 @@ namespace Hl7.Fhir.Model
         {
             var baseResults = base.Validate(validationContext);
 
-            if (HasValidValue)
+            if (TryParseObjectValue(out _))
                 return baseResults;
             else
             {

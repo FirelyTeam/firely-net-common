@@ -52,7 +52,7 @@ namespace Hl7.Fhir.Validation
         internal static readonly DAVE TIME_LITERAL_INVALID = new(TIME_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for a time.");
         internal static readonly DAVE URI_LITERAL_INVALID = new(URI_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for an uri.");
         internal static readonly DAVE UUID_LITERAL_INVALID = new(UUID_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for a uuid.");
-        internal static readonly DAVE INVALID_CODED_VALUE = new(INVALID_CODED_VALUE_CODE, "'{0}' is not a correct code for enumeration '{1}'.");
+        internal static readonly DAVE INVALID_CODED_VALUE = new(INVALID_CODED_VALUE_CODE, "Value '{0}' is not a correct code for valueset '{1}'.");
 
         /// <summary>
         /// The unique and permanent code for this error.

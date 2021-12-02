@@ -51,7 +51,7 @@ namespace Hl7.Fhir.Serialization
         public const string PRIMITIVE_ARRAYS_LONELY_NULL_CODE = "JSON124";
         public const string PRIMITIVE_ARRAYS_ONLY_NULL_CODE = "JSON125";
         public const string INCOMPATIBLE_SIMPLE_VALUE_CODE = "JSON126";
-        public const string CODED_VALUE_NOT_IN_ENUM_CODE = "JSON128";
+        // public const string CODED_VALUE_NOT_IN_ENUM_CODE = "JSON128";
 
         // ==========================================
         // Unrecoverable Errors
@@ -103,7 +103,9 @@ namespace Hl7.Fhir.Serialization
         internal static readonly FhirJsonException PRIMITIVE_ARRAYS_ONLY_NULL = new(PRIMITIVE_ARRAYS_ONLY_NULL_CODE, "If present, property '{0}' should not only contain nulls.", true);
 
         // The value cannot be found in an enum, but the raw data is retained in the POCO
-        internal static readonly FhirJsonException CODED_VALUE_NOT_IN_ENUM = new(CODED_VALUE_NOT_IN_ENUM_CODE, "Literal string '{0}' is not a member of valueset '{1}'.", true);
+        // Validation is now done using POCO validation, so have removed it here.
+        // Keep code around in case I make my mind up before publication.
+        // internal static readonly FhirJsonException CODED_VALUE_NOT_IN_ENUM = new(CODED_VALUE_NOT_IN_ENUM_CODE, "Literal string '{0}' is not a member of valueset '{1}'.", true);
 
         /// <summary>
         /// The unique and permanent code for this error.

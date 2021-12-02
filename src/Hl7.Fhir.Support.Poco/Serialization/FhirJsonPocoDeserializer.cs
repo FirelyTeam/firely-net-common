@@ -250,7 +250,7 @@ namespace Hl7.Fhir.Serialization
 
             // Only run instance validation when deserialization yielded no errors
             // to avoid spurious error messages.
-            if (state.Errors.Count == oldErrorCount)
+            if (Settings.Validator is not null && state.Errors.Count == oldErrorCount)
             {
                 var context = new InstanceDeserializationContext(state.Path, mapping);
                 doInstanceValidation(target, line, pos, context, state.Errors);
@@ -557,12 +557,11 @@ namespace Hl7.Fhir.Serialization
 
                 // Only do validation when no parse errors were encountered, otherwise we'll just
                 // produce spurious messages.
-                if (error is not null)
+                if (Settings.Validator is not null && error is null)
                 {
                     var context = new InstanceDeserializationContext(state.Path, propertyValueMapping);
                     doInstanceValidation(targetPrimitive, line, pos, context, state.Errors);
                 }
-
                 return targetPrimitive;
             }
             else
@@ -642,7 +641,8 @@ namespace Hl7.Fhir.Serialization
                 JsonTokenType.String when requiredType == typeof(byte[]) =>
                                 !Settings.DisableBase64Decoding ? readBase64(ref reader) : new(reader.GetString(), null),
                 JsonTokenType.String when requiredType == typeof(DateTimeOffset) => readDateTimeOffset(ref reader),
-                JsonTokenType.String when requiredType.IsEnum => readEnum(ref reader, requiredType),
+                JsonTokenType.String when requiredType.IsEnum => new(reader.GetString(), null),
+                //JsonTokenType.String when requiredType.IsEnum => readEnum(ref reader, requiredType),
                 JsonTokenType.String => unexpectedToken(ref reader, reader.GetString(), requiredType.Name, "string"),
                 JsonTokenType.Number => tryGetMatchingNumber(ref reader, requiredType),
                 JsonTokenType.True or JsonTokenType.False when requiredType == typeof(bool) => new(reader.GetBoolean(), null),
@@ -691,15 +691,17 @@ namespace Hl7.Fhir.Serialization
                     new(contents, ERR.STRING_ISNOTAN_INSTANT.With(ref reader, contents));
             }
 
-            static (object?, FhirJsonException?) readEnum(ref Utf8JsonReader reader, Type enumType)
-            {
-                var contents = reader.GetString()!;
-                var enumValue = EnumUtility.ParseLiteral(contents, enumType);
+            // Validation is now done using POCO validation, so have removed it here.
+            // Keep code around in case I make my mind up before publication.
+            //static (object?, FhirJsonException?) readEnum(ref Utf8JsonReader reader, Type enumType)
+            //{
+            //    var contents = reader.GetString()!;
+            //    var enumValue = EnumUtility.ParseLiteral(contents, enumType);
 
-                return enumValue is not null
-                    ? (contents, null)
-                    : (contents, ERR.CODED_VALUE_NOT_IN_ENUM.With(ref reader, contents, EnumUtility.GetName(enumType)));
-            }
+            //    return enumValue is not null
+            //        ? (contents, null)
+            //        : (contents, ERR.CODED_VALUE_NOT_IN_ENUM.With(ref reader, contents, EnumUtility.GetName(enumType)));
+            //}
         }
 
         private static (object?, FhirJsonException) unexpectedToken(ref Utf8JsonReader reader, string? value, string expected, string actual) =>

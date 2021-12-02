@@ -34,7 +34,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [DataRow("hi!", typeof(byte[]), "JSON106")]
         [DataRow("hi!", typeof(DateTimeOffset), "JSON107")]
         [DataRow("2007-02-03", typeof(DateTimeOffset), null)]
-        [DataRow("enumvalue", typeof(UriFormat), ERR.CODED_VALUE_NOT_IN_ENUM_CODE)]
+        [DataRow("enumvalue", typeof(UriFormat), DAVE.INVALID_CODED_VALUE_CODE)]
         [DataRow(true, typeof(Enum), "JSON110")]
         [DataRow("hi!", typeof(int), "JSON110")]
 
@@ -202,7 +202,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
         [DataRow("female", typeof(Code), null, "female")]
         [DataRow("is-a", typeof(Code<FilterOperator>), null, "is-a")]
-        [DataRow("female", typeof(Code<FilterOperator>), ERR.CODED_VALUE_NOT_IN_ENUM_CODE, "female")]
+        [DataRow("wrong", typeof(Code<FilterOperator>), DAVE.INVALID_CODED_VALUE_CODE, "wrong")]   // just sets ObjectValue, POCO validation handles enum checks
         [DataRow(true, typeof(Code), ERR.UNEXPECTED_JSON_TOKEN_CODE, "true")]
 
         [DataRow("hi!", typeof(Instant), "JSON107")]
@@ -226,16 +226,14 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
             var result = test();
 
+            state.Errors.HasExceptions.Should().Be(errorcode is not null);
+
             if (state.Errors.HasExceptions)
             {
                 if (errorcode is not null)
                     state.Errors.Should().OnlyContain(ce => ce.ErrorCode == errorcode);
                 else
                     throw state.Errors.Single().Exception;
-            }
-            else
-            {
-                errorcode.Should().BeNull();
             }
 
             if (expectedObjectValue is not null)
@@ -600,6 +598,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
                     ERR.EXPECTED_PRIMITIVE_NOT_NULL_CODE, // telecom use cannot be null
                     ERR.EXPECTED_PRIMITIVE_NOT_OBJECT_CODE, // address.use is not an object
                     ERR.PRIMITIVE_ARRAYS_BOTH_NULL_CODE, // address.line should not have a null at the same position in both arrays
+                    DAVE.INVALID_CODED_VALUE_CODE,      // status 'generatedY'
                     ERR.PRIMITIVE_ARRAYS_ONLY_NULL_CODE, // Questionnaire._subjectType cannot be just null
                     DAVE.CHOICE_TYPE_NOT_ALLOWED_CODE,   // incorrect use of valueBoolean in option.
                     ERR.EXPECTED_START_OF_OBJECT_CODE, // item.code is a complex object, not a boolean
@@ -647,7 +646,10 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
         private class CustomComplexValidator : IDeserializationValidator
         {
-            public void ValidateInstance(object? candidateInstance, in InstanceDeserializationContext context, out DAVE[]? reportedErrors) => throw new NotImplementedException();
+            public void ValidateInstance(object? candidateInstance, in InstanceDeserializationContext context, out DAVE[]? reportedErrors)
+            {
+                reportedErrors = null;
+            }
 
             public void ValidateProperty(object? candidateValue, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors, out object? validatedValue)
             {
@@ -674,7 +676,10 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
         private class CustomDataTypeValidator : IDeserializationValidator
         {
-            public void ValidateInstance(object? candidateInstance, in InstanceDeserializationContext context, out DAVE[]? reportedErrors) => throw new NotImplementedException();
+            public void ValidateInstance(object? candidateInstance, in InstanceDeserializationContext context, out DAVE[]? reportedErrors)
+            {
+                reportedErrors = null;
+            }
 
             public void ValidateProperty(object? candidateValue, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors, out object? validatedValue)
             {

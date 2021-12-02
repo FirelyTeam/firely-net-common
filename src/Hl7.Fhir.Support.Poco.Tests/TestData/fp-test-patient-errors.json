@@ -1,14 +1,18 @@
 {
   "resourceType": "Patient",
+  "id": "pat1-with-errors",
+  "meta": {
+    "lastUpdated": "not a valid instant"
+  },
   "text": {
     "resourceType": "Narrative",
-    "status": "generatedX",
+    "status": "generated",
     "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>Patient Donald DUCK @ Acme Healthcare, Inc. MR = 654321</p></div>"
   },
   "contained": [
     {
-        "resourceType": "PatientX",
-        "id": "1"
+      "resourceType": "PatientX",
+      "id": "1"
     },
     {
       "resourceType": "Meta",
@@ -45,7 +49,10 @@
           "use": "usual",
           "family": [ "error: array is unexpected here" ],
           "given": [ "Eveline" ],
-          "_given" : [ null, { "id": "a1" } ]
+          "_given": [
+            null,
+            { "id": "a1" }
+          ]
         }
       ],
       "telecom": [
@@ -62,7 +69,10 @@
         {
           "use": { "incorrect": "should have been a simple string" },
           "line": [ "2222 Home Street", null ],
-          "_line": [ { "id": "bla"} , null]
+          "_line": [
+            { "id": "bla" },
+            null
+          ]
         }
       ],
       "managingOrganization": { "reference": "Organization/hl7" }
@@ -83,9 +93,8 @@
           "linkId": "1",
           "text": "Cancer Quality Forum Questionnaire 2012",
           "type": "display",
-          "option":
-          [
-              {"valueBoolean": true }
+          "option": [
+            { "valueBoolean": true }
           ],
           "item": [
             {
@@ -306,7 +315,7 @@
       }
     },
     {
-      "language": { "coding": [ ] },
+      "language": { "coding": [] },
       "preferred": true,
       "_preferred": {
         "extension": [
@@ -323,7 +332,7 @@
     "display": "ACME Healthcare, Inc"
   },
   "link": [
-    {     
+    {
     }
   ]
 }

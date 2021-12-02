@@ -65,8 +65,7 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public string GetPath()
         {
-            if (_pathStack.Count == 0)
-                throw new InvalidOperationException("No path present.");
+            if (_pathStack.Count == 0) return "";
 
             StringBuilder b = new();
 
