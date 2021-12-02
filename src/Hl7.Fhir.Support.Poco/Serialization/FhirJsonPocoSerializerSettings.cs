@@ -24,6 +24,9 @@ namespace Hl7.Fhir.Serialization
     /// </summary>
     public record FhirJsonPocoSerializerSettings
     {
+        /// <summary>
+        /// Specifies the filter to use for summary serialization.
+        /// </summary>
         public SerializationFilter? SummaryFilter { get; set; } = default;
     }
 }
