@@ -47,8 +47,8 @@ namespace Hl7.Fhir.Serialization
         public const string OBJECTS_CANNOT_BE_EMPTY_CODE = "JSON120";
         public const string ARRAYS_CANNOT_BE_EMPTY_CODE = "JSON121";
         public const string PRIMITIVE_ARRAYS_INCOMPAT_SIZE_CODE = "JSON122";
-        public const string PRIMITIVE_ARRAYS_BOTH_NULL_CODE = "JSON123";
-        public const string PRIMITIVE_ARRAYS_LONELY_NULL_CODE = "JSON124";
+        //public const string PRIMITIVE_ARRAYS_BOTH_NULL_CODE = "JSON123";
+        //public const string PRIMITIVE_ARRAYS_LONELY_NULL_CODE = "JSON124";
         public const string PRIMITIVE_ARRAYS_ONLY_NULL_CODE = "JSON125";
         public const string INCOMPATIBLE_SIMPLE_VALUE_CODE = "JSON126";
         // public const string CODED_VALUE_NOT_IN_ENUM_CODE = "JSON128";
@@ -98,8 +98,8 @@ namespace Hl7.Fhir.Serialization
         internal static readonly FhirJsonException PRIMITIVE_ARRAYS_INCOMPAT_SIZE = new(PRIMITIVE_ARRAYS_INCOMPAT_SIZE_CODE, "Primitive arrays split in two properties should have the same size.", true);
 
         // This leaves the incorrect nulls in place, no change in data.
-        internal static readonly FhirJsonException PRIMITIVE_ARRAYS_BOTH_NULL = new(PRIMITIVE_ARRAYS_BOTH_NULL_CODE, "Primitive arrays split in two properties should not both have a null at the same position.", true);
-        internal static readonly FhirJsonException PRIMITIVE_ARRAYS_LONELY_NULL = new(PRIMITIVE_ARRAYS_LONELY_NULL_CODE, "Property '{0}' is a single primitive array and should not contain a null.", true);
+        //internal static readonly FhirJsonException PRIMITIVE_ARRAYS_BOTH_NULL = new(PRIMITIVE_ARRAYS_BOTH_NULL_CODE, "Primitive arrays split in two properties should not both have a null at the same position.", true);
+        //internal static readonly FhirJsonException PRIMITIVE_ARRAYS_LONELY_NULL = new(PRIMITIVE_ARRAYS_LONELY_NULL_CODE, "Property '{0}' is a single primitive array and should not contain a null.", true);
         internal static readonly FhirJsonException PRIMITIVE_ARRAYS_ONLY_NULL = new(PRIMITIVE_ARRAYS_ONLY_NULL_CODE, "If present, property '{0}' should not only contain nulls.", true);
 
         // The value cannot be found in an enum, but the raw data is retained in the POCO

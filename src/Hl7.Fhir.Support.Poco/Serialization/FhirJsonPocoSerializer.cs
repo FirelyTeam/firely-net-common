@@ -100,9 +100,9 @@ namespace Hl7.Fhir.Serialization
                             addSuffixToElementName(member.Key, member.Value) : member.Key;
 
                 if (member.Value is PrimitiveType pt)
-                    serializeFhirPrimitive(propertyName, pt, writer, filter);
-                else if (member.Value is IReadOnlyCollection<PrimitiveType> pts)
-                    serializeFhirPrimitiveList(propertyName, pts, writer, filter);
+                    serializeFhirPrimitive(propertyName, pt, writer);
+                else if (member.Value is IReadOnlyCollection<PrimitiveType?> pts)
+                    serializeFhirPrimitiveList(propertyName, pts, writer);
                 else
                 {
                     writer.WritePropertyName(propertyName);
@@ -156,9 +156,8 @@ namespace Hl7.Fhir.Serialization
         /// may use Json <c>null</c>s as placeholders.</remarks>
         private void serializeFhirPrimitiveList(
             string elementName,
-            IReadOnlyCollection<PrimitiveType> values,
-            Utf8JsonWriter writer,
-            SerializationFilter? filter)
+            IReadOnlyCollection<PrimitiveType?> values,
+            Utf8JsonWriter writer)
         {
             if (values is null) throw new ArgumentNullException(nameof(values));
 
@@ -174,7 +173,7 @@ namespace Hl7.Fhir.Serialization
 
             foreach (var value in values)
             {
-                if (value.ObjectValue is not null)
+                if (value?.ObjectValue is not null)
                 {
                     if (!wroteStartArray)
                     {
@@ -204,7 +203,7 @@ namespace Hl7.Fhir.Serialization
 
             foreach (var value in values)
             {
-                if (value.HasElements)
+                if (value?.HasElements == true)
                 {
                     if (!wroteStartArray)
                     {
@@ -240,7 +239,7 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         /// <remarks>FHIR primitives are handled separately here since they may require
         /// serialization into two Json properties called "elementName" and "_elementName".</remarks>
-        private void serializeFhirPrimitive(string elementName, PrimitiveType value, Utf8JsonWriter writer, SerializationFilter? filter)
+        private void serializeFhirPrimitive(string elementName, PrimitiveType value, Utf8JsonWriter writer)
         {
             if (value is null) throw new ArgumentNullException(nameof(value));
 

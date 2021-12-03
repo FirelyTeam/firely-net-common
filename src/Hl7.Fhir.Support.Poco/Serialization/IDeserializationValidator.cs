@@ -22,17 +22,20 @@ namespace Hl7.Fhir.Serialization
         /// Implements validation logic to be run on a property value just before that value is used 
         /// to initialize the property.
         /// </summary>
-        /// <param name="candidateValue">The value to be validated.</param>
+        /// <param name="instance">The instance to be validated.</param>
         /// <param name="context">The current context of deserialization, like the path and the type under deserialization.</param>
-        /// <param name="reportedErrors">null, Zero or more validation errors which will be aggregated in the final result of deserialization.</param>
-        /// <param name="validatedValue">The validated value that will be used to initialize the deserialized object at this point.</param>
-        /// <returns>An array with zero or more formatted strings detailing the validation issues.</returns>
+        /// <param name="reportedErrors">null, zero or more validation errors which will be aggregated in the final result of deserialization.</param>
         void ValidateProperty(
-            object? candidateValue,
+            object? instance,
             in PropertyDeserializationContext context,
-            out CodedValidationException[]? reportedErrors,
-            out object? validatedValue);
+            out CodedValidationException[]? reportedErrors);
 
+        /// <summary>
+        /// Implements validation logic to be run on a deserialized instance.
+        /// </summary>
+        /// <param name="instance">The instance to be validated</param>
+        /// <param name="context">The current context of deserialization, like the path and the type under deserialization.</param>
+        /// <param name="reportedErrors">null, zero or more validation errors which will be aggregated in the final result of deserialization.</param>
         void ValidateInstance(
             object? instance,
             in InstanceDeserializationContext context,

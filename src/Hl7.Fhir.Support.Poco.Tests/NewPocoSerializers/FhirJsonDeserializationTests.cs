@@ -224,7 +224,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 var reader = constructReader(value);
                 reader.Read();
 
-                return deserializer.DeserializeFhirPrimitive(null, "dummy", mapping, ref reader, state);
+                return deserializer.DeserializeFhirPrimitive(null, "dummy", mapping, ref reader, null, state);
             }
 
             var result = test();
@@ -270,7 +270,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             else
             {
                 result = (Base)mapping.Factory();
-                deserializer.DeserializeObjectInto(result, mapping, ref reader, inResource: false, state);
+                deserializer.DeserializeObjectInto(result, mapping, ref reader, FhirJsonPocoDeserializer.DeserializedObjectKind.Complex, state);
             }
 
             readerState = reader; // copy
@@ -291,7 +291,8 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 return;
 
             string why = $"Should be the same: actual [{string.Join(",", actual.Select(a => a.ErrorCode))}] and expected [{string.Join(";", expected)}]";
-            expected.Length.Should().Be(actual.Count(), because: why);
+            Console.WriteLine("Messages: " + string.Join(", ", actual.Select(a => a.Message)));
+            actual.Count().Should().Be(expected.Length, because: why);
             _ = actual.Zip(expected, (a, e) => a.ErrorCode.Should().Be(e, because: why)).ToList();
             Console.WriteLine($"Found {string.Join(", ", actual.Select(a => a.Message))}");
         }
@@ -462,23 +463,23 @@ namespace Hl7.Fhir.Support.Poco.Tests
             yield return data<TestAddress>(new { line = Array.Empty<string>(), _line = new string?[] { null } }, ERR.ARRAYS_CANNOT_BE_EMPTY, ERR.PRIMITIVE_ARRAYS_ONLY_NULL);
             yield return data<TestAddress>(new { line = new string?[] { null }, _line = new[] { new { id = "1" } } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL);
             yield return data<TestAddress>(new { line = new[] { "Ewout" }, _line = new string?[] { null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL);
-            yield return data<TestAddress>(new { line = new string?[] { null }, _line = new string?[] { null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_BOTH_NULL, ERR.PRIMITIVE_ARRAYS_ONLY_NULL);
-            yield return data<TestAddress>(new { line = new string?[] { null }, _line = new string?[] { null, null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_BOTH_NULL, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
-            yield return data<TestAddress>(new { line = new string?[] { null, null }, _line = new string?[] { null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_BOTH_NULL, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
+            yield return data<TestAddress>(new { line = new string?[] { null }, _line = new string?[] { null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_ONLY_NULL);
+            yield return data<TestAddress>(new { line = new string?[] { null }, _line = new string?[] { null, null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
+            yield return data<TestAddress>(new { line = new string?[] { null, null }, _line = new string?[] { null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
             yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" } }, checkName);
             yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" }, _line = new[] { new { id = "1" } } }, checkId1AndName, ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
             yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" }, _line = new[] { new { id = "1" }, null } }, checkId1AndName);
             yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" }, _line = new[] { new { id = "1" }, new { id = "2" } } }, checkAll);
             yield return data<TestAddress>(new { line = new[] { "Ewout", null }, _line = new[] { null, new { id = "2" } } });
-            yield return data<TestAddress>(new { line = new[] { "Ewout", null }, _line = new[] { new { id = "1" }, null } }, checkId1, ERR.PRIMITIVE_ARRAYS_BOTH_NULL);
-            yield return data<TestAddress>(new { _line = new[] { new { id = "1" }, null } }, checkId1, ERR.PRIMITIVE_ARRAYS_LONELY_NULL);
+            yield return data<TestAddress>(new { line = new[] { "Ewout", null }, _line = new[] { new { id = "1" }, null } }, checkId1, DAVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL);
+            yield return data<TestAddress>(new { _line = new[] { new { id = "1" }, null } }, checkId1, DAVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL);
             yield return data<TestAddress>(new { _line = new[] { new { id = "1" }, new { id = "2" } } }, checkIds);
 
             static void checkName(object parsed) => parsed.Should().BeOfType<TestAddress>().Which.Line.Should().BeEquivalentTo("Ewout", "Wouter");
             static void checkIds(object parsed) =>
-                parsed.Should().BeOfType<TestAddress>().Which.LineElement.Select(le => le.ElementId).Should().BeEquivalentTo("1", "2");
+                parsed.Should().BeOfType<TestAddress>().Which.LineElement.Select(le => le?.ElementId).Should().BeEquivalentTo("1", "2");
             static void checkId1(object parsed) =>
-                parsed.Should().BeOfType<TestAddress>().Which.LineElement.Select(le => le.ElementId).Should().BeEquivalentTo("1", null);
+                parsed.Should().BeOfType<TestAddress>().Which.LineElement.Select(le => le?.ElementId).Should().BeEquivalentTo("1", null);
             static void checkId1AndName(object parsed)
             {
                 checkName(parsed);
@@ -600,13 +601,13 @@ namespace Hl7.Fhir.Support.Poco.Tests
                     ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE_CODE, // given and _given not the same length
                     ERR.EXPECTED_PRIMITIVE_NOT_NULL_CODE, // telecom use cannot be null
                     ERR.EXPECTED_PRIMITIVE_NOT_OBJECT_CODE, // address.use is not an object
-                    ERR.PRIMITIVE_ARRAYS_BOTH_NULL_CODE, // address.line should not have a null at the same position in both arrays
+                    DAVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL_CODE, // address.line should not have a null at the same position in both arrays
                     DAVE.INVALID_CODED_VALUE_CODE,      // status 'generatedY'
                     ERR.PRIMITIVE_ARRAYS_ONLY_NULL_CODE, // Questionnaire._subjectType cannot be just null
                     DAVE.CHOICE_TYPE_NOT_ALLOWED_CODE,   // incorrect use of valueBoolean in option.
                     ERR.EXPECTED_START_OF_OBJECT_CODE, // item.code is a complex object, not a boolean
                     DAVE.URI_LITERAL_INVALID_CODE, // incorrect oid
-                    ERR.PRIMITIVE_ARRAYS_LONELY_NULL_CODE, // given cannot be the only array with a null
+                    DAVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL_CODE, // given cannot be a single array with just a null
                     ERR.UNEXPECTED_JSON_TOKEN_CODE, // telecom.rank should be a number, not a boolean
                     ERR.USE_OF_UNDERSCORE_ILLEGAL_CODE, // should be extension.url, not extension._url
                     ERR.UNEXPECTED_JSON_TOKEN_CODE, // gender.extension.valueCode should be a string, not a number
@@ -649,18 +650,17 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
         private class CustomComplexValidator : IDeserializationValidator
         {
-            public void ValidateInstance(object? candidateInstance, in InstanceDeserializationContext context, out DAVE[]? reportedErrors)
+            public void ValidateInstance(object? instance, in InstanceDeserializationContext context, out DAVE[]? reportedErrors)
             {
                 reportedErrors = null;
             }
 
-            public void ValidateProperty(object? candidateValue, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors, out object? validatedValue)
+            public void ValidateProperty(object? instance, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors)
             {
-                validatedValue = candidateValue;
                 reportedErrors = null;
 
-                if (candidateValue is not FhirDateTime f) return;
-                if (context.GetPath() != "Patient.deceased") return;
+                if (instance is not FhirDateTime f) return;
+                if (context.Path != "Patient.deceased") return;
 
                 context.ElementMapping.DeclaringClass.Name.Should().Be("Patient");
                 context.PropertyName.Should().Be("deceasedDateTime");
@@ -670,7 +670,6 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 // deserialization of the FhirDateTime, validation will not be triggered!
                 if (f.Value.EndsWith("Z")) f.Value = f.Value.TrimEnd('Z') + "+00:00";
 
-                validatedValue = f;
                 reportedErrors = new[] { DAVE.DATETIME_LITERAL_INVALID };
             }
 
@@ -693,10 +692,9 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 }
             }
 
-            public void ValidateProperty(object? candidateValue, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors, out object? validatedValue)
+            public void ValidateProperty(object? instance, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors)
             {
                 reportedErrors = null;
-                validatedValue = candidateValue;
             }
         }
 

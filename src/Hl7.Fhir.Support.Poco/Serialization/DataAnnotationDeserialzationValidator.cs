@@ -40,17 +40,14 @@ namespace Hl7.Fhir.Serialization
             NarrativeValidation = narrativeValidation;
         }
 
-        /// <inheritdoc cref="IDeserializationValidator.ValidateProperty(object?, in PropertyDeserializationContext, out CodedValidationException[], out object?)"/>
-        public void ValidateProperty(object? candidateValue, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors, out object? validatedValue)
+        /// <inheritdoc cref="IDeserializationValidator.ValidateProperty(object?, in PropertyDeserializationContext, out CodedValidationException[])"/>
+        public void ValidateProperty(object? instance, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors)
         {
-            // We are not rewriting the value, so set it immediately
-            validatedValue = candidateValue;
-
-            var validationContext = new ValidationContext(candidateValue ?? new object()) { MemberName = context.PropertyName }
+            var validationContext = new ValidationContext(instance ?? new object()) { MemberName = context.PropertyName }
                 .SetValidateRecursively(false)    // Don't go deeper - we've already validated the children because we're parsing bottom-up.
                 .SetNarrativeValidationKind(NarrativeValidation);
 
-            reportedErrors = runAttributeValidation(candidateValue, context.ElementMapping.ValidationAttributes, validationContext);
+            reportedErrors = runAttributeValidation(instance, context.ElementMapping.ValidationAttributes, validationContext);
         }
 
         /// <inheritdoc />

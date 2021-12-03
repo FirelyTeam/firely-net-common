@@ -65,7 +65,7 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public string GetPath()
         {
-            if (_pathStack.Count == 0) return string.Empty;
+            if (_pathStack.Count == 0) return "$this";
 
             StringBuilder b = new();
 

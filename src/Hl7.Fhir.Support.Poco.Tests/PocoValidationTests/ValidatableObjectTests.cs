@@ -44,7 +44,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         }
 
 
-        private void assertValid(IValidatableObject o, CodedValidationException? e = null)
+        private static void assertValid(IValidatableObject o, CodedValidationException? e = null)
         {
             var validationResult = o.Validate(new ValidationContext(o));
             if (e is null)

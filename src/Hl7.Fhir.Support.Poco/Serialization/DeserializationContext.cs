@@ -20,19 +20,19 @@ namespace Hl7.Fhir.Serialization
     public readonly struct PropertyDeserializationContext
     {
         internal PropertyDeserializationContext(
-            PathStack ps,
+            string path,
             string propertyName,
             PropertyMapping propMapping)
         {
-            PathStack = ps;
+            Path = path;
             PropertyName = propertyName;
             ElementMapping = propMapping;
         }
 
-        internal PathStack PathStack { get; }
-
-        /// <inheritdoc cref="PathStack.GetPath"/>
-        public string GetPath() => PathStack.GetPath();
+        /// <summary>
+        /// The dotted FhirPath path leading to this element from the root.
+        /// </summary>
+        public string Path { get; }
 
         /// <summary>
         /// The property name for which an instance is currently being deserialized.
@@ -54,17 +54,17 @@ namespace Hl7.Fhir.Serialization
     public readonly struct InstanceDeserializationContext
     {
         internal InstanceDeserializationContext(
-            PathStack ps,
+            string path,
             ClassMapping instanceMapping)
         {
-            PathStack = ps;
+            Path = path;
             InstanceMapping = instanceMapping;
         }
 
-        internal PathStack PathStack { get; }
-
-        /// <inheritdoc cref="PathStack.GetPath"/>
-        public string GetPath() => PathStack.GetPath();
+        /// <summary>
+        /// The dotted FhirPath path leading to this element from the root.
+        /// </summary>
+        public string Path { get; }
 
         /// <summary>
         /// The metadata for the type of which the current property is part of.

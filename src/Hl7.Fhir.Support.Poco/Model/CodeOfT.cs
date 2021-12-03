@@ -87,10 +87,7 @@ namespace Hl7.Fhir.Model
                 value = parsed;
                 return true;
             }
-            else if (ObjectValue is null)
-                return true;
-            else
-                return false;
+            else return ObjectValue is null;
         }
 
         string ISystemAndCode.System => Value?.GetSystem();

@@ -31,7 +31,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             ps.ExitElement(); t("A");
 
             Assert.ThrowsException<InvalidOperationException>(() => ps.ExitElement());
-            ps.ExitResource(); t("");
+            ps.ExitResource(); t("$this");
 
             void t(string e) => ps.GetPath().Should().Be(e);
         }

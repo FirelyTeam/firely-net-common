@@ -43,7 +43,7 @@ namespace Hl7.Fhir.Validation
         internal static readonly DAVE CHOICE_TYPE_NOT_ALLOWED = new(CHOICE_TYPE_NOT_ALLOWED_CODE, "Value is of type '{0}', which is not an allowed choice.");
         internal static readonly DAVE INCORRECT_CARDINALITY_MIN = new(INCORRECT_CARDINALITY_MIN_CODE, "Element has {0} elements, but minium cardinality is {1}.");
         internal static readonly DAVE INCORRECT_CARDINALITY_MAX = new(INCORRECT_CARDINALITY_MAX_CODE, "Element has {0} elements, but maximum cardinality is {1}.");
-        internal static readonly DAVE REPEATING_ELEMENT_CANNOT_CONTAIN_NULL = new(REPEATING_ELEMENT_CANNOT_CONTAIN_NULL_CODE, "Repeating elements cannot contain null values.");
+        internal static readonly DAVE REPEATING_ELEMENT_CANNOT_CONTAIN_NULL = new(REPEATING_ELEMENT_CANNOT_CONTAIN_NULL_CODE, "Repeating elements should not contain a null value.");
         internal static readonly DAVE MANDATORY_ELEMENT_CANNOT_BE_NULL = new(MANDATORY_ELEMENT_CANNOT_BE_NULL_CODE, "Element with minimum cardinality {0} cannot be null.");
         internal static readonly DAVE CODE_LITERAL_INVALID = new(CODE_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for a code.");
         internal static readonly DAVE DATE_LITERAL_INVALID = new(DATE_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for a date.");
