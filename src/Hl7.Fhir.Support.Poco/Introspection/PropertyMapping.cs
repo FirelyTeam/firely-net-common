@@ -72,6 +72,9 @@ namespace Hl7.Fhir.Introspection
         /// <summary>
         /// Five W's mappings of the element.
         /// </summary>
+        /// <remarks>Each string in the array represents the exact element name of one the elements of the 
+        /// <c>FiveWs</c> pattern from http://hl7.org/fhir/fivews.html. Choice elements are spelled with the
+        /// [x] suffix, like <c>done[x]</c>. </remarks>
         public string[] FiveWs { get; private set; }
 
         /// <summary>
