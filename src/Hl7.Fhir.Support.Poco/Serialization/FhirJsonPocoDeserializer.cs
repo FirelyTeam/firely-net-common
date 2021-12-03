@@ -177,7 +177,7 @@ namespace Hl7.Fhir.Serialization
         /// how the <see cref="DeserializeObjectInto{T}(T, ClassMapping, ref Utf8JsonReader, DeserializedObjectKind, FhirJsonPocoDeserializerState)" />
         /// function will operate.
         /// </summary>
-        internal enum DeserializedObjectKind
+        private enum DeserializedObjectKind
         {
             /// <summary>
             /// Deserialize into a complex datatype, and complain about the presence of
@@ -202,7 +202,7 @@ namespace Hl7.Fhir.Serialization
         /// Reads a complex object into an existing instance of a POCO.
         /// </summary>
         /// <remarks>Reader will be on the first token after the object upon return.</remarks>
-        internal void DeserializeObjectInto<T>(
+        private void DeserializeObjectInto<T>(
             T target,
             ClassMapping mapping,
             ref Utf8JsonReader reader,
@@ -413,7 +413,7 @@ namespace Hl7.Fhir.Serialization
 
             if (reader.TokenType != JsonTokenType.StartArray)
             {
-                state.Errors.Add(ERR.EXPECTED_START_OF_ARRAY.With(ref reader, propertyName));
+                state.Errors.Add(ERR.EXPECTED_START_OF_ARRAY.With(ref reader));
                 oneshot = true;
             }
             else
@@ -478,7 +478,7 @@ namespace Hl7.Fhir.Serialization
 
             if (reader.TokenType != JsonTokenType.StartArray)
             {
-                state.Errors.Add(ERR.EXPECTED_START_OF_ARRAY.With(ref reader, propertyName));
+                state.Errors.Add(ERR.EXPECTED_START_OF_ARRAY.With(ref reader));
                 oneshot = true;
             }
             else
@@ -522,7 +522,7 @@ namespace Hl7.Fhir.Serialization
             }
 
             if (onlyNulls == true)
-                state.Errors.Add(ERR.PRIMITIVE_ARRAYS_ONLY_NULL.With(ref reader, propertyName));
+                state.Errors.Add(ERR.PRIMITIVE_ARRAYS_ONLY_NULL.With(ref reader));
 
             if (originalSize > 0 && elementIndex != originalSize)
                 state.Errors.Add(ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE.With(ref reader));

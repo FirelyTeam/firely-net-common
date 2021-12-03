@@ -248,34 +248,28 @@ namespace Hl7.Fhir.Support.Poco.Tests
             }
         }
 
-        private static Base deserializeComplex(Type objectType, object testObject, out Utf8JsonReader readerState,
-            out FhirJsonPocoDeserializerState state, FhirJsonPocoDeserializerSettings settings)
+        private static (Base?, IReadOnlyCollection<ICodedException>) deserializeComplex(Type objectType, object testObject, out Utf8JsonReader readerState,
+            FhirJsonPocoDeserializerSettings settings)
         {
-            var inspector = ModelInspector.ForAssembly(typeof(TestPatient).Assembly);
-            state = new();
-
             // For the tests, enable full XHML validation so we can test it when necessary.
             var deserializer = new FhirJsonPocoDeserializer(typeof(TestPatient).Assembly, settings);
-            var mapping = inspector.ImportType(objectType)!;
-
             Utf8JsonReader reader = constructReader(testObject);
             reader.Read();
 
-            Base? result = null;
-
-            if (objectType.IsAssignableTo(typeof(Resource)))
+            try
             {
-                result = deserializer.DeserializeResource(ref reader);
+                var result = objectType.IsAssignableTo(typeof(Resource))
+                    ? deserializer.DeserializeResource(ref reader)
+                    : deserializer.DeserializeObject(objectType, ref reader);
+
+                readerState = reader; // copy
+                return (result, Array.Empty<ICodedException>());
             }
-            else
+            catch (DeserializationFailedException dfe)
             {
-                result = (Base)mapping.Factory();
-                deserializer.DeserializeObjectInto(result, mapping, ref reader, FhirJsonPocoDeserializer.DeserializedObjectKind.Complex, state);
+                readerState = reader;
+                return (dfe.PartialResult, dfe.Exceptions);
             }
-
-            readerState = reader; // copy
-
-            return result;
         }
 
         private static Utf8JsonReader constructReader(object testObject)
@@ -358,13 +352,13 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [DynamicData(nameof(TestNormalArrayData), DynamicDataSourceType.Method)]
         [DynamicData(nameof(TestPrimitiveData), DynamicDataSourceType.Method)]
         [DynamicData(nameof(TestValidatePrimitiveData), DynamicDataSourceType.Method)]
-        public void TestData(Type t, object testObject, JsonTokenType token, Action<object>? verify, params ICodedException[] errors)
+        public void TestData(Type t, object testObject, JsonTokenType token, Action<object?>? verify, params ICodedException[] expectedErrors)
         {
             // Enable full narrative validation so we can test for it
-            var result = deserializeComplex(t, testObject, out var readerState, out var state,
+            var (result, errors) = deserializeComplex(t, testObject, out var readerState,
                 new() { Validator = new DataAnnotationDeserialzationValidator(narrativeValidation: Validation.NarrativeValidationKind.FhirXhtml) });
 
-            assertErrors(state.Errors.OfType<ICodedException>(), errors.Select(e => e.ErrorCode).ToArray());
+            assertErrors(errors, expectedErrors.Select(e => e.ErrorCode).ToArray());
             readerState.TokenType.Should().Be(token);
             var cdResult = result.Should().BeOfType(t);
             verify?.Invoke(result);
@@ -641,10 +635,10 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
             static TestAttachment deserializeAttachment(FhirJsonPocoDeserializerSettings settings)
             {
-                var attachment = (TestAttachment)deserializeComplex(typeof(TestAttachment), new { data = "SGkh" }, out _, out var state, settings);
-                state.Errors.HasExceptions.Should().BeFalse();
+                var (attachment, errors) = deserializeComplex(typeof(TestAttachment), new { data = "SGkh" }, out _, settings);
+                errors.Any().Should().BeFalse();
 
-                return attachment;
+                return (TestAttachment)attachment!;
             }
         }
 
@@ -706,21 +700,16 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
             static void test(IDeserializationValidator validator)
             {
-                try
-                {
-                    _ = (TestPatient)deserializeComplex(typeof(TestPatient),
-                        new { resourceType = "Patient", deceasedDateTime = "2070-01-01T12:01:02Z" },
-                            out _, out _, new() { Validator = validator });
-                    Assert.Fail();
-                }
-                catch (DeserializationFailedException dfe)
-                {
-                    dfe.Exceptions.Should().AllBeOfType<DAVE>()
-                        .And.ContainSingle(e => ((DAVE)e).ErrorCode == DAVE.DATETIME_LITERAL_INVALID_CODE);
-                    dfe.PartialResult.Should().BeOfType<TestPatient>()
-                        .Which.Deceased.Should().BeOfType<FhirDateTime>()
-                        .Which.Value.Should().EndWith("+00:00");
-                }
+                var (result, errors) = deserializeComplex(typeof(TestPatient),
+                    new { resourceType = "Patient", deceasedDateTime = "2070-01-01T12:01:02Z" },
+                        out _, new() { Validator = validator });
+
+                errors.Any().Should().BeTrue();
+                errors.Should().AllBeOfType<DAVE>()
+                    .And.ContainSingle(e => ((DAVE)e).ErrorCode == DAVE.DATETIME_LITERAL_INVALID_CODE);
+                result.Should().BeOfType<TestPatient>()
+                    .Which.Deceased.Should().BeOfType<FhirDateTime>()
+                    .Which.Value.Should().EndWith("+00:00");
             }
         }
     }

@@ -66,7 +66,7 @@ namespace Hl7.Fhir.Serialization
         internal static readonly FhirJsonException UNKNOWN_RESOURCE_TYPE = new(UNKNOWN_RESOURCE_TYPE_CODE, "Unknown type '{0}' found in 'resourceType' property.", false);
         internal static readonly FhirJsonException RESOURCE_TYPE_NOT_A_RESOURCE = new(RESOURCE_TYPE_NOT_A_RESOURCE_CODE, "Data type '{0}' in property 'resourceType' is not a type of resource.", false);
         internal static readonly FhirJsonException UNKNOWN_PROPERTY_FOUND = new(UNKNOWN_PROPERTY_FOUND_CODE, "Encountered unrecognized property '{0}'.", false);
-        internal static readonly FhirJsonException INCOMPATIBLE_SIMPLE_VALUE = new(INCOMPATIBLE_SIMPLE_VALUE_CODE, "Found a json primitive value that does not match the expected type of the primitive property. Details: {0}", false);
+        internal static readonly FhirJsonException INCOMPATIBLE_SIMPLE_VALUE = new(INCOMPATIBLE_SIMPLE_VALUE_CODE, "Json primitive value does not match the expected type of the primitive property. Details: ({0})", false);
 
         // ==========================================
         // Recoverable Errors
@@ -82,7 +82,7 @@ namespace Hl7.Fhir.Serialization
         internal static readonly FhirJsonException UNEXPECTED_JSON_TOKEN = new(UNEXPECTED_JSON_TOKEN_CODE, "Expecting a {0}, but found a json {1} with value '{2}'.", true);
 
         // The parser will turn a non-array value into an array with a single element, so no data is lost.
-        internal static readonly FhirJsonException EXPECTED_START_OF_ARRAY = new(EXPECTED_START_OF_ARRAY_CODE, "Expected start of array since '{0}' is a repeating element.", true);
+        internal static readonly FhirJsonException EXPECTED_START_OF_ARRAY = new(EXPECTED_START_OF_ARRAY_CODE, "Expected start of array.", true);
 
         // We will just ignore the underscore and keep on parsing
         internal static readonly FhirJsonException USE_OF_UNDERSCORE_ILLEGAL = new(USE_OF_UNDERSCORE_ILLEGAL_CODE, "Element '{0}' is not a FHIR primitive, so it should not use an underscore in the '{1}' property.", true);
@@ -100,7 +100,7 @@ namespace Hl7.Fhir.Serialization
         // This leaves the incorrect nulls in place, no change in data.
         //internal static readonly FhirJsonException PRIMITIVE_ARRAYS_BOTH_NULL = new(PRIMITIVE_ARRAYS_BOTH_NULL_CODE, "Primitive arrays split in two properties should not both have a null at the same position.", true);
         //internal static readonly FhirJsonException PRIMITIVE_ARRAYS_LONELY_NULL = new(PRIMITIVE_ARRAYS_LONELY_NULL_CODE, "Property '{0}' is a single primitive array and should not contain a null.", true);
-        internal static readonly FhirJsonException PRIMITIVE_ARRAYS_ONLY_NULL = new(PRIMITIVE_ARRAYS_ONLY_NULL_CODE, "If present, property '{0}' should not only contain nulls.", true);
+        internal static readonly FhirJsonException PRIMITIVE_ARRAYS_ONLY_NULL = new(PRIMITIVE_ARRAYS_ONLY_NULL_CODE, "Arrays need to have at least one non-null element.", true);
 
         // The value cannot be found in an enum, but the raw data is retained in the POCO
         // Validation is now done using POCO validation, so have removed it here.
@@ -152,7 +152,8 @@ namespace Hl7.Fhir.Serialization
             var formattedMessage = string.Format(CultureInfo.InvariantCulture, Message, parameters);
 
             var location = reader.GenerateLocationMessage(out var lineNumber, out var position);
-            var message = formattedMessage + " " + location;
+
+            var message = $"{formattedMessage} At {location}";
 
             return new FhirJsonException(ErrorCode, message, Recoverable, lineNumber, position, inner);
         }
