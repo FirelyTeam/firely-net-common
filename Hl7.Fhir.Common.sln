@@ -30,10 +30,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hl7.Fhir.Support.Poco", "sr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hl7.Fhir.Support.Poco.Tests", "src\Hl7.Fhir.Support.Poco.Tests\Hl7.Fhir.Support.Poco.Tests.csproj", "{3CF50D69-6562-468F-A3E5-8D2B352C6185}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Firely.Fhir.Packages", "src\Firely.Fhir.Packages\Firely.Fhir.Packages.csproj", "{10BDC813-8868-4E08-8D81-47C147FE5E17}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Firely.Fhir.Packages.Tests", "src\Firely.Fhir.Packages.Tests\Firely.Fhir.Packages.Tests.csproj", "{4FC60B32-BBA2-4EAC-8306-676571A47FB2}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

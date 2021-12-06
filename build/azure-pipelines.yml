@@ -62,7 +62,6 @@ stages:
       inputs:
         command: publish
         projects: |
-         **/Firely.Fhir.*Tests.csproj
          **/Hl7.Fhir*Tests.csproj
         publishWebProjects: false
         zipAfterPublish: false
@@ -116,4 +115,3 @@ stages:
             **/publish/Hl7.Fhir.Support.Tests.dll
             **/publish/HL7.FhirPath.Tests.dll
             **/publish/Hl7.Fhir.Support.Poco.Tests.dll
-            **/publish/Firely.Fhir.Packages.Tests.dll
