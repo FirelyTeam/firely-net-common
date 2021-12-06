@@ -26,7 +26,7 @@
   </ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="Firely.Fhir.Packages" Version="2.2.0-build-20211103-2" />
+	  <PackageReference Include="Firely.Fhir.Packages" Version="2.2.0-build-20211201-1" />
 	</ItemGroup>
 
 	<ItemGroup>

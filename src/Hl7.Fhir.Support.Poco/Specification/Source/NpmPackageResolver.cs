@@ -3,8 +3,10 @@ using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
+using Hl7.Fhir.Utility;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,15 +14,20 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Specification.Source
 {
-
+    /// <summary>Reads FHIR artifacts (Profiles, ValueSets, ...) from one or multiple FHIR packages.</summary>
     public class NpmPackageResolver : IAsyncResourceResolver, IArtifactSource
     {
         private PackageContext _context;
         private ModelInspector _provider;
 
+        /// <summary>Create a new <see cref="NpmPackageResolver"/> instance to read FHIR artifacts from one or multiple FHIR packages of a specific FHIR version
+        /// found in the paths passed to this function.</summary>
+        /// <returns>A new <see cref="NpmPackageResolver"/> instance.</returns>
+        /// <param name="provider">A <see cref="ModelInspector"/> used to parse the filecontents to FHIR resources, this is typically a <see cref="ModelInspector"/> containing the definitions of a specific FHIR version. </param>
+        /// <param name="filePaths">A path to the FHIR package files.</param>
         public NpmPackageResolver(ModelInspector provider, params string[] filePaths)
         {
-            _context = createPackageContextAsync(filePaths).Result;
+            _context = TaskHelper.Await(() => createPackageContextAsync(filePaths));
             _provider = provider;
         }
 
@@ -72,6 +79,14 @@ namespace Hl7.Fhir.Specification.Source
             }
         }
 
+        private Resource? toResource(string content)
+        {
+            var sourceNode = FhirJsonNode.Parse(content);
+            return TypedSerialization.ToPoco(sourceNode, _provider) as Resource;
+        }
+
+
+        ///<inheritdoc/>
         public async Task<Resource?> ResolveByCanonicalUriAsync(string uri)
         {
             (var url, var version) = splitCanonical(uri);
@@ -79,12 +94,6 @@ namespace Hl7.Fhir.Specification.Source
             return content is null ? null : toResource(content);
         }
 
-        public async Task<Resource?> ResolveByUriAsync(string uri)
-        {
-            (string resource, string id) = uri.Splice('/');
-            var content = await _context.GetFileContentById(resource, id);
-            return content is null ? null : toResource(content);
-        }
 
         private static (string url, string version) splitCanonical(string canonical)
         {
@@ -98,11 +107,19 @@ namespace Hl7.Fhir.Specification.Source
                 : (canonical.Substring(0, position), canonical.Substring(position + 1));
         }
 
-        private Resource? toResource(string content)
+
+        ///<inheritdoc/>
+        public async Task<Resource?> ResolveByUriAsync(string uri)
         {
-            var sourceNode = FhirJsonNode.Parse(content);
-            return TypedSerialization.ToPoco(sourceNode, _provider) as Resource;
+            (string? resource, string? id) = uri.Splice('/');
+
+            if (resource == null || id is null)
+                return null;
+
+            var content = await _context.GetFileContentById(resource, id);
+            return content is null ? null : toResource(content);
         }
+
 
         private static PackageContext createContext(string folder, bool localCache = false)
         {
@@ -114,21 +131,57 @@ namespace Hl7.Fhir.Specification.Source
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         }
 
+        ///<inheritdoc/>
         public IEnumerable<string> ListArtifactNames()
         {
             return _context.GetFileNames();
         }
 
+        ///<inheritdoc/>
         public Stream? LoadArtifactByName(string artifactName)
         {
-            var content = _context.GetFileContentByFileName(artifactName).Result;
+            var content = TaskHelper.Await(() => _context.GetFileContentByFileName(artifactName));
             return content == null ? null : new MemoryStream(Encoding.UTF8.GetBytes(content));
         }
 
+        ///<inheritdoc/>
         public Stream? LoadArtifactByPath(string artifactPath)
         {
-            var content = _context.GetFileContentByFilePath(artifactPath).Result;
+            var content = TaskHelper.Await(() => _context.GetFileContentByFilePath(artifactPath));
             return content == null ? null : new MemoryStream(Encoding.UTF8.GetBytes(content));
+        }
+
+        ///<inheritdoc/>
+        public IEnumerable<string> ListResourceUris(string? filter = null)
+        {
+            return _context.ListCanonicalUris(filter);
+        }
+
+        ///<inheritdoc/>
+        public async Task<Resource?> FindCodeSystemByValueSet(string valueSetUri)
+        {
+            var content = await _context.GetCodeSystemByValueSet(valueSetUri);
+            return content is null ? null : toResource(content);
+        }
+
+        ///<inheritdoc/>
+        public async Task<IEnumerable<Resource>?> FindConceptMaps(string? sourceUri = null, string? targetUri = null)
+        {
+            var content = await _context.GetConceptMapsBySourceAndTarget(sourceUri, targetUri);
+            if (content is null)
+                return null;
+            else
+#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
+                return content.Select(i => toResource(i))
+                              .Where(i => i is not null);
+#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
+        }
+
+        ///<inheritdoc/>
+        public async Task<Resource?> FindNamingSystemByUniqueId(string uniqueId)
+        {
+            var content = await _context.GetNamingSystemByUniqueId(uniqueId);
+            return content is null ? null : toResource(content);
         }
     }
 }
