@@ -26,7 +26,7 @@ namespace Hl7.Fhir.Validation
             {
                 null => ValidationResult.Success,
                 string s when FhirUri.IsValidValue(s) => ValidationResult.Success,
-                string s => DAVE.URI_LITERAL_INVALID.With(s).AsResult(validationContext),
+                string s => DAVE.URI_LITERAL_INVALID.AsResult(validationContext, s),
                 _ => throw new ArgumentException($"{nameof(UriPatternAttribute)} attributes can only be applied to string properties.")
             };
     }

@@ -6,6 +6,7 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
+using Hl7.Fhir.Utility;
 using System.ComponentModel.DataAnnotations;
 
 #nullable enable
@@ -19,6 +20,8 @@ namespace Hl7.Fhir.Validation
     {
         private const string RECURSE_ITEM_KEY = "__dotnetapi_recurse__";
         private const string NARRATIVE_VALIDATION_KIND_ITEM_KEY = "__dotnetapi_narrative_validation_kind__";
+        private const string POSITIONINFO_ITEM_KEY = "__dotnetapi_positioninfo__";
+        private const string LOCATION_ITEM_KEY = "__dotnetapi_location__";
 
         /// <summary>
         /// Alters the ValidationContext to indicate that validation should or should not recurse into nested objects
@@ -55,6 +58,39 @@ namespace Hl7.Fhir.Validation
         public static NarrativeValidationKind GetNarrativeValidationKind(this ValidationContext ctx) =>
             ctx.Items.TryGetValue(NARRATIVE_VALIDATION_KIND_ITEM_KEY, out var result) && result is NarrativeValidationKind k ?
                     k : NarrativeValidationKind.FhirXhtml;
+
+        /// <summary>
+        /// Alters the ValidationContext to include line/position information for the validation errors to use.
+        /// </summary>
+        public static ValidationContext SetPositionInfo(this ValidationContext ctx, IPositionInfo position)
+        {
+            ctx.Items[POSITIONINFO_ITEM_KEY] = position;
+            return ctx;
+        }
+
+        /// <summary>
+        /// Gets the position information for the validation errors from the ValidationContext.
+        /// </summary>
+        public static IPositionInfo? GetPositionInfo(this ValidationContext ctx) =>
+            ctx.Items.TryGetValue(POSITIONINFO_ITEM_KEY, out var result) && result is IPositionInfo pi ?
+                    pi : null;
+
+        /// <summary>
+        /// Alters the ValidationContext to include the human-readable location for the validation errors to use.
+        /// </summary>
+        public static ValidationContext SetLocation(this ValidationContext ctx, string location)
+        {
+            ctx.Items[LOCATION_ITEM_KEY] = location;
+            return ctx;
+        }
+
+        /// <summary>
+        /// Gets the human-readable location for the validation errors from the ValidationContext.
+        /// </summary>
+        public static string? GetLocation(this ValidationContext ctx) =>
+            ctx.Items.TryGetValue(LOCATION_ITEM_KEY, out var result) && result is string loc ?
+                    loc : null;
+
     }
 }
 

@@ -27,7 +27,7 @@ namespace Hl7.Fhir.Validation
             {
                 null => ValidationResult.Success,
                 string s when Time.IsValidValue(s) => ValidationResult.Success,
-                string s => DAVE.TIME_LITERAL_INVALID.With(s).AsResult(validationContext),
+                string s => DAVE.TIME_LITERAL_INVALID.AsResult(validationContext, s),
                 _ => throw new ArgumentException($"{nameof(TimePatternAttribute)} attributes can only be applied to string properties.")
             };
     }

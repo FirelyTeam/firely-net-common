@@ -22,10 +22,14 @@ namespace Hl7.Fhir.Serialization
         internal PropertyDeserializationContext(
             string path,
             string propertyName,
+            long lineNumber,
+            long linePosition,
             PropertyMapping propMapping)
         {
             Path = path;
             PropertyName = propertyName;
+            LineNumber = lineNumber;
+            LinePosition = linePosition;
             ElementMapping = propMapping;
         }
 
@@ -38,6 +42,16 @@ namespace Hl7.Fhir.Serialization
         /// The property name for which an instance is currently being deserialized.
         /// </summary>
         public string PropertyName { get; }
+
+        /// <summary>
+        /// The approximate line number in the source data that is being deserialized.
+        /// </summary>
+        public long LineNumber { get; }
+
+        /// <summary>
+        /// The approximate line position in the source data that is being deserialized.
+        /// </summary>
+        public long LinePosition { get; }
 
         /// <summary>
         /// The metadata for the element that is currently being deserialized.
@@ -55,9 +69,13 @@ namespace Hl7.Fhir.Serialization
     {
         internal InstanceDeserializationContext(
             string path,
+            long lineNumber,
+            long linePosition,
             ClassMapping instanceMapping)
         {
             Path = path;
+            LineNumber = lineNumber;
+            LinePosition = linePosition;
             InstanceMapping = instanceMapping;
         }
 
@@ -65,6 +83,16 @@ namespace Hl7.Fhir.Serialization
         /// The dotted FhirPath path leading to this element from the root.
         /// </summary>
         public string Path { get; }
+
+        /// <summary>
+        /// The approximate line number in the source data that is being deserialized.
+        /// </summary>
+        public long LineNumber { get; }
+
+        /// <summary>
+        /// The approximate line position in the source data that is being deserialized.
+        /// </summary>
+        public long LinePosition { get; }
 
         /// <summary>
         /// The metadata for the type of which the current property is part of.

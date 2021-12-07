@@ -48,7 +48,7 @@ namespace Hl7.Fhir.Serialization
         internal static string GenerateLocationMessage(this ref Utf8JsonReader reader, out long lineNumber, out long position)
         {
             (lineNumber, position) = reader.GetLocation();
-            return $"line {lineNumber}, position {position}.";
+            return $"At line {lineNumber}, position {position}.";
         }
 
 

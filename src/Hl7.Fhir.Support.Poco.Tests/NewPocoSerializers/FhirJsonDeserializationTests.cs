@@ -236,7 +236,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 if (errorcode is not null)
                     state.Errors.Should().OnlyContain(ce => ce.ErrorCode == errorcode);
                 else
-                    throw state.Errors.Single().Exception;
+                    throw state.Errors.Single();
             }
 
             if (expectedObjectValue is not null)
@@ -248,7 +248,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             }
         }
 
-        private static (Base?, IReadOnlyCollection<ICodedException>) deserializeComplex(Type objectType, object testObject, out Utf8JsonReader readerState,
+        private static (Base?, IReadOnlyCollection<CodedException>) deserializeComplex(Type objectType, object testObject, out Utf8JsonReader readerState,
             FhirJsonPocoDeserializerSettings settings)
         {
             // For the tests, enable full XHML validation so we can test it when necessary.
@@ -263,7 +263,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
                     : deserializer.DeserializeObject(objectType, ref reader);
 
                 readerState = reader; // copy
-                return (result, Array.Empty<ICodedException>());
+                return (result, Array.Empty<CodedException>());
             }
             catch (DeserializationFailedException dfe)
             {
@@ -279,7 +279,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             return reader;
         }
 
-        private static void assertErrors(IEnumerable<ICodedException> actual, string[] expected)
+        private static void assertErrors(IEnumerable<CodedException> actual, string[] expected)
         {
             if (expected.Length == 0 && !actual.Any())
                 return;
@@ -294,7 +294,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [TestMethod]
         [DynamicData(nameof(TestDeserializeResourceData))]
         [DynamicData(nameof(TestDeserializeNestedResource))]
-        public void TestDeserializeResource(object testObject, JsonTokenType tokenAfterParsing, params ICodedException[] errors)
+        public void TestDeserializeResource(object testObject, JsonTokenType tokenAfterParsing, params CodedException[] errors)
         {
             var reader = constructReader(testObject);
             reader.Read();
@@ -302,7 +302,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             var deserializer = new FhirJsonPocoDeserializer(typeof(TestPatient).Assembly);
             var state = new FhirJsonPocoDeserializerState();
             _ = deserializer.DeserializeResourceInternal(ref reader, state);
-            assertErrors(state.Errors.OfType<ICodedException>(), errors.Select(e => e.ErrorCode).ToArray());
+            assertErrors(state.Errors, errors.Select(e => e.ErrorCode).ToArray());
             reader.TokenType.Should().Be(tokenAfterParsing);
         }
 
@@ -352,7 +352,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [DynamicData(nameof(TestNormalArrayData), DynamicDataSourceType.Method)]
         [DynamicData(nameof(TestPrimitiveData), DynamicDataSourceType.Method)]
         [DynamicData(nameof(TestValidatePrimitiveData), DynamicDataSourceType.Method)]
-        public void TestData(Type t, object testObject, JsonTokenType token, Action<object?>? verify, params ICodedException[] expectedErrors)
+        public void TestData(Type t, object testObject, JsonTokenType token, Action<object?>? verify, params CodedException[] expectedErrors)
         {
             // Enable full narrative validation so we can test for it
             var (result, errors) = deserializeComplex(t, testObject, out var readerState,

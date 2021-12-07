@@ -104,7 +104,7 @@ namespace Hl7.Fhir.Model
                 return baseResults;
             else
             {
-                var result = DAVE.INVALID_CODED_VALUE.With(ObjectValue, EnumUtility.GetName<T>()).AsResult(validationContext);
+                var result = DAVE.INVALID_CODED_VALUE.AsResult(validationContext, ObjectValue, EnumUtility.GetName<T>());
 #if NET45
                 return baseResults.Concat(new[] { result });
 #else

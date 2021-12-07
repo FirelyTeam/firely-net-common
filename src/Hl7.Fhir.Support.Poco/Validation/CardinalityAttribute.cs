@@ -43,7 +43,7 @@ namespace Hl7.Fhir.Validation
         {
             if (value is null)
                 return (Min == 0) ? ValidationResult.Success :
-                    DAVE.MANDATORY_ELEMENT_CANNOT_BE_NULL.With(Min).AsResult(validationContext);
+                    DAVE.MANDATORY_ELEMENT_CANNOT_BE_NULL.AsResult(validationContext, Min);
 
             var count = 1;
 
@@ -55,9 +55,9 @@ namespace Hl7.Fhir.Validation
             }
 
             if (count < Min)
-                return DAVE.INCORRECT_CARDINALITY_MIN.With(count, Min).AsResult(validationContext);
+                return DAVE.INCORRECT_CARDINALITY_MIN.AsResult(validationContext, count, Min);
             if (Max != -1 && count > Max)
-                return DAVE.INCORRECT_CARDINALITY_MAX.With(count, Max).AsResult(validationContext);
+                return DAVE.INCORRECT_CARDINALITY_MAX.AsResult(validationContext, count, Max);
 
             return ValidationResult.Success;
         }
