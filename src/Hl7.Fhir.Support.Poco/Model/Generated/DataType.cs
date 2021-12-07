@@ -68,6 +68,7 @@ namespace Hl7.Fhir.Model
       return dest;
     }
 
+    ///<inheritdoc />
     public override bool Matches(IDeepComparable other)
     {
       var otherT = other as DataType;

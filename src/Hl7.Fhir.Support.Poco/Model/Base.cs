@@ -55,6 +55,11 @@ namespace Hl7.Fhir.Model
         }
 
 
+        /// <summary>
+        /// Checks whether the element is matched by pattern ("other"). If the checked pattern has a value, the element must have that value as well. A pattern of "null" will always return true.
+        /// </summary>
+        /// <param name="other">The pattern that the element is supposed to match</param>
+        /// <returns>Whether the element is matched by the pattern ("other")</returns>
         public virtual bool Matches(IDeepComparable other)
         {
             var otherT = other as Base;
