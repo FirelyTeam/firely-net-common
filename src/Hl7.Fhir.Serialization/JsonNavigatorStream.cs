@@ -14,8 +14,6 @@ using System;
 using System.Collections;
 using System.IO;
 
-#if !NETSTANDARD1_6
-
 namespace Hl7.Fhir.Serialization
 {
     /// <summary>
@@ -291,7 +289,7 @@ namespace Hl7.Fhir.Serialization
             {
                 throwIfDisposed();
                 var jelem = _current?.element;
-                return jelem != null ? FhirJsonNode.Create(jelem, settings:ParserSettings) : null;
+                return jelem != null ? FhirJsonNode.Create(jelem, settings: ParserSettings) : null;
             }
         }
 
@@ -303,7 +301,7 @@ namespace Hl7.Fhir.Serialization
         /// <value>Returns a (non-<c>null</c>) <see cref="FhirJsonParsingSettings"/> instance.</value>
         public FhirJsonParsingSettings ParserSettings { get; }
 
-#region private helpers
+        #region private helpers
 
         string scanForResourceType(JsonReader reader) => skipTo(reader, "resourceType") ? reader.ReadAsString() : null;
 
@@ -323,9 +321,7 @@ namespace Hl7.Fhir.Serialization
             if (_disposed) { throw new ObjectDisposedException(GetType().FullName); }
         }
 
-#endregion
+        #endregion
 
     }
 }
-
-#endif

@@ -120,6 +120,7 @@ namespace Hl7.Fhir.Model
       return CopyTo(new CodeableConcept());
     }
 
+    ///<inheritdoc />
     public override bool Matches(IDeepComparable other)
     {
       var otherT = other as CodeableConcept;
