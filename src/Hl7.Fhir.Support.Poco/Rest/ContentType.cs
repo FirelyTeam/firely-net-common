@@ -84,17 +84,17 @@ namespace Hl7.Fhir.Rest
                 return ResourceFormat.Unknown;
         }
 
+        internal static string BuildContentType(FhirClientSettings settings, string fhirVersion)
+            => BuildContentType(settings.PreferredFormat, settings.UseFhirVersionInAcceptHeader ? fhirVersion : String.Empty);
 
         public static string BuildContentType(ResourceFormat format, string fhirVersion)
         {
-            string contentType;
-
-            if (format == ResourceFormat.Json)
-                contentType = JSON_CONTENT_HEADER;
-            else if (format == ResourceFormat.Xml)
-                contentType = XML_CONTENT_HEADER;
-            else
-                throw new ArgumentException("Cannot determine content type for data format " + format);
+            string contentType = format switch
+            {
+                ResourceFormat.Json => JSON_CONTENT_HEADER,
+                ResourceFormat.Xml => XML_CONTENT_HEADER,
+                _ => throw new ArgumentException("Cannot determine content type for data format " + format),
+            };
 
             contentType += "; charset=" + Encoding.UTF8.WebName;
 
@@ -104,7 +104,6 @@ namespace Hl7.Fhir.Rest
                 contentType += "; " + VERSION_CONTENT_HEADER + majorMinor;
             }
             return contentType;
-
         }
 
 
@@ -143,10 +142,6 @@ namespace Hl7.Fhir.Rest
 
         public static string GetMediaTypeFromHeaderValue(string mediaHeaderValue)
         {
-#if NETSTANDARD1_6
-            System.Net.Http.Headers.MediaTypeHeaderValue.TryParse(mediaHeaderValue, out System.Net.Http.Headers.MediaTypeHeaderValue headerValue);
-            return headerValue != null ? headerValue.MediaType.ToLowerInvariant() : mediaHeaderValue;
-#else
             try
             {
                 var ct = new System.Net.Mime.ContentType(mediaHeaderValue);
@@ -156,18 +151,12 @@ namespace Hl7.Fhir.Rest
             {
                 return mediaHeaderValue;
             }
-#endif
         }
 
         public static string GetCharSetFromHeaderValue(string mediaHeaderValue)
         {
-#if NETSTANDARD1_6
-            System.Net.Http.Headers.MediaTypeHeaderValue.TryParse(mediaHeaderValue, out System.Net.Http.Headers.MediaTypeHeaderValue headerValue);
-            return headerValue.CharSet;
-#else
             var ct = new System.Net.Mime.ContentType(mediaHeaderValue);
             return ct.CharSet;
-#endif
         }
     }
 }
