@@ -88,11 +88,10 @@ namespace Hl7.Fhir.Introspection
             // If we should not validate 'value's elements, return immediately
             if (!validationContext.ValidateRecursively()) return ValidationResult.Success;
 
-            IEnumerable list = value as IEnumerable;
             var result = new List<ValidationResult>();
 
             // If value is an enumerated type, validate all elements of the list
-            if (list != null)
+            if (value is ICollection list)
             {
                 foreach (var element in list)
                 {

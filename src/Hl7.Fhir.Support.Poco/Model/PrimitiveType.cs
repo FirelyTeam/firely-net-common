@@ -19,7 +19,7 @@ namespace Hl7.Fhir.Model
     [Serializable]
     [FhirType("PrimitiveType", "http://hl7.org/fhir/StructureDefinition/PrimitiveType")]
     [DataContract]
-    public abstract class PrimitiveType : DataType
+    public abstract class PrimitiveType : DataType, IFhirPrimitive
     {
         public override string TypeName { get { return "PrimitiveType"; } }
 
@@ -82,9 +82,45 @@ namespace Hl7.Fhir.Model
             get
             {
                 foreach (var item in base.NamedChildren) yield return item;
-
             }
         }
 
+        protected override bool TryGetValue(string key, out object value)
+        {
+            if (key == "value")
+            {
+                value = ObjectValue;
+                return value is not null;
+            }
+            else
+                return base.TryGetValue(key, out value);
+        }
+
+        protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+        {
+            foreach (var kvp in base.GetElementPairs()) yield return kvp;
+            if (ObjectValue is not null) yield return new KeyValuePair<string, object>("value", ObjectValue);
+        }
+
+        public bool HasElements => ElementId is not null || Extension?.Any() == true;
+    }
+
+
+    /// <summary>
+    /// A instance representing a FhirPrimitive.
+    /// </summary>
+    public interface IFhirPrimitive
+    {
+        /// <summary>
+        /// The underlying value for the primitive, usually the same as
+        /// the <c>Value</c> element of a <see cref="PrimitiveType"/>.
+        /// </summary>
+        object ObjectValue { get; set; }
+
+        /// <summary>
+        /// Whether the FhirPrimitive contains additional elements to the
+        /// value, i.e. the <c>id</c> or <c>extension</c>.
+        /// </summary>
+        bool HasElements { get; }
     }
 }

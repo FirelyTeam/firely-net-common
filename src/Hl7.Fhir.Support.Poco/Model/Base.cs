@@ -30,6 +30,7 @@
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Utility;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -42,7 +43,8 @@ namespace Hl7.Fhir.Model
     [Serializable]
     [FhirType("Base", "http://hl7.org/fhir/StructureDefinition/Base")]
     [DataContract]
-    public abstract class Base : Validation.IValidatableObject, IDeepCopyable, IDeepComparable, IAnnotated, IAnnotatable, INotifyPropertyChanged
+    public abstract class Base : Validation.IValidatableObject, IDeepCopyable, IDeepComparable,
+        IAnnotated, IAnnotatable, INotifyPropertyChanged, IReadOnlyDictionary<string, object>
     {
         public virtual bool IsExactly(IDeepComparable other)
         {
@@ -134,5 +136,31 @@ namespace Hl7.Fhir.Model
         /// Finally returns child nodes defined by the current class.
         /// </summary>
         public virtual IEnumerable<ElementValue> NamedChildren => Enumerable.Empty<ElementValue>();
+
+        public IReadOnlyDictionary<string, object> AsReadOnlyDictionary() => this;
+
+        IEnumerable<string> IReadOnlyDictionary<string, object>.Keys => GetElementPairs().Select(kvp => kvp.Key);
+
+        IEnumerable<object> IReadOnlyDictionary<string, object>.Values => GetElementPairs().Select(kvp => kvp.Value);
+
+        int IReadOnlyCollection<KeyValuePair<string, object>>.Count => GetElementPairs().Count();
+
+        object IReadOnlyDictionary<string, object>.this[string key] => TryGetValue(key, out var value) ? value : throw new KeyNotFoundException();
+
+        bool IReadOnlyDictionary<string, object>.ContainsKey(string key) => TryGetValue(key, out _);
+
+        IEnumerator<KeyValuePair<string, object>> IEnumerable<KeyValuePair<string, object>>.GetEnumerator() => GetElementPairs().GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => GetElementPairs().GetEnumerator();
+
+        bool IReadOnlyDictionary<string, object>.TryGetValue(string key, out object value) => TryGetValue(key, out value);
+
+        protected virtual bool TryGetValue(string key, out object value)
+        {
+            value = default;
+            return false;
+        }
+
+        protected virtual IEnumerable<KeyValuePair<string, object>> GetElementPairs() => Enumerable.Empty<KeyValuePair<string, object>>();
     }
 }
