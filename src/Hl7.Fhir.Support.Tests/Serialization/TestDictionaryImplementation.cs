@@ -34,11 +34,12 @@ namespace Hl7.Fhir.Support.Tests.Serialization
             nb.ElementId = "id1";
             b = nb;
             b.Count.Should().Be(3);
-            b.Keys.Should().BeEquivalentTo("id", "extension", "value");
-            b.Values.First().Should().BeOfType<string>();
-            b.Values.Skip(1).First().Should().BeAssignableTo<IEnumerable<Extension>>();
+            b.Keys.Should().BeEquivalentTo("value", "id", "extension");
+            b.Values.First().Should().BeOfType<bool>();
+            b.Values.Skip(1).First().Should().BeOfType<string>();
+            b.Values.Skip(2).First().Should().BeAssignableTo<IEnumerable<Extension>>();
 
-            b.ToList()[1].Value.Should().BeAssignableTo<IEnumerable<Extension>>();
+            b.ToList()[2].Value.Should().BeAssignableTo<IEnumerable<Extension>>();
 
             b.TryGetValue("id", out var v).Should().BeTrue();
             v.Should().Be("id1");

@@ -171,9 +171,9 @@ namespace Hl7.Fhir.Model
 
         protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
         {
-            foreach (var kvp in base.GetElementPairs()) yield return kvp;
             if (Url is not null) yield return new KeyValuePair<string, object>("url", Url);
             if (Value is not null) yield return new KeyValuePair<string, object>("value", Value);
+            foreach (var kvp in base.GetElementPairs()) yield return kvp;
         }
     }
 }

@@ -8,20 +8,13 @@
 
 #nullable enable
 
-#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
-
-
 using Hl7.Fhir.Introspection;
-using System;
 
 namespace Hl7.Fhir.Serialization
 {
     /// <summary>
     /// A filter that instructs the serializers which parts of a tree to serialize.
     /// </summary>
-    /// <remarks>An instance of a filter is passed to the <see cref="JsonFhirDictionarySerializer.Serialize(System.Collections.Generic.IReadOnlyDictionary{string, object}, System.Text.Json.Utf8JsonWriter, SerializationFilter?)"/>
-    /// functions.
-    /// </remarks>
     public abstract class SerializationFilter
     {
         /// <summary>
@@ -82,5 +75,4 @@ namespace Hl7.Fhir.Serialization
     }
 }
 
-#endif
 #nullable restore

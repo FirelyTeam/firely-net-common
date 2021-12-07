@@ -10,11 +10,15 @@
 
 	<ItemGroup>
 	  <None Remove="TestData\fp-test-patient.json" />
+	  <None Remove="TestData\fp-test-patient.xml" />
 	  <None Remove="TestData\mask-text.xml" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <Content Include="TestData\fp-test-patient.json">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="TestData\fp-test-patient.xml">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Content>
 	  <Content Include="TestData\json-edge-cases.json">

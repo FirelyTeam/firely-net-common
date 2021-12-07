@@ -233,9 +233,20 @@ namespace Hl7.Fhir.Introspection
             if (FindMappedElementByName(name) is { } pm) return pm;
 
             // Now, check the choice elements for a match.
-            return propertyMappings.ChoiceProperties
-                .Where(m => name.StartsWith(m.Name))
-                .FirstOrDefault();
+            var matches = propertyMappings.ChoiceProperties
+                .Where(m => name.StartsWith(m.Name)).ToList();
+
+            // Loop through possible matches and return the longest match.
+            if(matches.Any())
+            {
+                return (matches.Count == 1) 
+                        ? matches[0] 
+                        : matches.Aggregate((l, r) => l.Name.Length > r.Name.Length ? l : r);
+            }
+            else
+            {
+                return null;
+            }            
         }
 
         internal static T? GetAttribute<T>(MemberInfo t, FhirRelease version) where T : Attribute
