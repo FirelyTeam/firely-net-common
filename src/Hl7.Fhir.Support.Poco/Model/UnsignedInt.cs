@@ -37,7 +37,7 @@ namespace Hl7.Fhir.Model
         /// <summary>
         /// Checks whether the given literal is correctly formatted.
         /// </summary>
-        public static bool IsValidValue(string value) => ElementModel.Types.Integer.TryParse(value, out var parsed) && parsed.Value > 0;
+        public static bool IsValidValue(string value) => ElementModel.Types.Integer.TryParse(value, out var parsed) && parsed.Value >= 0;
     }
 }
 

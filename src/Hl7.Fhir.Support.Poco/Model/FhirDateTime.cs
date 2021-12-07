@@ -204,7 +204,7 @@ namespace Hl7.Fhir.Model
         /// Checks whether the given literal is correctly formatted.
         /// </summary>
         public static bool IsValidValue(string value) => ElementModel.Types.DateTime.TryParse(value, out var parsed) &&
-            (parsed.Precision <= ElementModel.Types.DateTimePrecision.Day || parsed.HasOffset);
+            (parsed.Precision <= ElementModel.Types.DateTimePrecision.Day == !parsed.HasOffset);
     }
 
 }

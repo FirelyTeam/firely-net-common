@@ -12,7 +12,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
-using DAVE = Hl7.Fhir.Validation.CodedValidationException;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
 
 #nullable enable
 
@@ -61,7 +61,7 @@ namespace Hl7.Fhir.Validation
         private ValidationResult? validateValue(object? item, ValidationContext context) =>
             item is null || IsAllowedType(item.GetType())
                 ? ValidationResult.Success
-                : DAVE.CHOICE_TYPE_NOT_ALLOWED
+                : COVE.CHOICE_TYPE_NOT_ALLOWED
                     .With(ModelInspector.GetClassMappingForType(item.GetType())?.Name ?? item.GetType().Name)
                     .AsResult(context);
 

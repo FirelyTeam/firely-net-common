@@ -37,7 +37,7 @@ namespace Hl7.Fhir.Model
         /// <summary>
         /// Checks whether the given literal is correctly formatted.
         /// </summary>
-        public static bool IsValidValue(string value) => value == "true" || value == "false";
+        public static bool IsValidValue(string value) => ElementModel.Types.Boolean.TryParse(value, out _);
     }
 }
 

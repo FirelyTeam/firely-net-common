@@ -37,7 +37,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Runtime.Serialization;
-using DAVE = Hl7.Fhir.Validation.CodedValidationException;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
 using S = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Model
@@ -104,7 +104,7 @@ namespace Hl7.Fhir.Model
                 return baseResults;
             else
             {
-                var result = DAVE.INVALID_CODED_VALUE.With(ObjectValue, EnumUtility.GetName<T>()).AsResult(validationContext);
+                var result = COVE.INVALID_CODED_VALUE.With(ObjectValue, EnumUtility.GetName<T>()).AsResult(validationContext);
 #if NET45
                 return baseResults.Concat(new[] { result });
 #else

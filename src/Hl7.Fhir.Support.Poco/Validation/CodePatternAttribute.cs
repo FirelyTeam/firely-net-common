@@ -9,7 +9,7 @@
 using Hl7.Fhir.Model;
 using System;
 using System.ComponentModel.DataAnnotations;
-using DAVE = Hl7.Fhir.Validation.CodedValidationException;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
 
 #nullable enable
 
@@ -27,7 +27,7 @@ namespace Hl7.Fhir.Validation
             {
                 null => ValidationResult.Success,
                 string s when Code.IsValidValue(s) => ValidationResult.Success,
-                string s => DAVE.CODE_LITERAL_INVALID.With(s).AsResult(validationContext),
+                string s => COVE.CODE_LITERAL_INVALID.With(s).AsResult(validationContext),
                 _ => throw new ArgumentException($"{nameof(CodePatternAttribute)} attributes can only be applied to string properties.")
             };
     }

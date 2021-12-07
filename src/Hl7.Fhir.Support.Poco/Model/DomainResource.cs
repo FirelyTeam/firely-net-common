@@ -32,7 +32,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Linq;
-using DAVE = Hl7.Fhir.Validation.CodedValidationException;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
 
 namespace Hl7.Fhir.Model
 {
@@ -49,10 +49,10 @@ namespace Hl7.Fhir.Model
             if (this.Contained != null)
             {
                 if (!Contained.OfType<DomainResource>().All(dr => dr.Text == null))
-                    result.Add(DAVE.CONTAINED_RESOURCE_CANNOT_HAVE_NARRATIVE.AsResult(validationContext));
+                    result.Add(COVE.CONTAINED_RESOURCE_CANNOT_HAVE_NARRATIVE.AsResult(validationContext));
 
                 if (!Contained.OfType<DomainResource>().All(cr => cr.Contained == null || !cr.Contained.Any()))
-                    result.Add(DAVE.CONTAINED_RESOURCES_CANNOT_BE_NESTED.AsResult(validationContext));
+                    result.Add(COVE.CONTAINED_RESOURCES_CANNOT_BE_NESTED.AsResult(validationContext));
             }
 
             return result;

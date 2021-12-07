@@ -43,6 +43,8 @@ namespace Hl7.Fhir.Model
         /// <summary>
         /// Checks whether the given literal is correctly formatted.
         /// </summary>
+        /// <remarks>Due to the way we use Urls in FHIR, some "valid" FHIR urls are
+        /// actually no valid according to <see cref="Uri.IsWellFormedUriString(string?, UriKind)"/></remarks>
         public static bool IsValidValue(string value)
         {
             Uri uri;
