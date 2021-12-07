@@ -118,6 +118,8 @@ namespace Hl7.Fhir.Introspection
         /// <summary>
         /// The FHIR release which this mapping reflects.
         /// </summary>
+        /// <remarks>The mapping will contain the metadata that applies to this version (or older), using the
+        /// newest metadata when multiple exist.</remarks>
         public FhirRelease? Release { get; }
 
         /// <summary>
