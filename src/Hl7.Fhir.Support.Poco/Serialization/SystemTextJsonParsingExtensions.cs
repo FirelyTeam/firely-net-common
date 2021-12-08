@@ -59,11 +59,18 @@ namespace Hl7.Fhir.Serialization
             var gotValue = reader.TryGetDecimal(out var dec) && (value = dec) is { };
             if (!gotValue) gotValue = reader.TryGetUInt64(out var uint64) && (value = uint64) is { };
             if (!gotValue) gotValue = reader.TryGetInt64(out var int64) && (value = int64) is { };
-            if (!gotValue) gotValue = reader.TryGetDouble(out var dbl) && double.IsNormal(dbl) && (value = dbl) is { };
+            if (!gotValue) gotValue = reader.TryGetDouble(out var dbl) && dbl.IsNormal() && (value = dbl) is { };
 
             return gotValue;
         }
 
+#if NETSTANDARD2_0
+        internal static bool IsNormal(this float f) => !float.IsNaN(f) && !float.IsInfinity(f);
+        internal static bool IsNormal(this double d) => !double.IsNaN(d) && !double.IsInfinity(d);
+#else
+        internal static bool IsNormal(this float f) => float.IsNormal(f);
+        internal static bool IsNormal(this double d) => double.IsNormal(d);
+#endif
 
         public static void Recover(this ref Utf8JsonReader reader)
         {

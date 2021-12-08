@@ -105,6 +105,7 @@ namespace Hl7.Fhir.Model
       return CopyTo(new UsageContext());
     }
 
+    ///<inheritdoc />
     public override bool Matches(IDeepComparable other)
     {
       var otherT = other as UsageContext;

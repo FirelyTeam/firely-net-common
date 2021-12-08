@@ -746,9 +746,9 @@ namespace Hl7.Fhir.Serialization
             else if (requiredType == typeof(ulong))
                 success = reader.TryGetUInt64(out ulong ui64) && (value = ui64) is { };
             else if (requiredType == typeof(float))
-                success = reader.TryGetSingle(out float si) && float.IsNormal(si) && (value = si) is { };
+                success = reader.TryGetSingle(out float si) && si.IsNormal() && (value = si) is { };
             else if (requiredType == typeof(double))
-                success = reader.TryGetDouble(out double dbl) && double.IsNormal(dbl) && (value = dbl) is { };
+                success = reader.TryGetDouble(out double dbl) && dbl.IsNormal() && (value = dbl) is { };
             else
             {
                 var rawValue = reader.GetRawText();
@@ -835,7 +835,7 @@ namespace Hl7.Fhir.Serialization
             string propertyName)
         {
             bool startsWithUnderscore = propertyName[0] == '_';
-            var elementName = startsWithUnderscore ? propertyName[1..] : propertyName;
+            var elementName = startsWithUnderscore ? propertyName.Substring(1) : propertyName;
 
             var propertyMapping = parentMapping.FindMappedElementByName(elementName)
                 ?? parentMapping.FindMappedElementByChoiceName(propertyName);
@@ -857,7 +857,7 @@ namespace Hl7.Fhir.Serialization
 
             (ClassMapping?, FhirJsonException?) getChoiceClassMapping(ref Utf8JsonReader r)
             {
-                string typeSuffix = propertyName[propertyMapping.Name.Length..];
+                string typeSuffix = propertyName.Substring(propertyMapping.Name.Length);
 
                 return string.IsNullOrEmpty(typeSuffix)
                     ? (null, ERR.CHOICE_ELEMENT_HAS_NO_TYPE.With(ref r, propertyMapping.Name))

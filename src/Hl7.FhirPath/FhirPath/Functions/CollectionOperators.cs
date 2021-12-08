@@ -81,7 +81,7 @@ namespace Hl7.FhirPath.Functions
                     return new List<ITypedElement>() { element };
                 }
             }
-            
+
             return element.Children(name);
         }
 

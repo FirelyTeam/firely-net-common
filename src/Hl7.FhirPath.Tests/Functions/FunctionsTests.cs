@@ -125,6 +125,12 @@ namespace HL7.FhirPath.Tests
 
                     // function repeat(projection: expression) : collection
 
+                    // function Aggregate(aggregator : expression [, init : value]) : value
+                    ("(1|2|3|4|5|6|7|8|9).aggregate($this+$total, 0) = 45", true, false),
+                    ("(1|2|3|4|5|6|7|8|9).aggregate($this+$total, 2) = 47", true, false),
+                    ("(1|2|3|4|5|6|7|8|9).aggregate(iif($total.empty(), $this, iif($this < $total, $this, $total))) = 1", true, false),
+                    ("(1|2|3|4|5|6|7|8|9).aggregate(iif($total.empty(), $this, iif($this > $total, $this, $total))) = 9", true, false),
+
                     // function ofType(type : type specifier) : collection 
                     ("{}.ofType(String).empty()", true, false),
                     ("('a').ofType(String).count() = 1", true, false),

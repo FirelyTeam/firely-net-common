@@ -79,19 +79,7 @@ namespace Hl7.Fhir.Rest
             }
             result.ResponseUri = response.ResponseUri;
             result.Location = response.Headers[HttpUtil.LOCATION] ?? response.Headers[HttpUtil.CONTENTLOCATION];
-
-#if NETSTANDARD1_6
-            if (!String.IsNullOrEmpty(response.Headers[HttpUtil.LASTMODIFIED]))
-            {
-                DateTimeOffset dateTimeOffset = new DateTimeOffset();
-                bool success = DateTimeOffset.TryParse(response.Headers[HttpUtil.LASTMODIFIED], out dateTimeOffset);
-                if (!success)
-                    throw new FormatException($"Last-Modified header has value '{response.Headers[HttpUtil.LASTMODIFIED]}', which is not recognized as a valid DateTime");
-                result.LastModified = dateTimeOffset;
-            }
-#else
             result.LastModified = response.LastModified;
-#endif
             result.Etag = getETag(response);
             result.ContentType = getContentType(response);
             result.Body = body;
