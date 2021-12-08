@@ -448,8 +448,8 @@ namespace Hl7.Fhir.Serialization
             public void Schedule(string key, Action validation)
             {
                 // Add or overwrite the entry for the given key.
-                if (!_validations.TryAdd(key, validation))
-                    _validations[key] = validation;
+                if (_validations.ContainsKey(key)) _validations.Remove(key);
+                _validations[key] = validation;
             }
 
             //public CodedValidationException[] Run() => _validations.Values.SelectMany(delayed => delayed()).ToArray();

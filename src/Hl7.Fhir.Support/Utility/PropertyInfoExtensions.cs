@@ -208,7 +208,7 @@ namespace Hl7.Fhir.Utility
                 il.Emit(OpCodes.Ldfld, field);
                 il.Emit(OpCodes.Ret);
 
-                return setter.CreateDelegate<Func<C, T>>();
+                return (Func<C, T>)setter.CreateDelegate(typeof(Func<C, T>));
             }
             catch (PlatformNotSupportedException)
             {
