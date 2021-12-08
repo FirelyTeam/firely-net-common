@@ -20,8 +20,36 @@ namespace HL7.FhirPath.Tests
                  }.Select(t => new object[] { t.expression, t.expected, t.invalid });
 
         private static IEnumerable<object[]> EqualityOperatorTestcases() =>
-            new (string expression, bool expected, bool invalid)[]
+            new (string expression, bool? expected, bool invalid)[]
                  {
+                    ("(@2012 + 1 year) = @2013", true, false),
+                    ("(@2012-02 + 1 year) = @2013-02", true, false),
+                    ("(@2012-02-13 + 13 month) = @2013-03-13", true, false),
+                    ("(@2012 + 1 month) = @2012", true, false),
+                    ("(@2012 + 12 month) = @2013", true, false),
+                    ("(@2012-02-27 + 5 days) = @2012-03-03", true, false),
+
+                    ("(@2014 + 23 months) = @2015", true, false),
+                    ("(@2016 + 365 days) = @2017", true, false),
+                    ("(@2016-01 + 29 weeks) = @2016-07", true, false),
+                    ("(@2016-01 + 30 weeks) = @2016-08", true, false),
+                    ("(@2016-01 + 31 weeks) = @2016-08", true, false),
+
+                    ("(@2012-02-13T10:45:31.1 + 30 minutes) = @2012-02-13T11:15:31.1", true, false),
+                    ("(@2012-02-13T10:45:31.1 + 25 hours) = @2012-02-14T11:45:31.1", true, false),
+                    ("(@2012-02-13T10:45:31.1 + 25 hours + 9 seconds) = @2012-02-14T11:45:40.1", true, false),
+                    ("(@2012-02-13T10:45:31.1 + 13 'ms') = @2012-02-13T10:45:31.113", true, false),
+                    ("(@2012-02-13T10:45:31.1 + 10 'ms') = @2012-02-13T10:45:31.110", true, false),
+
+                    // https://hl7.org/fhirpath/#time-valued-quantities
+                    ("'1 year'.toQuantity() = 1 'a'", null, false),
+                    ("'1 day'.toQuantity() = 1 'd'", true, false),
+                    ("'1 second'.toQuantity() = 1 's'", true, false),
+
+                    ("'1 year'.toQuantity() ~ 1 'a'", true, false),
+                    ("'1 day'.toQuantity() ~ 1 'd'", true, false),
+                    ("'1 second'.toQuantity() ~ 1 's'", true, false),
+
                     ("@2012 = @2012", true, false),
                     ("@2012 = @2013", false, false),
                     ("(@2012-01 = @2012).empty()", true, false),
@@ -171,18 +199,23 @@ namespace HL7.FhirPath.Tests
 
         [DataTestMethod]
         [DynamicData(nameof(AllFunctionTestcases), DynamicDataSourceType.Method)]
-        public void AssertTestcases(string expression, bool expected, bool invalid = false)
+        public void AssertTestcases(string expression, bool? expected, bool invalid = false)
         {
             ITypedElement dummy = ElementNode.ForPrimitive(true);
 
             if (invalid)
             {
-                Action act = () => dummy.IsBoolean(expression, expected);
+                Action act = () => dummy.IsBoolean(expression, expected.Value);
                 act.Should().Throw<Exception>();
+            }
+            if (expected is null)
+            {
+                dummy.Scalar(expression).Should().BeNull();
             }
             else
             {
-                dummy.IsBoolean(expression, expected).Should().BeTrue();
+                dummy.IsBoolean(expression, expected.Value)
+                    .Should().BeTrue(because: $"The expression was supposed to result in {expected}.");
             }
         }
     }

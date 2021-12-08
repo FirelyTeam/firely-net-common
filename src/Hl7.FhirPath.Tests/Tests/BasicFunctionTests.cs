@@ -189,7 +189,7 @@ namespace Hl7.FhirPath.Tests
             Assert.AreEqual(P.Date.Today(), scalar("today()"));
 
             // Check greater than
-            isB("today() < @" + P.Date.FromDateTimeOffset(DateTimeOffset.UtcNow.AddDays(1), includeOffset: false));
+            isB("today() < @" + P.Date.FromDateTimeOffset(DateTimeOffset.UtcNow.AddDays(2), includeOffset: false));
 
             // Check less than
             isB("today() > @" + P.Date.FromDateTimeOffset(DateTimeOffset.UtcNow.AddDays(-1), includeOffset: false));

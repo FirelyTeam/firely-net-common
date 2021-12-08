@@ -77,7 +77,7 @@ namespace Hl7.Fhir.Model
         [NonSerialized]
         private AnnotationList _annotations = null;
 
-        private AnnotationList annotations => LazyInitializer.EnsureInitialized(ref _annotations);
+        private AnnotationList annotations => LazyInitializer.EnsureInitialized(ref _annotations, () => new());
 
         public IEnumerable<object> Annotations(Type type) => annotations.OfType(type);
 
