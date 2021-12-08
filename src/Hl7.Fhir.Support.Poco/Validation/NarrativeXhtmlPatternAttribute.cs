@@ -61,7 +61,7 @@ namespace Hl7.Fhir.Validation
 #else
                 var errors = SerializationUtil.RunFhirXhtmlSchemaValidation(doc);
 #endif
-                return errors.Any() ? DAVE.NARRATIVE_XML_IS_INVALID.AsResult(context, string.Join(", ", errors)) : ValidationResult.Success!;
+                return errors.Any() ? COVE.NARRATIVE_XML_IS_INVALID.AsResult(context, string.Join(", ", errors)) : ValidationResult.Success!;
             }
             catch (FormatException fe)
             {

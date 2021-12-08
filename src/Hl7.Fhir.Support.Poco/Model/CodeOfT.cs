@@ -105,7 +105,7 @@ namespace Hl7.Fhir.Model
             else
             {
                 var result = COVE.INVALID_CODED_VALUE.AsResult(validationContext, ObjectValue, EnumUtility.GetName<T>());
-#if NET45
+#if NET452
                 return baseResults.Concat(new[] { result });
 #else
                 return baseResults.Append(result);
