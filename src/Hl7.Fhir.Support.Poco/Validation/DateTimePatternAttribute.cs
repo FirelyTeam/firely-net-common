@@ -9,7 +9,7 @@
 using Hl7.Fhir.Model;
 using System;
 using System.ComponentModel.DataAnnotations;
-using DAVE = Hl7.Fhir.Validation.CodedValidationException;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
 
 #nullable enable
 
@@ -27,7 +27,7 @@ namespace Hl7.Fhir.Validation
             {
                 null => ValidationResult.Success,
                 string s when FhirDateTime.IsValidValue(s) => ValidationResult.Success,
-                string s => DAVE.DATETIME_LITERAL_INVALID.AsResult(validationContext, s),
+                string s => COVE.DATETIME_LITERAL_INVALID.AsResult(validationContext, s),
                 _ => throw new ArgumentException($"{nameof(DateTimePatternAttribute)} attributes can only be applied to string properties.")
             };
     }

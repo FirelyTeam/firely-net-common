@@ -10,7 +10,7 @@ using Hl7.Fhir.Utility;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using DAVE = Hl7.Fhir.Validation.CodedValidationException;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
 
 #nullable enable
 
@@ -43,21 +43,21 @@ namespace Hl7.Fhir.Validation
         {
             if (value is null)
                 return (Min == 0) ? ValidationResult.Success :
-                    DAVE.MANDATORY_ELEMENT_CANNOT_BE_NULL.AsResult(validationContext, Min);
+                    COVE.MANDATORY_ELEMENT_CANNOT_BE_NULL.AsResult(validationContext, Min);
 
             var count = 1;
 
             if (ReflectionHelper.IsRepeatingElement(value, out var list))
             {
                 if (list.Cast<object>().Any(item => item is null))
-                    return DAVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL.AsResult(validationContext);
+                    return COVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL.AsResult(validationContext);
                 count = list.Count;
             }
 
             if (count < Min)
-                return DAVE.INCORRECT_CARDINALITY_MIN.AsResult(validationContext, count, Min);
+                return COVE.INCORRECT_CARDINALITY_MIN.AsResult(validationContext, count, Min);
             if (Max != -1 && count > Max)
-                return DAVE.INCORRECT_CARDINALITY_MAX.AsResult(validationContext, count, Max);
+                return COVE.INCORRECT_CARDINALITY_MAX.AsResult(validationContext, count, Max);
 
             return ValidationResult.Success;
         }

@@ -12,7 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
-using DAVE = Hl7.Fhir.Validation.CodedValidationException;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
 using ERR = Hl7.Fhir.Serialization.FhirJsonException;
 
 #nullable enable
@@ -34,7 +34,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [DataRow("hi!", typeof(byte[]), "JSON106")]
         [DataRow("hi!", typeof(DateTimeOffset), "JSON107")]
         [DataRow("2007-02-03", typeof(DateTimeOffset), null)]
-        [DataRow("enumvalue", typeof(UriFormat), DAVE.INVALID_CODED_VALUE_CODE)]
+        [DataRow("enumvalue", typeof(UriFormat), COVE.INVALID_CODED_VALUE_CODE)]
         [DataRow(true, typeof(Enum), "JSON110")]
         [DataRow("hi!", typeof(int), "JSON110")]
 
@@ -200,12 +200,12 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [DataRow(4, typeof(Base64Binary), "JSON110", "4")]
 
         [DataRow("2007-04", typeof(FhirDateTime), null, "2007-04")]
-        [DataRow("2007-", typeof(FhirDateTime), DAVE.DATETIME_LITERAL_INVALID_CODE, "2007-")]
+        [DataRow("2007-", typeof(FhirDateTime), COVE.DATETIME_LITERAL_INVALID_CODE, "2007-")]
         [DataRow(4.45, typeof(FhirDateTime), "JSON110", "4.45")]
 
         [DataRow("female", typeof(Code), null, "female")]
         [DataRow("is-a", typeof(Code<FilterOperator>), null, "is-a")]
-        [DataRow("wrong", typeof(Code<FilterOperator>), DAVE.INVALID_CODED_VALUE_CODE, "wrong")]   // just sets ObjectValue, POCO validation handles enum checks
+        [DataRow("wrong", typeof(Code<FilterOperator>), COVE.INVALID_CODED_VALUE_CODE, "wrong")]   // just sets ObjectValue, POCO validation handles enum checks
         [DataRow(true, typeof(Code), ERR.UNEXPECTED_JSON_TOKEN_CODE, "true")]
 
         [DataRow("hi!", typeof(Instant), "JSON107")]
@@ -442,11 +442,11 @@ namespace Hl7.Fhir.Support.Poco.Tests
         public static IEnumerable<object?[]> TestValidatePrimitiveData()
         {
             yield return data<Narrative>(new { div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>correct</p></div>" });
-            yield return data<Narrative>(new { div = "this isn't xml" }, DAVE.NARRATIVE_XML_IS_MALFORMED);
-            yield return data<Narrative>(new { div = "<puinhoop />" }, DAVE.NARRATIVE_XML_IS_INVALID);
+            yield return data<Narrative>(new { div = "this isn't xml" }, COVE.NARRATIVE_XML_IS_MALFORMED);
+            yield return data<Narrative>(new { div = "<puinhoop />" }, COVE.NARRATIVE_XML_IS_INVALID);
 
             yield return data<TestAttachment>(new { url = "urn:oid:1.3.6.1.4.1.343" });
-            yield return data<TestAttachment>(new { url = "urn:oid:1" }, DAVE.URI_LITERAL_INVALID);
+            yield return data<TestAttachment>(new { url = "urn:oid:1" }, COVE.URI_LITERAL_INVALID);
         }
 
         public static IEnumerable<object?[]> TestPrimitiveArrayData()
@@ -465,8 +465,8 @@ namespace Hl7.Fhir.Support.Poco.Tests
             yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" }, _line = new[] { new { id = "1" }, null } }, checkId1AndName);
             yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" }, _line = new[] { new { id = "1" }, new { id = "2" } } }, checkAll);
             yield return data<TestAddress>(new { line = new[] { "Ewout", null }, _line = new[] { null, new { id = "2" } } });
-            yield return data<TestAddress>(new { line = new[] { "Ewout", null }, _line = new[] { new { id = "1" }, null } }, checkId1, DAVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL);
-            yield return data<TestAddress>(new { _line = new[] { new { id = "1" }, null } }, checkId1, DAVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL);
+            yield return data<TestAddress>(new { line = new[] { "Ewout", null }, _line = new[] { new { id = "1" }, null } }, checkId1, COVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL);
+            yield return data<TestAddress>(new { _line = new[] { new { id = "1" }, null } }, checkId1, COVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL);
             yield return data<TestAddress>(new { _line = new[] { new { id = "1" }, new { id = "2" } } }, checkIds);
 
             static void checkName(object parsed) => parsed.Should().BeOfType<TestAddress>().Which.Line.Should().BeEquivalentTo("Ewout", "Wouter");
@@ -595,13 +595,13 @@ namespace Hl7.Fhir.Support.Poco.Tests
                     ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE_CODE, // given and _given not the same length
                     ERR.EXPECTED_PRIMITIVE_NOT_NULL_CODE, // telecom use cannot be null
                     ERR.EXPECTED_PRIMITIVE_NOT_OBJECT_CODE, // address.use is not an object
-                    DAVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL_CODE, // address.line should not have a null at the same position in both arrays
-                    DAVE.INVALID_CODED_VALUE_CODE,      // status 'generatedY'
+                    COVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL_CODE, // address.line should not have a null at the same position in both arrays
+                    COVE.INVALID_CODED_VALUE_CODE,      // status 'generatedY'
                     ERR.PRIMITIVE_ARRAYS_ONLY_NULL_CODE, // Questionnaire._subjectType cannot be just null
-                    DAVE.CHOICE_TYPE_NOT_ALLOWED_CODE,   // incorrect use of valueBoolean in option.
+                    COVE.CHOICE_TYPE_NOT_ALLOWED_CODE,   // incorrect use of valueBoolean in option.
                     ERR.EXPECTED_START_OF_OBJECT_CODE, // item.code is a complex object, not a boolean
-                    DAVE.URI_LITERAL_INVALID_CODE, // incorrect oid
-                    DAVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL_CODE, // given cannot be a single array with just a null
+                    COVE.URI_LITERAL_INVALID_CODE, // incorrect oid
+                    COVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL_CODE, // given cannot be a single array with just a null
                     ERR.UNEXPECTED_JSON_TOKEN_CODE, // telecom.rank should be a number, not a boolean
                     ERR.USE_OF_UNDERSCORE_ILLEGAL_CODE, // should be extension.url, not extension._url
                     ERR.UNEXPECTED_JSON_TOKEN_CODE, // gender.extension.valueCode should be a string, not a number
@@ -644,7 +644,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
         private class CustomComplexValidator : IDeserializationValidator
         {
-            public void ValidateInstance(object? instance, in InstanceDeserializationContext context, out DAVE[]? reportedErrors)
+            public void ValidateInstance(object? instance, in InstanceDeserializationContext context, out COVE[]? reportedErrors)
             {
                 reportedErrors = null;
             }
@@ -664,21 +664,21 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 // deserialization of the FhirDateTime, validation will not be triggered!
                 if (f.Value.EndsWith("Z")) f.Value = f.Value.TrimEnd('Z') + "+00:00";
 
-                reportedErrors = new[] { DAVE.DATETIME_LITERAL_INVALID };
+                reportedErrors = new[] { COVE.DATETIME_LITERAL_INVALID };
             }
 
         }
 
         private class CustomDataTypeValidator : IDeserializationValidator
         {
-            public void ValidateInstance(object? instance, in InstanceDeserializationContext context, out DAVE[]? reportedErrors)
+            public void ValidateInstance(object? instance, in InstanceDeserializationContext context, out COVE[]? reportedErrors)
             {
                 if (context.InstanceMapping.Name == "dateTime")
                 {
                     var dt = instance.Should().BeOfType<FhirDateTime>().Subject;
 
                     if (dt.Value.EndsWith("Z")) dt.Value = dt.Value.TrimEnd('Z') + "+00:00";
-                    reportedErrors = new[] { DAVE.DATETIME_LITERAL_INVALID };
+                    reportedErrors = new[] { COVE.DATETIME_LITERAL_INVALID };
                 }
                 else
                 {
@@ -705,8 +705,8 @@ namespace Hl7.Fhir.Support.Poco.Tests
                         out _, new() { Validator = validator });
 
                 errors.Any().Should().BeTrue();
-                errors.Should().AllBeOfType<DAVE>()
-                    .And.ContainSingle(e => ((DAVE)e).ErrorCode == DAVE.DATETIME_LITERAL_INVALID_CODE);
+                errors.Should().AllBeOfType<COVE>()
+                    .And.ContainSingle(e => ((COVE)e).ErrorCode == COVE.DATETIME_LITERAL_INVALID_CODE);
                 result.Should().BeOfType<TestPatient>()
                     .Which.Deceased.Should().BeOfType<FhirDateTime>()
                     .Which.Value.Should().EndWith("+00:00");

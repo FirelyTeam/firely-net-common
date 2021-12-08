@@ -9,7 +9,7 @@
 using Hl7.Fhir.Model;
 using System;
 using System.ComponentModel.DataAnnotations;
-using DAVE = Hl7.Fhir.Validation.CodedValidationException;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
 
 #nullable enable
 
@@ -26,7 +26,7 @@ namespace Hl7.Fhir.Validation
             {
                 null => ValidationResult.Success,
                 string s when FhirUri.IsValidValue(s) => ValidationResult.Success,
-                string s => DAVE.URI_LITERAL_INVALID.AsResult(validationContext, s),
+                string s => COVE.URI_LITERAL_INVALID.AsResult(validationContext, s),
                 _ => throw new ArgumentException($"{nameof(UriPatternAttribute)} attributes can only be applied to string properties.")
             };
     }

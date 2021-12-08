@@ -11,7 +11,7 @@ using Hl7.Fhir.Utility;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using DAVE = Hl7.Fhir.Validation.CodedValidationException;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
 
 #nullable enable
 
@@ -41,7 +41,7 @@ namespace Hl7.Fhir.Validation
                     NarrativeValidationKind.None => ValidationResult.Success,
                     NarrativeValidationKind.Xml => XHtml.IsValidXml(xml, out var error)
                             ? ValidationResult.Success
-                            : DAVE.NARRATIVE_XML_IS_MALFORMED.AsResult(context, error),
+                            : COVE.NARRATIVE_XML_IS_MALFORMED.AsResult(context, error),
                     NarrativeValidationKind.FhirXhtml => runValidateXhtmlSchema(xml, context),
                     _ => throw new NotSupportedException($"Encountered unknown narrative validation kind {kind}.")
                 };
@@ -65,7 +65,7 @@ namespace Hl7.Fhir.Validation
             }
             catch (FormatException fe)
             {
-                return DAVE.NARRATIVE_XML_IS_MALFORMED.AsResult(context, fe.Message);
+                return COVE.NARRATIVE_XML_IS_MALFORMED.AsResult(context, fe.Message);
             }
         }
     }

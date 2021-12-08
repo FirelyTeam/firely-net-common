@@ -9,7 +9,7 @@
 using Hl7.Fhir.Utility;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
-using DAVE = Hl7.Fhir.Validation.CodedValidationException;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
 
 #nullable enable
 
@@ -39,24 +39,24 @@ namespace Hl7.Fhir.Validation
         public const string CONTAINED_RESOURCE_CANNOT_HAVE_NARRATIVE_CODE = "PVAL117";
         public const string CONTAINED_RESOURCES_CANNOT_BE_NESTED_CODE = "PVAL118";
 
-        internal static readonly DAVE CHOICE_TYPE_NOT_ALLOWED = new(CHOICE_TYPE_NOT_ALLOWED_CODE, "Value is of type '{0}', which is not an allowed choice.");
-        internal static readonly DAVE INCORRECT_CARDINALITY_MIN = new(INCORRECT_CARDINALITY_MIN_CODE, "Element has {0} elements, but minium cardinality is {1}.");
-        internal static readonly DAVE INCORRECT_CARDINALITY_MAX = new(INCORRECT_CARDINALITY_MAX_CODE, "Element has {0} elements, but maximum cardinality is {1}.");
-        internal static readonly DAVE REPEATING_ELEMENT_CANNOT_CONTAIN_NULL = new(REPEATING_ELEMENT_CANNOT_CONTAIN_NULL_CODE, "Repeating elements should not contain a null value.");
-        internal static readonly DAVE MANDATORY_ELEMENT_CANNOT_BE_NULL = new(MANDATORY_ELEMENT_CANNOT_BE_NULL_CODE, "Element with minimum cardinality {0} cannot be null.");
-        internal static readonly DAVE CODE_LITERAL_INVALID = new(CODE_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for a code.");
-        internal static readonly DAVE DATE_LITERAL_INVALID = new(DATE_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for a date.");
-        internal static readonly DAVE DATETIME_LITERAL_INVALID = new(DATETIME_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for a dateTime.");
-        internal static readonly DAVE ID_LITERAL_INVALID = new(ID_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for an id.");
-        internal static readonly DAVE NARRATIVE_XML_IS_MALFORMED = new(NARRATIVE_XML_IS_MALFORMED_CODE, "Value is not well-formatted Xml: {0}");
-        internal static readonly DAVE NARRATIVE_XML_IS_INVALID = new(NARRATIVE_XML_IS_INVALID_CODE, "Value is not well-formed Xml adhering to the FHIR schema for Narrative: {0}");
-        internal static readonly DAVE OID_LITERAL_INVALID = new(OID_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for an oid.");
-        internal static readonly DAVE TIME_LITERAL_INVALID = new(TIME_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for a time.");
-        internal static readonly DAVE URI_LITERAL_INVALID = new(URI_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for an uri.");
-        internal static readonly DAVE UUID_LITERAL_INVALID = new(UUID_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for a uuid.");
-        internal static readonly DAVE INVALID_CODED_VALUE = new(INVALID_CODED_VALUE_CODE, "Value '{0}' is not a correct code for valueset '{1}'.");
-        internal static readonly DAVE CONTAINED_RESOURCE_CANNOT_HAVE_NARRATIVE = new(CONTAINED_RESOURCE_CANNOT_HAVE_NARRATIVE_CODE, "Resource has contained resources with narrative, which is not allowed.");
-        internal static readonly DAVE CONTAINED_RESOURCES_CANNOT_BE_NESTED = new(CONTAINED_RESOURCES_CANNOT_BE_NESTED_CODE, "It is not allowed for a resource to contain resources which themselves contain resources.");
+        internal static readonly COVE CHOICE_TYPE_NOT_ALLOWED = new(CHOICE_TYPE_NOT_ALLOWED_CODE, "Value is of type '{0}', which is not an allowed choice.");
+        internal static readonly COVE INCORRECT_CARDINALITY_MIN = new(INCORRECT_CARDINALITY_MIN_CODE, "Element has {0} elements, but minium cardinality is {1}.");
+        internal static readonly COVE INCORRECT_CARDINALITY_MAX = new(INCORRECT_CARDINALITY_MAX_CODE, "Element has {0} elements, but maximum cardinality is {1}.");
+        internal static readonly COVE REPEATING_ELEMENT_CANNOT_CONTAIN_NULL = new(REPEATING_ELEMENT_CANNOT_CONTAIN_NULL_CODE, "Repeating elements should not contain a null value.");
+        internal static readonly COVE MANDATORY_ELEMENT_CANNOT_BE_NULL = new(MANDATORY_ELEMENT_CANNOT_BE_NULL_CODE, "Element with minimum cardinality {0} cannot be null.");
+        internal static readonly COVE CODE_LITERAL_INVALID = new(CODE_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for a code.");
+        internal static readonly COVE DATE_LITERAL_INVALID = new(DATE_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for a date.");
+        internal static readonly COVE DATETIME_LITERAL_INVALID = new(DATETIME_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for a dateTime.");
+        internal static readonly COVE ID_LITERAL_INVALID = new(ID_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for an id.");
+        internal static readonly COVE NARRATIVE_XML_IS_MALFORMED = new(NARRATIVE_XML_IS_MALFORMED_CODE, "Value is not well-formatted Xml: {0}");
+        internal static readonly COVE NARRATIVE_XML_IS_INVALID = new(NARRATIVE_XML_IS_INVALID_CODE, "Value is not well-formed Xml adhering to the FHIR schema for Narrative: {0}");
+        internal static readonly COVE OID_LITERAL_INVALID = new(OID_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for an oid.");
+        internal static readonly COVE TIME_LITERAL_INVALID = new(TIME_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for a time.");
+        internal static readonly COVE URI_LITERAL_INVALID = new(URI_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for an uri.");
+        internal static readonly COVE UUID_LITERAL_INVALID = new(UUID_LITERAL_INVALID_CODE, "'{0}' is not a correct literal for a uuid.");
+        internal static readonly COVE INVALID_CODED_VALUE = new(INVALID_CODED_VALUE_CODE, "Value '{0}' is not a correct code for valueset '{1}'.");
+        internal static readonly COVE CONTAINED_RESOURCE_CANNOT_HAVE_NARRATIVE = new(CONTAINED_RESOURCE_CANNOT_HAVE_NARRATIVE_CODE, "Resource has contained resources with narrative, which is not allowed.");
+        internal static readonly COVE CONTAINED_RESOURCES_CANNOT_BE_NESTED = new(CONTAINED_RESOURCES_CANNOT_BE_NESTED_CODE, "It is not allowed for a resource to contain resources which themselves contain resources.");
 
         public CodedValidationException(string code, string message) : base(code, message)
         {

@@ -5,7 +5,7 @@ using Hl7.Fhir.Validation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.ComponentModel.DataAnnotations;
-using DAVE = Hl7.Fhir.Validation.CodedValidationException;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
 
 #nullable enable
 
@@ -35,11 +35,11 @@ namespace Hl7.Fhir.Support.Poco.Tests
             c.Value.Should().Be(FilterOperator.ChildOf);
 
             c.ObjectValue = "wrong";
-            assertValid(c, e: DAVE.INVALID_CODED_VALUE);
+            assertValid(c, e: COVE.INVALID_CODED_VALUE);
             Assert.ThrowsException<InvalidCastException>(() => c.Value);
 
             c.ObjectValue = 4;
-            assertValid(c, e: DAVE.INVALID_CODED_VALUE);
+            assertValid(c, e: COVE.INVALID_CODED_VALUE);
             Assert.ThrowsException<InvalidCastException>(() => c.Value);
         }
 

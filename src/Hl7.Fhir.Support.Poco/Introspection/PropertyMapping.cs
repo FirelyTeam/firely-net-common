@@ -43,6 +43,11 @@ namespace Hl7.Fhir.Introspection
             FhirType = fhirTypes;
             PropertyTypeMapping = propertyTypeMapping;
             DeclaringClass = declaringClass;
+#if NET452
+            ValidationAttributes = new ValidationAttribute[0];
+#else
+            ValidationAttributes = Array.Empty<ValidationAttribute>();
+#endif
         }
 
         /// <summary>
@@ -152,7 +157,7 @@ namespace Hl7.Fhir.Introspection
         /// on this property.
         /// </summary>
         public ValidationAttribute[] ValidationAttributes { get; private set; } =
-#if NET45
+#if NET452
             new ValidationAttribute[0];
 #else
             Array.Empty<ValidationAttribute>();
