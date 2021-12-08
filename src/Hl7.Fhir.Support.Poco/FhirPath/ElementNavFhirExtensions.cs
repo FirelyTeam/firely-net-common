@@ -60,7 +60,7 @@ namespace Hl7.Fhir.FhirPath
             if (focus?.Value is null) return false;
 
             // Perform the checking of the content for valid html content
-            return XHtml.IsValidValue(focus.Value.ToString());
+            return XHtml.IsValidNarrativeXhtml(focus.Value.ToString());
         }
 
         public static IEnumerable<Base> ToFhirValues(this IEnumerable<ITypedElement> results)

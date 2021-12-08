@@ -6,62 +6,57 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using Hl7.Fhir.Model;
-using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
+
+#nullable enable
 
 namespace Hl7.Fhir.Validation
 {
+    /// <summary>
+    /// Utility methods for invoking .NET's <see cref="ValidationAttribute"/>-based validation mechanism.
+    /// </summary>
     public static class DotNetAttributeValidation
     {
-        public static ValidationContext BuildContext(object value=null)
+        /// <summary>
+        /// Validate and object and its members against any <see cref="ValidationAttribute" />s present. 
+        /// Will throw when a validation error is encountered.
+        /// </summary>
+        public static void Validate(object value, bool recurse = false, NarrativeValidationKind narrativeValidation = NarrativeValidationKind.FhirXhtml)
         {
-#if NET40
-            return new ValidationContext(value, null, null);
-#else
-            return new ValidationContext(value);
-#endif
-        }
-
-        public static void Validate(object value, bool recurse = false, Func<string, Resource> resolver = null)
-        {
-            if (value == null) throw new ArgumentNullException("value");
-            //    assertSupportedInstanceType(value);
-
-            var validationContext = BuildContext(value);
-            validationContext.SetValidateRecursively(recurse);
-            validationContext.SetResolver(resolver);
-
+            var validationContext = buildContext(recurse, narrativeValidation, value);
             Validator.ValidateObject(value, validationContext, true);
         }
 
-        public static bool TryValidate(object value, ICollection<ValidationResult> validationResults = null, bool recurse = false, Func<string,Resource> resolver=null)
+        /// <summary>
+        /// Validate an object and its members against any <see cref="ValidationAttribute" />s present. 
+        /// </summary>
+        /// <remarks>If <paramref name="validationResults"/> is <c>null</c>, no errors will be returned.</remarks>
+        public static bool TryValidate(object value, ICollection<ValidationResult>? validationResults = null, bool recurse = false, NarrativeValidationKind narrativeValidation = NarrativeValidationKind.FhirXhtml)
         {
-            if (value == null) throw new ArgumentNullException("value");
-          // assertSupportedInstanceType(value);
+            var validationContext = buildContext(recurse, narrativeValidation, value);
 
+            // Validate the object, also calling the validators on each child property.
             var results = validationResults ?? new List<ValidationResult>();
-            var validationContext = BuildContext(value);
-            validationContext.SetValidateRecursively(recurse);
-            validationContext.SetResolver(resolver);
-            return Validator.TryValidateObject(value, validationContext, results, true);
-
-            // Note, if you pass a null validationResults, you will *not* get results (it's not an out param!)
+            return Validator.TryValidateObject(value, validationContext, results, validateAllProperties: true);
         }
-     
 
-        public static ValidationResult BuildResult(ValidationContext context, string message, params object[] messageArgs)
+        private static ValidationContext buildContext(bool recurse, NarrativeValidationKind kind, object? instance)
         {
-            var resultMessage = String.Format(message, messageArgs);
+            ValidationContext newContext =
+#if NET40
+                new ValidationContext(instance ?? new object(), null, null);
+#else
+                new(instance ?? new object());
+#endif
 
-            if(context != null && context.MemberName != null)
-                return new ValidationResult(resultMessage, new string[] { context.MemberName });
-            else
-                return new ValidationResult(resultMessage);
+            newContext.SetValidateRecursively(recurse);
+            newContext.SetNarrativeValidationKind(kind);
+            return newContext;
         }
+
     }
 
 }
+
+#nullable restore

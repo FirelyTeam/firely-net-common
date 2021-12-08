@@ -7,15 +7,16 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
 
-namespace Hl7.Fhir.Validation
+namespace Hl7.Fhir.Utility
 {
-    public interface IValidatableObject
+    public interface ICodedException
     {
-        IEnumerable<ValidationResult> Validate(ValidationContext validationContext);
+        string ErrorCode { get; }
+        string Message { get; }
+
+        Exception Exception { get; }
+
+        ICodedException WithMessage(string message);
     }
 }

@@ -6,70 +6,56 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using Hl7.Fhir.Model;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+#nullable enable
 
 namespace Hl7.Fhir.Validation
 {
+    /// <summary>
+    /// Extension methods on <see cref="ValidationContext" /> to support POCO validation.
+    /// </summary>
     public static class ValidationContextExtensions
     {
         private const string RECURSE_ITEM_KEY = "__dotnetapi_recurse__";
-        private const string RESOLVER_ITEM_KEY = "__dotnetapi_resolver__";
+        private const string NARRATIVE_VALIDATION_KIND_ITEM_KEY = "__dotnetapi_narrative_validation_kind__";
 
         /// <summary>
         /// Alters the ValidationContext to indicate that validation should or should not recurse into nested objects
         /// (i.e. validate members of the validated objects complex members recursively)
         /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="recursively"></param>
-        public static void SetValidateRecursively(this ValidationContext ctx, bool recursively)
+        public static ValidationContext SetValidateRecursively(this ValidationContext ctx, bool recursively)
         {
             ctx.Items[RECURSE_ITEM_KEY] = recursively;
+            return ctx;
         }
-
 
         /// <summary>
         /// Gets the indication from the ValidationContext whether validation should recurse into nested objects
         /// </summary>
         /// <param name="ctx"></param>
         /// <returns></returns>
-        public static bool ValidateRecursively(this ValidationContext ctx)
+        public static bool ValidateRecursively(this ValidationContext ctx) =>
+            ctx.Items.TryGetValue(RECURSE_ITEM_KEY, out var result) && result is bool b && b;
+
+        /// <summary>
+        /// Alters the ValidationContext to indicate the kind of narrative validation the
+        /// <see cref="NarrativeXhtmlPatternAttribute"/> should perform.
+        /// </summary>
+        public static ValidationContext SetNarrativeValidationKind(this ValidationContext ctx, NarrativeValidationKind kind)
         {
-            if (ctx.Items.TryGetValue(RECURSE_ITEM_KEY, out object result))
-                return result is bool b ? b : false;
-            else
-                return false;
+            ctx.Items[NARRATIVE_VALIDATION_KIND_ITEM_KEY] = kind;
+            return ctx;
         }
 
         /// <summary>
-        /// Sets the callback to resolve a url to a resource when FhirPath validation encounters 
-        /// a call to resolve() in an invariant.
+        /// Gets the kind of narrative validation the <see cref="NarrativeXhtmlPatternAttribute"/> should perform
+        /// from the ValidationContext.
         /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="resolver"></param>
-        public static void SetResolver(this ValidationContext ctx, Func<string,Resource> resolver)
-        {
-            ctx.Items[RESOLVER_ITEM_KEY] = resolver;
-        }
-
-
-        /// <summary>
-        /// Gets the callback that is used by FhirPath validation when an invariant invokes the resolve() function.
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <returns></returns>
-        public static Func<string,Resource> Resolver(this ValidationContext ctx)
-        {
-            if (ctx.Items.TryGetValue(RESOLVER_ITEM_KEY, out object result))
-                return result is Func<string, Resource> c ? c : null;
-            else
-                return null;
-        }
-
+        public static NarrativeValidationKind GetNarrativeValidationKind(this ValidationContext ctx) =>
+            ctx.Items.TryGetValue(NARRATIVE_VALIDATION_KIND_ITEM_KEY, out var result) && result is NarrativeValidationKind k ?
+                    k : NarrativeValidationKind.FhirXhtml;
     }
 }
+
+#nullable restore

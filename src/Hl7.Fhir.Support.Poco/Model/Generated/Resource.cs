@@ -233,6 +233,37 @@ namespace Hl7.Fhir.Model
       }
     }
 
+    protected override bool TryGetValue(string key, out object value)
+    {
+      switch (key)
+      {
+        case "id":
+          value = IdElement;
+          return IdElement is not null;
+        case "meta":
+          value = Meta;
+          return Meta is not null;
+        case "implicitRules":
+          value = ImplicitRulesElement;
+          return ImplicitRulesElement is not null;
+        case "language":
+          value = LanguageElement;
+          return LanguageElement is not null;
+        default:
+          return base.TryGetValue(key, out value);
+      };
+
+    }
+
+    protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+    {
+      foreach (var kvp in base.GetElementPairs()) yield return kvp;
+      if (IdElement is not null) yield return new KeyValuePair<string,object>("id",IdElement);
+      if (Meta is not null) yield return new KeyValuePair<string,object>("meta",Meta);
+      if (ImplicitRulesElement is not null) yield return new KeyValuePair<string,object>("implicitRules",ImplicitRulesElement);
+      if (LanguageElement is not null) yield return new KeyValuePair<string,object>("language",LanguageElement);
+    }
+
   }
 
 }

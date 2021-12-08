@@ -28,26 +28,43 @@
 
 */
 
+#nullable enable
+
+using Hl7.Fhir.Serialization;
 using System;
 using System.Text.RegularExpressions;
-using Hl7.Fhir.Serialization;
 
 namespace Hl7.Fhir.Model
 {
     public partial class FhirDateTime
     {
+        /// <summary>
+        /// A <c>string.Format</c> pattern to use when formatting a full datetime with timezone.
+        /// </summary>
         public const string FMT_FULL = "yyyy-MM-dd'T'HH:mm:ssK";
+
+        /// <summary>
+        /// A <c>string.Format</c> pattern to use when formatting a year.
+        /// </summary>
         public const string FMT_YEAR = "{0:D4}";
+
+        /// <summary>
+        /// A <c>string.Format</c> pattern to use when formatting a year and month.
+        /// </summary>
         public const string FMT_YEARMONTH = "{0:D4}-{1:D2}";
+
+        /// <summary>
+        /// A <c>string.Format</c> pattern to use when formatting a date.
+        /// </summary>
         public const string FMT_YEARMONTHDAY = "{0:D4}-{1:D2}-{2:D2}";
 
         private static readonly string DATEFORMAT =
           $"(?<year>[0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000) (?<month>-(0[1-9]|1[0-2]) (?<day>-(0[1-9]|[1-2][0-9]|3[0-1])";
-        private static readonly string TIMEFORMAT = 
+        private static readonly string TIMEFORMAT =
             $"(T(?<hours>[01][0-9]|2[0-3]) (?<minutes>:[0-5][0-9]) (?<seconds>:[0-5][0-9]|60)(?<fractions>\\.[0-9]+) ?(?<offset>Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?";
-   
+
         private static readonly Regex DATETIMEREGEX =
-                new Regex("^" + DATEFORMAT + TIMEFORMAT + "$",
+                new("^" + DATEFORMAT + TIMEFORMAT + "$",
                 RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled | RegexOptions.ExplicitCapture);
 
         public FhirDateTime(DateTimeOffset dt) : this(PrimitiveTypeConverter.ConvertTo<string>(dt))
@@ -90,7 +107,7 @@ namespace Hl7.Fhir.Model
         {
             return new FhirDateTime(PrimitiveTypeConverter.ConvertTo<string>(DateTimeOffset.Now));
         }
-       
+
         [Obsolete("Use ToDateTimeOffset(TimeSpan zone) instead. Obsolete since 2018-11-22")]
         public DateTimeOffset ToDateTimeOffset(TimeSpan? zone = null) =>
            ToDateTimeOffset(zone ?? TimeSpan.Zero);
@@ -116,7 +133,6 @@ namespace Hl7.Fhir.Model
             return dto.ToOffset(zone);
         }
 
-
         /// <summary>
         /// Determines whether a Fhir DateTime can be converted to a a .NET DateTimeOffset. Fails in case of a partial DateTime (no timezone), 
         /// otherwise 'success' will be returned including the DateTimeOffset as out parameter. 
@@ -128,7 +144,7 @@ namespace Hl7.Fhir.Model
             dto = default;
 
             if (this.Value == null)
-                return false;          
+                return false;
 
             if (tryGetTimeSpan(out var timespan))
             {
@@ -138,7 +154,7 @@ namespace Hl7.Fhir.Model
             else
             {
                 return false;
-            }           
+            }
         }
 
         private bool tryGetTimeSpan(out TimeSpan ts)
@@ -154,18 +170,18 @@ namespace Hl7.Fhir.Model
                 }
 
                 //converts +07:00 to 07:00, and keeps -07:00 as is.
-                tz = tz.Replace("+", "");
+                tz = tz!.Replace("+", "");
 
                 if (TimeSpan.TryParse(tz, out var timespan))
                 {
                     ts = timespan;
                     return true;
-                }                    
+                }
                 else
                 {
                     //can't determine timezone
                     return false;
-                }                    
+                }
             }
             else
             {
@@ -173,16 +189,24 @@ namespace Hl7.Fhir.Model
             }
         }
 
-        private bool tryGetTimeZone(out string timezone)
+        private bool tryGetTimeZone(out string? timezone)
         {
-            var matches = DATETIMEREGEX.Match(this.Value);
+            var matches = DATETIMEREGEX.Match(Value);
             timezone = matches.Groups["offset"]?.Value;
-            return !string.IsNullOrEmpty(timezone);                
+            return !string.IsNullOrEmpty(timezone);
         }
 
         [Obsolete("Use ToDateTimeOffset(TimeSpan zone) instead")]
-        public DateTime? ToDateTime() 
-            => Value == null ? null : (DateTime?)PrimitiveTypeConverter.ConvertTo<DateTime>(Value);
+        public DateTime? ToDateTime()
+            => Value == null ? null : PrimitiveTypeConverter.ConvertTo<DateTime>(Value);
+
+        /// <summary>
+        /// Checks whether the given literal is correctly formatted.
+        /// </summary>
+        public static bool IsValidValue(string value) => ElementModel.Types.DateTime.TryParse(value, out var parsed) &&
+            (parsed.Precision <= ElementModel.Types.DateTimePrecision.Day == !parsed.HasOffset);
     }
 
 }
+
+#nullable restore
