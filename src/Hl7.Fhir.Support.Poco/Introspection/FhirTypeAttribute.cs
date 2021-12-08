@@ -31,6 +31,8 @@
 using Hl7.Fhir.Validation;
 using System;
 
+#nullable enable
+
 namespace Hl7.Fhir.Introspection
 {
     /// <summary>
@@ -68,6 +70,8 @@ namespace Hl7.Fhir.Introspection
         /// <summary>
         /// The canonical of the StructureDefinition defining this type.
         /// </summary>
-        public string Canonical { get; set; }
+        public string? Canonical { get; set; }
     }
 }
+
+#nullable restore

@@ -6,26 +6,51 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
+using Hl7.Fhir.Model;
 using System;
 using System.ComponentModel.DataAnnotations;
-using Hl7.Fhir.Model;
+
+#nullable enable
 
 namespace Hl7.Fhir.Validation
 {
+    /// <summary>
+    /// Validates an xhtml value against the FHIR rules for xhtml.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
     public class NarrativeXhtmlPatternAttribute : ValidationAttribute
     {
-		protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        /// <inheritdoc />
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext) =>
+            IsValid(value, NarrativeValidationKind.FhirXhtml);
+
+        /// <summary>
+        /// Validates whether the value is a string of well-formatted Xml.
+        /// </summary>
+        public ValidationResult? IsValid(object? value, NarrativeValidationKind kind)
         {
-            if (value == null) return ValidationResult.Success;
+            if (value is null) return ValidationResult.Success;
 
-            if (value.GetType() != typeof(string))
-                throw new ArgumentException("CodePatternAttribute can only be applied to string properties");
-
-            if(XHtml.IsValidValue(value as string))
-                return ValidationResult.Success;
-            else 
-                return DotNetAttributeValidation.BuildResult(validationContext, "Xml can not be parsed or is not valid according to the (limited) FHIR scheme");
+            if (value is string xml)
+            {
+                return kind switch
+                {
+                    NarrativeValidationKind.None => ValidationResult.Success,
+                    NarrativeValidationKind.Xml => XHtml.IsValidXml(xml, out var error) ?
+                            ValidationResult.Success :
+                            new ValidationResult("Value is not well-formatted Xml: " + error),
+                    NarrativeValidationKind.FhirXhtml => XHtml.IsValidNarrativeXhtml(xml, out var errors) ?
+                                ValidationResult.Success :
+                                new ValidationResult("Xml can not be parsed or is not valid according to the (limited) FHIR scheme: " +
+                                string.Join(", ", errors)),
+                    _ => throw new NotSupportedException($"Encountered unknown narrative validation kind {kind}.")
+                };
+            }
+            else
+                throw new ArgumentException($"{nameof(NarrativeXhtmlPatternAttribute)} attributes can only be applied to string properties.");
         }
-	}
+    }
 }
+
+
+#nullable restore

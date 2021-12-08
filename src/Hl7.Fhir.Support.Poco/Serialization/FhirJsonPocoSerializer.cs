@@ -13,6 +13,7 @@
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Specification;
+using Hl7.Fhir.Utility;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -28,26 +29,40 @@ namespace Hl7.Fhir.Serialization
     /// <remarks>The serializer uses the format documented in https://www.hl7.org/fhir/json.html. Since all POCOs included
     /// in the SDK implement IReadOnlyDictionary, these methods can be used to serialize POCOs to Json.
     /// </remarks>
-    public class JsonFhirDictionarySerializer
+    public class FhirJsonPocoSerializer
     {
+        /// <summary>
+        /// Construct a new serializer for a specific release of FHIR.
+        /// </summary>
+        public FhirJsonPocoSerializer(FhirRelease release) : this(release, new())
+        {
+            // nothing
+        }
+
+        /// <summary>
+        /// Construct a new serializer for a specific release of FHIR.
+        /// </summary>
+        public FhirJsonPocoSerializer(FhirRelease release, FhirJsonPocoSerializerSettings settings)
+        {
+            Release = release;
+            Settings = settings;
+        }
+
         /// <summary>
         /// The release of FHIR for which this serializer is configured.
         /// </summary>
         public FhirRelease Release { get; }
 
         /// <summary>
-        /// Construct a new serializer for a specific release of FHIR.
+        /// The settings that were passed to the constructor.
         /// </summary>
-        public JsonFhirDictionarySerializer(FhirRelease release)
-        {
-            Release = release;
-        }
+        public FhirJsonPocoSerializerSettings Settings { get; }
 
         /// <summary>
         /// Serializes the given dictionary with FHIR data into Json.
         /// </summary>
-        public void Serialize(IReadOnlyDictionary<string, object> members, Utf8JsonWriter writer, SerializationFilter? summary = default) =>
-            serializeInternal(members, writer, skipValue: false, summary);
+        public void Serialize(IReadOnlyDictionary<string, object> members, Utf8JsonWriter writer) =>
+            serializeInternal(members, writer, skipValue: false);
 
         /// <summary>
         /// Serializes the given dictionary with FHIR data into Json, optionally skipping the "value" element.
@@ -57,10 +72,10 @@ namespace Hl7.Fhir.Serialization
         private void serializeInternal(
             IReadOnlyDictionary<string, object> members,
             Utf8JsonWriter writer,
-            bool skipValue,
-            SerializationFilter? filter)
+            bool skipValue)
         {
             writer.WriteStartObject();
+            var filter = Settings.SummaryFilter;
 
             if (members is Resource r)
                 writer.WriteString("resourceType", r.TypeName);
@@ -92,17 +107,17 @@ namespace Hl7.Fhir.Serialization
                 {
                     writer.WritePropertyName(propertyName);
 
-                    if (member.Value is ICollection coll && !(member.Value is byte[]))
+                    if (member.Value is ICollection coll && member.Value is not byte[])
                     {
                         writer.WriteStartArray();
 
                         foreach (var value in coll)
-                            serializeMemberValue(value, writer, filter);
+                            serializeMemberValue(value, writer);
 
                         writer.WriteEndArray();
                     }
                     else
-                        serializeMemberValue(member.Value, writer, filter);
+                        serializeMemberValue(member.Value, writer);
                 }
 
                 filter?.LeaveMember(member.Key, member.Value, propertyMapping);
@@ -125,10 +140,10 @@ namespace Hl7.Fhir.Serialization
         }
 
 
-        private void serializeMemberValue(object value, Utf8JsonWriter writer, SerializationFilter? filter)
+        private void serializeMemberValue(object value, Utf8JsonWriter writer)
         {
             if (value is IReadOnlyDictionary<string, object> complex)
-                serializeInternal(complex, writer, skipValue: false, filter);
+                serializeInternal(complex, writer, skipValue: false);
             else
                 SerializePrimitiveValue(value, writer);
         }
@@ -197,7 +212,7 @@ namespace Hl7.Fhir.Serialization
                         writeStartArray("_" + elementName, numNullsMissed, writer);
                     }
 
-                    serializeInternal(value, writer, skipValue: true, filter);
+                    serializeInternal(value, writer, skipValue: true);
                 }
                 else
                 {
@@ -240,7 +255,7 @@ namespace Hl7.Fhir.Serialization
             {
                 // Write a property with '_elementName'
                 writer.WritePropertyName("_" + elementName);
-                serializeInternal(value, writer, skipValue: true, filter);
+                serializeInternal(value, writer, skipValue: true);
             }
         }
 
@@ -261,7 +276,6 @@ namespace Hl7.Fhir.Serialization
         {
             switch (value)
             {
-                //TODO: Include support for Any subclasses (CQL types)?
                 case int i32: writer.WriteNumberValue(i32); break;
                 case uint ui32: writer.WriteNumberValue(ui32); break;
                 case long i64: writer.WriteNumberValue(i64); break;
@@ -280,6 +294,7 @@ namespace Hl7.Fhir.Serialization
                 case string s: writer.WriteStringValue(s); break;
                 case bool b: writer.WriteBooleanValue(b); break;
                 case DateTimeOffset dto: writer.WriteStringValue(ElementModel.Types.DateTime.FormatDateTimeOffset(dto)); break;
+                case Enum e: writer.WriteStringValue(e.GetLiteral()); break;
                 case byte[] bytes: writer.WriteStringValue(Convert.ToBase64String(bytes)); break;
                 case null: writer.WriteNullValue(); break;
                 default:

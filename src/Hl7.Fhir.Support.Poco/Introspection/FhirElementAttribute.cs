@@ -36,6 +36,8 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 
+#nullable enable
+
 namespace Hl7.Fhir.Introspection
 {
     [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
@@ -53,6 +55,9 @@ namespace Hl7.Fhir.Introspection
             XmlSerialization = representation;
         }
 
+        /// <summary>
+        /// Whether this element allows instances of more than one type.
+        /// </summary>
         public ChoiceType Choice { get; set; } = ChoiceType.None;
 
         /// <summary>
@@ -72,6 +77,9 @@ namespace Hl7.Fhir.Introspection
 
         public int Order { get; set; }
 
+        /// <summary>
+        /// The order of the element in the Xml representation.
+        /// </summary>
         public bool InSummary { get; set; }
 
         // This attribute is a subclass of ValidationAttribute so that IsValid() is called on every 
@@ -79,11 +87,11 @@ namespace Hl7.Fhir.Introspection
         // while normally, the .NET validation will only validate one level, but will not recurse
         // into each element. This is controllable by the SetValidateRecursively extension of the
         // ValidationContext
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
         {
-            if (validationContext == null) throw new ArgumentNullException("validationContext");
+            if (validationContext is null) throw new ArgumentNullException(nameof(validationContext));
 
-            if (value == null) return ValidationResult.Success;
+            if (value is null) return ValidationResult.Success;
 
             // If we should not validate 'value's elements, return immediately
             if (!validationContext.ValidateRecursively()) return ValidationResult.Success;
@@ -115,3 +123,5 @@ namespace Hl7.Fhir.Introspection
         }
     }
 }
+
+#nullable restore

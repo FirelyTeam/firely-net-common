@@ -9,12 +9,20 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="TestData\fp-test-patient-errors-recovered.json" />
+	  <None Remove="TestData\fp-test-patient-errors.json" />
 	  <None Remove="TestData\fp-test-patient.json" />
 	  <None Remove="TestData\fp-test-patient.xml" />
 	  <None Remove="TestData\mask-text.xml" />
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Content Include="TestData\fp-test-patient-errors-recovered.json">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="TestData\fp-test-patient-errors.json">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
 	  <Content Include="TestData\fp-test-patient.json">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Content>

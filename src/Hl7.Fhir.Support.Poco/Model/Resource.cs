@@ -71,19 +71,6 @@ namespace Hl7.Fhir.Model
         /// </remarks>
         public readonly object SyncLock = new object();
 
-        public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-        {
-            var result = new List<ValidationResult>();
-
-            if (Meta != null)
-            {
-                if (Meta.Tag != null && validationContext.ValidateRecursively())
-                    DotNetAttributeValidation.TryValidate(Meta.Tag, result, true);
-            }
-
-            return result;
-        }
-
         public string VersionId
         {
             get => HasVersionId ? Meta.VersionId : null;

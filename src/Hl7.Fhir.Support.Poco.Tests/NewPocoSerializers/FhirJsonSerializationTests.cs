@@ -12,8 +12,10 @@ using System.Text.Json;
 namespace Hl7.Fhir.Support.Poco.Tests
 {
     [TestClass]
-    public class JsonFhirSerializationTests
+    public class FhirJsonSerializationTests
     {
+        public JsonSerializerOptions BaseOptions = new JsonSerializerOptions().ForFhir(typeof(TestPatient).Assembly);
+
         private (TestPatient, string) getEdgecases()
         {
             var filename = Path.Combine("TestData", "json-edge-cases.json");
@@ -21,15 +23,15 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
             // For now, deserialize with the existing deserializer, until we have completed
             // the dynamicserializer too.
-            return (TypedSerialization.ToPoco<TestPatient>(FhirJsonNode.Parse(expected)), expected);
+            return (JsonSerializer.Deserialize<TestPatient>(expected, BaseOptions), expected);
         }
 
         [TestMethod]
-        public void CanSerializeEdgeCases()
+        public void RoundtripEdgeCases()
         {
             var (poco, expected) = getEdgecases();
 
-            var options = new JsonSerializerOptions().ForFhir(typeof(TestPatient).Assembly).Pretty();
+            var options = BaseOptions.Pretty();
             string actual = JsonSerializer.Serialize(poco, options);
 
             var errors = new List<string>();

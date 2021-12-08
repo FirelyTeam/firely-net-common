@@ -10,6 +10,7 @@ using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation;
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -40,6 +41,11 @@ namespace Hl7.Fhir.Introspection
             ImplementingType = implementingType;
             FhirType = fhirTypes;
             PropertyTypeMapping = propertyTypeMapping;
+#if NET452
+            ValidationAttributes = new ValidationAttribute[0];
+#else
+            ValidationAttributes = Array.Empty<ValidationAttribute>();
+#endif
         }
 
         /// <summary>
@@ -140,6 +146,12 @@ namespace Hl7.Fhir.Introspection
         public ClassMapping PropertyTypeMapping { get; private set; }
 
         /// <summary>
+        /// The collection of zero or more <see cref="ValidationAttribute"/> (or subclasses) declared
+        /// on this property.
+        /// </summary>
+        public ValidationAttribute[] ValidationAttributes { get; private set; }
+
+        /// <summary>
         /// The original <see cref="PropertyInfo"/> the metadata was obtained from.
         /// </summary>
         public readonly PropertyInfo NativeProperty;
@@ -216,6 +228,7 @@ namespace Hl7.Fhir.Introspection
                 IsMandatoryElement = cardinalityAttr?.Min > 0,
                 IsPrimitive = isPrimitive,
                 RepresentsValueElement = isPrimitive && isPrimitiveValueElement(elementAttr, prop),
+                ValidationAttributes = ClassMapping.GetAttributes<ValidationAttribute>(prop, release).ToArray()
             };
 
             return true;
@@ -246,17 +259,17 @@ namespace Hl7.Fhir.Introspection
         /// <summary>
         /// Given an instance of the parent class, gets the value for this property.
         /// </summary>
-        public object GetValue(object instance) => LazyInitializer.EnsureInitialized(ref _getter, NativeProperty.GetValueGetter)!(instance);
+        public object? GetValue(object instance) => LazyInitializer.EnsureInitialized(ref _getter, NativeProperty.GetValueGetter)!(instance);
 
-        private Func<object, object>? _getter;
+        private Func<object, object?>? _getter;
 
         /// <summary>
         /// Given an instance of the parent class, sets the value for this property.
         /// </summary>
-        public void SetValue(object instance, object value) =>
+        public void SetValue(object instance, object? value) =>
             LazyInitializer.EnsureInitialized(ref _setter, NativeProperty.GetValueSetter)!(instance, value);
 
-        private Action<object, object>? _setter;
+        private Action<object, object?>? _setter;
 
         #region IElementDefinitionSummary members
         string IElementDefinitionSummary.ElementName => this.Name;

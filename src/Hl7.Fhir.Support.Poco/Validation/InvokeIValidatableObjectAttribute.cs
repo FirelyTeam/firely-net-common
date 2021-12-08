@@ -7,27 +7,24 @@
  */
 
 using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Model;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
+
+#nullable enable
 
 namespace Hl7.Fhir.Validation
 {
+    /// <summary>
+    /// This attribute is used to trigger nested validation. I think :-).
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
     public class InvokeIValidatableObjectAttribute : VersionedValidationAttribute
     {
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
-        {
-            var validatable = value as IValidatableObject;
-
-            if (validatable != null)
-                return validatable.Validate(validationContext).FirstOrDefault();
-            else
-                return null;
-        }
+        /// <inheritdoc />
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext) =>
+            (value as IValidatableObject)?.Validate(validationContext).FirstOrDefault();
     }
 }
+
+#nullable restore

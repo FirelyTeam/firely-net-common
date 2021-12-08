@@ -26,7 +26,7 @@ namespace Hl7.Fhir.Serialization
     /// <remarks>The serializer uses the format documented in https://www.hl7.org/fhir/xml.html. Since all POCOs included
     /// in the SDK implement IReadOnlyDictionary, these methods can be used to serialize POCOs to Xml.
     /// </remarks>
-    public class XmlFhirDictionarySerializer
+    public class FhirXmlPocoSerializer
     {
         /// <summary>
         /// The release of FHIR for which this serializer is configured.
@@ -36,7 +36,7 @@ namespace Hl7.Fhir.Serialization
         /// <summary>
         /// Construct a new serializer for a specific release of FHIR.
         /// </summary>
-        public XmlFhirDictionarySerializer(FhirRelease release)
+        public FhirXmlPocoSerializer(FhirRelease release)
         {
             Release = release;
         }
@@ -158,7 +158,6 @@ namespace Hl7.Fhir.Serialization
 
             var literal = value switch
             {
-                //TODO: Include support for Any subclasses (CQL types)?
                 int i32 => XmlConvert.ToString(i32),
                 uint ui32 => XmlConvert.ToString(ui32),
                 long i64 => XmlConvert.ToString(i64),

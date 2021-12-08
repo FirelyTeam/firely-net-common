@@ -6,22 +6,30 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 #nullable enable
 
 namespace Hl7.Fhir.Validation
 {
     /// <summary>
-    /// Interface used by the <see cref="InvokeIValidatableObjectAttribute" /> to start nested validation.
+    /// Determine the kind of narrative validation is done.
     /// </summary>
-    public interface IValidatableObject
+    public enum NarrativeValidationKind
     {
         /// <summary>
-        /// Invoke validation on an object that implements this interface.
+        /// No validation is performed.
         /// </summary>
-        IEnumerable<ValidationResult> Validate(ValidationContext validationContext);
+        None,
+
+        /// <summary>
+        /// Value is validated to be well-formed xml.
+        /// </summary>
+        Xml,
+
+        /// <summary>
+        /// Value is well-formed Xml and is valid against the FHIR rules for Narrative Xhtml.
+        /// </summary>
+        FhirXhtml
     }
 }
 

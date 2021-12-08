@@ -24,21 +24,41 @@ namespace Hl7.Fhir.Serialization
         /// <summary>
         /// Initialize the options to serialize using the JsonFhirConverter, producing compact output without whitespace.
         /// </summary>
-        public static JsonSerializerOptions ForFhir(this JsonSerializerOptions options, Assembly modelAssembly, SerializationFilter? filter = default)
+        public static JsonSerializerOptions ForFhir(this JsonSerializerOptions options, Assembly modelAssembly) =>
+            options.ForFhir(modelAssembly, new(), new());
+
+        /// <inheritdoc cref="ForFhir(JsonSerializerOptions, Assembly)"/>
+        public static JsonSerializerOptions ForFhir(this JsonSerializerOptions options, Assembly modelAssembly, FhirJsonPocoSerializerSettings serializerSettings) =>
+            options.ForFhir(modelAssembly, serializerSettings, new());
+
+        /// <inheritdoc cref="ForFhir(JsonSerializerOptions, Assembly)"/>
+        public static JsonSerializerOptions ForFhir(this JsonSerializerOptions options, Assembly modelAssembly, FhirJsonPocoDeserializerSettings deserializerSettings) =>
+        options.ForFhir(modelAssembly, new(), deserializerSettings);
+
+        /// <inheritdoc cref="ForFhir(JsonSerializerOptions, Assembly)"/>
+        public static JsonSerializerOptions ForFhir(
+                this JsonSerializerOptions options,
+                Assembly modelAssembly,
+                FhirJsonPocoSerializerSettings serializerSettings,
+                FhirJsonPocoDeserializerSettings deserializerSettings
+                )
         {
-            options.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
-            options.Converters.Add(new JsonFhirConverter(modelAssembly, filter));
-            return options;
+            var converter = new FhirJsonConverter(modelAssembly, serializerSettings, deserializerSettings);
+            return options.ForFhir(converter);
         }
 
         /// <summary>
         /// Initialize the options to serialize using the JsonFhirConverter, producing compact output without whitespace.
         /// </summary>
-        public static JsonSerializerOptions ForFhir(this JsonSerializerOptions options, JsonFhirConverter converter)
+        public static JsonSerializerOptions ForFhir(this JsonSerializerOptions options, FhirJsonConverter converter)
         {
-            options.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
-            options.Converters.Add(converter);
-            return options;
+            var result = new JsonSerializerOptions(options)
+            {
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            };
+
+            result.Converters.Add(converter);
+            return result;
         }
 
         /// <summary>
@@ -46,18 +66,21 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public static JsonSerializerOptions Compact(this JsonSerializerOptions options)
         {
-            options.WriteIndented = false;
-            return options;
+            return new JsonSerializerOptions(options)
+            {
+                WriteIndented = false
+            };
         }
-
 
         /// <summary>
         /// Initialize the options to serialize using the JsonFhirConverter, producing pretty output.
         /// </summary>
         public static JsonSerializerOptions Pretty(this JsonSerializerOptions options)
         {
-            options.WriteIndented = true;
-            return options;
+            return new JsonSerializerOptions(options)
+            {
+                WriteIndented = true
+            };
         }
     }
 }

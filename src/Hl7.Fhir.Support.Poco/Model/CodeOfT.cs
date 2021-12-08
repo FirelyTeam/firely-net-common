@@ -42,7 +42,7 @@ namespace Hl7.Fhir.Model
     [FhirType("codeOfT")]
     [DataContract]
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    public class Code<T> : PrimitiveType, INullableValue<T>, ISystemAndCode where T : struct
+    public class Code<T> : PrimitiveType, INullableValue<T>, ISystemAndCode where T : struct, Enum
     {
         static Code()
         {
@@ -64,15 +64,25 @@ namespace Hl7.Fhir.Model
         [DataMember]
         public T? Value
         {
-            get => ObjectValue != null ? EnumUtility.ParseLiteral<T>((string)ObjectValue) : null;
+            get
+            {
+                if (ObjectValue is null) return null;
+                var enumString = (string)ObjectValue;
 
-            set => ObjectValue = value != null ? ((Enum)(object)value).GetLiteral() : null;
+                return EnumUtility.ParseLiteral<T>(enumString) ?? throw new InvalidCastException($"String '{enumString}' cannot be cast to a member of enumeration {typeof(T).Name}.");
+            }
+
+            set 
+            { 
+                ObjectValue = value?.GetLiteral();
+                OnPropertyChanged("Value"); 
+            }
         }
 
-        string ISystemAndCode.System => ((Enum)(object)Value).GetSystem();
+        string ISystemAndCode.System => Value?.GetSystem();
 
-        string ISystemAndCode.Code => ObjectValue as string; // this is the literal
+        string ISystemAndCode.Code => Value?.GetLiteral();
 
-        public S.Code ToSystemCode() => new S.Code(((ISystemAndCode)this).System, ObjectValue as string, display: null, version: null);
+        public S.Code ToSystemCode() => new(Value?.GetSystem(), Value?.GetLiteral(), display: null, version: null);
     }
 }
