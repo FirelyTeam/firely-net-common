@@ -11,16 +11,14 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
-
-#if !NETSTANDARD1_6
 using System.Xml.Schema;
-#endif
 
 namespace Hl7.Fhir.Utility
 {
@@ -454,7 +452,6 @@ namespace Hl7.Fhir.Utility
             return resultRE;
         }
 
-#if !NETSTANDARD1_6
         public static string[] RunFhirXhtmlSchemaValidation(string xmlText)
         {
             try
@@ -475,8 +472,15 @@ namespace Hl7.Fhir.Utility
             if (!doc.Root.AtXhtmlDiv())
                 return new[] { $"Root element of XHTML is not a <div> from the XHTML namespace ({XmlNs.XHTML})." };
 
+            if (!hasContent(doc.Root))
+                return new[] { $"The narrative SHALL have some non-whitespace content." };
+
             doc.Validate(_xhtmlSchemaSet.Value, (s, a) => result.Add(a.Message));
             return result.ToArray();
+
+            // content consist of xml elements with non-whitespace content (text or an image)
+            static bool hasContent(XElement el)
+                => el.DescendantsAndSelf().Any(e => !string.IsNullOrWhiteSpace(e.Value) || e.Name.LocalName == "img");
         }
 
         private static readonly Lazy<XmlSchemaSet> _xhtmlSchemaSet = new Lazy<XmlSchemaSet>(compileXhtmlSchema, true);
@@ -517,8 +521,6 @@ namespace Hl7.Fhir.Utility
                 }
             }
         }
-#endif
-
 
         private static readonly Regex _re = new Regex("(&[a-zA-Z0-9]+;)", RegexOptions.Compiled | RegexOptions.CultureInvariant);
         private static Dictionary<string, string> _xmlReplacements;
