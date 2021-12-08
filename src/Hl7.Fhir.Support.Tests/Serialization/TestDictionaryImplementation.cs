@@ -50,7 +50,7 @@ namespace Hl7.Fhir.Support.Tests.Serialization
         public void CanEnumerateCodedValue()
         {
             IReadOnlyDictionary<string, object> b = new Code<Narrative.NarrativeStatus>(Narrative.NarrativeStatus.Additional);
-            b.Should().BeEquivalentTo(KeyValuePair.Create("value", Narrative.NarrativeStatus.Additional.GetLiteral()));
+            b.Should().BeEquivalentTo(new[] { KeyValuePair.Create("value", Narrative.NarrativeStatus.Additional.GetLiteral()) });
         }
 
         [TestMethod]
@@ -58,9 +58,9 @@ namespace Hl7.Fhir.Support.Tests.Serialization
         {
             IReadOnlyDictionary<string, object> b = new Narrative("<p>bla</p>");
             b.Count.Should().Be(2);
-            b.Should().BeEquivalentTo(
-                KeyValuePair.Create("div", new XHtml("<p>bla</p>")),
-                KeyValuePair.Create("status", new Code<Narrative.NarrativeStatus>(Narrative.NarrativeStatus.Generated)));
+            b.Should().BeEquivalentTo(new[] {
+                KeyValuePair.Create<string, object>("div", new XHtml("<p>bla</p>")),
+                KeyValuePair.Create<string, object>("status", new Code<Narrative.NarrativeStatus>(Narrative.NarrativeStatus.Generated)) });
         }
 
         [TestMethod]
@@ -69,9 +69,9 @@ namespace Hl7.Fhir.Support.Tests.Serialization
             // Explicitly test hand-written IROD implementation.
             IReadOnlyDictionary<string, object> b = new Extension("http://nu.nl", new FhirBoolean(true));
             b.Count.Should().Be(2);
-            b.Should().BeEquivalentTo(
-                KeyValuePair.Create("url", "http://nu.nl"),
-                KeyValuePair.Create("value", new FhirBoolean(true)));
+            b.Should().BeEquivalentTo(new[] {
+                KeyValuePair.Create<string, object>("url", "http://nu.nl"),
+                KeyValuePair.Create<string, object>("value", new FhirBoolean(true)) });
 
             b.TryGetValue("valueString", out _).Should().BeFalse();
             b.TryGetValue("valueBoolean", out _).Should().BeFalse();
