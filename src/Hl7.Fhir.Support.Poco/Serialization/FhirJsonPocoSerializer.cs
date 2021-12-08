@@ -136,7 +136,7 @@ namespace Hl7.Fhir.Serialization
                 _ => null
             };
 
-            return typeName is null ? elementName : elementName + char.ToUpperInvariant(typeName[0]) + typeName[1..];
+            return typeName is null ? elementName : elementName + char.ToUpperInvariant(typeName[0]) + typeName.Substring(1);
         }
 
 

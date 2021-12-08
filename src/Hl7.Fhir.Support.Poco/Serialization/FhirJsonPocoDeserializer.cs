@@ -490,7 +490,15 @@ namespace Hl7.Fhir.Serialization
                 {
                     if (onlyNulls is null) onlyNulls = true;
 
-                    if (originalSize == 0 && !hadLonely) plps.SingleArraysWithNull.TryAdd(propertyName.TrimStart('_'), propertyName);
+                    if (originalSize == 0 && !hadLonely)
+                    {
+#if NETSTANDARD2_0
+                        var key = propertyName.TrimStart('_');
+                        if (!plps.SingleArraysWithNull.ContainsKey(key)) plps.SingleArraysWithNull.Add(key, propertyName);
+#else
+                        plps.SingleArraysWithNull.TryAdd(propertyName.TrimStart('_'), propertyName);
+#endif
+                    }
 
                     if (originalSize > 0 && elementIndex < originalSize && !targetPrimitive.Any())
                         state.Errors.Add(ERR.PRIMITIVE_ARRAYS_BOTH_NULL.With(ref reader));
@@ -733,9 +741,9 @@ namespace Hl7.Fhir.Serialization
             else if (requiredType == typeof(ulong))
                 success = reader.TryGetUInt64(out ulong ui64) && (value = ui64) is { };
             else if (requiredType == typeof(float))
-                success = reader.TryGetSingle(out float si) && float.IsNormal(si) && (value = si) is { };
+                success = reader.TryGetSingle(out float si) && si.IsNormal() && (value = si) is { };
             else if (requiredType == typeof(double))
-                success = reader.TryGetDouble(out double dbl) && double.IsNormal(dbl) && (value = dbl) is { };
+                success = reader.TryGetDouble(out double dbl) && dbl.IsNormal() && (value = dbl) is { };
             else
             {
                 var rawValue = reader.GetRawText();
@@ -822,7 +830,7 @@ namespace Hl7.Fhir.Serialization
             getMappedElementMetadata(ModelInspector inspector, ClassMapping parentMapping, ref Utf8JsonReader reader, string propertyName)
         {
             bool startsWithUnderscore = propertyName[0] == '_';
-            var elementName = startsWithUnderscore ? propertyName[1..] : propertyName;
+            var elementName = startsWithUnderscore ? propertyName.Substring(1) : propertyName;
 
             var propertyMapping = parentMapping.FindMappedElementByName(elementName)
                 ?? parentMapping.FindMappedElementByChoiceName(propertyName)
@@ -840,7 +848,7 @@ namespace Hl7.Fhir.Serialization
 
             ClassMapping getChoiceClassMapping(ref Utf8JsonReader r)
             {
-                string typeSuffix = propertyName[propertyMapping.Name.Length..];
+                string typeSuffix = propertyName.Substring(propertyMapping.Name.Length);
 
                 var typeSuffixMapping = string.IsNullOrEmpty(typeSuffix)
                     ? throw ERR.CHOICE_ELEMENT_HAS_NO_TYPE.With(ref r, propertyMapping.Name)
