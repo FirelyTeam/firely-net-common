@@ -27,6 +27,8 @@
   
 */
 
+#nullable enable
+
 using System;
 
 namespace Hl7.Fhir.Model
@@ -34,23 +36,27 @@ namespace Hl7.Fhir.Model
     public partial class Instant
     {
         public static Instant FromLocalDateTime(int year, int month, int day,
-                    int hour, int min, int sec, int millis = 0)
-        {
-            return new Instant(new DateTimeOffset(year, month, day, hour, min, sec, millis,
-                            DateTimeOffset.Now.Offset));
-        }
+                    int hour, int min, int sec, int millis = 0) =>
+            new(new DateTimeOffset(year, month, day, hour, min, sec, millis, DateTimeOffset.Now.Offset));
 
 
         public static Instant FromDateTimeUtc(int year, int month, int day,
-                                            int hour, int min, int sec, int millis = 0)
-        {
-            return new Instant(new DateTimeOffset(year, month, day, hour, min, sec, millis,
+                                            int hour, int min, int sec, int millis = 0) =>
+            new(new DateTimeOffset(year, month, day, hour, min, sec, millis,
                                    TimeSpan.Zero));
-        }
 
-        public static Instant Now()
-        {
-            return new Instant(DateTimeOffset.Now);
-        }     
+        /// <summary>
+        /// Returns an Instant initialized with the current date and time.
+        /// </summary>
+        /// <returns></returns>
+        public static Instant Now() => new(DateTimeOffset.Now);
+
+        /// <summary>
+        /// Checks whether the given literal is correctly formatted.
+        /// </summary>
+        public static bool IsValidValue(string value) => ElementModel.Types.DateTime.TryParse(value, out var dateTime) &&
+            dateTime.Precision >= ElementModel.Types.DateTimePrecision.Second && dateTime.HasOffset;
     }
 }
+
+#nullable restore

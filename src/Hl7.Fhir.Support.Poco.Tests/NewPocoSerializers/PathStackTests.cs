@@ -18,11 +18,11 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
             ps.EnterElement("b"); t("A.b");
             ps.EnterElement("c"); t("A.b.c");
-            ps.EnterResource("D"); t("A.b.c.D");
-            ps.EnterElement("e"); t("A.b.c.D.e");
+            ps.EnterResource("D"); t("D");
+            ps.EnterElement("e"); t("D.e");
 
             Assert.ThrowsException<InvalidOperationException>(() => ps.ExitResource());
-            ps.ExitElement(); t("A.b.c.D");
+            ps.ExitElement(); t("D");
 
             Assert.ThrowsException<InvalidOperationException>(() => ps.ExitElement());
             ps.ExitResource(); t("A.b.c");
@@ -31,8 +31,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             ps.ExitElement(); t("A");
 
             Assert.ThrowsException<InvalidOperationException>(() => ps.ExitElement());
-            ps.ExitResource();
-            Assert.ThrowsException<InvalidOperationException>(() => ps.GetPath());
+            ps.ExitResource(); t("$this");
 
             void t(string e) => ps.GetPath().Should().Be(e);
         }

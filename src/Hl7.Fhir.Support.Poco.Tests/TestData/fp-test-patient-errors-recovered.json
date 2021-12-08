@@ -62,7 +62,7 @@
       "resourceType": "Questionnaire",
       "id": "3141",
       "text": {
-        "status": "generated",
+        "status": "generatedY",
         "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><pre>\r\n            Comorbidity? YES\r\n            Cardial Comorbidity? YES\r\n            Angina? YES\r\n            MI? NO\r\n            Vascular Comorbidity?\r\n            (no answers)\r\n            ...\r\n            Histopathology\r\n            Abdominal\r\n            pT category: 1a\r\n            ...\r\n          </pre></div>"
       },
       "status": "draft",
@@ -73,7 +73,9 @@
           "linkId": "1",
           "text": "Cancer Quality Forum Questionnaire 2012",
           "type": "display",
-          "option": [ {} ],
+          "option": [
+            { "valueBoolean": true }
+          ],
           "item": [
             {
               "linkId": "1.1",

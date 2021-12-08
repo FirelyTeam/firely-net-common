@@ -29,6 +29,7 @@ namespace Hl7.Fhir.Introspection
         // no public constructors
         private PropertyMapping(
             string name,
+            ClassMapping declaringClass,
             PropertyInfo pi,
             Type implementingType,
             ClassMapping propertyTypeMapping,
@@ -41,6 +42,7 @@ namespace Hl7.Fhir.Introspection
             ImplementingType = implementingType;
             FhirType = fhirTypes;
             PropertyTypeMapping = propertyTypeMapping;
+            DeclaringClass = declaringClass;
 #if NET452
             ValidationAttributes = new ValidationAttribute[0];
 #else
@@ -52,6 +54,11 @@ namespace Hl7.Fhir.Introspection
         /// The name of the element in the FHIR specification.
         /// </summary>
         public string Name { get; internal set; }
+
+        /// <summary>
+        /// The ClassMapping for the type this property is a member of.
+        /// </summary>
+        public ClassMapping DeclaringClass { get; internal set; }
 
         /// <summary>
         /// Whether the element can repeat.
@@ -149,7 +156,13 @@ namespace Hl7.Fhir.Introspection
         /// The collection of zero or more <see cref="ValidationAttribute"/> (or subclasses) declared
         /// on this property.
         /// </summary>
-        public ValidationAttribute[] ValidationAttributes { get; private set; }
+        public ValidationAttribute[] ValidationAttributes { get; private set; } =
+#if NET452
+            new ValidationAttribute[0];
+#else
+            Array.Empty<ValidationAttribute>();
+#endif
+
 
         /// <summary>
         /// The original <see cref="PropertyInfo"/> the metadata was obtained from.
@@ -162,15 +175,15 @@ namespace Hl7.Fhir.Introspection
         public readonly FhirRelease Release;
 
         [Obsolete("Use TryCreate() instead.")]
-        public static PropertyMapping? Create(PropertyInfo prop, FhirRelease version = (FhirRelease)int.MaxValue)
-            => TryCreate(prop, out var mapping, version) ? mapping : null;
+        public static PropertyMapping? Create(PropertyInfo prop, ClassMapping declaringClass, FhirRelease version = (FhirRelease)int.MaxValue)
+            => TryCreate(prop, out var mapping, declaringClass, version) ? mapping : null;
 
         /// <summary>
         /// Inspects the given PropertyInfo, extracting metadata from its attributes and creating a new <see cref="PropertyMapping"/>.
         /// </summary>
         /// <remarks>There should generally be no reason to call this method, as you can easily get the required PropertyMapping via
         /// a ClassMapping - which will cache this information as well. This constructor is public for historical reasons only.</remarks>
-        public static bool TryCreate(PropertyInfo prop, out PropertyMapping? result, FhirRelease release)
+        public static bool TryCreate(PropertyInfo prop, out PropertyMapping? result, ClassMapping declaringClass, FhirRelease release)
         {
             if (prop == null) throw Error.ArgumentNull(nameof(prop));
             result = default;
@@ -218,7 +231,7 @@ namespace Hl7.Fhir.Introspection
 
             var isPrimitive = isAllowedNativeTypeForDataTypeValue(implementingType);
 
-            result = new PropertyMapping(elementAttr.Name, prop, implementingType, propertyTypeMapping!, fhirTypes, release)
+            result = new PropertyMapping(elementAttr.Name, declaringClass, prop, implementingType, propertyTypeMapping!, fhirTypes, release)
             {
                 InSummary = elementAttr.InSummary,
                 Choice = elementAttr.Choice,

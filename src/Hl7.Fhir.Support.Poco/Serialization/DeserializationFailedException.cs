@@ -7,8 +7,8 @@
  */
 
 
-#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
 using Hl7.Fhir.Model;
+using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,24 +18,36 @@ using System.Linq;
 namespace Hl7.Fhir.Serialization
 {
     /// <summary>
-    /// A <see cref="AggregateException"/> that contains the list of errors detected while deserializing data into
-    /// .NET POCOs.
+    /// Contains the list of errors detected while deserializing data into .NET POCOs.
     /// </summary>
     /// <remarks>The deserializers will continue deserialization in the face of errors, and so will collect the full
     /// set of errors detected using this aggregate exception.</remarks>
-    public class DeserializationFailedException : AggregateException
+    public class DeserializationFailedException : Exception
     {
-        public DeserializationFailedException(Base? partialResult, IEnumerable<Exception> innerExceptions) : base(innerExceptions)
+        public DeserializationFailedException(Base? partialResult, IEnumerable<ICodedException> innerExceptions) :
+            base(generateMessage(innerExceptions))
         {
             PartialResult = partialResult;
+            Exceptions = innerExceptions.ToList();
         }
+
+        private static string generateMessage(IEnumerable<ICodedException> exceptions)
+        {
+            string b = "One or more errors occurred.";
+            if (exceptions.Any())
+                b += " " + string.Join(" ", exceptions.Select(e => $"({e.Message})"));
+
+            return b;
+        }
+
 
         /// <summary>
         /// The best-effort result of deserialization. Maybe invalid or incomplete because of the errors encountered.
         /// </summary>
         public Base? PartialResult { get; private set; }
+
+        public IReadOnlyCollection<ICodedException> Exceptions { get; }
     }
 }
 
 #nullable restore
-#endif

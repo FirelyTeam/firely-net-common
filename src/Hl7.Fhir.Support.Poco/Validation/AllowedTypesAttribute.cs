@@ -6,11 +6,13 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
+using Hl7.Fhir.Introspection;
+using Hl7.Fhir.Utility;
 using System;
-using System.Collections;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
 
 #nullable enable
 
@@ -40,8 +42,7 @@ namespace Hl7.Fhir.Validation
 
             var result = ValidationResult.Success;
 
-            // Avoid interpreting this as a collection just because string is IEnumerable<char>.
-            if (value is ICollection list && value is not string)
+            if (ReflectionHelper.IsRepeatingElement(value, out var list))
             {
                 foreach (var item in list)
                 {
@@ -57,16 +58,12 @@ namespace Hl7.Fhir.Validation
             return result;
         }
 
-        private ValidationResult? validateValue(object? item, ValidationContext context)
-        {
-            if (item is not null)
-            {
-                if (!IsAllowedType(item.GetType()))
-                    return DotNetAttributeValidation.BuildResult(context, "Value is of type {0}, which is not an allowed choice.", item.GetType());
-            }
-
-            return ValidationResult.Success;
-        }
+        private ValidationResult? validateValue(object? item, ValidationContext context) =>
+            item is null || IsAllowedType(item.GetType())
+                ? ValidationResult.Success
+                : COVE.CHOICE_TYPE_NOT_ALLOWED
+                    .With(ModelInspector.GetClassMappingForType(item.GetType())?.Name ?? item.GetType().Name)
+                    .AsResult(context);
 
         /// <summary>
         /// Determine whether the given type is allowed according to this attribute.

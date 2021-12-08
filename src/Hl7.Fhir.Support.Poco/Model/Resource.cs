@@ -29,15 +29,11 @@
 */
 
 using Hl7.Fhir.Utility;
-using Hl7.Fhir.Validation;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace Hl7.Fhir.Model
 {
     [System.Diagnostics.DebuggerDisplay("\\{\"{TypeName,nq}/{Id,nq}\"}")]
-    [InvokeIValidatableObject]
     public partial class Resource
     {
         /// <summary>

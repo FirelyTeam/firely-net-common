@@ -42,7 +42,9 @@ namespace Hl7.Fhir.Model
     /// </summary>
     public partial class XHtml
     {
-        /// <inheritdoc cref="IsValidNarrativeXhtml(string)"/>        
+        /// <summary>
+        /// Checks whether the given literal is correctly formatted.
+        /// </summary>
         [Obsolete("Use the more explicit IsValidNarrativeXhtml function instead (or IsValidXml if that is more appropriate).")]
         public static bool IsValidValue(string value) => IsValidNarrativeXhtml(value);
 
@@ -51,7 +53,7 @@ namespace Hl7.Fhir.Model
         /// Verifies the given string of XML against the FHIR narrative requirements from https://www.hl7.org/fhir/narrative.html. Note
         /// that due to unavailability of XML validation under netstandard1.6, this function always returns true.
         /// </summary>
-        public static bool IsValidNarrativeXhtml(string value, out string[] errors)
+        public static bool IsValidNarrativeXhtml(string _, out string[] errors)
         {
             errors = new string[0];
             return true;

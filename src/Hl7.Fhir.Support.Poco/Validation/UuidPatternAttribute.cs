@@ -9,6 +9,7 @@
 using Hl7.Fhir.Model;
 using System;
 using System.ComponentModel.DataAnnotations;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
 
 #nullable enable
 
@@ -26,7 +27,7 @@ namespace Hl7.Fhir.Validation
             {
                 null => ValidationResult.Success,
                 string s when Uuid.IsValidValue(s) => ValidationResult.Success,
-                string s => DotNetAttributeValidation.BuildResult(validationContext, "'{0}' is not a correct value for a Uuid.", s),
+                string s => COVE.UUID_LITERAL_INVALID.With(s).AsResult(validationContext),
                 _ => throw new ArgumentException($"{nameof(UuidPatternAttribute)} attributes can only be applied to string properties.")
             };
     }

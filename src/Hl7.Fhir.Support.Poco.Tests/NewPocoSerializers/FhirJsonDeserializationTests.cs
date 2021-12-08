@@ -3,6 +3,8 @@ using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Tests;
+using Hl7.Fhir.Utility;
+using Hl7.Fhir.Validation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -10,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
 using ERR = Hl7.Fhir.Serialization.FhirJsonException;
 
 #nullable enable
@@ -31,7 +34,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [DataRow("hi!", typeof(byte[]), "JSON106")]
         [DataRow("hi!", typeof(DateTimeOffset), "JSON107")]
         [DataRow("2007-02-03", typeof(DateTimeOffset), null)]
-        [DataRow("enumvalue", typeof(UriFormat), ERR.CODED_VALUE_NOT_IN_ENUM_CODE)]
+        [DataRow("enumvalue", typeof(UriFormat), COVE.INVALID_CODED_VALUE_CODE)]
         [DataRow(true, typeof(Enum), "JSON110")]
         [DataRow("hi!", typeof(int), "JSON110")]
 
@@ -115,7 +118,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             error?.ErrorCode.Should().Be(FhirJsonException.ARRAYS_CANNOT_BE_EMPTY_CODE);
 
             (result, error) = test(31);
-            result.Should().Be("31");
+            result.Should().BeNull();
             error?.ErrorCode.Should().Be(FhirJsonException.UNEXPECTED_JSON_TOKEN_CODE);
 
             try
@@ -127,14 +130,17 @@ namespace Hl7.Fhir.Support.Poco.Tests
             {
             }
 
-            static object correctIntToBool(ref Utf8JsonReader reader, Type targetType, FhirJsonException originalException)
+            static (object?, FhirJsonException?) correctIntToBool(ref Utf8JsonReader reader,
+                                                                  Type targetType,
+                                                                  object? originalValue,
+                                                                  FhirJsonException originalException)
             {
                 return reader.GetInt32() switch
                 {
-                    < 10 => false,
-                    < 20 => true,
-                    < 30 => throw ERR.ARRAYS_CANNOT_BE_EMPTY,
-                    < 40 => throw originalException,
+                    < 10 => (false, null),
+                    < 20 => (true, null),
+                    < 30 => (originalValue, ERR.ARRAYS_CANNOT_BE_EMPTY),
+                    < 40 => (null, originalException),
                     _ => throw new InvalidOperationException("Something")
                 };
             }
@@ -194,12 +200,12 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [DataRow(4, typeof(Base64Binary), "JSON110", "4")]
 
         [DataRow("2007-04", typeof(FhirDateTime), null, "2007-04")]
-        [DataRow("2007-", typeof(FhirDateTime), ERR.VALIDATION_FAILED_CODE, "2007-")]
+        [DataRow("2007-", typeof(FhirDateTime), COVE.DATETIME_LITERAL_INVALID_CODE, "2007-")]
         [DataRow(4.45, typeof(FhirDateTime), "JSON110", "4.45")]
 
         [DataRow("female", typeof(Code), null, "female")]
         [DataRow("is-a", typeof(Code<FilterOperator>), null, "is-a")]
-        [DataRow("female", typeof(Code<FilterOperator>), ERR.CODED_VALUE_NOT_IN_ENUM_CODE, "female")]
+        [DataRow("wrong", typeof(Code<FilterOperator>), COVE.INVALID_CODED_VALUE_CODE, "wrong")]   // just sets ObjectValue, POCO validation handles enum checks
         [DataRow(true, typeof(Code), ERR.UNEXPECTED_JSON_TOKEN_CODE, "true")]
 
         [DataRow("hi!", typeof(Instant), "JSON107")]
@@ -218,21 +224,19 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 var reader = constructReader(value);
                 reader.Read();
 
-                return deserializer.DeserializeFhirPrimitive(null, "dummy", mapping, ref reader, state);
+                return deserializer.DeserializeFhirPrimitive(null, "dummy", mapping, ref reader, null, state);
             }
 
             var result = test();
 
+            state.Errors.HasExceptions.Should().Be(errorcode is not null);
+
             if (state.Errors.HasExceptions)
             {
                 if (errorcode is not null)
-                    state.Errors.Single().Should().BeOfType<FhirJsonException>().Which.ErrorCode.Should().Be(errorcode);
+                    state.Errors.Should().OnlyContain(ce => ce.ErrorCode == errorcode);
                 else
-                    throw state.Errors.Single();
-            }
-            else
-            {
-                errorcode.Should().BeNull();
+                    throw state.Errors.Single().Exception;
             }
 
             if (expectedObjectValue is not null)
@@ -244,34 +248,28 @@ namespace Hl7.Fhir.Support.Poco.Tests
             }
         }
 
-        private static Base deserializeComplex(Type objectType, object testObject, out Utf8JsonReader readerState,
-            out FhirJsonPocoDeserializerState state, FhirJsonPocoDeserializerSettings settings)
+        private static (Base?, IReadOnlyCollection<ICodedException>) deserializeComplex(Type objectType, object testObject, out Utf8JsonReader readerState,
+            FhirJsonPocoDeserializerSettings settings)
         {
-            var inspector = ModelInspector.ForAssembly(typeof(TestPatient).Assembly);
-            state = new();
-
             // For the tests, enable full XHML validation so we can test it when necessary.
             var deserializer = new FhirJsonPocoDeserializer(typeof(TestPatient).Assembly, settings);
-            var mapping = inspector.ImportType(objectType)!;
-
             Utf8JsonReader reader = constructReader(testObject);
             reader.Read();
 
-            Base? result = null;
-
-            if (objectType.IsAssignableTo(typeof(Resource)))
+            try
             {
-                result = deserializer.DeserializeResource(ref reader);
+                var result = objectType.IsAssignableTo(typeof(Resource))
+                    ? deserializer.DeserializeResource(ref reader)
+                    : deserializer.DeserializeObject(objectType, ref reader);
+
+                readerState = reader; // copy
+                return (result, Array.Empty<ICodedException>());
             }
-            else
+            catch (DeserializationFailedException dfe)
             {
-                result = (Base)mapping.Factory();
-                deserializer.DeserializeObjectInto(result, mapping, ref reader, inResource: false, state);
+                readerState = reader;
+                return (dfe.PartialResult, dfe.Exceptions);
             }
-
-            readerState = reader; // copy
-
-            return result;
         }
 
         private static Utf8JsonReader constructReader(object testObject)
@@ -281,13 +279,14 @@ namespace Hl7.Fhir.Support.Poco.Tests
             return reader;
         }
 
-        private static void assertErrors(IEnumerable<FhirJsonException> actual, string[] expected)
+        private static void assertErrors(IEnumerable<ICodedException> actual, string[] expected)
         {
             if (expected.Length == 0 && !actual.Any())
                 return;
 
             string why = $"Should be the same: actual [{string.Join(",", actual.Select(a => a.ErrorCode))}] and expected [{string.Join(";", expected)}]";
-            expected.Length.Should().Be(actual.Count(), because: why);
+            Console.WriteLine("Messages: " + string.Join(", ", actual.Select(a => a.Message)));
+            actual.Count().Should().Be(expected.Length, because: why);
             _ = actual.Zip(expected, (a, e) => a.ErrorCode.Should().Be(e, because: why)).ToList();
             Console.WriteLine($"Found {string.Join(", ", actual.Select(a => a.Message))}");
         }
@@ -295,7 +294,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [TestMethod]
         [DynamicData(nameof(TestDeserializeResourceData))]
         [DynamicData(nameof(TestDeserializeNestedResource))]
-        public void TestDeserializeResource(object testObject, JsonTokenType tokenAfterParsing, params FhirJsonException[] errors)
+        public void TestDeserializeResource(object testObject, JsonTokenType tokenAfterParsing, params ICodedException[] errors)
         {
             var reader = constructReader(testObject);
             reader.Read();
@@ -303,7 +302,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             var deserializer = new FhirJsonPocoDeserializer(typeof(TestPatient).Assembly);
             var state = new FhirJsonPocoDeserializerState();
             _ = deserializer.DeserializeResourceInternal(ref reader, state);
-            assertErrors(state.Errors, errors.Select(e => e.ErrorCode).ToArray());
+            assertErrors(state.Errors.OfType<ICodedException>(), errors.Select(e => e.ErrorCode).ToArray());
             reader.TokenType.Should().Be(tokenAfterParsing);
         }
 
@@ -353,13 +352,13 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [DynamicData(nameof(TestNormalArrayData), DynamicDataSourceType.Method)]
         [DynamicData(nameof(TestPrimitiveData), DynamicDataSourceType.Method)]
         [DynamicData(nameof(TestValidatePrimitiveData), DynamicDataSourceType.Method)]
-        public void TestData(Type t, object testObject, JsonTokenType token, Action<object>? verify, params FhirJsonException[] errors)
+        public void TestData(Type t, object testObject, JsonTokenType token, Action<object?>? verify, params ICodedException[] expectedErrors)
         {
             // Enable full narrative validation so we can test for it
-            var result = deserializeComplex(t, testObject, out var readerState, out var state,
-                new() { ValidateNarrative = Validation.NarrativeValidationKind.FhirXhtml });
+            var (result, errors) = deserializeComplex(t, testObject, out var readerState,
+                new() { Validator = new DataAnnotationDeserialzationValidator(narrativeValidation: Validation.NarrativeValidationKind.FhirXhtml) });
 
-            assertErrors(state.Errors, errors.Select(e => e.ErrorCode).ToArray());
+            assertErrors(errors, expectedErrors.Select(e => e.ErrorCode).ToArray());
             readerState.TokenType.Should().Be(token);
             var cdResult = result.Should().BeOfType(t);
             verify?.Invoke(result);
@@ -443,11 +442,11 @@ namespace Hl7.Fhir.Support.Poco.Tests
         public static IEnumerable<object?[]> TestValidatePrimitiveData()
         {
             yield return data<Narrative>(new { div = "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p>correct</p></div>" });
-            yield return data<Narrative>(new { div = "this isn't xml" }, ERR.VALIDATION_FAILED);
-            yield return data<Narrative>(new { div = "<puinhoop />" }, ERR.VALIDATION_FAILED);
+            yield return data<Narrative>(new { div = "this isn't xml" }, COVE.NARRATIVE_XML_IS_MALFORMED);
+            yield return data<Narrative>(new { div = "<puinhoop />" }, COVE.NARRATIVE_XML_IS_INVALID);
 
             yield return data<TestAttachment>(new { url = "urn:oid:1.3.6.1.4.1.343" });
-            yield return data<TestAttachment>(new { url = "urn:oid:1" }, ERR.VALIDATION_FAILED);
+            yield return data<TestAttachment>(new { url = "urn:oid:1" }, COVE.URI_LITERAL_INVALID);
         }
 
         public static IEnumerable<object?[]> TestPrimitiveArrayData()
@@ -458,23 +457,23 @@ namespace Hl7.Fhir.Support.Poco.Tests
             yield return data<TestAddress>(new { line = Array.Empty<string>(), _line = new string?[] { null } }, ERR.ARRAYS_CANNOT_BE_EMPTY, ERR.PRIMITIVE_ARRAYS_ONLY_NULL);
             yield return data<TestAddress>(new { line = new string?[] { null }, _line = new[] { new { id = "1" } } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL);
             yield return data<TestAddress>(new { line = new[] { "Ewout" }, _line = new string?[] { null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL);
-            yield return data<TestAddress>(new { line = new string?[] { null }, _line = new string?[] { null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_BOTH_NULL, ERR.PRIMITIVE_ARRAYS_ONLY_NULL);
-            yield return data<TestAddress>(new { line = new string?[] { null }, _line = new string?[] { null, null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_BOTH_NULL, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
-            yield return data<TestAddress>(new { line = new string?[] { null, null }, _line = new string?[] { null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_BOTH_NULL, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
+            yield return data<TestAddress>(new { line = new string?[] { null }, _line = new string?[] { null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_ONLY_NULL);
+            yield return data<TestAddress>(new { line = new string?[] { null }, _line = new string?[] { null, null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
+            yield return data<TestAddress>(new { line = new string?[] { null, null }, _line = new string?[] { null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
             yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" } }, checkName);
             yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" }, _line = new[] { new { id = "1" } } }, checkId1AndName, ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
             yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" }, _line = new[] { new { id = "1" }, null } }, checkId1AndName);
             yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" }, _line = new[] { new { id = "1" }, new { id = "2" } } }, checkAll);
             yield return data<TestAddress>(new { line = new[] { "Ewout", null }, _line = new[] { null, new { id = "2" } } });
-            yield return data<TestAddress>(new { line = new[] { "Ewout", null }, _line = new[] { new { id = "1" }, null } }, checkId1, ERR.PRIMITIVE_ARRAYS_BOTH_NULL);
-            yield return data<TestAddress>(new { _line = new[] { new { id = "1" }, null } }, checkId1, ERR.PRIMITIVE_ARRAYS_LONELY_NULL);
+            yield return data<TestAddress>(new { line = new[] { "Ewout", null }, _line = new[] { new { id = "1" }, null } }, checkId1, COVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL);
+            yield return data<TestAddress>(new { _line = new[] { new { id = "1" }, null } }, checkId1, COVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL);
             yield return data<TestAddress>(new { _line = new[] { new { id = "1" }, new { id = "2" } } }, checkIds);
 
             static void checkName(object parsed) => parsed.Should().BeOfType<TestAddress>().Which.Line.Should().BeEquivalentTo("Ewout", "Wouter");
             static void checkIds(object parsed) =>
-                parsed.Should().BeOfType<TestAddress>().Which.LineElement.Select(le => le.ElementId).Should().BeEquivalentTo("1", "2");
+                parsed.Should().BeOfType<TestAddress>().Which.LineElement.Select(le => le?.ElementId).Should().BeEquivalentTo("1", "2");
             static void checkId1(object parsed) =>
-                parsed.Should().BeOfType<TestAddress>().Which.LineElement.Select(le => le.ElementId).Should().BeEquivalentTo("1", null);
+                parsed.Should().BeOfType<TestAddress>().Which.LineElement.Select(le => le?.ElementId).Should().BeEquivalentTo("1", null);
             static void checkId1AndName(object parsed)
             {
                 checkName(parsed);
@@ -581,14 +580,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 var recoveredActual = JsonSerializer.Serialize(dfe.PartialResult, options);
                 Console.WriteLine(recoveredActual);
 
-                var recoveredFilename = Path.Combine("TestData", "fp-test-patient-errors-recovered.json");
-                var recoveredExpected = File.ReadAllText(recoveredFilename);
-
-                List<string> errors = new();
-                JsonAssert.AreSame("fp-test-patient-json-errors/recovery", recoveredExpected, recoveredActual, errors);
-                errors.Should().BeEmpty();
-
-                assertErrors(dfe.InnerExceptions.Cast<FhirJsonException>(), new string[]
+                assertErrors(dfe.Exceptions, new string[]
                 {
                     ERR.STRING_ISNOTAN_INSTANT_CODE,
                     ERR.RESOURCETYPE_UNEXPECTED_CODE,
@@ -603,12 +595,13 @@ namespace Hl7.Fhir.Support.Poco.Tests
                     ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE_CODE, // given and _given not the same length
                     ERR.EXPECTED_PRIMITIVE_NOT_NULL_CODE, // telecom use cannot be null
                     ERR.EXPECTED_PRIMITIVE_NOT_OBJECT_CODE, // address.use is not an object
-                    ERR.PRIMITIVE_ARRAYS_BOTH_NULL_CODE, // address.line should not have a null at the same position in both arrays
+                    COVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL_CODE, // address.line should not have a null at the same position in both arrays
+                    COVE.INVALID_CODED_VALUE_CODE,      // status 'generatedY'
                     ERR.PRIMITIVE_ARRAYS_ONLY_NULL_CODE, // Questionnaire._subjectType cannot be just null
-                    ERR.CHOICE_ELEMENT_TYPE_NOT_ALLOWED_CODE,
+                    COVE.CHOICE_TYPE_NOT_ALLOWED_CODE,   // incorrect use of valueBoolean in option.
                     ERR.EXPECTED_START_OF_OBJECT_CODE, // item.code is a complex object, not a boolean
-                    ERR.VALIDATION_FAILED_CODE, // incorrect oid
-                    ERR.PRIMITIVE_ARRAYS_LONELY_NULL_CODE, // given cannot be the only array with a null
+                    COVE.URI_LITERAL_INVALID_CODE, // incorrect oid
+                    COVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL_CODE, // given cannot be a single array with just a null
                     ERR.UNEXPECTED_JSON_TOKEN_CODE, // telecom.rank should be a number, not a boolean
                     ERR.USE_OF_UNDERSCORE_ILLEGAL_CODE, // should be extension.url, not extension._url
                     ERR.UNEXPECTED_JSON_TOKEN_CODE, // gender.extension.valueCode should be a string, not a number
@@ -620,6 +613,13 @@ namespace Hl7.Fhir.Support.Poco.Tests
                     ERR.ARRAYS_CANNOT_BE_EMPTY_CODE,
                     ERR.OBJECTS_CANNOT_BE_EMPTY_CODE
                 });
+
+                var recoveredFilename = Path.Combine("TestData", "fp-test-patient-errors-recovered.json");
+                var recoveredExpected = File.ReadAllText(recoveredFilename);
+
+                List<string> errors = new();
+                JsonAssert.AreSame("fp-test-patient-json-errors/recovery", recoveredExpected, recoveredActual, errors);
+                errors.Should().BeEmpty();
             }
 
         }
@@ -635,67 +635,83 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
             static TestAttachment deserializeAttachment(FhirJsonPocoDeserializerSettings settings)
             {
-                var attachment = (TestAttachment)deserializeComplex(typeof(TestAttachment), new { data = "SGkh" }, out _, out var state, settings);
-                state.Errors.HasExceptions.Should().BeFalse();
+                var (attachment, errors) = deserializeComplex(typeof(TestAttachment), new { data = "SGkh" }, out _, settings);
+                errors.Any().Should().BeFalse();
 
-                return attachment;
+                return (TestAttachment)attachment!;
             }
         }
 
-        [TestMethod]
-        public void TestUpdateComplexValue()
+        private class CustomComplexValidator : IDeserializationValidator
         {
-            var patient = (TestPatient)deserializeComplex(typeof(TestPatient), new { resourceType = "Patient", deceasedDateTime = "2070-01-01T12:01:02Z" },
-                        out _, out var state, new() { OnUpdateValue = updateValue });
-            state.Errors.HasExceptions.Should().BeFalse();
-
-            patient.Deceased.Should().BeOfType<FhirDateTime>().Which.Value.Should().EndWith("+00");
-
-            static object? updateValue(object? candidateValue, in DeserializationContext deserializationContext)
+            public void ValidateInstance(object? instance, in InstanceDeserializationContext context, out COVE[]? reportedErrors)
             {
-                if (candidateValue is not FhirDateTime f) return candidateValue;
-                if (deserializationContext.GetPath() != "Patient.deceased") return candidateValue;
+                reportedErrors = null;
+            }
 
-                deserializationContext.TargetObjectMapping.Name.Should().Be("Patient");
-                deserializationContext.PropertyName.Should().Be("deceasedDateTime");
-                deserializationContext.ElementMapping.Name.Should().Be("deceased");
-                deserializationContext.ValueType.Should().Be(typeof(FhirDateTime));
+            public void ValidateProperty(object? instance, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors)
+            {
+                reportedErrors = null;
+
+                if (instance is not FhirDateTime f) return;
+                if (context.Path != "Patient.deceased") return;
+
+                context.ElementMapping.DeclaringClass.Name.Should().Be("Patient");
+                context.PropertyName.Should().Be("deceasedDateTime");
+                context.ElementMapping.Name.Should().Be("deceased");
 
                 // Invalid value, but since this value has already been validated during
                 // deserialization of the FhirDateTime, validation will not be triggered!
-                if (f.Value.EndsWith("Z")) f.Value = f.Value.TrimEnd('Z') + "+00";
+                if (f.Value.EndsWith("Z")) f.Value = f.Value.TrimEnd('Z') + "+00:00";
 
-                return candidateValue;
+                reportedErrors = new[] { COVE.DATETIME_LITERAL_INVALID };
+            }
+
+        }
+
+        private class CustomDataTypeValidator : IDeserializationValidator
+        {
+            public void ValidateInstance(object? instance, in InstanceDeserializationContext context, out COVE[]? reportedErrors)
+            {
+                if (context.InstanceMapping.Name == "dateTime")
+                {
+                    var dt = instance.Should().BeOfType<FhirDateTime>().Subject;
+
+                    if (dt.Value.EndsWith("Z")) dt.Value = dt.Value.TrimEnd('Z') + "+00:00";
+                    reportedErrors = new[] { COVE.DATETIME_LITERAL_INVALID };
+                }
+                else
+                {
+                    reportedErrors = null;
+                }
+            }
+
+            public void ValidateProperty(object? instance, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors)
+            {
+                reportedErrors = null;
             }
         }
 
         [TestMethod]
         public void TestUpdatePrimitiveValue()
         {
-            var patient = (TestPatient)deserializeComplex(typeof(TestPatient), new { resourceType = "Patient", deceasedDateTime = "2070-01-01T12:01:02Z" },
-                        out _, out var state, new() { OnUpdateValue = updateValue });
-            state.Errors.HasExceptions.Should().BeFalse();
+            test(new CustomComplexValidator());
+            test(new CustomDataTypeValidator());
 
-            patient.Deceased.Should().BeOfType<FhirDateTime>().Which.Value.Should().EndWith("+00:00");
-
-            static object? updateValue(object? candidateValue, in DeserializationContext deserializationContext)
+            static void test(IDeserializationValidator validator)
             {
-                if (candidateValue is string s &&
-                    deserializationContext.TargetObjectMapping.Name == "dateTime" &&
-                    deserializationContext.ElementMapping.Name == "value")
-                {
-                    deserializationContext.ValueType.Should().Be(typeof(string));
+                var (result, errors) = deserializeComplex(typeof(TestPatient),
+                    new { resourceType = "Patient", deceasedDateTime = "2070-01-01T12:01:02Z" },
+                        out _, new() { Validator = validator });
 
-                    if (s.EndsWith("Z")) s = s.TrimEnd('Z') + "+00:00";
-                    return s;
-                }
-                else
-                    return candidateValue;
+                errors.Any().Should().BeTrue();
+                errors.Should().AllBeOfType<COVE>()
+                    .And.ContainSingle(e => ((COVE)e).ErrorCode == COVE.DATETIME_LITERAL_INVALID_CODE);
+                result.Should().BeOfType<TestPatient>()
+                    .Which.Deceased.Should().BeOfType<FhirDateTime>()
+                    .Which.Value.Should().EndWith("+00:00");
             }
         }
-
-
     }
-
 }
 #nullable restore

@@ -9,6 +9,7 @@
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
 using System;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
 #nullable enable
@@ -17,6 +18,13 @@ namespace Hl7.Fhir.Serialization
 {
     internal static class SystemTextJsonParsingExtensions
     {
+        // While we are waiting for this https://github.com/dotnet/runtime/issues/28482,
+        // there's no other option than to just force our way to these valuable properties.
+        private static readonly Lazy<Func<JsonReaderState, long>> GETLINENUMBER =
+            new(() => Utility.PropertyInfoExtensions.GetField<JsonReaderState, long>("_lineNumber"));
+        private static readonly Lazy<Func<JsonReaderState, long>> GETPOSITION =
+            new(() => Utility.PropertyInfoExtensions.GetField<JsonReaderState, long>("_bytePositionInLine"));
+
         internal static string GetRawText(this ref Utf8JsonReader reader)
         {
             var doc = JsonDocument.ParseValue(ref reader);
@@ -25,17 +33,9 @@ namespace Hl7.Fhir.Serialization
 
         internal static (long lineNumber, long position) GetLocation(this JsonReaderState state)
         {
-            // While we are waiting for this https://github.com/dotnet/runtime/issues/28482,
-            // there's no other option than to just force our way to these valuable properties.
             // Note: linenumber/position are 0 based, so adding 1 position here.
-
-            var lineNumber = ((long)typeof(JsonReaderState)
-                .GetField("_lineNumber", BindingFlags.NonPublic | BindingFlags.Instance)!
-                .GetValue(state)!) + 1;
-            var position = ((long)typeof(JsonReaderState)
-                .GetField("_bytePositionInLine", BindingFlags.NonPublic | BindingFlags.Instance)!
-                .GetValue(state)!) + 1;
-
+            var lineNumber = GETLINENUMBER.Value(state) + 1;
+            var position = GETPOSITION.Value(state) + 1;
             return (lineNumber, position);
         }
 
@@ -48,7 +48,7 @@ namespace Hl7.Fhir.Serialization
         internal static string GenerateLocationMessage(this ref Utf8JsonReader reader, out long lineNumber, out long position)
         {
             (lineNumber, position) = reader.GetLocation();
-            return $" Line {lineNumber}, position {position}.";
+            return $"line {lineNumber}, position {position}.";
         }
 
 

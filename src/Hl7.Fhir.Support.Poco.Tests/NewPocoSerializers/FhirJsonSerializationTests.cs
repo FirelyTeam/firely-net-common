@@ -1,8 +1,8 @@
 using FluentAssertions;
-using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Tests;
+using Hl7.Fhir.Validation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.IO;
@@ -21,9 +21,19 @@ namespace Hl7.Fhir.Support.Poco.Tests
             var filename = Path.Combine("TestData", "json-edge-cases.json");
             var expected = File.ReadAllText(filename);
 
-            // For now, deserialize with the existing deserializer, until we have completed
-            // the dynamicserializer too.
-            return (JsonSerializer.Deserialize<TestPatient>(expected, BaseOptions), expected);
+            try
+            {
+                var parsed = JsonSerializer.Deserialize<TestPatient>(expected, BaseOptions);
+                return (parsed, expected);
+            }
+            catch (DeserializationFailedException dfe)
+            {
+                if (dfe.Exceptions.All(e => e.ErrorCode == CodedValidationException.CONTAINED_RESOURCE_CANNOT_HAVE_NARRATIVE_CODE))
+                    return (dfe.PartialResult as TestPatient, expected);
+                else
+                    throw;
+            }
+
         }
 
         [TestMethod]

@@ -12,9 +12,9 @@
 #nullable enable
 
 using Hl7.Fhir.Model;
-using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation;
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 
 namespace Hl7.Fhir.Serialization
@@ -24,19 +24,6 @@ namespace Hl7.Fhir.Serialization
     /// </summary>
     public record FhirJsonPocoDeserializerSettings
     {
-        /// <summary>
-        /// For performance reasons, validation of Xhtml again the rules specified in the FHIR
-        /// specification for Narrative (http://hl7.org/fhir/narrative.html#2.4.0) is turned off by
-        /// default. Set this property to true to perform this validation during serialization.
-        /// </summary>
-        public NarrativeValidationKind ValidateNarrative { get; init; } = NarrativeValidationKind.None;
-
-        /// <summary>
-        /// Validation of the string contents of Date, Time and DateTime is done during deserialization
-        /// but can be turned off for modest performance gains if necessary.
-        /// </summary>
-        public bool SkipDateTimeValidation { get; init; } = false;
-
         /// <summary>
         /// If the caller will not access base64 data in the deserialized resources, base64 decoding
         /// of <see cref="Base64Binary"/> values can be turned off to increase performance.
@@ -51,48 +38,27 @@ namespace Hl7.Fhir.Serialization
         public PrimitiveParseHandler? OnPrimitiveParseFailed { get; init; } = null;
 
         /// <summary>
-        /// If set, this delegate is called after a value was deserialized, but before it is set on
-        /// the POCO property under construction and before validation is done.
+        /// If set, this validator is invoked before the value is set in the object under construction to validate
+        /// and possibly alter the value. Setting this property to <c>null</c> will disable validation completely.
         /// </summary>
-        public ValueUpdater? OnUpdateValue { get; init; } = null;
-
-        /// <summary>
-        /// This delegate is called after <see cref="OnUpdateValue"/> has been run and before the
-        /// value is set in the object under construction to validate the value.
-        /// </summary>
-        public DeserializationValidator OnValidate { get; init; } =
-             FhirJsonPocoDeserializer.DotNetAttributeDeserializationValidator;
+        public IDeserializationValidator? Validator { get; init; } = DataAnnotationDeserialzationValidator.Default;
     }
-
-
-    /// <summary>
-    /// A callback that implements validation logic to be run just before the value is used to initialize
-    /// the deserialized object.
-    /// </summary>
-    /// <param name="value">The value to be validated</param>
-    /// <param name="settings">The settings as passed to the deserializer.</param>
-    /// <param name="context">The current context of deserialization, like the path and the type under deserialization.</param>
-    /// <returns>An array with zero or more formatted strings detailing the validation issues.</returns>
-    public delegate string[] DeserializationValidator(object? value, FhirJsonPocoDeserializerSettings settings, in DeserializationContext context);
-
-    /// <summary>
-    /// A callback that can implement custom logic to update deserialized values before
-    /// they are validated and used to initialize the deserialized object.
-    /// </summary>
-    /// <param name="candidateValue">The preliminary value that would be used if no custom logic was invoked.</param>
-    /// <param name="context">The current context of deserialization, like the path and the type under deserialization.</param>
-    /// <returns></returns>
-    public delegate object? ValueUpdater(object? candidateValue, in DeserializationContext context);
 
     /// <summary>
     /// A callback that can handle parsing failures for primitive types.
     /// </summary>
     /// <param name="reader">A json reader positioned on the primitive value that failed to parse.</param>
-    /// <param name="originalException">The exception that the deserializer would have raised if this handler was not installed.</param>
     /// <param name="targetType">The .NET type the deserializer needs this handler to return to be able to update the POCO under construction.</param>
-    /// <remarks>Returns an object if this handler succeeded in parsing, otherwise the delegate must throw an exception (which might
-    /// be the <c>originalException</c>).</remarks>
-    public delegate object? PrimitiveParseHandler(ref Utf8JsonReader reader, Type targetType, FhirJsonException originalException);
+    /// <param name="originalValue">The value the deserializer would have returned if this handler was not installed.</param>
+    /// <param name="originalException">The exception the deserializer would have raised if this handler was not installed.</param>
+    /// <remarks>Returns an object, an error or both depending on whether the handler succeeded in parsing. The returned exception
+    /// may be the <c>originalException</c> and the returned value the <c>originalValue</c>.
+    /// If both are returned, the parsing is considered to have failed, with the returned object as the partially parsed result.</remarks>
+    public delegate (object?, FhirJsonException?) PrimitiveParseHandler(
+        ref Utf8JsonReader reader,
+        Type targetType,
+        object? originalValue,
+        FhirJsonException originalException);
 }
 
 #nullable restore

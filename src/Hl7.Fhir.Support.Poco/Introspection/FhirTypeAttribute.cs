@@ -28,7 +28,6 @@
 
 */
 
-using Hl7.Fhir.Validation;
 using System;
 
 #nullable enable
@@ -39,7 +38,7 @@ namespace Hl7.Fhir.Introspection
     /// This attribute is applied to classes that represent FHIR datatypes and resources.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-    public sealed class FhirTypeAttribute : InvokeIValidatableObjectAttribute
+    public sealed class FhirTypeAttribute : VersionedAttribute
     {
         public FhirTypeAttribute(string name)
         {

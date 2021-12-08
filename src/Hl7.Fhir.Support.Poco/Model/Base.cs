@@ -43,30 +43,12 @@ namespace Hl7.Fhir.Model
     [Serializable]
     [FhirType("Base", "http://hl7.org/fhir/StructureDefinition/Base")]
     [DataContract]
-    public abstract class Base : Validation.IValidatableObject, IDeepCopyable, IDeepComparable,
-        IAnnotated, IAnnotatable, INotifyPropertyChanged, IReadOnlyDictionary<string, object>
+    public abstract class Base : IDeepCopyable, IDeepComparable,
+        IAnnotated, IAnnotatable, IValidatableObject, INotifyPropertyChanged, IReadOnlyDictionary<string, object>
     {
-        public virtual bool IsExactly(IDeepComparable other)
-        {
-            var otherT = other as Base;
-            if (otherT == null) return false;
+        public virtual bool IsExactly(IDeepComparable other) => other is Base;
 
-            return true;
-        }
-
-
-        /// <summary>
-        /// Checks whether the element is matched by pattern ("other"). If the checked pattern has a value, the element must have that value as well. A pattern of "null" will always return true.
-        /// </summary>
-        /// <param name="other">The pattern that the element is supposed to match</param>
-        /// <returns>Whether the element is matched by the pattern ("other")</returns>
-        public virtual bool Matches(IDeepComparable other)
-        {
-            var otherT = other as Base;
-            if (otherT == null) return false;
-
-            return true;
-        }
+        public virtual bool Matches(IDeepComparable other) => other is Base;
 
         /// <summary>
         /// 
@@ -84,15 +66,12 @@ namespace Hl7.Fhir.Model
                 return dest;
             }
             else
-                throw new ArgumentException("Can only copy to an object of the same type", "other");
+                throw new ArgumentException("Can only copy to an object of the same type", nameof(other));
         }
 
         public abstract IDeepCopyable DeepCopy();
 
-        public virtual IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-        {
-            return Enumerable.Empty<ValidationResult>();
-        }
+        public virtual IEnumerable<ValidationResult> Validate(ValidationContext validationContext) => Enumerable.Empty<ValidationResult>();
 
         #region << Annotations >>
         [NonSerialized]
@@ -139,6 +118,7 @@ namespace Hl7.Fhir.Model
 
         public IReadOnlyDictionary<string, object> AsReadOnlyDictionary() => this;
 
+        #region IReadOnlyDictionary
         IEnumerable<string> IReadOnlyDictionary<string, object>.Keys => GetElementPairs().Select(kvp => kvp.Key);
 
         IEnumerable<object> IReadOnlyDictionary<string, object>.Values => GetElementPairs().Select(kvp => kvp.Value);
@@ -154,6 +134,7 @@ namespace Hl7.Fhir.Model
         IEnumerator IEnumerable.GetEnumerator() => GetElementPairs().GetEnumerator();
 
         bool IReadOnlyDictionary<string, object>.TryGetValue(string key, out object value) => TryGetValue(key, out value);
+        #endregion
 
         protected virtual bool TryGetValue(string key, out object value)
         {

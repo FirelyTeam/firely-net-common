@@ -7,44 +7,32 @@
  */
 
 
-#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
 using Hl7.Fhir.Introspection;
-using System;
 
 #nullable enable
 
 namespace Hl7.Fhir.Serialization
 {
     /// <summary>
-    /// Contains information of the location in the POCO that is currently being deserialized and is passed 
+    /// Contains contextual information for the property that is currently being deserialized and is passed 
     /// to delegate methods implementing parts of user-definable deserialization and validation logic.
     /// </summary>
-    public readonly struct DeserializationContext
+    public readonly struct PropertyDeserializationContext
     {
-        internal DeserializationContext(
-            PathStack ps,
+        internal PropertyDeserializationContext(
+            string path,
             string propertyName,
-            ClassMapping targetMapping,
-            PropertyMapping propMapping,
-            Type valueType
-            )
+            PropertyMapping propMapping)
         {
-            PathStack = ps;
+            Path = path;
             PropertyName = propertyName;
-            TargetObjectMapping = targetMapping;
             ElementMapping = propMapping;
-            ValueType = valueType;
         }
 
-        internal PathStack PathStack { get; }
-
-        /// <inheritdoc cref="PathStack.GetPath"/>
-        public string GetPath() => PathStack.GetPath();
-
         /// <summary>
-        /// The metadata for the type of which the current property is part of.
+        /// The dotted FhirPath path leading to this element from the root.
         /// </summary>
-        public ClassMapping TargetObjectMapping { get; }
+        public string Path { get; }
 
         /// <summary>
         /// The property name for which an instance is currently being deserialized.
@@ -55,13 +43,34 @@ namespace Hl7.Fhir.Serialization
         /// The metadata for the element that is currently being deserialized.
         /// </summary>
         public PropertyMapping ElementMapping { get; }
+    }
+
+
+
+    /// <summary>
+    /// Contains contextual information for the instance that is currently being deserialized and is passed 
+    /// to delegate methods implementing parts of user-definable deserialization and validation logic.
+    /// </summary>
+    public readonly struct InstanceDeserializationContext
+    {
+        internal InstanceDeserializationContext(
+            string path,
+            ClassMapping instanceMapping)
+        {
+            Path = path;
+            InstanceMapping = instanceMapping;
+        }
 
         /// <summary>
-        /// The type of the instance currently being deserialized.
+        /// The dotted FhirPath path leading to this element from the root.
         /// </summary>
-        public Type ValueType { get; }
+        public string Path { get; }
+
+        /// <summary>
+        /// The metadata for the type of which the current property is part of.
+        /// </summary>
+        public ClassMapping InstanceMapping { get; }
     }
 }
 
 #nullable restore
-#endif
