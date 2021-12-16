@@ -9,6 +9,7 @@
 #nullable enable
 
 using Hl7.Fhir.Introspection;
+using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation;
 using System;
 using System.Collections.Generic;
@@ -43,9 +44,11 @@ namespace Hl7.Fhir.Serialization
         /// <inheritdoc cref="IDeserializationValidator.ValidateProperty(object?, in PropertyDeserializationContext, out CodedValidationException[])"/>
         public void ValidateProperty(object? instance, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors)
         {
-            var validationContext = new ValidationContext(instance ?? new object()) { MemberName = context.PropertyName }
+            var validationContext = new ValidationContext(instance ?? new object())
                 .SetValidateRecursively(false)    // Don't go deeper - we've already validated the children because we're parsing bottom-up.
-                .SetNarrativeValidationKind(NarrativeValidation);
+                .SetNarrativeValidationKind(NarrativeValidation)
+                .SetPositionInfo(new PositionInfo((int)context.LineNumber, (int)context.LinePosition))
+                .SetLocation(context.Path);
 
             reportedErrors = runAttributeValidation(instance, context.ElementMapping.ValidationAttributes, validationContext);
         }
@@ -55,7 +58,9 @@ namespace Hl7.Fhir.Serialization
         {
             var validationContext = new ValidationContext(instance ?? new object())
                 .SetValidateRecursively(false)    // Don't go deeper - we've already validated the children because we're parsing bottom-up.
-                .SetNarrativeValidationKind(NarrativeValidation);
+                .SetNarrativeValidationKind(NarrativeValidation)
+                .SetPositionInfo(new PositionInfo((int)context.LineNumber, (int)context.LinePosition))
+                .SetLocation(context.Path);
 
             reportedErrors = runAttributeValidation(instance, context.InstanceMapping.ValidationAttributes, validationContext);
 

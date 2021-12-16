@@ -116,8 +116,10 @@ namespace Hl7.Fhir.Introspection
             return result.FirstOrDefault();
         }
 
-        private static void validateElement(object value, ValidationContext validationContext, List<ValidationResult> result) =>
-            DotNetAttributeValidation.TryValidate(value, result, validationContext.ValidateRecursively());
+        private void validateElement(object value, ValidationContext validationContext, List<ValidationResult> result)
+        {
+            DotNetAttributeValidation.TryValidate(value, validationContext.IntoPath(value, validationContext.MemberName ?? Name), result);
+        }
     }
 }
 

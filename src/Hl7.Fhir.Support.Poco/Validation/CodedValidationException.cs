@@ -7,7 +7,6 @@
  */
 
 using Hl7.Fhir.Utility;
-using System;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using COVE = Hl7.Fhir.Validation.CodedValidationException;
@@ -19,7 +18,7 @@ namespace Hl7.Fhir.Validation
     /// <summary>
     /// An error found during validation of POCO's using the <see cref="ValidationAttribute"/> validators.
     /// </summary>
-    public class CodedValidationException : Exception, ICodedException
+    public class CodedValidationException : CodedException
     {
         public const string CHOICE_TYPE_NOT_ALLOWED_CODE = "PVAL101";
         public const string INCORRECT_CARDINALITY_MIN_CODE = "PVAL102";
@@ -59,28 +58,38 @@ namespace Hl7.Fhir.Validation
         internal static readonly COVE CONTAINED_RESOURCE_CANNOT_HAVE_NARRATIVE = new(CONTAINED_RESOURCE_CANNOT_HAVE_NARRATIVE_CODE, "Resource has contained resources with narrative, which is not allowed.");
         internal static readonly COVE CONTAINED_RESOURCES_CANNOT_BE_NESTED = new(CONTAINED_RESOURCES_CANNOT_BE_NESTED_CODE, "It is not allowed for a resource to contain resources which themselves contain resources.");
 
-        /// <summary>
-        /// The unique and permanent code for this error.
-        /// </summary>
-        /// <remarks>Developers can assume that these codes will not change in future versions.</remarks>
-        public string ErrorCode { get; private set; }
-
-        public Exception Exception => this;
-
-        public CodedValidationException(string code, string message) : base(message) => ErrorCode = code;
-
-        internal COVE With(params object?[] parameters)
+        public CodedValidationException(string code, string message) : base(code, message)
         {
-            var formattedMessage = string.Format(CultureInfo.InvariantCulture, Message, parameters);
-            return new(ErrorCode, formattedMessage);
+            // nothing
         }
 
-        internal CodedValidationResult AsResult(ValidationContext context) =>
-            context.MemberName is string mn
-                ? new(this, memberNames: new[] { mn })
-                : new(this);
+        internal CodedValidationResult AsResult(ValidationContext context, params object?[] parameters)
+        {
+            string? location = null;
 
-        public ICodedException WithMessage(string message) => new COVE(ErrorCode, message);
+            if (context.GetPositionInfo() is IPositionInfo pi)
+                location = $"line {pi.LineNumber}, position {pi.LinePosition}";
+
+            if (context.GetLocation() is string loc)
+            {
+                // Bit of a hack. The location returned by GetLocation() will be different depending on
+                // whether this validation is run within the deserializer or the DataAnnotations.Validator.
+                // In the latter case, the MemberName will be set, and the location will be the GetLocation()
+                // will return the parent, so we need to add the MemberName.
+                if (context.MemberName is not null) loc = $"{loc}.{context.MemberName}";
+                location = location is null ? loc : $"{loc}, {location}";
+            }
+
+            var formattedMessage = string.Format(CultureInfo.InvariantCulture, Message, parameters);
+
+            var messageWithLocation = $"{formattedMessage} At {location}.";
+
+            var codedException = new CodedValidationException(ErrorCode, messageWithLocation);
+
+            return context.MemberName is string mn
+                ? new(codedException, memberNames: new[] { mn })
+                : new(codedException);
+        }
     }
 }
 

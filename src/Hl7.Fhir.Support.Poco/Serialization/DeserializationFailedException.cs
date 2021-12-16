@@ -24,14 +24,14 @@ namespace Hl7.Fhir.Serialization
     /// set of errors detected using this aggregate exception.</remarks>
     public class DeserializationFailedException : Exception
     {
-        public DeserializationFailedException(Base? partialResult, IEnumerable<ICodedException> innerExceptions) :
+        public DeserializationFailedException(Base? partialResult, IEnumerable<CodedException> innerExceptions) :
             base(generateMessage(innerExceptions))
         {
             PartialResult = partialResult;
             Exceptions = innerExceptions.ToList();
         }
 
-        private static string generateMessage(IEnumerable<ICodedException> exceptions)
+        private static string generateMessage(IEnumerable<CodedException> exceptions)
         {
             string b = "One or more errors occurred.";
             if (exceptions.Any())
@@ -46,7 +46,7 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public Base? PartialResult { get; private set; }
 
-        public IReadOnlyCollection<ICodedException> Exceptions { get; }
+        public IReadOnlyCollection<CodedException> Exceptions { get; }
     }
 }
 

@@ -43,7 +43,7 @@ namespace Hl7.Fhir.Validation
         {
             if (value is null)
                 return (Min == 0) ? ValidationResult.Success :
-                    COVE.MANDATORY_ELEMENT_CANNOT_BE_NULL.With(Min).AsResult(validationContext);
+                    COVE.MANDATORY_ELEMENT_CANNOT_BE_NULL.AsResult(validationContext, Min);
 
             var count = 1;
 
@@ -55,9 +55,9 @@ namespace Hl7.Fhir.Validation
             }
 
             if (count < Min)
-                return COVE.INCORRECT_CARDINALITY_MIN.With(count, Min).AsResult(validationContext);
+                return COVE.INCORRECT_CARDINALITY_MIN.AsResult(validationContext, count, Min);
             if (Max != -1 && count > Max)
-                return COVE.INCORRECT_CARDINALITY_MAX.With(count, Max).AsResult(validationContext);
+                return COVE.INCORRECT_CARDINALITY_MAX.AsResult(validationContext, count, Max);
 
             return ValidationResult.Success;
         }

@@ -27,7 +27,7 @@ namespace Hl7.Fhir.Validation
             {
                 null => ValidationResult.Success,
                 string s when FhirDateTime.IsValidValue(s) => ValidationResult.Success,
-                string s => COVE.DATETIME_LITERAL_INVALID.With(s).AsResult(validationContext),
+                string s => COVE.DATETIME_LITERAL_INVALID.AsResult(validationContext, s),
                 _ => throw new ArgumentException($"{nameof(DateTimePatternAttribute)} attributes can only be applied to string properties.")
             };
     }
