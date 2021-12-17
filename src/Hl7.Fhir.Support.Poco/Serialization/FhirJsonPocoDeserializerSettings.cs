@@ -42,6 +42,11 @@ namespace Hl7.Fhir.Serialization
         /// and possibly alter the value. Setting this property to <c>null</c> will disable validation completely.
         /// </summary>
         public IDeserializationValidator? Validator { get; init; } = DataAnnotationDeserialzationValidator.Default;
+
+        /// <summary>
+        ///     Gets or sets the default buffer size, in bytes, to use when creating temporary buffers.
+        /// </summary>
+        public int DefaultBufferSize { get; init; } = 16 * 1_024;
     }
 
     /// <summary>

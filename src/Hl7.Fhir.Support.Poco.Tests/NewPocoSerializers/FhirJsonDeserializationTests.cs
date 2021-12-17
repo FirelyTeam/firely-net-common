@@ -66,7 +66,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             reader.Read();
 
             var deserializer = getTestDeserializer(new());
-            var (result, error) = deserializer.DeserializePrimitiveValue(ref reader, expected);
+            var (result, error) = deserializer.DeserializePrimitiveValue(ref reader, expected, new());
 
             if (code is not null)
                 error?.ErrorCode.Should().Be(code);
@@ -149,7 +149,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             {
                 var reader = constructReader(number); reader.Read();
                 var deserializer = getTestDeserializer(new() { OnPrimitiveParseFailed = correctIntToBool });
-                return deserializer.DeserializePrimitiveValue(ref reader, typeof(bool));
+                return deserializer.DeserializePrimitiveValue(ref reader, typeof(bool), new());
             }
         }
 
@@ -186,7 +186,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 var reader = new Utf8JsonReader(jsonBytes);
                 reader.Read();
 
-                return FhirJsonPocoDeserializer.DetermineClassMappingFromInstance(ref reader, inspector);
+                return FhirJsonPocoDeserializer.DetermineClassMappingFromInstance(ref reader, inspector, new());
             }
         }
 

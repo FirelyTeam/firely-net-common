@@ -9,8 +9,10 @@
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
 using System;
+using System.IO;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 #nullable enable
 
@@ -72,7 +74,7 @@ namespace Hl7.Fhir.Serialization
         internal static bool IsNormal(this double d) => double.IsNormal(d);
 #endif
 
-        public static void Recover(this ref Utf8JsonReader reader)
+        public static void Recover(this ref Utf8JsonReader reader, FhirJsonPocoDeserializerState state)
         {
             switch (reader.TokenType)
             {
@@ -81,18 +83,18 @@ namespace Hl7.Fhir.Serialization
                 case JsonTokenType.Null:
                 case JsonTokenType.Number or JsonTokenType.String:
                 case JsonTokenType.True or JsonTokenType.False:
-                    reader.Read();
+                    reader.ReadInternal(state);
                     return;
                 case JsonTokenType.PropertyName:
-                    SkipTo(ref reader, JsonTokenType.PropertyName);
+                    SkipTo(ref reader, JsonTokenType.PropertyName, state);
                     return;
                 case JsonTokenType.StartArray:
-                    SkipTo(ref reader, JsonTokenType.EndArray);
-                    reader.Read();
+                    SkipTo(ref reader, JsonTokenType.EndArray, state);
+                    reader.ReadInternal(state);
                     return;
                 case JsonTokenType.StartObject:
-                    SkipTo(ref reader, JsonTokenType.EndObject);
-                    reader.Read();
+                    SkipTo(ref reader, JsonTokenType.EndObject, state);
+                    reader.ReadInternal(state);
                     return;
                 default:
                     throw new InvalidOperationException($"Cannot recover, aborting. Token {reader.TokenType} was unexpected at this point. " +
@@ -100,18 +102,93 @@ namespace Hl7.Fhir.Serialization
             }
         }
 
-        public static void SkipTo(this ref Utf8JsonReader reader, JsonTokenType tt)
+        public static void SkipTo(this ref Utf8JsonReader reader, JsonTokenType tt, FhirJsonPocoDeserializerState state)
         {
             var depth = reader.CurrentDepth;
 
-            while (reader.Read() && reader.CurrentDepth >= depth)
+            while (reader.ReadInternal(state) && reader.CurrentDepth >= depth)
             {
                 if (reader.CurrentDepth == depth && reader.TokenType == tt) break;
             }
         }
+
+        public static bool ReadInternal(this ref Utf8JsonReader reader, FhirJsonPocoDeserializerState? state = null)
+        {
+            if (state?.BufferState is not null)
+            {
+                if (state.BufferState.IsFirstIteration)
+                    reader.readFirstBlockFromStream(state.BufferState);
+
+                while (!reader.Read())
+                {
+                    if (reader.IsFinalBlock) return false;
+                    reader.readNextBlockFromStream(state.BufferState);
+                }
+                return true;
+            }
+            else
+            {
+                return reader.Read();
+            }
+        }
+
+        private static ReadOnlySpan<byte> Utf8Bom => new byte[] { 0xEF, 0xBB, 0xBF };
+
+        private static void readFirstBlockFromStream(this ref Utf8JsonReader reader, ReadBufferState state)
+        {
+            state.IsFirstIteration = false;
+
+            // read the first block
+            int bytesRead = state.ReadToBuffer(0, state.Buffersize);
+
+            var span = state.Buffer.AsSpan();
+
+            // Read past the UTF-8 BOM bytes if a BOM exists.
+            span = span.StartsWith(SystemTextJsonParsingExtensions.Utf8Bom)
+                ? span.Slice(SystemTextJsonParsingExtensions.Utf8Bom.Length, bytesRead - SystemTextJsonParsingExtensions.Utf8Bom.Length)
+                : span.Slice(0, bytesRead);
+
+
+            reader = new(span, bytesRead < state.Buffersize, default);
+        }
+
+        private static void readNextBlockFromStream(this ref Utf8JsonReader reader, ReadBufferState state)
+        {
+            int contentLength;
+            int bytesRead;
+
+            if (reader.BytesConsumed < state.Buffersize)
+            {
+                var bufferSpan = state.Buffer.AsSpan();
+                var bytesConsumed = checked((int)reader.BytesConsumed);
+
+                if (bufferSpan.StartsWith(Utf8Bom))
+                {
+                    bytesConsumed += Utf8Bom.Length;
+                }
+
+                ReadOnlySpan<byte> leftover = state.Buffer.AsSpan(bytesConsumed);
+
+                if (leftover.Length == state.Buffersize)
+                {
+                    // resize the buffer, because the reader could not read the whole token
+                    state.ResizeBuffer(state.Buffersize * 2);
+
+                }
+
+                leftover.CopyTo(state.Buffer);
+                bytesRead = state.ReadToBuffer(leftover.Length, state.Buffersize - leftover.Length);
+                contentLength = bytesRead == 0 ? 0 : bytesRead + leftover.Length;
+            }
+            else
+            {
+                bytesRead = state.ReadToBuffer(0, state.Buffersize);
+                contentLength = bytesRead;
+            }
+
+            reader = new(state.Buffer.AsSpan(0, contentLength), bytesRead == 0, reader.CurrentState);
+        }
     }
-
-
 }
 
 #nullable restore

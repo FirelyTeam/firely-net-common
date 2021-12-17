@@ -16,8 +16,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 using ERR = Hl7.Fhir.Serialization.FhirJsonException;
 
@@ -77,7 +79,7 @@ namespace Hl7.Fhir.Serialization
                 throw new InvalidOperationException("The reader must be set to ignore or refuse comments.");
 
             // If the stream has just been opened, move to the first token.
-            if (reader.TokenType == JsonTokenType.None) reader.Read();
+            if (reader.TokenType == JsonTokenType.None) reader.ReadInternal();
 
             FhirJsonPocoDeserializerState state = new();
 
@@ -100,7 +102,7 @@ namespace Hl7.Fhir.Serialization
                 throw new InvalidOperationException("The reader must be set to ignore or refuse comments.");
 
             // If the stream has just been opened, move to the first token.
-            if (reader.TokenType == JsonTokenType.None) reader.Read();
+            if (reader.TokenType == JsonTokenType.None) reader.ReadInternal();
 
             var mapping = _inspector.FindOrImportClassMapping(targetType) ??
                 throw new ArgumentException($"Type '{targetType}' could not be located in model assembly '{Assembly}' and can " +
@@ -119,6 +121,42 @@ namespace Hl7.Fhir.Serialization
                 throw new ArgumentException($"Can only deserialize into subclasses of class {nameof(Base)}. " + reader.GenerateLocationMessage(), nameof(targetType));
         }
 
+        public Resource DeserializeResource(Stream utf8Json)
+        {
+            if (utf8Json is null)
+            {
+                throw new ArgumentNullException(nameof(utf8Json));
+            }
+
+            ReadBufferState bufferState = new(Settings.DefaultBufferSize, utf8Json);
+
+            Utf8JsonReader reader = new(bufferState.Buffer, false, default);
+
+            /*
+            // read the first block
+            int bytesRead = bufferState.ReadToBuffer(0, bufferState.Buffersize);
+
+            var span = bufferState.Buffer.AsSpan();
+
+            // Read past the UTF-8 BOM bytes if a BOM exists.
+            span = span.StartsWith(SystemTextJsonParsingExtensions.Utf8Bom) ? span.Slice(SystemTextJsonParsingExtensions.Utf8Bom.Length, bytesRead) : span.Slice(0, bytesRead);
+
+            Utf8JsonReader reader = new(span, bytesRead < bufferState.Buffersize, default);
+            */
+
+            FhirJsonPocoDeserializerState state = new() { BufferState = bufferState };
+
+            // If the stream has just been opened, move to the first token.
+            if (reader.TokenType == JsonTokenType.None) reader.ReadInternal(state);
+
+            var result = DeserializeResourceInternal(ref reader, state);
+
+            return !state.Errors.HasExceptions
+                ? result!
+                : throw new DeserializationFailedException(result, state.Errors);
+        }
+
+
         /// <summary>
         /// Reads a (subtree) of serialzed FHIR Json data into a POCO object.
         /// </summary>
@@ -132,11 +170,11 @@ namespace Hl7.Fhir.Serialization
             if (reader.TokenType != JsonTokenType.StartObject)
             {
                 state.Errors.Add(ERR.EXPECTED_START_OF_OBJECT.With(ref reader, reader.TokenType));
-                reader.Recover();  // skip to the end of the construct encountered (value or array)                
+                reader.Recover(state);  // skip to the end of the construct encountered (value or array)                
                 return null;
             }
 
-            (ClassMapping? resourceMapping, FhirJsonException? error) = DetermineClassMappingFromInstance(ref reader, _inspector);
+            (ClassMapping? resourceMapping, FhirJsonException? error) = DetermineClassMappingFromInstance(ref reader, _inspector, state);
 
             if (resourceMapping is not null)
             {
@@ -166,7 +204,7 @@ namespace Hl7.Fhir.Serialization
                 state.Errors.Add(error!);
 
                 // Read past the end of this object to recover.
-                reader.Recover();
+                reader.Recover(state);
 
                 return null;
             }
@@ -212,12 +250,12 @@ namespace Hl7.Fhir.Serialization
             if (reader.TokenType != JsonTokenType.StartObject)
             {
                 state.Errors.Add(ERR.EXPECTED_START_OF_OBJECT.With(ref reader, reader.TokenType));
-                reader.Recover();  // skip to the end of the construct encountered (value or array)
+                reader.Recover(state);  // skip to the end of the construct encountered (value or array)
                 return;
             }
 
             // read past start of object into first property or end of object
-            reader.Read();
+            reader.ReadInternal(state);
 
             var empty = true;
             var delayedValidations = new DelayedValidations();
@@ -231,7 +269,7 @@ namespace Hl7.Fhir.Serialization
                 if (currentPropertyName == "resourceType")
                 {
                     if (kind != DeserializedObjectKind.Resource) state.Errors.Add(ERR.RESOURCETYPE_UNEXPECTED.With(ref reader));
-                    reader.SkipTo(JsonTokenType.PropertyName);  // skip to next property
+                    reader.SkipTo(JsonTokenType.PropertyName, state);  // skip to next property
                     continue;
                 }
 
@@ -245,13 +283,13 @@ namespace Hl7.Fhir.Serialization
                     state.Errors.Add(error);
 
                     // try to recover by skipping to the next property.
-                    reader.SkipTo(JsonTokenType.PropertyName);
+                    reader.SkipTo(JsonTokenType.PropertyName, state);
                     continue;
                 }
                 else
                 {
                     // read past the property name into the value
-                    reader.Read();
+                    reader.ReadInternal(state);
 
                     try
                     {
@@ -272,7 +310,7 @@ namespace Hl7.Fhir.Serialization
             delayedValidations.Run();
 
             // read past object
-            reader.Read();
+            reader.ReadInternal(state);
 
             // do not allow empty complex objects.
             if (empty) state.Errors.Add(ERR.OBJECTS_CANNOT_BE_EMPTY.With(ref reader));
@@ -419,7 +457,7 @@ namespace Hl7.Fhir.Serialization
             else
             {
                 // Read past start of array
-                reader.Read();
+                reader.ReadInternal(state);
 
                 if (reader.TokenType == JsonTokenType.EndArray)
                     state.Errors.Add(ERR.ARRAYS_CANNOT_BE_EMPTY.With(ref reader));
@@ -436,7 +474,7 @@ namespace Hl7.Fhir.Serialization
             }
 
             // Read past end of array
-            if (!oneshot) reader.Read();
+            if (!oneshot) reader.ReadInternal(state);
 
             return listInstance;
         }
@@ -484,7 +522,7 @@ namespace Hl7.Fhir.Serialization
             else
             {
                 // read into array
-                reader.Read();
+                reader.ReadInternal(state);
 
                 if (reader.TokenType == JsonTokenType.EndArray)
                     state.Errors.Add(ERR.ARRAYS_CANNOT_BE_EMPTY.With(ref reader));
@@ -507,7 +545,7 @@ namespace Hl7.Fhir.Serialization
                     if (onlyNulls is null) onlyNulls = true;
 
                     // don't read any new data into the primitive here
-                    reader.Read();
+                    reader.ReadInternal(state);
                 }
                 else
                 {
@@ -528,7 +566,7 @@ namespace Hl7.Fhir.Serialization
                 state.Errors.Add(ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE.With(ref reader));
 
             // read past array to next property or end of object
-            if (!oneshot) reader.Read();
+            if (!oneshot) reader.ReadInternal(state);
 
             return existingList;
         }
@@ -557,7 +595,7 @@ namespace Hl7.Fhir.Serialization
                     throw new InvalidOperationException($"All subclasses of {nameof(PrimitiveType)} should have a property representing the value element, " +
                         $"but {propertyValueMapping.Name} has not. " + reader.GenerateLocationMessage());
 
-                var (result, error) = DeserializePrimitiveValue(ref reader, primitiveValueProperty.ImplementingType);
+                var (result, error) = DeserializePrimitiveValue(ref reader, primitiveValueProperty.ImplementingType, state);
 
                 // Only do validation when no parse errors were encountered, otherwise we'll just
                 // produce spurious messages.
@@ -615,7 +653,7 @@ namespace Hl7.Fhir.Serialization
             // needs to handle PrimitiveType.ObjectValue & dual properties.
             else if (propertyValueMapping.IsPrimitive)
             {
-                var (result, error) = DeserializePrimitiveValue(ref reader, propertyValueMapping.NativeType);
+                var (result, error) = DeserializePrimitiveValue(ref reader, propertyValueMapping.NativeType, state);
 
                 if (error is not null && result is not null)
                 {
@@ -647,7 +685,7 @@ namespace Hl7.Fhir.Serialization
         /// <returns>A value without an error if the data could be parsed to the required type, and a value with an error if the
         /// value could not be parsed - in which case the value returned is the raw value coming in from the reader.</returns>
         /// <remarks>Upon completion, the reader will be positioned on the token after the primitive.</remarks>
-        internal (object?, FhirJsonException?) DeserializePrimitiveValue(ref Utf8JsonReader reader, Type requiredType)
+        internal (object?, FhirJsonException?) DeserializePrimitiveValue(ref Utf8JsonReader reader, Type requiredType, FhirJsonPocoDeserializerState state)
         {
             // Check for unexpected non-value types.
             if (reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)
@@ -655,7 +693,7 @@ namespace Hl7.Fhir.Serialization
                 var exception = reader.TokenType == JsonTokenType.StartObject
                     ? ERR.EXPECTED_PRIMITIVE_NOT_OBJECT.With(ref reader)
                     : ERR.EXPECTED_PRIMITIVE_NOT_ARRAY.With(ref reader);
-                reader.Recover();
+                reader.Recover(state);
                 return (null, exception);
             }
 
@@ -688,7 +726,7 @@ namespace Hl7.Fhir.Serialization
                 result = Settings.OnPrimitiveParseFailed(ref reader, requiredType, result.partial, result.error);
 
             // Read past the value
-            reader.Read();
+            reader.ReadInternal(state);
 
             return result;
 
@@ -771,9 +809,9 @@ namespace Hl7.Fhir.Serialization
         /// Returns the <see cref="ClassMapping" /> for the object to be deserialized using the `resourceType` property.
         /// </summary>
         /// <remarks>Assumes the reader is on the start of an object.</remarks>
-        internal static (ClassMapping?, FhirJsonException?) DetermineClassMappingFromInstance(ref Utf8JsonReader reader, ModelInspector inspector)
+        internal static (ClassMapping?, FhirJsonException?) DetermineClassMappingFromInstance(ref Utf8JsonReader reader, ModelInspector inspector, FhirJsonPocoDeserializerState state)
         {
-            var (resourceType, error) = determineResourceType(ref reader);
+            var (resourceType, error) = determineResourceType(ref reader, state);
 
             if (resourceType is not null)
             {
@@ -787,16 +825,24 @@ namespace Hl7.Fhir.Serialization
                 return new(null, error);
         }
 
-        private static (string?, FhirJsonException?) determineResourceType(ref Utf8JsonReader reader)
+        private static (string?, FhirJsonException?) determineResourceType(ref Utf8JsonReader reader, FhirJsonPocoDeserializerState state)
         {
             //TODO: determineResourceType probably won't work with streaming inputs to Utf8JsonReader                       
 
+            //var originalState = reader.CurrentState;
             var originalReader = reader;    // copy the struct so we can "rewind"
             var atDepth = reader.CurrentDepth + 1;
 
             try
             {
-                while (reader.Read() && reader.CurrentDepth >= atDepth)
+                /*
+                if (state?.BufferState is not null)
+                {
+                    state.BufferState.UseForwardBuffering(reader.CurrentState);
+                }
+                */
+
+                while (reader.ReadInternal(state) && reader.CurrentDepth >= atDepth)
                 {
                     if (reader.TokenType == JsonTokenType.PropertyName && reader.CurrentDepth == atDepth)
                     {
@@ -804,7 +850,7 @@ namespace Hl7.Fhir.Serialization
 
                         if (propName == "resourceType")
                         {
-                            reader.Read();
+                            reader.ReadInternal(state);
                             return (reader.TokenType == JsonTokenType.String) ?
                                 new(reader.GetString()!, null) :
                                 new(null, ERR.RESOURCETYPE_SHOULD_BE_STRING.With(ref reader, reader.TokenType));
@@ -816,6 +862,12 @@ namespace Hl7.Fhir.Serialization
             }
             finally
             {
+                /*
+                if (state?.BufferState is not null)
+                {
+                    state.BufferState.Rewind(ref reader);
+                }
+                */
                 reader = originalReader;
             }
         }
@@ -872,6 +924,71 @@ namespace Hl7.Fhir.Serialization
     {
         public readonly ExceptionAggregator Errors = new();
         public readonly PathStack Path = new();
+
+        public ReadBufferState? BufferState;
+    }
+
+    internal class ReadBufferState
+    {
+        private readonly Stream _stream;
+        private byte[] _buffer;
+        private byte[] _forwardBuffer;
+        private JsonReaderState _formerState;
+
+        public int Buffersize => Buffer.Length;
+
+        public byte[] Buffer { get => _buffer; private set => _buffer = value; }
+
+        public bool IsFirstIteration;
+        public bool ReadForward;
+
+        public ReadBufferState(int buffersize, Stream stream)
+        {
+            _buffer = new byte[buffersize];
+            _stream = stream;
+            IsFirstIteration = true;
+            ReadForward = false;
+        }
+
+        internal void ResizeBuffer(int newBuffersize) => Array.Resize(ref _buffer, newBuffersize);
+
+        public int ReadToBuffer(int offset, int count)
+        {
+            var read = _stream.Read(Buffer, offset, count);
+
+            /*
+            if (ReadForward)
+            {
+                var bufLength = _forwardBuffer.Length;
+                // resize the forward buffer with the amount of bytes we've just read
+                Array.Resize(ref _forwardBuffer, bufLength + read);
+
+                // append read bytes to forward buffer
+                var toSpan = _forwardBuffer.AsSpan(bufLength, read);
+                Buffer.AsSpan(offset, read).CopyTo(toSpan);
+            }
+            */
+
+            return read;
+        }
+
+        internal void UseForwardBuffering(JsonReaderState currentState)
+        {
+            if (!ReadForward)
+            {
+                ReadForward = true;
+                _formerState = currentState;
+
+                // create forward buffer
+                _forwardBuffer = Array.Empty<byte>();
+            }
+
+        }
+
+        internal void Rewind(ref Utf8JsonReader reader)
+        {
+            //reader = new(_forwardBuffer, reader.IsFinalBlock, _formerState);
+        }
     }
 }
 
