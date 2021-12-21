@@ -527,14 +527,13 @@ namespace HL7.FhirPath.Tests
             }
         }
 
-        private static int iterations = 0;
-
         /// <summary>
         /// Check that scalar expressions are evaluated only once.
         /// </summary>
         [TestMethod]
         public void SingleScalarTest()
         {
+            var iterations = 0;
             var symbols = new SymbolTable();
 
             symbols.Add("once", (object _) =>
