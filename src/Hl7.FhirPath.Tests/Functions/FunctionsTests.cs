@@ -7,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using Hl7.FhirPath.Expressions;
+
 namespace HL7.FhirPath.Tests
 {
     [TestClass]
@@ -526,6 +528,29 @@ namespace HL7.FhirPath.Tests
             }
         }
 
+        
+        /// <summary>
+        /// Check that scalar expressions are evaluated only once.
+        /// </summary>
+        [TestMethod]
+        public void SingleScalarTest()
+        {
+            var iterations = 0;
+            var symbols = new SymbolTable();
+
+            symbols.Add("once", (object _) =>
+            {
+                iterations++;
+
+                return ElementNode.CreateList(iterations);
+            });
+
+            var expression = new FhirPathCompiler(symbols).Compile("once()");
+            var result = expression.Scalar(null, new EvaluationContext());
+
+            Assert.AreEqual(result, 1);
+        }
+      
         /// <summary>
         /// Tests issue 1652 https://github.com/FirelyTeam/firely-net-sdk/issues/1652
         /// </summary>
@@ -540,5 +565,6 @@ namespace HL7.FhirPath.Tests
             Assert.IsTrue(te.IsBoolean($"system.endsWith(code.toString())", true));
             Assert.IsTrue(te.IsBoolean($"system.endsWith('banana')", false));
         }
+
     }
 }
