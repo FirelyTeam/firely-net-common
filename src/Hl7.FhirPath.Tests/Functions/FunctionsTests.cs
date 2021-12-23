@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using Hl7.FhirPath.Expressions;
+
 namespace HL7.FhirPath.Tests
 {
     [TestClass]
@@ -523,6 +525,28 @@ namespace HL7.FhirPath.Tests
                 name.Should().Be("test");
                 list.Should().HaveCount(2);
             }
+        }
+
+        /// <summary>
+        /// Check that scalar expressions are evaluated only once.
+        /// </summary>
+        [TestMethod]
+        public void SingleScalarTest()
+        {
+            var iterations = 0;
+            var symbols = new SymbolTable();
+
+            symbols.Add("once", (object _) =>
+            {
+                iterations++;
+
+                return ElementNode.CreateList(iterations);
+            });
+
+            var expression = new FhirPathCompiler(symbols).Compile("once()");
+            var result = expression.Scalar(null, new EvaluationContext());
+
+            Assert.AreEqual(result, 1);
         }
     }
 }
