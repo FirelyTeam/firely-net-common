@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Model;
 using Hl7.FhirPath;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -527,6 +528,7 @@ namespace HL7.FhirPath.Tests
             }
         }
 
+        
         /// <summary>
         /// Check that scalar expressions are evaluated only once.
         /// </summary>
@@ -548,5 +550,21 @@ namespace HL7.FhirPath.Tests
 
             Assert.AreEqual(result, 1);
         }
+      
+        /// <summary>
+        /// Tests issue 1652 https://github.com/FirelyTeam/firely-net-sdk/issues/1652
+        /// </summary>
+        [TestMethod]
+        public void ContextNestingLevelTest()
+        {
+            Coding c = new("http://nu.nl", "nl");
+            var te = TypedSerialization.ToTypedElement(c);
+            Assert.IsTrue(te.IsBoolean($"system.endsWith(code)", true));
+            Assert.IsTrue(te.IsBoolean($"system.endsWith(%context.code)", true));
+            Assert.IsTrue(te.IsBoolean($"system.endsWith('nl')", true));
+            Assert.IsTrue(te.IsBoolean($"system.endsWith(code.toString())", true));
+            Assert.IsTrue(te.IsBoolean($"system.endsWith('banana')", false));
+        }
+
     }
 }
