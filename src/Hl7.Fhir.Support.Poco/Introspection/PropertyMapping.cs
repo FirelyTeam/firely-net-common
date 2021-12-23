@@ -70,6 +70,14 @@ namespace Hl7.Fhir.Introspection
         public bool InSummary { get; private set; }
 
         /// <summary>
+        /// Five W's mappings of the element.
+        /// </summary>
+        /// <remarks>Each string in the array represents the exact element name of one the elements of the 
+        /// <c>FiveWs</c> pattern from http://hl7.org/fhir/fivews.html. Choice elements are spelled with the
+        /// [x] suffix, like <c>done[x]</c>. </remarks>
+        public string[] FiveWs { get; private set; }
+
+        /// <summary>
         /// Whether the element has a cardinality higher than 0.
         /// </summary>
         public bool IsMandatoryElement { get; private set; }
@@ -216,6 +224,7 @@ namespace Hl7.Fhir.Introspection
                 IsMandatoryElement = cardinalityAttr?.Min > 0,
                 IsPrimitive = isPrimitive,
                 RepresentsValueElement = isPrimitive && isPrimitiveValueElement(elementAttr, prop),
+                FiveWs = elementAttr.FiveWs,
             };
 
             return true;
