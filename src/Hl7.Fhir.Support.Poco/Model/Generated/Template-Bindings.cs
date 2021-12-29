@@ -35,6 +35,40 @@ using Hl7.Fhir.Utility;
 namespace Hl7.Fhir.Model
 {
   /// <summary>
+  /// The lifecycle status of an artifact.
+  /// (url: http://hl7.org/fhir/ValueSet/publication-status)
+  /// (system: http://hl7.org/fhir/publication-status)
+  /// </summary>
+  [FhirEnumeration("PublicationStatus")]
+  public enum PublicationStatus
+  {
+    /// <summary>
+    /// This resource is still under development and is not yet considered to be ready for normal use.
+    /// (system: http://hl7.org/fhir/publication-status)
+    /// </summary>
+    [EnumLiteral("draft", "http://hl7.org/fhir/publication-status"), Description("Draft")]
+    Draft,
+    /// <summary>
+    /// This resource is ready for normal use.
+    /// (system: http://hl7.org/fhir/publication-status)
+    /// </summary>
+    [EnumLiteral("active", "http://hl7.org/fhir/publication-status"), Description("Active")]
+    Active,
+    /// <summary>
+    /// This resource has been withdrawn or superseded and should no longer be used.
+    /// (system: http://hl7.org/fhir/publication-status)
+    /// </summary>
+    [EnumLiteral("retired", "http://hl7.org/fhir/publication-status"), Description("Retired")]
+    Retired,
+    /// <summary>
+    /// The authoring system does not know which of the status values currently applies for this resource.  Note: This concept is not to be used for "other" - one of the listed statuses is presumed to apply, it's just not known which one.
+    /// (system: http://hl7.org/fhir/publication-status)
+    /// </summary>
+    [EnumLiteral("unknown", "http://hl7.org/fhir/publication-status"), Description("Unknown")]
+    Unknown,
+  }
+
+  /// <summary>
   /// The kind of operation to perform as a part of a property based filter.
   /// (url: http://hl7.org/fhir/ValueSet/filter-operator)
   /// (system: http://hl7.org/fhir/filter-operator)
@@ -108,40 +142,6 @@ namespace Hl7.Fhir.Model
     /// </summary>
     [EnumLiteral("exists", "http://hl7.org/fhir/filter-operator"), Description("Exists")]
     Exists,
-  }
-
-  /// <summary>
-  /// The lifecycle status of an artifact.
-  /// (url: http://hl7.org/fhir/ValueSet/publication-status)
-  /// (system: http://hl7.org/fhir/publication-status)
-  /// </summary>
-  [FhirEnumeration("PublicationStatus")]
-  public enum PublicationStatus
-  {
-    /// <summary>
-    /// This resource is still under development and is not yet considered to be ready for normal use.
-    /// (system: http://hl7.org/fhir/publication-status)
-    /// </summary>
-    [EnumLiteral("draft", "http://hl7.org/fhir/publication-status"), Description("Draft")]
-    Draft,
-    /// <summary>
-    /// This resource is ready for normal use.
-    /// (system: http://hl7.org/fhir/publication-status)
-    /// </summary>
-    [EnumLiteral("active", "http://hl7.org/fhir/publication-status"), Description("Active")]
-    Active,
-    /// <summary>
-    /// This resource has been withdrawn or superseded and should no longer be used.
-    /// (system: http://hl7.org/fhir/publication-status)
-    /// </summary>
-    [EnumLiteral("retired", "http://hl7.org/fhir/publication-status"), Description("Retired")]
-    Retired,
-    /// <summary>
-    /// The authoring system does not know which of the status values currently applies for this resource.  Note: This concept is not to be used for "other" - one of the listed statuses is presumed to apply, it's just not known which one.
-    /// (system: http://hl7.org/fhir/publication-status)
-    /// </summary>
-    [EnumLiteral("unknown", "http://hl7.org/fhir/publication-status"), Description("Unknown")]
-    Unknown,
   }
 
 }

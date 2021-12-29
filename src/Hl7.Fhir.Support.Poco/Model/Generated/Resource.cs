@@ -133,7 +133,7 @@ namespace Hl7.Fhir.Model
     /// <summary>
     /// Language of the resource content
     /// </summary>
-    [FhirElement("language", Order=40)]
+    [FhirElement("language", Order=40 )]
     [DataMember]
     public Hl7.Fhir.Model.Code LanguageElement
     {

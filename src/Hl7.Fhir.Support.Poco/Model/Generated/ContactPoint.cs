@@ -150,7 +150,7 @@ namespace Hl7.Fhir.Model
     /// <summary>
     /// phone | fax | email | pager | url | sms | other
     /// </summary>
-    [FhirElement("system", InSummary=true, Order=30)]
+    [FhirElement("system", InSummary=true, Order=30 )]
     [DeclaredType(Type = typeof(Code))]
     [DataMember]
     public Code<Hl7.Fhir.Model.ContactPoint.ContactPointSystem> SystemElement
@@ -213,7 +213,7 @@ namespace Hl7.Fhir.Model
     /// <summary>
     /// home | work | temp | old | mobile - purpose of this contact point
     /// </summary>
-    [FhirElement("use", InSummary=true, Order=50)]
+    [FhirElement("use", InSummary=true, Order=50 )]
     [DeclaredType(Type = typeof(Code))]
     [DataMember]
     public Code<Hl7.Fhir.Model.ContactPoint.ContactPointUse> UseElement

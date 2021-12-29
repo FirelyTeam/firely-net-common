@@ -129,7 +129,7 @@ namespace Hl7.Fhir.Model
     /// <summary>
     /// &lt; | &lt;= | &gt;= | &gt; | ad - how to understand the value
     /// </summary>
-    [FhirElement("comparator", InSummary=true, Order=40)]
+    [FhirElement("comparator", InSummary=true, Order=40 )]
     [DeclaredType(Type = typeof(Code))]
     [DataMember]
     public Code<Hl7.Fhir.Model.Quantity.QuantityComparator> ComparatorElement
@@ -223,7 +223,7 @@ namespace Hl7.Fhir.Model
     /// <summary>
     /// Coded form of the unit
     /// </summary>
-    [FhirElement("code", InSummary=true, Order=70)]
+    [FhirElement("code", InSummary=true, Order=70 )]
     [DataMember]
     public Hl7.Fhir.Model.Code CodeElement
     {
