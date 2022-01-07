@@ -101,11 +101,11 @@ namespace Hl7.Fhir.Serialization
 
             if (!MustSerializeMember(source, out var serializationInfo)) return;
             bool hasTypeInfo = serializationInfo != null;
-            
+
             var value = source.Value != null ?
                 PrimitiveTypeConverter.ConvertTo<string>(source.Value) : null;
 
-            if(_settings.TrimWhitespaces)
+            if (_settings.TrimWhitespaces)
             {
                 value = value?.Trim();
             }
@@ -197,7 +197,7 @@ namespace Hl7.Fhir.Serialization
                 me.Add(containedResource);
 
             // Only add myself to my parent if I have content, or I am the root
-            if (value != null || me.HasElements || atRoot)
+            if (value != null || me.HasElements || me.HasAttributes || atRoot)
             {
                 if (sourceComments?.CommentsBefore != null)
                     writeComments(sourceComments.CommentsBefore, parent);
