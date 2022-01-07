@@ -11,7 +11,6 @@ using Hl7.FhirPath.Functions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace Hl7.FhirPath.Expressions
 {
@@ -106,8 +105,7 @@ namespace Hl7.FhirPath.Expressions
 
                 if (typeof(B) != typeof(EvaluationContext))
                 {
-                    var newCtx = ctx.Nest(focus);
-                    var argA = args.Skip(1).First()(newCtx, InvokeeFactory.EmptyArgs);
+                    var argA = args.Skip(1).First()(ctx, InvokeeFactory.EmptyArgs);
                     if (propNull && !argA.Any()) return ElementNode.EmptyList;
 
                     return Typecasts.CastTo<IEnumerable<ITypedElement>>(func(Typecasts.CastTo<A>(focus), Typecasts.CastTo<B>(argA)));
@@ -124,15 +122,15 @@ namespace Hl7.FhirPath.Expressions
         {
             return (ctx, args) =>
             {
-                var focus = args.First()(ctx, InvokeeFactory.EmptyArgs);
+                var focus = args.First()((Closure)ctx, InvokeeFactory.EmptyArgs);
                 if (propNull && !focus.Any()) return ElementNode.EmptyList;
-                var newCtx = ctx.Nest(focus);
-                var argA = args.Skip(1).First()(newCtx, InvokeeFactory.EmptyArgs);
+
+                var argA = args.Skip(1).First()(ctx, InvokeeFactory.EmptyArgs);
                 if (propNull && !argA.Any()) return ElementNode.EmptyList;
 
                 if (typeof(C) != typeof(EvaluationContext))
                 {
-                    var argB = args.Skip(2).First()(newCtx, InvokeeFactory.EmptyArgs);
+                    var argB = args.Skip(2).First()(ctx, InvokeeFactory.EmptyArgs);
                     if (propNull && !argB.Any()) return ElementNode.EmptyList;
 
                     return Typecasts.CastTo<IEnumerable<ITypedElement>>(func(Typecasts.CastTo<A>(focus), Typecasts.CastTo<B>(argA),
@@ -151,18 +149,17 @@ namespace Hl7.FhirPath.Expressions
         {
             return (ctx, args) =>
             {
-                var focus = args.First()(ctx, InvokeeFactory.EmptyArgs);
+                var focus = args.First()((Closure)ctx, InvokeeFactory.EmptyArgs);
                 if (propNull && !focus.Any()) return ElementNode.EmptyList;
 
-                var newCtx = ctx.Nest(focus);
-                var argA = args.Skip(1).First()(newCtx, InvokeeFactory.EmptyArgs);
+                var argA = args.Skip(1).First()(ctx, InvokeeFactory.EmptyArgs);
                 if (propNull && !argA.Any()) return ElementNode.EmptyList;
-                var argB = args.Skip(2).First()(newCtx, InvokeeFactory.EmptyArgs);
+                var argB = args.Skip(2).First()(ctx, InvokeeFactory.EmptyArgs);
                 if (propNull && !argB.Any()) return ElementNode.EmptyList;
 
                 if (typeof(D) != typeof(EvaluationContext))
                 {
-                    var argC = args.Skip(3).First()(newCtx, InvokeeFactory.EmptyArgs);
+                    var argC = args.Skip(3).First()(ctx, InvokeeFactory.EmptyArgs);
                     if (propNull && !argC.Any()) return ElementNode.EmptyList;
 
                     return Typecasts.CastTo<IEnumerable<ITypedElement>>(func(Typecasts.CastTo<A>(focus),

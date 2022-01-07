@@ -55,8 +55,8 @@ namespace Hl7.Fhir.Utility
                 //Official R4 versions (and technical corrections) => 4.0.x
                 string s when s.StartsWith("4.0") => FhirRelease.R4,
 
-                //Official R4B versions (and technical corrections) => 4.1.x
-                string s when s.StartsWith("4.1") => FhirRelease.R4B,
+                //Official R4B versions (and technical corrections) => 4.1.x || 4.3.x
+                string s when s.StartsWith("4.1") || s.StartsWith("4.3") => FhirRelease.R4B,
 
                 //R5 ballot versions
                 "4.2.0" or "4.4.0" or "4.5.0" or "4.6.0" => FhirRelease.R5,
@@ -84,8 +84,8 @@ namespace Hl7.Fhir.Utility
                 FhirRelease.DSTU2 => "1.0.2",
                 FhirRelease.STU3 => "3.0.2",
                 FhirRelease.R4 => "4.0.1",
-                FhirRelease.R4B => "4.1.0",
-                FhirRelease.R5 => "4.6.0",
+                FhirRelease.R4B => "4.3.0-snapshot1",
+                FhirRelease.R5 => "5.0.0-snapshot1",
                 _ => throw new NotSupportedException($"Unknown FHIR version {fhirRelease}")
             };
         }
@@ -117,7 +117,7 @@ namespace Hl7.Fhir.Utility
                 // Note: this has not yet been balloted on, check
                 // https://jira.hl7.org/projects/FHIR/issues/FHIR-32523 on the latest outcome of
                 // this discussion.
-                "4.1" => FhirRelease.R4B,
+                "4.3" => FhirRelease.R4B,
                 "5.0" => FhirRelease.R5,
                 _ => null
             };
@@ -146,7 +146,7 @@ namespace Hl7.Fhir.Utility
                 // Note: this has not yet been balloted on, check
                 // https://jira.hl7.org/projects/FHIR/issues/FHIR-32523 on the latest outcome of
                 // this discussion.
-                FhirRelease.R4B => "4.1",
+                FhirRelease.R4B => "4.3",
                 FhirRelease.R5 => "5.0",
                 _ => throw new NotSupportedException($"Unknown FHIR version {fhirRelease}")
             };
