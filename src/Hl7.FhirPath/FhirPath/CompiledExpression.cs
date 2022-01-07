@@ -12,9 +12,10 @@ namespace Hl7.FhirPath
     {
         public static object Scalar(this CompiledExpression evaluator, ITypedElement input, EvaluationContext ctx)
         {
-            var result = evaluator(input, ctx);
+            var result = evaluator(input, ctx).Take(2).ToArray();
+
             if (result.Any())
-                return evaluator(input, ctx).Single().Value;
+                return result.Single().Value;
             else
                 return null;
         }
