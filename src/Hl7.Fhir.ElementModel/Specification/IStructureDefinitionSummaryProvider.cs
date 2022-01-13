@@ -21,13 +21,18 @@ namespace Hl7.Fhir.Specification
         bool IsChoiceElement { get; }
         bool IsResource { get; }
 
+        /// <summary>
+        /// If this modifies the meaning of other elements
+        /// </summary>
+        bool IsModifier { get; }
+
         ITypeSerializationInfo[] Type { get; }
 
         /// <summary>
         /// Logical Models where a choice type is represented by ElementDefinition.representation = typeAttr might define a default type (elementdefinition-defaulttype extension). null in most cases.
         /// </summary>
         string DefaultTypeName { get; }
-    
+
         /// <summary>
         /// This is the namespace used for the xml node representing this element.
         /// Only need to be set if different from "http://hl7.org/fhir".
