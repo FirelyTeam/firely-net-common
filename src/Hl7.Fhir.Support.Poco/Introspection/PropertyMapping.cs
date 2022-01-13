@@ -83,6 +83,11 @@ namespace Hl7.Fhir.Introspection
         public bool InSummary { get; private set; }
 
         /// <summary>
+        /// If this modifies the meaning of other elements
+        /// (see https://www.hl7.org/fhir/conformance-rules.html#isModifier)
+        /// </summary>
+        public bool IsModifier { get; private set; }
+
         /// Five W's mappings of the element.
         /// </summary>
         /// <remarks>Each string in the array represents the exact element name of one the elements of the 
@@ -242,6 +247,7 @@ namespace Hl7.Fhir.Introspection
             result = new PropertyMapping(elementAttr.Name, declaringClass, prop, implementingType, propertyTypeMapping!, fhirTypes, release)
             {
                 InSummary = elementAttr.InSummary,
+                IsModifier = elementAttr.IsModifier,
                 Choice = elementAttr.Choice,
                 SerializationHint = elementAttr.XmlSerialization,
                 Order = elementAttr.Order,
@@ -301,6 +307,9 @@ namespace Hl7.Fhir.Introspection
         bool IElementDefinitionSummary.IsRequired => this.IsMandatoryElement;
 
         bool IElementDefinitionSummary.InSummary => this.InSummary;
+
+        /// <inheritdoc/>
+        bool IElementDefinitionSummary.IsModifier => this.IsModifier;
 
         bool IElementDefinitionSummary.IsChoiceElement => this.Choice == ChoiceType.DatatypeChoice;
 

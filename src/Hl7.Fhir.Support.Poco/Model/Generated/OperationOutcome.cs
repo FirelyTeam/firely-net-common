@@ -301,7 +301,8 @@ namespace Hl7.Fhir.Model
       /// <summary>
       /// fatal | error | warning | information
       /// </summary>
-      [FhirElement("severity", InSummary=true, Order=40)]
+      [FhirElement("severity", InSummary=true, IsModifier=true, Order=40)]
+      [FhirElement("severity", InSummary=true, Order=40, Since=FhirRelease.R4)]
       [DeclaredType(Type = typeof(Code))]
       [Cardinality(Min=1,Max=1)]
       [DataMember]

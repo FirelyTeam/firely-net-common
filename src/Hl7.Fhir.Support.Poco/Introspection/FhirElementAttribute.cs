@@ -82,6 +82,11 @@ namespace Hl7.Fhir.Introspection
         /// </summary>
         public bool InSummary { get; set; }
 
+        /// <summary>
+        /// If this modifies the meaning of other elements
+        /// </summary>
+        public bool IsModifier { get; set; }
+
         public string[] FiveWs { get; set; }
 
         // This attribute is a subclass of ValidationAttribute so that IsValid() is called on every 
