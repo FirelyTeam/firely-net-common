@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Globalization;
-using System.Text;
-
-#if !NETSTANDARD
+#if NET452
 using System.Runtime.Serialization;
 using System.Security.Permissions;
 #endif
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Utility
@@ -14,7 +13,7 @@ namespace Hl7.Fhir.Utility
     /// A semantic version implementation.
     /// Conforms with v2.0.0 of http://semver.org
     /// </summary>
-#if !NET45
+#if !NET452
     public sealed class SemVersion : IComparable<SemVersion>, IComparable
 #else
     [Serializable]
@@ -27,14 +26,14 @@ namespace Hl7.Fhir.Utility
                 @"(?>\.(?<patch>\d+))?" +
                 @"(?>\-(?<pre>[0-9A-Za-z\-\.]+))?" +
                 @"(?>\+(?<build>[0-9A-Za-z\-\.]+))?$",
-#if !NET45
+#if !NET452
                 RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture
 #else
                 RegexOptions.CultureInvariant | RegexOptions.Compiled | RegexOptions.ExplicitCapture
 #endif
                 );
 
-#if NET45
+#if NET452
 #pragma warning disable CA1801 // Parameter unused
         /// <summary>
         /// Deserialize a <see cref="SemVersion"/>.
@@ -479,7 +478,7 @@ namespace Hl7.Fhir.Utility
             }
         }
 
-#if NET45
+#if NET452
         /// <summary>
         /// Populates a <see cref="SerializationInfo"/> with the data needed to serialize the target object.
         /// </summary>

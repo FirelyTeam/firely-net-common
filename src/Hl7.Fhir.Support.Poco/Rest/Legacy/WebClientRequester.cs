@@ -41,9 +41,7 @@ namespace Hl7.Fhir.Rest
 
             var request = interaction.ToHttpWebRequest(BaseUrl, Settings);
 
-#if !NETSTANDARD1_6
             request.Timeout = Settings.Timeout;
-#endif
 
             if (Settings.PreferCompressedResponses)
             {

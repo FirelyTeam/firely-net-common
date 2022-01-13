@@ -6,10 +6,11 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using System;
-using System.Linq;
-using System.Collections.Generic;
 using Hl7.Fhir.ElementModel;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Hl7.FhirPath.Expressions
@@ -86,7 +87,7 @@ namespace Hl7.FhirPath.Expressions
             }
         }
 
-        private List<TableEntry> _entries = new List<TableEntry>();
+        private ConcurrentBag<TableEntry> _entries = new();
 
         internal void Add(CallSignature signature, Invokee body)
         {
@@ -96,7 +97,7 @@ namespace Hl7.FhirPath.Expressions
         public SymbolTable Filter(string name, int argCount)
         {
             var result = new SymbolTable();
-            result._entries = new List<TableEntry>(_entries.Where(e => e.Signature.Matches(name, argCount)));
+            result._entries = new(_entries.Where(e => e.Signature.Matches(name, argCount)));
 
             if (Parent != null)
                 result.Parent = Parent.Filter(name, argCount);
@@ -106,7 +107,8 @@ namespace Hl7.FhirPath.Expressions
 
         internal Invokee DynamicGet(string name, IEnumerable<object> args)
         {
-            TableEntry entry = _entries.FirstOrDefault(e => e.Signature.DynamicMatches(name, args));
+            var exactMatches = _entries.Where(e => e.Signature.DynamicExactMatches(name, args));
+            TableEntry entry = exactMatches.Union(_entries.Where(e => e.Signature.DynamicMatches(name, args))).FirstOrDefault();
 
             if (entry == null && Parent != null) return Parent.DynamicGet(name, args);
 
@@ -116,21 +118,21 @@ namespace Hl7.FhirPath.Expressions
 
 
     public static class SymbolTableExtensions
-    {    
+    {
         public static void Add<R>(this SymbolTable table, string name, Func<R> func)
         {
             table.Add(new CallSignature(name, typeof(R)), InvokeeFactory.Wrap(func));
         }
 
-        public static void Add<A,R>(this SymbolTable table, string name, Func<A,R> func, bool doNullProp = false)
+        public static void Add<A, R>(this SymbolTable table, string name, Func<A, R> func, bool doNullProp = false)
         {
-            if(typeof(A) != typeof(EvaluationContext))
+            if (typeof(A) != typeof(EvaluationContext))
                 table.Add(new CallSignature(name, typeof(R), typeof(A)), InvokeeFactory.Wrap(func, doNullProp));
             else
                 table.Add(new CallSignature(name, typeof(R)), InvokeeFactory.Wrap(func, doNullProp));
         }
 
-        public static void Add<A,B,R>(this SymbolTable table, string name, Func<A,B,R> func, bool doNullProp = false)
+        public static void Add<A, B, R>(this SymbolTable table, string name, Func<A, B, R> func, bool doNullProp = false)
         {
             if (typeof(B) != typeof(EvaluationContext))
                 table.Add(new CallSignature(name, typeof(R), typeof(A), typeof(B)), InvokeeFactory.Wrap(func, doNullProp));
@@ -138,7 +140,7 @@ namespace Hl7.FhirPath.Expressions
                 table.Add(new CallSignature(name, typeof(R), typeof(A)), InvokeeFactory.Wrap(func, doNullProp));
         }
 
-        public static void Add<A, B, C, R>(this SymbolTable table, string name, Func<A, B,C, R> func, bool doNullProp = false)
+        public static void Add<A, B, C, R>(this SymbolTable table, string name, Func<A, B, C, R> func, bool doNullProp = false)
         {
             if (typeof(C) != typeof(EvaluationContext))
                 table.Add(new CallSignature(name, typeof(R), typeof(A), typeof(B), typeof(C)), InvokeeFactory.Wrap(func, doNullProp));
@@ -146,7 +148,7 @@ namespace Hl7.FhirPath.Expressions
                 table.Add(new CallSignature(name, typeof(R), typeof(A), typeof(B)), InvokeeFactory.Wrap(func, doNullProp));
         }
 
-        public static void Add<A, B, C, D, R>(this SymbolTable table, string name, Func<A,B,C,D,R> func, bool doNullProp = false)
+        public static void Add<A, B, C, D, R>(this SymbolTable table, string name, Func<A, B, C, D, R> func, bool doNullProp = false)
         {
             if (typeof(D) != typeof(EvaluationContext))
                 table.Add(new CallSignature(name, typeof(R), typeof(A), typeof(B), typeof(C), typeof(D)), InvokeeFactory.Wrap(func, doNullProp));

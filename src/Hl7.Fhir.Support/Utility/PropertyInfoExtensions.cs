@@ -135,13 +135,13 @@ namespace Hl7.Fhir.Utility
         /// <summary>
         /// Generates a function that, when passed an object instance, gets the value of the given property.
         /// </summary>   
-        public static Func<object, object> GetValueGetter(this PropertyInfo propertyInfo) =>
-            GetValueGetter<object>(propertyInfo);
+        public static Func<object, object?> GetValueGetter(this PropertyInfo propertyInfo) =>
+            GetValueGetter<object?>(propertyInfo);
 
         /// <summary>
         /// Generates a function that, when passed an instance and a value, sets the value of the given property.
         /// </summary>
-        public static Action<T, object> GetValueSetter<T>(this PropertyInfo propertyInfo)
+        public static Action<T, object?> GetValueSetter<T>(this PropertyInfo propertyInfo)
         {
             MethodInfo setMethod = propertyInfo.SetMethod ?? throw new InvalidOperationException($"Property {propertyInfo.Name} does not have a setter."); ;
 
@@ -170,8 +170,8 @@ namespace Hl7.Fhir.Utility
 
                 il.Emit(OpCodes.Ret);
 
-                var del = (Func<T, object, object>)setter.CreateDelegate(typeof(Func<T, object, object>));
-                void actionDelegate(T obj, object val) => del(obj, val);
+                var del = (Func<T, object?, object>)setter.CreateDelegate(typeof(Func<T, object?, object>));
+                void actionDelegate(T obj, object? val) => del(obj, val);
 
                 return actionDelegate;
             }
@@ -181,13 +181,44 @@ namespace Hl7.Fhir.Utility
                 return setValue;
             }
 
-            void setValue(T instance, object value) => propertyInfo.SetValue(instance, value, null);
+            void setValue(T instance, object? value) => propertyInfo.SetValue(instance, value, null);
         }
 
         /// <summary>
         /// Generates a function that, when passed an object instance and a value, sets the value of the given property.
         /// </summary>
-        public static Action<object, object> GetValueSetter(this PropertyInfo propertyInfo) => GetValueSetter<object>(propertyInfo);
+        public static Action<object, object?> GetValueSetter(this PropertyInfo propertyInfo) => GetValueSetter<object>(propertyInfo);
+
+#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
+
+        public static Func<C, T> GetField<C, T>(string fieldName)
+        {
+            FieldInfo? field = typeof(C).GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+            if (field is null) throw new ArgumentException($"Cannot find field {fieldName} in type {typeof(C).Name}.", nameof(fieldName));
+
+            try
+            {
+                if (NoCodeGenSupport) return getField;
+
+                Type[] arguments = new Type[] { typeof(C) };
+                DynamicMethod setter = new($"getField_{fieldName}", typeof(T), arguments, typeof(C), true);
+                ILGenerator il = setter.GetILGenerator();
+
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldfld, field);
+                il.Emit(OpCodes.Ret);
+
+                return (Func<C, T>)setter.CreateDelegate(typeof(Func<C, T>));
+            }
+            catch (PlatformNotSupportedException)
+            {
+                NoCodeGenSupport = true;
+                return getField;
+            }
+
+            T getField(C instance) => (T)field.GetValue(instance)!;
+        }
+#endif
     }
 }
 

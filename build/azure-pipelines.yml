@@ -1,13 +1,20 @@
 # Repo: FirelyTeam/firely-net-common
 # File: build/azure-pipelines.yml
 
-name: build-$(Date:yyyyMMdd)$(Rev:-r)
+name: $(date:yyyyMMdd)$(rev:.r)
 
 variables:
-  NET_CORE_SDK: 5.0.x
+- template: build-variables.yml
+- template: pipeline-variables.yml
   
 pool:
   vmImage: 'windows-latest'
+
+resources:
+  repositories:
+  - repository: self
+    type: git
+    ref: develop
 
 trigger:
   branches:
@@ -19,12 +26,19 @@ trigger:
 
 stages:
 - stage: build
+  displayName: Build
   jobs:
-  - job: BuildAndTest
-    displayName: Unit test in Debug mode
+  - job: restoreAndBuild
+    displayName: 'Build Artifacts'
     steps:
+    - checkout: self
+      clean: true
+      fetchDepth: 1
+
+    - template: templates/apply-versioning-steps-template.yml
+
     - task: UseDotNet@2
-      displayName: Use .Net Core SDK
+      displayName: 'Use .NET Core sdk $(NET_CORE_SDK)'
       inputs:
         version: $(NET_CORE_SDK)
 
@@ -34,78 +48,70 @@ stages:
         command: restore
         projects: ./Hl7.Fhir.Common.sln
         verbosityRestore: Minimal
+        arguments: --configuration $(buildConfiguration)
 
     - task: DotNetCoreCLI@2
       displayName: Build
       inputs:
+        command: build
         projects: ./Hl7.Fhir.Common.sln
-        arguments: '--configuration Debug --no-restore'
+        arguments: --configuration $(buildConfiguration) --no-restore
 
     - task: DotNetCoreCLI@2
-      displayName: Test
+      displayName: Create Test artifacts
       inputs:
-        command: test
-        projects: '**/Hl7.Fhir*Tests.csproj'
-        arguments: '--no-build'
-    
-  - job: BuildAndPack
-    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest')) # not a PR
-    displayName: Build and Pack in Release mode
-    steps:
-    - task: UseDotNet@2
-      displayName: Use .Net Core SDK
-      inputs:
-        version: $(NET_CORE_SDK)
-
-    - task: DownloadSecureFile@1
-      displayName: 'Download Signing key file'
-      inputs:
-        secureFile: '47f5a9d4-7009-4fe1-9cb2-c0d6122ded23'
-        retryCount: 5
+        command: publish
+        projects: |
+         **/Hl7.Fhir*Tests.csproj
+        publishWebProjects: false
+        zipAfterPublish: false
+        arguments: --configuration $(buildConfiguration) --no-build -f $(TEST_TARGETFRAMEWORK)
 
     - task: CopyFiles@2
-      displayName: 'Copy key file to $(Build.SourcesDirectory)\src'
+      displayName: 'Copy Test artifacts to $(System.DefaultWorkingDirectory)/bin'
       inputs:
-        SourceFolder: '$(Agent.TempDirectory)'
-        Contents: FhirNetApi.snk
-        TargetFolder: '$(Build.SourcesDirectory)\src'
+        sourceFolder: $(System.DefaultWorkingDirectory)
+        Contents: '**/bin/$(buildConfiguration)/*/publish/**'
+        flattenFolders: false
+        TargetFolder: '$(System.DefaultWorkingDirectory)/bin'   
 
-    - task: PowerShell@2
-      displayName: 'Retrieve current version'
+    - task: PublishPipelineArtifact@1
+      displayName: Publish Test artifacts
       inputs:
-        targetType: filePath
-        filePath: './build/RetrieveVersion.ps1'
+        targetPath: $(System.DefaultWorkingDirectory)/bin
+        artifactName: TestBuild
+    
+    - template: templates/sign-dlls-template.yml
 
-    - task: PowerShell@2
-      displayName: 'Setting version'
-      inputs:
-        targetType: filePath
-        filePath: './build/UpdateVersion.ps1'
-        arguments: '-newVersion $(CurrentVersion) -suffix $(CurrentSuffix)-$(Build.BuildNumber)'
-
-    - task: DotNetCoreCLI@2
-      displayName: Restore
-      inputs:
-        command: restore
-        projects: ./Hl7.Fhir.Common.sln
-        verbosityRestore: Minimal
-
-    - task: DotNetCoreCLI@2
-      displayName: Build
-      inputs:
-        projects: ./Hl7.Fhir.Common.sln
-        arguments: '--configuration Release --no-restore'
 
     - task: DotNetCoreCLI@2
       displayName: Pack
       inputs:
         command: pack
-        packagesToPack: '**/*.csproj;!**/*.Tests.csproj;!**/Sprache.csproj'
-        configuration: Release
+        searchPatternPack: '**/*.csproj;!**/*.Tests.csproj;!**/Sprache.csproj;!**/Benchmarks.csproj'
+        configurationToPack: $(buildConfiguration)
         nobuild: true
+        verbosityPack: Normal
 
     - task: PublishBuildArtifacts@1
-      displayName: 'Publish Artifact'
+      displayName: Publish Artifact
       inputs:
-        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        pathToPublish: $(Build.ArtifactStagingDirectory)
         ArtifactName: NuGetPackages
+
+
+- stage: test
+  displayName: Test
+  dependsOn: build
+  jobs:
+  - job: test
+    displayName: Tests common test projects
+    steps:
+      - checkout: none
+      - template: templates/test-job-template.yml
+        parameters:
+          testRunTitle: Tests common test projects
+          projects: |
+            **/publish/Hl7.Fhir.Support.Tests.dll
+            **/publish/HL7.FhirPath.Tests.dll
+            **/publish/Hl7.Fhir.Support.Poco.Tests.dll

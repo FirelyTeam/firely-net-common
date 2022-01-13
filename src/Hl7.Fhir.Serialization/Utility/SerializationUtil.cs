@@ -11,16 +11,14 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
-
-#if !NETSTANDARD1_6
 using System.Xml.Schema;
-#endif
 
 namespace Hl7.Fhir.Utility
 {
@@ -51,9 +49,9 @@ namespace Hl7.Fhir.Utility
 
         public static XDocument XDocumentFromReader(XmlReader reader, bool ignoreComments = true)
             => XDocumentFromReaderInternal(WrapXmlReader(reader, ignoreComments));
-        
+
         public static Task<XDocument> XDocumentFromReaderAsync(XmlReader reader, bool ignoreComments = true)
-            => Task.FromResult(XDocumentFromReaderInternal(WrapXmlReader(reader, ignoreComments, async:true)));
+            => Task.FromResult(XDocumentFromReaderInternal(WrapXmlReader(reader, ignoreComments, async: true)));
 
         /// <inheritdoc cref="JObjectFromReaderAsync(JsonReader)" />
         public static JObject JObjectFromReader(JsonReader reader)
@@ -125,9 +123,9 @@ namespace Hl7.Fhir.Utility
 
         public static XmlReader XmlReaderFromXmlText(string xml, bool ignoreComments = true)
             => WrapXmlReader(XmlReader.Create(new StringReader(SerializationUtil.SanitizeXml(xml))), ignoreComments);
-        
+
         public static Task<XmlReader> XmlReaderFromXmlTextAsync(string xml, bool ignoreComments = true)
-            => Task.FromResult(WrapXmlReader(XmlReader.Create(new StringReader(SerializationUtil.SanitizeXml(xml))), ignoreComments, async:true));
+            => Task.FromResult(WrapXmlReader(XmlReader.Create(new StringReader(SerializationUtil.SanitizeXml(xml))), ignoreComments, async: true));
 
         public static JsonReader JsonReaderFromJsonText(string json)
             => JsonReaderFromTextReader(new StringReader(json));
@@ -207,6 +205,9 @@ namespace Hl7.Fhir.Utility
             }
         }
 
+        public static string WriteXmlToString<T>(T value, Action<T, XmlWriter> serializer, bool pretty = false, bool appendNewLine = false) =>
+                WriteXmlToString(w => serializer(value, w), pretty, appendNewLine);
+
         /// <inheritdoc cref="WriteXmlToStringAsync(Func{XmlWriter, Task}, bool, bool)" />
         public static string WriteXmlToString(Action<XmlWriter> serializer, bool pretty = false, bool appendNewLine = false)
         {
@@ -262,7 +263,7 @@ namespace Hl7.Fhir.Utility
 
             return doc;
         }
-        
+
         public static async Task<XDocument> WriteXmlToDocumentAsync(Func<XmlWriter, Task> serializer)
         {
             var doc = new XDocument();
@@ -451,7 +452,6 @@ namespace Hl7.Fhir.Utility
             return resultRE;
         }
 
-#if !NETSTANDARD1_6
         public static string[] RunFhirXhtmlSchemaValidation(string xmlText)
         {
             try
@@ -472,17 +472,24 @@ namespace Hl7.Fhir.Utility
             if (!doc.Root.AtXhtmlDiv())
                 return new[] { $"Root element of XHTML is not a <div> from the XHTML namespace ({XmlNs.XHTML})." };
 
+            if (!hasContent(doc.Root))
+                return new[] { $"The narrative SHALL have some non-whitespace content." };
+
             doc.Validate(_xhtmlSchemaSet.Value, (s, a) => result.Add(a.Message));
             return result.ToArray();
+
+            // content consist of xml elements with non-whitespace content (text or an image)
+            static bool hasContent(XElement el)
+                => el.DescendantsAndSelf().Any(e => !string.IsNullOrWhiteSpace(e.Value) || e.Name.LocalName == "img");
         }
 
-        private static Lazy<XmlSchemaSet> _xhtmlSchemaSet = new Lazy<XmlSchemaSet>(compileXhtmlSchema, true);
+        private static readonly Lazy<XmlSchemaSet> _xhtmlSchemaSet = new Lazy<XmlSchemaSet>(compileXhtmlSchema, true);
 
         private const string XML_XSD_RESOURCENAME = "Hl7.Fhir.Serialization.xhtml.xml.xsd";
         private const string FHIRXHTML_XSD_RESOURCENAME = "Hl7.Fhir.Serialization.xhtml.fhir-xhtml.xsd";
 
-        private static Lazy<string> XmlXsdData = new Lazy<string>(() => readResource(XML_XSD_RESOURCENAME));
-        private static Lazy<string> FhirXhtmlXsdData = new Lazy<string>(() => readResource(FHIRXHTML_XSD_RESOURCENAME));
+        private static readonly Lazy<string> XmlXsdData = new Lazy<string>(() => readResource(XML_XSD_RESOURCENAME));
+        private static readonly Lazy<string> FhirXhtmlXsdData = new Lazy<string>(() => readResource(FHIRXHTML_XSD_RESOURCENAME));
 
         private static XmlSchemaSet compileXhtmlSchema()
         {
@@ -514,10 +521,8 @@ namespace Hl7.Fhir.Utility
                 }
             }
         }
-#endif
 
-
-        private static Regex _re = new Regex("(&[a-zA-Z0-9]+;)", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+        private static readonly Regex _re = new Regex("(&[a-zA-Z0-9]+;)", RegexOptions.Compiled | RegexOptions.CultureInvariant);
         private static Dictionary<string, string> _xmlReplacements;
         private static Dictionary<string, string> getXmlReplacements()
         {

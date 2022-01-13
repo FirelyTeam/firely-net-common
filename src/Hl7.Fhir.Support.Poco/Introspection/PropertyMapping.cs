@@ -10,6 +10,7 @@ using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation;
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -28,6 +29,7 @@ namespace Hl7.Fhir.Introspection
         // no public constructors
         private PropertyMapping(
             string name,
+            ClassMapping declaringClass,
             PropertyInfo pi,
             Type implementingType,
             ClassMapping propertyTypeMapping,
@@ -40,12 +42,23 @@ namespace Hl7.Fhir.Introspection
             ImplementingType = implementingType;
             FhirType = fhirTypes;
             PropertyTypeMapping = propertyTypeMapping;
+            DeclaringClass = declaringClass;
+#if NET452
+            ValidationAttributes = new ValidationAttribute[0];
+#else
+            ValidationAttributes = Array.Empty<ValidationAttribute>();
+#endif
         }
 
         /// <summary>
         /// The name of the element in the FHIR specification.
         /// </summary>
         public string Name { get; internal set; }
+
+        /// <summary>
+        /// The ClassMapping for the type this property is a member of.
+        /// </summary>
+        public ClassMapping DeclaringClass { get; internal set; }
 
         /// <summary>
         /// Whether the element can repeat.
@@ -75,6 +88,12 @@ namespace Hl7.Fhir.Introspection
         /// </summary>
         public bool IsModifier { get; private set; }
 
+        /// Five W's mappings of the element.
+        /// </summary>
+        /// <remarks>Each string in the array represents the exact element name of one the elements of the 
+        /// <c>FiveWs</c> pattern from http://hl7.org/fhir/fivews.html. Choice elements are spelled with the
+        /// [x] suffix, like <c>done[x]</c>. </remarks>
+        public string[] FiveWs { get; private set; }
 
         /// <summary>
         /// Whether the element has a cardinality higher than 0.
@@ -147,6 +166,18 @@ namespace Hl7.Fhir.Introspection
         public ClassMapping PropertyTypeMapping { get; private set; }
 
         /// <summary>
+        /// The collection of zero or more <see cref="ValidationAttribute"/> (or subclasses) declared
+        /// on this property.
+        /// </summary>
+        public ValidationAttribute[] ValidationAttributes { get; private set; } =
+#if NET452
+            new ValidationAttribute[0];
+#else
+            Array.Empty<ValidationAttribute>();
+#endif
+
+
+        /// <summary>
         /// The original <see cref="PropertyInfo"/> the metadata was obtained from.
         /// </summary>
         public readonly PropertyInfo NativeProperty;
@@ -157,15 +188,15 @@ namespace Hl7.Fhir.Introspection
         public readonly FhirRelease Release;
 
         [Obsolete("Use TryCreate() instead.")]
-        public static PropertyMapping? Create(PropertyInfo prop, FhirRelease version = (FhirRelease)int.MaxValue)
-            => TryCreate(prop, out var mapping, version) ? mapping : null;
+        public static PropertyMapping? Create(PropertyInfo prop, ClassMapping declaringClass, FhirRelease version = (FhirRelease)int.MaxValue)
+            => TryCreate(prop, out var mapping, declaringClass, version) ? mapping : null;
 
         /// <summary>
         /// Inspects the given PropertyInfo, extracting metadata from its attributes and creating a new <see cref="PropertyMapping"/>.
         /// </summary>
         /// <remarks>There should generally be no reason to call this method, as you can easily get the required PropertyMapping via
         /// a ClassMapping - which will cache this information as well. This constructor is public for historical reasons only.</remarks>
-        public static bool TryCreate(PropertyInfo prop, out PropertyMapping? result, FhirRelease release)
+        public static bool TryCreate(PropertyInfo prop, out PropertyMapping? result, ClassMapping declaringClass, FhirRelease release)
         {
             if (prop == null) throw Error.ArgumentNull(nameof(prop));
             result = default;
@@ -213,7 +244,7 @@ namespace Hl7.Fhir.Introspection
 
             var isPrimitive = isAllowedNativeTypeForDataTypeValue(implementingType);
 
-            result = new PropertyMapping(elementAttr.Name, prop, implementingType, propertyTypeMapping!, fhirTypes, release)
+            result = new PropertyMapping(elementAttr.Name, declaringClass, prop, implementingType, propertyTypeMapping!, fhirTypes, release)
             {
                 InSummary = elementAttr.InSummary,
                 IsModifier = elementAttr.IsModifier,
@@ -224,6 +255,8 @@ namespace Hl7.Fhir.Introspection
                 IsMandatoryElement = cardinalityAttr?.Min > 0,
                 IsPrimitive = isPrimitive,
                 RepresentsValueElement = isPrimitive && isPrimitiveValueElement(elementAttr, prop),
+                ValidationAttributes = ClassMapping.GetAttributes<ValidationAttribute>(prop, release).ToArray(),
+                FiveWs = elementAttr.FiveWs
             };
 
             return true;
@@ -254,17 +287,17 @@ namespace Hl7.Fhir.Introspection
         /// <summary>
         /// Given an instance of the parent class, gets the value for this property.
         /// </summary>
-        public object GetValue(object instance) => LazyInitializer.EnsureInitialized(ref _getter, NativeProperty.GetValueGetter)!(instance);
+        public object? GetValue(object instance) => LazyInitializer.EnsureInitialized(ref _getter, NativeProperty.GetValueGetter)!(instance);
 
-        private Func<object, object>? _getter;
+        private Func<object, object?>? _getter;
 
         /// <summary>
         /// Given an instance of the parent class, sets the value for this property.
         /// </summary>
-        public void SetValue(object instance, object value) =>
+        public void SetValue(object instance, object? value) =>
             LazyInitializer.EnsureInitialized(ref _setter, NativeProperty.GetValueSetter)!(instance, value);
 
-        private Action<object, object>? _setter;
+        private Action<object, object?>? _setter;
 
         #region IElementDefinitionSummary members
         string IElementDefinitionSummary.ElementName => this.Name;

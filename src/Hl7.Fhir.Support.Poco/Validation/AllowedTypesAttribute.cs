@@ -6,14 +6,21 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
+using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Utility;
 using System;
-using System.Collections;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Reflection;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
+
+#nullable enable
 
 namespace Hl7.Fhir.Validation
 {
+    /// <summary>
+    /// Validates the type of a property against the allowed type choices.
+    /// </summary>
     [CLSCompliant(false)]
     [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
     public class AllowedTypesAttribute : ValidationAttribute
@@ -23,17 +30,19 @@ namespace Hl7.Fhir.Validation
             Types = types;
         }
 
+        /// <summary>
+        /// The list of types that are allowed for the instance.
+        /// </summary>
         public Type[] Types { get; set; }
 
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        /// <inheritdoc />
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
         {
-            if (value == null) return ValidationResult.Success;
+            if (value is null) return ValidationResult.Success;
 
-            var list = value as IEnumerable;
-            ValidationResult result = ValidationResult.Success;
+            var result = ValidationResult.Success;
 
-            // Avoid interpreting this as a collection just because string is IEnumerable<char>.
-            if (list != null && !(value is string))
+            if (ReflectionHelper.IsRepeatingElement(value, out var list))
             {
                 foreach (var item in list)
                 {
@@ -49,17 +58,17 @@ namespace Hl7.Fhir.Validation
             return result;
         }
 
-        private ValidationResult validateValue(object item, ValidationContext context)
-        {
-            if (item != null)
-            {
-                if (!IsAllowedType(item.GetType()))
-                    return DotNetAttributeValidation.BuildResult(context, "Value is of type {0}, which is not an allowed choice", item.GetType());
-            }
+        private ValidationResult? validateValue(object? item, ValidationContext context) =>
+            item is null || IsAllowedType(item.GetType())
+                ? ValidationResult.Success
+                : COVE.CHOICE_TYPE_NOT_ALLOWED
+                    .AsResult(context, ModelInspector.GetClassMappingForType(item.GetType())?.Name ?? item.GetType().Name);
 
-            return ValidationResult.Success;
-        }
-
-        public bool IsAllowedType(Type t) => Types.Any(type => type.IsAssignableFrom(t));
+        /// <summary>
+        /// Determine whether the given type is allowed according to this attribute.
+        /// </summary>
+        public bool IsAllowedType(Type t) => Types.Any(type => type.GetTypeInfo().IsAssignableFrom(t));
     }
 }
+
+#nullable restore

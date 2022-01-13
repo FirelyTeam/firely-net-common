@@ -29,15 +29,11 @@
 */
 
 using Hl7.Fhir.Utility;
-using Hl7.Fhir.Validation;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace Hl7.Fhir.Model
 {
     [System.Diagnostics.DebuggerDisplay("\\{\"{TypeName,nq}/{Id,nq}\"}")]
-    [InvokeIValidatableObject]
     public partial class Resource
     {
         /// <summary>
@@ -70,19 +66,6 @@ namespace Hl7.Fhir.Model
         /// As a consumer of this API, please do not use this object.
         /// </remarks>
         public readonly object SyncLock = new object();
-
-        public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-        {
-            var result = new List<ValidationResult>();
-
-            if (Meta != null)
-            {
-                if (Meta.Tag != null && validationContext.ValidateRecursively())
-                    DotNetAttributeValidation.TryValidate(Meta.Tag, result, true);
-            }
-
-            return result;
-        }
 
         public string VersionId
         {

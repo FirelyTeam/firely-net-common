@@ -1,7 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	
-  <Import Project="..\firely-net-common.props" />
-  <Import Project="..\firely-net-common.targets" />
   <Import Project="..\firely-net-common-tests.props" />
 
   <PropertyGroup>
@@ -22,11 +20,8 @@
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net45' or '$(TargetFramework)' == 'net40' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
     <Reference Include="System.ComponentModel.DataAnnotations" />
   </ItemGroup> 
 
-  <ItemGroup>
-    <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
-  </ItemGroup>
 </Project>

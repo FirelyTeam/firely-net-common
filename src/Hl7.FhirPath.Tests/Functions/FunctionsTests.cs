@@ -1,10 +1,13 @@
 ﻿using FluentAssertions;
 using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Model;
 using Hl7.FhirPath;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
+using Hl7.FhirPath.Expressions;
 
 namespace HL7.FhirPath.Tests
 {
@@ -124,6 +127,12 @@ namespace HL7.FhirPath.Tests
                     ("('a' | 'b').select($this + 'x') = ('ax' | 'bx')", true, false),
 
                     // function repeat(projection: expression) : collection
+
+                    // function Aggregate(aggregator : expression [, init : value]) : value
+                    ("(1|2|3|4|5|6|7|8|9).aggregate($this+$total, 0) = 45", true, false),
+                    ("(1|2|3|4|5|6|7|8|9).aggregate($this+$total, 2) = 47", true, false),
+                    ("(1|2|3|4|5|6|7|8|9).aggregate(iif($total.empty(), $this, iif($this < $total, $this, $total))) = 1", true, false),
+                    ("(1|2|3|4|5|6|7|8|9).aggregate(iif($total.empty(), $this, iif($this > $total, $this, $total))) = 9", true, false),
 
                     // function ofType(type : type specifier) : collection 
                     ("{}.ofType(String).empty()", true, false),
@@ -518,5 +527,44 @@ namespace HL7.FhirPath.Tests
                 list.Should().HaveCount(2);
             }
         }
+
+        
+        /// <summary>
+        /// Check that scalar expressions are evaluated only once.
+        /// </summary>
+        [TestMethod]
+        public void SingleScalarTest()
+        {
+            var iterations = 0;
+            var symbols = new SymbolTable();
+
+            symbols.Add("once", (object _) =>
+            {
+                iterations++;
+
+                return ElementNode.CreateList(iterations);
+            });
+
+            var expression = new FhirPathCompiler(symbols).Compile("once()");
+            var result = expression.Scalar(null, new EvaluationContext());
+
+            Assert.AreEqual(result, 1);
+        }
+      
+        /// <summary>
+        /// Tests issue 1652 https://github.com/FirelyTeam/firely-net-sdk/issues/1652
+        /// </summary>
+        [TestMethod]
+        public void ContextNestingLevelTest()
+        {
+            Coding c = new("http://nu.nl", "nl");
+            var te = TypedSerialization.ToTypedElement(c);
+            Assert.IsTrue(te.IsBoolean($"system.endsWith(code)", true));
+            Assert.IsTrue(te.IsBoolean($"system.endsWith(%context.code)", true));
+            Assert.IsTrue(te.IsBoolean($"system.endsWith('nl')", true));
+            Assert.IsTrue(te.IsBoolean($"system.endsWith(code.toString())", true));
+            Assert.IsTrue(te.IsBoolean($"system.endsWith('banana')", false));
+        }
+
     }
 }
