@@ -33,7 +33,11 @@ using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
 using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Runtime.Serialization;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
 using S = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Model
@@ -42,7 +46,7 @@ namespace Hl7.Fhir.Model
     [FhirType("codeOfT")]
     [DataContract]
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value}}")]
-    public class Code<T> : PrimitiveType, INullableValue<T>, ISystemAndCode where T : struct
+    public class Code<T> : PrimitiveType, INullableValue<T>, ISystemAndCode where T : struct, Enum
     {
         static Code()
         {
@@ -64,15 +68,49 @@ namespace Hl7.Fhir.Model
         [DataMember]
         public T? Value
         {
-            get => ObjectValue != null ? EnumUtility.ParseLiteral<T>((string)ObjectValue) : null;
-
-            set => ObjectValue = value != null ? ((Enum)(object)value).GetLiteral() : null;
+            get => TryParseObjectValue(out var value)
+                    ? value
+                    : throw new InvalidCastException($"Value '{ObjectValue}' cannot be cast to a member of enumeration {typeof(T).Name}.");
+            set
+            {
+                ObjectValue = value?.GetLiteral();
+                OnPropertyChanged("Value");
+            }
         }
 
-        string ISystemAndCode.System => ((Enum)(object)Value).GetSystem();
+        internal bool TryParseObjectValue(out T? value)
+        {
+            value = default;
 
-        string ISystemAndCode.Code => ObjectValue as string; // this is the literal
+            if (ObjectValue is string s && EnumUtility.ParseLiteral<T>(s) is T parsed)
+            {
+                value = parsed;
+                return true;
+            }
+            else return ObjectValue is null;
+        }
 
-        public S.Code ToSystemCode() => new S.Code(((ISystemAndCode)this).System, ObjectValue as string, display: null, version: null);
+        string ISystemAndCode.System => Value?.GetSystem();
+
+        string ISystemAndCode.Code => Value?.GetLiteral();
+
+        public S.Code ToSystemCode() => new(Value?.GetSystem(), Value?.GetLiteral(), display: null, version: null);
+
+        public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            var baseResults = base.Validate(validationContext);
+
+            if (TryParseObjectValue(out _))
+                return baseResults;
+            else
+            {
+                var result = COVE.INVALID_CODED_VALUE.AsResult(validationContext, ObjectValue, EnumUtility.GetName<T>());
+#if NET452
+                return baseResults.Concat(new[] { result });
+#else
+                return baseResults.Append(result);
+#endif
+            }
+        }
     }
 }

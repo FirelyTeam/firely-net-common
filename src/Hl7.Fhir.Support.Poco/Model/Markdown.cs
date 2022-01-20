@@ -28,17 +28,18 @@
 
 */
 
-using System;
-using Hl7.Fhir.Introspection;
-using System.Runtime.Serialization;
-using Hl7.Fhir.Specification;
-
+#nullable enable
 
 namespace Hl7.Fhir.Model
 {
     public partial class Markdown
     {
+        /// <summary>
+        /// Checks whether the given literal is correctly formatted.
+        /// </summary>
         public static bool IsValidValue(string value) => FhirString.IsValidValue(value);
     }
-    
+
 }
+
+#nullable restore

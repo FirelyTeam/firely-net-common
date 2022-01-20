@@ -107,7 +107,8 @@ namespace Hl7.FhirPath.Expressions
 
         internal Invokee DynamicGet(string name, IEnumerable<object> args)
         {
-            TableEntry entry = _entries.FirstOrDefault(e => e.Signature.DynamicMatches(name, args));
+            var exactMatches = _entries.Where(e => e.Signature.DynamicExactMatches(name, args));
+            TableEntry entry = exactMatches.Union(_entries.Where(e => e.Signature.DynamicMatches(name, args))).FirstOrDefault();
 
             if (entry == null && Parent != null) return Parent.DynamicGet(name, args);
 

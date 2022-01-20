@@ -6,17 +6,43 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+#nullable enable
 
 namespace Hl7.Fhir.Utility
 {
+    /// <summary>
+    /// Represents an object that can provide line/position information within data being processed.
+    /// </summary>
     public interface IPositionInfo
     {
+        /// <summary>
+        /// The line number within the data, starting with 1 for the first line.
+        /// </summary>
         int LineNumber { get; }
+
+        /// <summary>
+        /// The position within the line, starting with 1 for the first column.
+        /// </summary>
         int LinePosition { get; }
     }
+
+    /// <summary>
+    /// A class representing line/position information within data being processed.
+    /// </summary>
+    public class PositionInfo : IPositionInfo
+    {
+        public PositionInfo(int lineNumber, int linePosition)
+        {
+            LineNumber = lineNumber;
+            LinePosition = linePosition;
+        }
+
+        /// <inheritdoc />
+        public int LineNumber { get; }
+
+        /// <inheritdoc />
+        public int LinePosition { get; }
+    }
 }
+
+#nullable restore
