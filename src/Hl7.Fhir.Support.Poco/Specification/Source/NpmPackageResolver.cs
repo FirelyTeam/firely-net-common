@@ -4,6 +4,7 @@ using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Utility;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -58,25 +59,34 @@ namespace Hl7.Fhir.Specification.Source
         private static async Task intstallPackageFromPath(PackageContext scope, string path)
         {
             var packageManifest = Packaging.ExtractManifestFromPackageFile(path);
-            var reference = packageManifest.GetPackageReference();
-            await scope.Cache.Install(reference, path);
-
-            var dependency = new PackageDependency(reference.Name ?? "", reference.Version);
-            if (reference.Found)
+            if (packageManifest is not null)
             {
-                var manifest = await scope.Project.ReadManifest();
-                manifest ??= ManifestFile.Create("temp", packageManifest.GetFhirVersion());
-                if (manifest.Name == reference.Name)
+                var reference = packageManifest.GetPackageReference();
+                await scope.Cache.Install(reference, path);
+
+                var dependency = new PackageDependency(reference.Name ?? "", reference.Version);
+                if (reference.Found)
                 {
-                    throw new("Skipped updating package manifest because it would cause the package to reference itself.");
-                }
-                else
-                {
-                    manifest.AddDependency(dependency);
-                    await scope.Project.WriteManifest(manifest);
-                    await scope.Restore();
+                    var manifest = await scope.Project.ReadManifest();
+                    var fhirVersion = packageManifest.GetFhirVersion();
+                    if (fhirVersion is null)
+                    {
+                        throw new("Manifest doesn't contain a valid FHIR version");
+                    }
+                    manifest ??= ManifestFile.Create("temp", fhirVersion);
+                    if (manifest.Name == reference.Name)
+                    {
+                        throw new("Skipped updating package manifest because it would cause the package to reference itself.");
+                    }
+                    else
+                    {
+                        manifest.AddDependency(dependency);
+                        await scope.Project.WriteManifest(manifest);
+                        await scope.Restore();
+                    }
                 }
             }
+
         }
 
         private Resource? toResource(string content)
@@ -111,7 +121,7 @@ namespace Hl7.Fhir.Specification.Source
         ///<inheritdoc/>
         public async Task<Resource?> ResolveByUriAsync(string uri)
         {
-            (string? resource, string? id) = uri.Splice('/');
+            uri.SplitLeft('/').Deconstruct(out var resource, out var id);
 
             if (resource == null || id is null)
                 return null;
