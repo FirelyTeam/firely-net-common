@@ -40,7 +40,7 @@ namespace Hl7.Fhir.Specification.Source
                     throw new FileNotFoundException($"File was not found: '{path}'.");
             }
 
-            var scopePath = Path.Combine(Directory.GetCurrentDirectory(), "package-" + Path.GetRandomFileName());
+            var scopePath = Path.Combine(Path.GetTempPath(), "package-" + Path.GetRandomFileName());
             if (!Directory.Exists(scopePath))
             {
                 Directory.CreateDirectory(scopePath);
