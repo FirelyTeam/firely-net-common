@@ -56,7 +56,7 @@ namespace Hl7.Fhir.Specification.Source
             return scope;
         }
 
-        private static async Task intstallPackageFromPath(PackageContext scope, string path)
+        private static async Task installPackageFromPath(PackageContext scope, string path)
         {
             var packageManifest = Packaging.ExtractManifestFromPackageFile(path);
             if (packageManifest is not null)
