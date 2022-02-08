@@ -91,10 +91,19 @@ namespace Hl7.Fhir.Specification.Source
 
         private Resource? toResource(string content)
         {
-            var sourceNode = FhirJsonNode.Parse(content);
-            return TypedSerialization.ToPoco(sourceNode, _provider) as Resource;
-        }
+            try
+            {
+                var sourceNode = content.StartsWith("{")
+                                ? FhirJsonNode.Parse(content)
+                                : FhirXmlNode.Parse(content);
 
+                return TypedSerialization.ToPoco(sourceNode, _provider) as Resource;
+            }
+            catch
+            {
+                return null;
+            }
+        }
 
         ///<inheritdoc/>
         public async Task<Resource?> ResolveByCanonicalUriAsync(string uri)
