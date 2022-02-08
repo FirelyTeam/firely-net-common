@@ -16,17 +16,17 @@ using System.Threading.Tasks;
 namespace Hl7.Fhir.Specification.Source
 {
     /// <summary>Reads FHIR artifacts (Profiles, ValueSets, ...) from one or multiple FHIR packages.</summary>
-    public class NpmPackageResolver : IAsyncResourceResolver, IArtifactSource
+    public class FhirPackageResolver : IAsyncResourceResolver, IArtifactSource
     {
         private Lazy<PackageContext> _context;
         private ModelInspector _provider;
 
-        /// <summary>Create a new <see cref="NpmPackageResolver"/> instance to read FHIR artifacts from one or multiple FHIR packages of a specific FHIR version
+        /// <summary>Create a new <see cref="FhirPackageResolver"/> instance to read FHIR artifacts from one or multiple FHIR packages of a specific FHIR version
         /// found in the paths passed to this function.</summary>
-        /// <returns>A new <see cref="NpmPackageResolver"/> instance.</returns>
+        /// <returns>A new <see cref="FhirPackageResolver"/> instance.</returns>
         /// <param name="provider">A <see cref="ModelInspector"/> used to parse the filecontents to FHIR resources, this is typically a <see cref="ModelInspector"/> containing the definitions of a specific FHIR version. </param>
         /// <param name="filePaths">A path to the FHIR package files.</param>
-        public NpmPackageResolver(ModelInspector provider, params string[] filePaths)
+        public FhirPackageResolver(ModelInspector provider, params string[] filePaths)
         {
             _context = new Lazy<PackageContext>(() => TaskHelper.Await(() => createPackageContextAsync(filePaths)));
             _provider = provider;
