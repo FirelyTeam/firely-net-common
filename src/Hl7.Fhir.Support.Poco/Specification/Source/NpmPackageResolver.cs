@@ -18,7 +18,7 @@ namespace Hl7.Fhir.Specification.Source
     /// <summary>Reads FHIR artifacts (Profiles, ValueSets, ...) from one or multiple FHIR packages.</summary>
     public class NpmPackageResolver : IAsyncResourceResolver, IArtifactSource
     {
-        private PackageContext _context;
+        private Lazy<PackageContext> _context;
         private ModelInspector _provider;
 
         /// <summary>Create a new <see cref="NpmPackageResolver"/> instance to read FHIR artifacts from one or multiple FHIR packages of a specific FHIR version
@@ -28,7 +28,7 @@ namespace Hl7.Fhir.Specification.Source
         /// <param name="filePaths">A path to the FHIR package files.</param>
         public NpmPackageResolver(ModelInspector provider, params string[] filePaths)
         {
-            _context = TaskHelper.Await(() => createPackageContextAsync(filePaths));
+            _context = new Lazy<PackageContext>(() => TaskHelper.Await(() => createPackageContextAsync(filePaths)));
             _provider = provider;
         }
 
@@ -109,7 +109,7 @@ namespace Hl7.Fhir.Specification.Source
         public async Task<Resource?> ResolveByCanonicalUriAsync(string uri)
         {
             (var url, var version) = splitCanonical(uri);
-            var content = await _context.GetFileContentByCanonical(url, version, resolveBestCandidate: true);
+            var content = await _context.Value.GetFileContentByCanonical(url, version, resolveBestCandidate: true);
             return content is null ? null : toResource(content);
         }
 
@@ -135,7 +135,7 @@ namespace Hl7.Fhir.Specification.Source
             if (resource == null || id is null)
                 return null;
 
-            var content = await _context.GetFileContentById(resource, id);
+            var content = await _context.Value.GetFileContentById(resource, id);
             return content is null ? null : toResource(content);
         }
 
@@ -153,53 +153,52 @@ namespace Hl7.Fhir.Specification.Source
         ///<inheritdoc/>
         public IEnumerable<string> ListArtifactNames()
         {
-            return _context.GetFileNames();
+            return _context.Value.GetFileNames();
         }
 
         ///<inheritdoc/>
         public Stream? LoadArtifactByName(string artifactName)
         {
-            var content = TaskHelper.Await(() => _context.GetFileContentByFileName(artifactName));
+            var content = TaskHelper.Await(() => _context.Value.GetFileContentByFileName(artifactName));
             return content == null ? null : new MemoryStream(Encoding.UTF8.GetBytes(content));
         }
 
         ///<inheritdoc/>
         public Stream? LoadArtifactByPath(string artifactPath)
         {
-            var content = TaskHelper.Await(() => _context.GetFileContentByFilePath(artifactPath));
+            var content = TaskHelper.Await(() => _context.Value.GetFileContentByFilePath(artifactPath));
             return content == null ? null : new MemoryStream(Encoding.UTF8.GetBytes(content));
         }
 
         ///<inheritdoc/>
         public IEnumerable<string> ListResourceUris(string? filter = null)
         {
-            return _context.ListCanonicalUris(filter);
+            return _context.Value.ListCanonicalUris(filter);
         }
 
         ///<inheritdoc/>
         public async Task<Resource?> FindCodeSystemByValueSet(string valueSetUri)
         {
-            var content = await _context.GetCodeSystemByValueSet(valueSetUri);
+            var content = await _context.Value.GetCodeSystemByValueSet(valueSetUri);
             return content is null ? null : toResource(content);
         }
 
         ///<inheritdoc/>
         public async Task<IEnumerable<Resource>?> FindConceptMaps(string? sourceUri = null, string? targetUri = null)
         {
-            var content = await _context.GetConceptMapsBySourceAndTarget(sourceUri, targetUri);
-            if (content is null)
-                return null;
-            else
-#pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
-                return content.Select(i => toResource(i))
-                              .Where(i => i is not null);
-#pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
+            var content = await _context.Value.GetConceptMapsBySourceAndTarget(sourceUri, targetUri);
+            return content is null
+                 ? null
+                 : (from item in content
+                    let resource = toResource(item)
+                    where resource is not null
+                    select resource);
         }
 
         ///<inheritdoc/>
         public async Task<Resource?> FindNamingSystemByUniqueId(string uniqueId)
         {
-            var content = await _context.GetNamingSystemByUniqueId(uniqueId);
+            var content = await _context.Value.GetNamingSystemByUniqueId(uniqueId);
             return content is null ? null : toResource(content);
         }
     }
