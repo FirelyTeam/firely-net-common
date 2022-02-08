@@ -50,7 +50,7 @@ namespace Hl7.Fhir.Specification.Source
 
             foreach (var path in paths)
             {
-                await intstallPackageFromPath(scope, path);
+                await installPackageFromPath(scope, path);
             }
 
             return scope;
