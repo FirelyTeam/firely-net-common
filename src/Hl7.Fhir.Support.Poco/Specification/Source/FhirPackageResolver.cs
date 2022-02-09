@@ -108,9 +108,15 @@ namespace Hl7.Fhir.Specification.Source
         ///<inheritdoc/>
         public async Task<Resource?> ResolveByCanonicalUriAsync(string uri)
         {
-            (var url, var version) = splitCanonical(uri);
-            var content = await _context.Value.GetFileContentByCanonical(url, version, resolveBestCandidate: true);
+            var content = await ResolveByCanonicalUriAsyncAsString(uri).ConfigureAwait(false);
             return content is null ? null : toResource(content);
+        }
+
+        //internal for test purposes
+        internal async Task<string?> ResolveByCanonicalUriAsyncAsString(string uri)
+        {
+            (var url, var version) = splitCanonical(uri);
+            return await _context.Value.GetFileContentByCanonical(url, version, resolveBestCandidate: true).ConfigureAwait(false);
         }
 
 
@@ -130,13 +136,19 @@ namespace Hl7.Fhir.Specification.Source
         ///<inheritdoc/>
         public async Task<Resource?> ResolveByUriAsync(string uri)
         {
+            var content = await ResolveByUriAsyncAsString(uri).ConfigureAwait(false);
+            return content is null ? null : toResource(content);
+        }
+
+        //internal for test purposes
+        internal async Task<string?> ResolveByUriAsyncAsString(string uri)
+        {
             uri.SplitLeft('/').Deconstruct(out var resource, out var id);
 
             if (resource == null || id is null)
                 return null;
 
-            var content = await _context.Value.GetFileContentById(resource, id);
-            return content is null ? null : toResource(content);
+            return await _context.Value.GetFileContentById(resource, id).ConfigureAwait(false);
         }
 
 
@@ -179,14 +191,20 @@ namespace Hl7.Fhir.Specification.Source
         ///<inheritdoc/>
         public async Task<Resource?> FindCodeSystemByValueSet(string valueSetUri)
         {
-            var content = await _context.Value.GetCodeSystemByValueSet(valueSetUri);
+            var content = await FindCodeSystemByValueSetAsString(valueSetUri).ConfigureAwait(false);
             return content is null ? null : toResource(content);
+        }
+
+        //internal for test purposes
+        internal async Task<string?> FindCodeSystemByValueSetAsString(string valueSetUri)
+        {
+            return await _context.Value.GetCodeSystemByValueSet(valueSetUri).ConfigureAwait(false);
         }
 
         ///<inheritdoc/>
         public async Task<IEnumerable<Resource>?> FindConceptMaps(string? sourceUri = null, string? targetUri = null)
         {
-            var content = await _context.Value.GetConceptMapsBySourceAndTarget(sourceUri, targetUri);
+            var content = await FindConceptMapsAsStrings(sourceUri, targetUri).ConfigureAwait(false);
             return content is null
                  ? null
                  : (from item in content
@@ -195,11 +213,23 @@ namespace Hl7.Fhir.Specification.Source
                     select resource);
         }
 
+        //internal for test purposes
+        internal async Task<IEnumerable<string>?> FindConceptMapsAsStrings(string? sourceUri = null, string? targetUri = null)
+        {
+            return await _context.Value.GetConceptMapsBySourceAndTarget(sourceUri, targetUri).ConfigureAwait(false);
+        }
+
         ///<inheritdoc/>
         public async Task<Resource?> FindNamingSystemByUniqueId(string uniqueId)
         {
-            var content = await _context.Value.GetNamingSystemByUniqueId(uniqueId);
+            var content = await FindNamingSystemByUniqueIdAsString(uniqueId).ConfigureAwait(false);
             return content is null ? null : toResource(content);
+        }
+
+        //internal for test purposes
+        internal async Task<string?> FindNamingSystemByUniqueIdAsString(string uniqueId)
+        {
+            return await _context.Value.GetNamingSystemByUniqueId(uniqueId).ConfigureAwait(false);
         }
     }
 }
