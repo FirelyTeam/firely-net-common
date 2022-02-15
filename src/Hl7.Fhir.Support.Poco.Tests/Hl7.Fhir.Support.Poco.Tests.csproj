@@ -7,7 +7,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Content Include="TestData\**\*.xml;TestData\**\*.json">
+		<Content Include="TestData\**\*.xml;TestData\**\*.json;TestData\testPackage.tgz">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
