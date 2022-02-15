@@ -1,8 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Hl7.Fhir.ElementModel;
 using Hl7.FhirPath.Functions;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Hl7.FhirPath
 {
@@ -30,6 +29,18 @@ namespace Hl7.FhirPath
             else
                 return result.Value;
         }
+
+        //Empty is considered false
+        public static bool IsTrue(this CompiledExpression evaluator, ITypedElement input, EvaluationContext ctx)
+        {
+            var result = evaluator(input, ctx).BooleanEval();
+
+            if (result == null)
+                return false;
+            else
+                return result.Value;
+        }
+
 
         public static bool IsBoolean(this CompiledExpression evaluator, bool value, ITypedElement input, EvaluationContext ctx)
         {

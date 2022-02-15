@@ -6,13 +6,9 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Utility;
-using Hl7.FhirPath;
-using Hl7.FhirPath.Sprache;
+using System.Collections.Generic;
 
 namespace Hl7.FhirPath
 {
@@ -51,6 +47,13 @@ namespace Hl7.FhirPath
             input = wrapInScopedNode(input);
             var evaluator = getCompiledExpression(expression);
             return evaluator.Predicate(input, ctx ?? EvaluationContext.CreateDefault());
+        }
+
+        public static bool IsTrue(this ITypedElement input, string expression, EvaluationContext ctx = null)
+        {
+            input = wrapInScopedNode(input);
+            var evaluator = getCompiledExpression(expression);
+            return evaluator.IsTrue(input, ctx ?? EvaluationContext.CreateDefault());
         }
 
         public static bool IsBoolean(this ITypedElement input, string expression, bool value, EvaluationContext ctx = null)
