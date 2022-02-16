@@ -115,7 +115,7 @@ namespace Hl7.Fhir.Rest
             request.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
         }
 
-
+        [Obsolete("Use the class FhirClient instead.")]       // Obsoleted on 20220210 by Marco Visser
         public static HttpWebRequest ToHttpWebRequest(this EntryRequest entry, Uri baseUrl, FhirClientSettings settings)
         {
             System.Diagnostics.Debug.WriteLine("{0}: {1}", (object)entry.Method, (object)entry.Url);
