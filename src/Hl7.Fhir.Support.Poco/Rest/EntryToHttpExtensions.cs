@@ -67,7 +67,7 @@ namespace Hl7.Fhir.Rest
 
             else if (interactionType == InteractionType.Search && settings.PreferredParameterHandling != null)
             {
-                List<string> preferHeader = new List<string>();
+                List<string> preferHeader = new();
                 if (settings.PreferredParameterHandling.HasValue)
                     preferHeader.Add("handling=" + settings.PreferredParameterHandling.GetLiteral());
                 if (settings.PreferredReturn.HasValue && settings.PreferredReturn == Prefer.RespondAsync)
@@ -88,25 +88,16 @@ namespace Hl7.Fhir.Rest
         /// </summary>
         /// <param name="verb"><see cref="HTTPVerb"/> specified by input bundle.</param>
         /// <returns><see cref="HttpMethod"/> corresponding to verb specified in input bundle.</returns>
-        private static HttpMethod getMethod(HTTPVerb? verb)
+        private static HttpMethod getMethod(HTTPVerb? verb) => verb switch
         {
-            switch (verb)
-            {
-                case HTTPVerb.GET:
-                    return HttpMethod.Get;
-                case HTTPVerb.POST:
-                    return HttpMethod.Post;
-                case HTTPVerb.PUT:
-                    return HttpMethod.Put;
-                case HTTPVerb.DELETE:
-                    return HttpMethod.Delete;
-                case HTTPVerb.HEAD:
-                    return HttpMethod.Head;
-                case HTTPVerb.PATCH:
-                    return new HttpMethod("PATCH");
-            }
-            throw new HttpRequestException($"Valid HttpVerb could not be found for verb type: [{verb}]");
-        }
+            HTTPVerb.GET => HttpMethod.Get,
+            HTTPVerb.POST => HttpMethod.Post,
+            HTTPVerb.PUT => HttpMethod.Put,
+            HTTPVerb.DELETE => HttpMethod.Delete,
+            HTTPVerb.HEAD => HttpMethod.Head,
+            HTTPVerb.PATCH => new HttpMethod("PATCH"),
+            _ => throw new HttpRequestException($"Valid HttpVerb could not be found for verb type: [{verb}]"),
+        };
 
         private static void setContentAndContentType(HttpRequestMessage request, byte[] data, string contentType)
         {
@@ -115,7 +106,7 @@ namespace Hl7.Fhir.Rest
             request.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
         }
 
-
+        [Obsolete("Use the class FhirClient instead. Will be removed in the next major release.")]       // Obsoleted on 20220210 by Marco Visser
         public static HttpWebRequest ToHttpWebRequest(this EntryRequest entry, Uri baseUrl, FhirClientSettings settings)
         {
             System.Diagnostics.Debug.WriteLine("{0}: {1}", (object)entry.Method, (object)entry.Url);
@@ -153,14 +144,13 @@ namespace Hl7.Fhir.Rest
 
             if (canHaveReturnPreference() && settings.PreferredReturn.HasValue)
             {
-                if (settings.PreferredReturn == Prefer.RespondAsync)
-                    request.Headers["Prefer"] = PrimitiveTypeConverter.ConvertTo<string>(settings.PreferredReturn);
-                else
-                    request.Headers["Prefer"] = "return=" + PrimitiveTypeConverter.ConvertTo<string>(settings.PreferredReturn);
+                request.Headers["Prefer"] = settings.PreferredReturn == Prefer.RespondAsync
+                    ? PrimitiveTypeConverter.ConvertTo<string>(settings.PreferredReturn)
+                    : "return=" + PrimitiveTypeConverter.ConvertTo<string>(settings.PreferredReturn);
             }
             else if (entry.Type == InteractionType.Search)
             {
-                List<string> preferHeader = new List<string>();
+                List<string> preferHeader = new();
                 if (settings.PreferredParameterHandling.HasValue)
                     preferHeader.Add("handling=" + settings.PreferredParameterHandling.GetLiteral());
                 if (settings.PreferredReturn.HasValue && settings.PreferredReturn == Prefer.RespondAsync)

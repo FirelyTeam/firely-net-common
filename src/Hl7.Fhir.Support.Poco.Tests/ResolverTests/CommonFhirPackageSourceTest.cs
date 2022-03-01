@@ -12,11 +12,15 @@ namespace Hl7.Fhir.Support.Poco.Tests
 {
 
     [TestClass]
-    public class FhirPackageResolverTests
+    public class CommonFhirPackageSourceTests
     {
+        private const string PACKAGESERVER = "http://packages.simplifier.net";
         private const string PACKAGENAME = "TestData/testPackage.tgz";
+        private const string US_CORE_PACKAGE = "hl7.fhir.us.core@4.1.0";
+
         //ModelInspector is needed for _resolver, but doesn't do anything in this case, since common doesn't have access to STU3 type information.
-        private readonly FhirPackageResolver _resolver = new(new ModelInspector(FhirRelease.STU3), PACKAGENAME);
+        private readonly CommonFhirPackageSource _resolver = new(new ModelInspector(FhirRelease.STU3), PACKAGENAME);
+        private readonly CommonFhirPackageSource _clientResolver = new(new ModelInspector(FhirRelease.STU3), PACKAGESERVER, new string[] { US_CORE_PACKAGE });
 
 
         [TestMethod]
@@ -31,6 +35,16 @@ namespace Hl7.Fhir.Support.Poco.Tests
             var adm_gender = await _resolver.ResolveByCanonicalUriAsyncAsString("http://hl7.org/fhir/ValueSet/administrative-gender").ConfigureAwait(false);
             adm_gender.Should().NotBeNull();
             adm_gender.Should().Contain("\"url\":\"http://hl7.org/fhir/ValueSet/administrative-gender\"");
+        }
+
+
+        [TestMethod, TestCategory("IntegrationTest")]
+        public async Task TestResolveByCanonicalUriUsingClient()
+        {
+            //check StructureDefinition from US Core
+            var pat = await _clientResolver.ResolveByCanonicalUriAsyncAsString("http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient").ConfigureAwait(false);
+            pat.Should().NotBeNull();
+            pat.Should().Contain("\"url\":\"http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient\"");
         }
 
         [TestMethod]
@@ -59,8 +73,6 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [TestMethod]
         public void TestLoadArtifactByPath()
         {
-
-            //check StructureDefinitions
             var stream = _resolver.LoadArtifactByPath("package/StructureDefinition-Patient.json");
 
             stream.Should().NotBeNull();
@@ -75,7 +87,6 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [TestMethod]
         public void TestListResourceUris()
         {
-            //check StructureDefinitions
             var names = _resolver.ListResourceUris();
             names.Should().Contain("http://hl7.org/fhir/StructureDefinition/Patient");
             names.Should().Contain("http://hl7.org/fhir/ValueSet/administrative-gender");
