@@ -56,21 +56,19 @@ namespace Hl7.Fhir.Rest
                 request.WriteBody(compressRequestBody, interaction.RequestBodyContent);
 
             // Make sure the HttpResponse gets disposed!
-            using (HttpWebResponse webResponse = (HttpWebResponse)await request.GetResponseAsync(TimeSpan.FromMilliseconds(Settings.Timeout)).ConfigureAwait(false))
+            using HttpWebResponse webResponse = (HttpWebResponse)await request.GetResponseAsync(TimeSpan.FromMilliseconds(Settings.Timeout)).ConfigureAwait(false);
+            try
             {
-                try
-                {
-                    //Read body before we call the hook, so the hook cannot read the body before we do
-                    var inBody = readBody(webResponse);
-                    AfterResponse?.Invoke(webResponse, inBody);
+                //Read body before we call the hook, so the hook cannot read the body before we do
+                var inBody = readBody(webResponse);
+                AfterResponse?.Invoke(webResponse, inBody);
 
-                    return webResponse.ToEntryResponse(inBody);
+                return webResponse.ToEntryResponse(inBody);
 
-                }
-                catch (AggregateException ae)
-                {
-                    throw ae.GetBaseException();
-                }
+            }
+            catch (AggregateException ae)
+            {
+                throw ae.GetBaseException();
             }
         }
 
@@ -87,17 +85,13 @@ namespace Hl7.Fhir.Rest
 #endif
                 if (contentEncoding == "gzip")
                 {
-                    using (var decompressed = new GZipStream(respStream, CompressionMode.Decompress, true))
-                    {
-                        body = HttpUtil.ReadAllFromStream(decompressed);
-                    }
+                    using var decompressed = new GZipStream(respStream, CompressionMode.Decompress, true);
+                    body = HttpUtil.ReadAllFromStream(decompressed);
                 }
                 else if (contentEncoding == "deflate")
                 {
-                    using (var decompressed = new DeflateStream(respStream, CompressionMode.Decompress, true))
-                    {
-                        body = HttpUtil.ReadAllFromStream(decompressed);
-                    }
+                    using var decompressed = new DeflateStream(respStream, CompressionMode.Decompress, true);
+                    body = HttpUtil.ReadAllFromStream(decompressed);
                 }
                 else
                 {
@@ -105,10 +99,7 @@ namespace Hl7.Fhir.Rest
                 }
                 respStream.Dispose();
 
-                if (body.Length > 0)
-                    return body;
-                else
-                    return null;
+                return body.Length > 0 ? body : null;
             }
             else
                 return null;
