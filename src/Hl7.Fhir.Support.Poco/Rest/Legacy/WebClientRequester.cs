@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Rest
 {
-    [Obsolete("Use the class HttpClientRequester instead.")]       // Obsoleted on 20220210 by Marco Visser
+    [Obsolete("Use the class HttpClientRequester instead. Will be removed in the next major release.")]       // Obsoleted on 20220210 by Marco Visser
     public class WebClientRequester : IClientRequester
     {
         public Uri BaseUrl { get; private set; }
