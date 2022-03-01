@@ -97,14 +97,7 @@ namespace Hl7.Fhir.Specification.Source
             }
 
             var scopePath = getScopePath();
-            var scope = await createContext(scopePath, client: null);
-
-            foreach (var path in paths)
-            {
-                await installPackageFromPath(scope, path);
-            }
-
-            return scope;
+            return await createContext(scopePath, client: null, paths);
         }
 
         private static string getScopePath()
@@ -117,25 +110,33 @@ namespace Hl7.Fhir.Specification.Source
             return scopePath;
         }
 
-        private static async Task<PackageContext> createContext(string scopePath, PackageClient? client, bool localCache = false)
+        private static async Task<PackageContext> createContext(string scopePath, PackageClient? client, string[]? filePaths = null, bool localCache = false)
         {
             string? cache_folder = localCache ? scopePath : null;
             var cache = new DiskPackageCache(cache_folder);
             var project = new FolderProject(scopePath);
-#pragma warning disable CS8604 // Possible null reference argument.
             var scope = new PackageContext(cache, project, client);
-#pragma warning restore CS8604 // Possible null reference argument.
 
+            //install packages from a package server
             if (client is not null)
             {
                 var closure = await scope.Restore();
 
                 if (closure.Missing.Any())
                 {
-                    var missingDeps = String.Join(", ", closure.Missing);
+                    var missingDeps = string.Join(", ", closure.Missing);
                     throw new FileNotFoundException($"Could not resolve all dependencies. Missing: {missingDeps}.");
                 }
             }
+            //install packages from local machine
+            if (filePaths is not null && filePaths.Any())
+            {
+                foreach (var path in filePaths)
+                {
+                    await installPackageFromPath(scope, path);
+                }
+            }
+
 
             return scope;
         }
