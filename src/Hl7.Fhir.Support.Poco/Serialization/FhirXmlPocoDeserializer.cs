@@ -136,7 +136,7 @@ namespace Hl7.Fhir.Serialization
 
 
                 // move into first attribute
-                reader.Att
+
             }
 
         }
