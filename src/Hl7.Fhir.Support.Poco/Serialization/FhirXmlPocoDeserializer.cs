@@ -102,9 +102,6 @@ namespace Hl7.Fhir.Serialization
                 try
                 {
                     state.Path.EnterResource(resourceMapping.Name);
-
-
-
                     deserializeElementInto(newResource, resourceMapping, reader, DeserializedObjectKind.Resource, state);
 
 
@@ -128,18 +125,36 @@ namespace Hl7.Fhir.Serialization
 
         private void deserializeElementInto<T>(T target, ClassMapping mapping, XmlReader reader, DeserializedObjectKind kind, FhirXmlPocoDeserializerState state) where T : Base
         {
+            while (shouldSkipNodeType(reader.NodeType))
+                if (!reader.Read())
+                    return;
+
             //read the next object
             while (reader.Read())
             {
                 var name = reader.Name;
                 var (propMapping, propValueMapping, error) = tryGetMappedElementMetadata(_inspector, mapping, reader, name);
 
-
                 // move into first attribute
+                while (reader.MoveToNextAttribute())
+                {
 
+                }
             }
 
         }
+
+        private bool shouldSkipNodeType(XmlNodeType nodeType)
+        {
+            return nodeType == XmlNodeType.Comment
+                || nodeType == XmlNodeType.XmlDeclaration
+                || nodeType == XmlNodeType.Whitespace
+                || nodeType == XmlNodeType.SignificantWhitespace
+                || nodeType == XmlNodeType.CDATA
+                || nodeType == XmlNodeType.Notation
+                || nodeType == XmlNodeType.ProcessingInstruction;
+        }
+
 
         /// <summary>
         /// Returns the <see cref="ClassMapping" /> for the object to be deserialized using the `resourceType` property.
