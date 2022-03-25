@@ -75,7 +75,7 @@ namespace Hl7.Fhir.Introspection
         /// <remarks>Each string in the array represents the exact element name of one the elements of the 
         /// <c>FiveWs</c> pattern from http://hl7.org/fhir/fivews.html. Choice elements are spelled with the
         /// [x] suffix, like <c>done[x]</c>. </remarks>
-        public string[] FiveWs { get; private set; }
+        public string[]? FiveWs { get; private set; }
 
         /// <summary>
         /// Whether the element has a cardinality higher than 0.

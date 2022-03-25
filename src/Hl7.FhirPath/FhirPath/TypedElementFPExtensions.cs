@@ -6,13 +6,9 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Utility;
-using Hl7.FhirPath;
-using Hl7.FhirPath.Sprache;
+using System.Collections.Generic;
 
 namespace Hl7.FhirPath
 {
@@ -34,38 +30,31 @@ namespace Hl7.FhirPath
 
         public static IEnumerable<ITypedElement> Select(this ITypedElement input, string expression, EvaluationContext ctx = null)
         {
-            input = wrapInScopedNode(input);
+            input = input.ToScopedNode();
             var evaluator = getCompiledExpression(expression);
             return evaluator(input, ctx ?? EvaluationContext.CreateDefault());
         }
 
         public static object Scalar(this ITypedElement input, string expression, EvaluationContext ctx = null)
         {
-            input = wrapInScopedNode(input);
+            input = input.ToScopedNode();
             var evaluator = getCompiledExpression(expression);
             return evaluator.Scalar(input, ctx ?? EvaluationContext.CreateDefault());
         }
 
         public static bool Predicate(this ITypedElement input, string expression, EvaluationContext ctx = null)
         {
-            input = wrapInScopedNode(input);
+            input = input.ToScopedNode();
             var evaluator = getCompiledExpression(expression);
             return evaluator.Predicate(input, ctx ?? EvaluationContext.CreateDefault());
         }
 
         public static bool IsBoolean(this ITypedElement input, string expression, bool value, EvaluationContext ctx = null)
         {
-            input = wrapInScopedNode(input);
+            input = input.ToScopedNode();
 
             var evaluator = getCompiledExpression(expression);
             return evaluator.IsBoolean(value, input, ctx ?? EvaluationContext.CreateDefault());
-        }
-
-        private static ITypedElement wrapInScopedNode(ITypedElement input)
-        {
-            if (input is not ScopedNode)
-                input = new ScopedNode(input);
-            return input;
         }
     }
 }
