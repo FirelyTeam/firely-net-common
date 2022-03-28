@@ -6,6 +6,8 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
+#nullable enable
+
 using Hl7.Fhir.ElementModel.Adapters;
 using Hl7.Fhir.Specification;
 using Hl7.Fhir.Utility;
@@ -17,7 +19,7 @@ namespace Hl7.Fhir.ElementModel
 {
     public static class ElementNodeExtensions
     {
-        public static IEnumerable<ITypedElement> Children(this IEnumerable<ITypedElement> nodes, string name = null) => 
+        public static IEnumerable<ITypedElement> Children(this IEnumerable<ITypedElement> nodes, string? name = null) =>
             nodes.SelectMany(n => n.Children(name));
 
         public static IEnumerable<ITypedElement> Descendants(this ITypedElement element)
@@ -33,14 +35,14 @@ namespace Hl7.Fhir.ElementModel
             }
         }
 
-        public static IEnumerable<ITypedElement> Descendants(this IEnumerable<ITypedElement> elements) => 
+        public static IEnumerable<ITypedElement> Descendants(this IEnumerable<ITypedElement> elements) =>
             elements.SelectMany(e => e.Descendants());
 
 
-        public static IEnumerable<ITypedElement> DescendantsAndSelf(this ITypedElement element) => 
+        public static IEnumerable<ITypedElement> DescendantsAndSelf(this ITypedElement element) =>
             (new[] { element }).Concat(element.Descendants());
 
-        public static IEnumerable<ITypedElement> DescendantsAndSelf(this IEnumerable<ITypedElement> elements) => 
+        public static IEnumerable<ITypedElement> DescendantsAndSelf(this IEnumerable<ITypedElement> elements) =>
             elements.SelectMany(e => e.DescendantsAndSelf());
 
         public static void Visit(this ITypedElement root, Action<int, ITypedElement> visitor) => root.visit(visitor, 0);
@@ -58,7 +60,7 @@ namespace Hl7.Fhir.ElementModel
         public static IDisposable Catch(this ITypedElement source, ExceptionNotificationHandler handler) =>
             source is IExceptionSource s ? s.Catch(handler) : throw new NotImplementedException("Element does not implement IExceptionSource.");
 
-        public static void VisitAll(this ITypedElement nav) => nav.Visit((_,n) => { var dummy = n.Value; });
+        public static void VisitAll(this ITypedElement nav) => nav.Visit((_, n) => { var dummy = n.Value; });
 
         public static List<ExceptionNotification> VisitAndCatch(this ITypedElement node)
         {
@@ -76,7 +78,7 @@ namespace Hl7.Fhir.ElementModel
 
         public static IEnumerable<object> Annotations(this ITypedElement nav, Type type) =>
         nav is IAnnotated ann ? ann.Annotations(type) : Enumerable.Empty<object>();
-        public static T Annotation<T>(this ITypedElement nav) =>
+        public static T? Annotation<T>(this ITypedElement nav) =>
             nav is IAnnotated ann ? ann.Annotation<T>() : default;
 
         public static ISourceNode ToSourceNode(this ITypedElement node) => new TypedElementToSourceNodeAdapter(node);
@@ -108,6 +110,7 @@ namespace Hl7.Fhir.ElementModel
 #endif
         }
 
-
+        public static ScopedNode ToScopedNode(this ITypedElement node) =>
+            node as ScopedNode ?? new ScopedNode(node);
     }
 }

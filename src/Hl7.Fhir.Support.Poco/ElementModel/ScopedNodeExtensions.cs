@@ -56,11 +56,8 @@ namespace Hl7.Fhir.ElementModel
             {
                 var identity = scopedNode.MakeAbsolute(new ResourceIdentity(reference));
 
-                if (identity.IsLocal || identity.IsAbsoluteRestUrl || identity.IsUrn)
-                {
-                    var result = locateResource(identity);
-                    if (result != null) return (T)(object)result;
-                }
+                var result = locateResource(identity);
+                if (result != null) return (T)(object)result;
             }
 
             // Nothing found internally, now try the external resolver
