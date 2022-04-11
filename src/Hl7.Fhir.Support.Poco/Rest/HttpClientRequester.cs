@@ -1,7 +1,7 @@
-﻿/* 
+﻿/*
  * Copyright (c) 2014, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
- * 
+ *
  * This file is licensed under the BSD 3-Clause license
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
@@ -20,12 +20,12 @@ namespace Hl7.Fhir.Rest
         public Uri BaseUrl { get; private set; }
         public HttpClient Client { get; private set; }
 
-        public HttpClientRequester(Uri baseUrl, FhirClientSettings settings, HttpMessageHandler messageHandler)
+        public HttpClientRequester(Uri baseUrl, FhirClientSettings settings, HttpMessageHandler messageHandler, bool disposeHandler)
         {
             Settings = settings;
             BaseUrl = baseUrl;
 
-            Client = new HttpClient(messageHandler);
+            Client = new HttpClient(messageHandler, disposeHandler);
             Client.DefaultRequestHeaders.Add("User-Agent", $".NET FhirClient for FHIR");
             Client.Timeout = new TimeSpan(0, 0, 0, Settings.Timeout);
         }
