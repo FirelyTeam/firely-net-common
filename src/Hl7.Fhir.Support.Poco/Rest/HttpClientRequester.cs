@@ -20,7 +20,7 @@ namespace Hl7.Fhir.Rest
         public Uri BaseUrl { get; private set; }
         public HttpClient Client { get; private set; }
 
-        public HttpClientRequester(Uri baseUrl, FhirClientSettings settings, HttpMessageHandler messageHandler, bool disposeHandler)
+        public HttpClientRequester(Uri baseUrl, FhirClientSettings settings, HttpMessageHandler messageHandler, bool disposeHandler = true)
         {
             Settings = settings;
             BaseUrl = baseUrl;
