@@ -19,6 +19,7 @@ namespace Hl7.Fhir.Rest
         public FhirClientSettings Settings { get; set; }
         public Uri BaseUrl { get; private set; }
         public HttpClient Client { get; private set; }
+        private bool _disposeHttpClient = true;
 
         public HttpClientRequester(Uri baseUrl, FhirClientSettings settings, HttpMessageHandler messageHandler, bool disposeHandler = true)
         {
@@ -30,6 +31,14 @@ namespace Hl7.Fhir.Rest
             Client.Timeout = new TimeSpan(0, 0, 0, Settings.Timeout);
         }
 
+        public HttpClientRequester(Uri baseUrl, FhirClientSettings settings, HttpClient client)
+        {
+            Settings = settings;
+            BaseUrl = baseUrl;
+
+            Client = client;
+            _disposeHttpClient = false;
+        }
 
         public EntryResponse LastResult { get; private set; }
 
@@ -77,11 +86,11 @@ namespace Hl7.Fhir.Rest
         {
             if (!disposedValue)
             {
-                if (disposing)
+                if (disposing && _disposeHttpClient)
                 {
+                    // Only dispose the httpclient if was created here
                     this.Client.Dispose();
                 }
-
                 disposedValue = true;
             }
         }
