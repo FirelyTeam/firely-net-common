@@ -5,7 +5,6 @@
 * This file is licensed under the BSD 3-Clause license
 */
 
-using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Support;
 using System;
@@ -49,7 +48,7 @@ namespace Hl7.Fhir.Support
         public static Stopwatch OUTCOME_INCLUDE_TIMER = new Stopwatch();
 
         public static void Include(this OperationOutcome outcome, OperationOutcome other)
-        {               
+        {
             foreach (var issue in other.Issue)
             {
                 // var myIssue = (OperationOutcome.IssueComponent)issue.DeepCopy();
@@ -80,7 +79,7 @@ namespace Hl7.Fhir.Support
         }
 
         public static IEnumerable<OperationOutcome.IssueComponent> Where(this OperationOutcome outcome,
-                OperationOutcome.IssueSeverity? severity=null, OperationOutcome.IssueType? type=null, int? issueCode = null)
+                OperationOutcome.IssueSeverity? severity = null, OperationOutcome.IssueType? type = null, int? issueCode = null)
         {
             IEnumerable<OperationOutcome.IssueComponent> result = outcome.Issue;
 
@@ -110,9 +109,9 @@ namespace Hl7.Fhir.Support
 
         public static bool IsAt(this OperationOutcome.IssueComponent issue, string path)
         {
-            if (issue.Location != null)
+            if (issue.Expression != null)
             {
-                return issue.Location.Contains(path);
+                return issue.Expression.Contains(path);
             }
 
             return false;
