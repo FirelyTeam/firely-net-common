@@ -42,7 +42,12 @@ namespace Hl7.Fhir.Support
             // Put numeric code + readable message into a CodeableConcept
             ic.Details = ToCodeableConcept(message);
 
-            if (path != null) ic.Location = new List<string> { path };
+            if (path is not null)
+            {
+                ic.Expression = new List<string> { path };
+                // IssueComponent.Location is deprecated but we still set this because of backwards compatibility.
+                ic.Location = new List<string> { path };
+            }
 
             return ic;
         }

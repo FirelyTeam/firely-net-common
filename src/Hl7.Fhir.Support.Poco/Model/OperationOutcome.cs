@@ -141,10 +141,10 @@ namespace Hl7.Fhir.Model
                     buffer.Append(")");
                 }
 
-                if (Location.Any())
+                if (Expression.Any())
                 {
                     buffer.Append(" (at ");
-                    buffer.Append(String.Join(" via ", Location));
+                    buffer.Append(String.Join(" via ", Expression));
                     buffer.Append(")");
                 }
             }
