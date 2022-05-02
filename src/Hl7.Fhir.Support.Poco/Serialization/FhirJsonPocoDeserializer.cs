@@ -81,7 +81,7 @@ namespace Hl7.Fhir.Serialization
 
             FhirJsonPocoDeserializerState state = new();
 
-            var result = DeserializeResourceInternal(ref reader, state);
+            var result = DeserializeResourceInternal(ref reader, state, stayOnLastToken: true);
 
             return !state.Errors.HasExceptions
                 ? result!
@@ -110,7 +110,7 @@ namespace Hl7.Fhir.Serialization
             if (mapping.Factory() is Base result)
             {
                 var state = new FhirJsonPocoDeserializerState();
-                deserializeObjectInto(result, mapping, ref reader, DeserializedObjectKind.Complex, state);
+                deserializeObjectInto(result, mapping, ref reader, DeserializedObjectKind.Complex, state, stayOnLastToken: true);
                 return !state.Errors.HasExceptions
                     ? result
                     : throw new DeserializationFailedException(result, state.Errors);
@@ -127,7 +127,7 @@ namespace Hl7.Fhir.Serialization
         /// <returns>A fully initialized POCO with the data from the reader.</returns>
         public T DeserializeObject<T>(ref Utf8JsonReader reader) where T : Base => (T)DeserializeObject(typeof(T), ref reader);
 
-        internal Resource? DeserializeResourceInternal(ref Utf8JsonReader reader, FhirJsonPocoDeserializerState state)
+        internal Resource? DeserializeResourceInternal(ref Utf8JsonReader reader, FhirJsonPocoDeserializerState state, bool stayOnLastToken)
         {
             if (reader.TokenType != JsonTokenType.StartObject)
             {
@@ -146,7 +146,7 @@ namespace Hl7.Fhir.Serialization
                 try
                 {
                     state.Path.EnterResource(resourceMapping.Name);
-                    deserializeObjectInto(newResource, resourceMapping, ref reader, DeserializedObjectKind.Resource, state);
+                    deserializeObjectInto(newResource, resourceMapping, ref reader, DeserializedObjectKind.Resource, state, stayOnLastToken);
 
                     if (!resourceMapping.IsResource)
                     {
@@ -174,7 +174,7 @@ namespace Hl7.Fhir.Serialization
 
         /// <summary>
         /// The kind of object we need to deserialize into, which will influence subtly
-        /// how the <see cref="deserializeObjectInto{T}(T, ClassMapping, ref Utf8JsonReader, DeserializedObjectKind, FhirJsonPocoDeserializerState)" />
+        /// how the <see cref="deserializeObjectInto{T}(T, ClassMapping, ref Utf8JsonReader, DeserializedObjectKind, FhirJsonPocoDeserializerState, bool)" />
         /// function will operate.
         /// </summary>
         private enum DeserializedObjectKind
@@ -201,13 +201,24 @@ namespace Hl7.Fhir.Serialization
         /// <summary>
         /// Reads a complex object into an existing instance of a POCO.
         /// </summary>
-        /// <remarks>Reader will be on the first token after the object upon return.</remarks>
+        /// <param name="target"></param>
+        /// <param name="mapping"></param>
+        /// <param name="reader"></param>
+        /// <param name="kind"></param>
+        /// <param name="state"></param>
+        /// <param name="stayOnLastToken">Normally, the reader will be on the first token *after* the object, however,
+        /// System.Text.Json converters expect the readers on the last token of the object. Since all logic
+        /// in this class assumes the first case, we make a special case for the outermost call to this function
+        /// done by the <see cref="DeserializeObject(Type, ref Utf8JsonReader)"/> function, which is in its
+        /// turn called by System.Text.Json upon a <see cref="FhirJsonConverter{F}.Read(ref Utf8JsonReader, Type, JsonSerializerOptions)" /></param>.
+        /// <remarks>Reader will be on the first token after the object upon return, but see <paramref name="stayOnLastToken"/>.</remarks>
         private void deserializeObjectInto<T>(
             T target,
             ClassMapping mapping,
             ref Utf8JsonReader reader,
             DeserializedObjectKind kind,
-            FhirJsonPocoDeserializerState state) where T : Base
+            FhirJsonPocoDeserializerState state,
+            bool stayOnLastToken = false) where T : Base
         {
             if (reader.TokenType != JsonTokenType.StartObject)
             {
@@ -271,8 +282,8 @@ namespace Hl7.Fhir.Serialization
             // and should only be validated when both have been processed, even if megabytes apart in the json file).
             delayedValidations.Run();
 
-            // read past object
-            reader.Read();
+            // read past object, unless this is the last EndObject in the top-level Deserialize call
+            if (!stayOnLastToken) reader.Read();
 
             // do not allow empty complex objects.
             if (empty) state.Errors.Add(ERR.OBJECTS_CANNOT_BE_EMPTY.With(ref reader));
@@ -567,7 +578,7 @@ namespace Hl7.Fhir.Serialization
             else
             {
                 // The complex part of a primitive - read the object's primitives into the target
-                deserializeObjectInto(targetPrimitive, propertyValueMapping, ref reader, DeserializedObjectKind.FhirPrimitive, state);
+                deserializeObjectInto(targetPrimitive, propertyValueMapping, ref reader, DeserializedObjectKind.FhirPrimitive, state, stayOnLastToken: false);
             }
 
             // Only do validation on this instance when no parse errors were encountered, otherwise we'll just
@@ -596,7 +607,7 @@ namespace Hl7.Fhir.Serialization
             // Resources
             if (propertyValueMapping.IsResource)
             {
-                return DeserializeResourceInternal(ref reader, state);
+                return DeserializeResourceInternal(ref reader, state, stayOnLastToken: false);
             }
 
             // primitive values (not FHIR primitives, real primitives, like Element.id)
@@ -624,7 +635,7 @@ namespace Hl7.Fhir.Serialization
             else
             {
                 var newComplex = (Base)propertyValueMapping.Factory();
-                deserializeObjectInto(newComplex, propertyValueMapping, ref reader, DeserializedObjectKind.Complex, state);
+                deserializeObjectInto(newComplex, propertyValueMapping, ref reader, DeserializedObjectKind.Complex, state, stayOnLastToken: false);
                 return newComplex;
             }
         }
