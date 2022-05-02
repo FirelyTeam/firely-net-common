@@ -16,6 +16,7 @@ using System;
 using System.Buffers;
 using System.IO;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -23,9 +24,39 @@ using System.Text.Json.Serialization;
 namespace Hl7.Fhir.Serialization
 {
     /// <summary>
-    /// Common resource converter to support polymorphic deserialization.
+    /// A converter factory to construct FhirJsonConverters for subclasses of <see cref="Base"/>.
     /// </summary>
-    public class FhirJsonConverter : JsonConverter<Base>
+    public class FhirJsonConverterFactory : JsonConverterFactory
+    {
+        private readonly Assembly _assembly;
+        private readonly FhirJsonPocoSerializerSettings _serializerSettings;
+        private readonly FhirJsonPocoDeserializerSettings _deserializerSettings;
+
+        public FhirJsonConverterFactory(
+            Assembly assembly,
+            FhirJsonPocoSerializerSettings serializerSettings,
+            FhirJsonPocoDeserializerSettings deserializerSettings)
+        {
+            _assembly = assembly;
+            _serializerSettings = serializerSettings;
+            _deserializerSettings = deserializerSettings;
+        }
+
+        public override bool CanConvert(Type typeToConvert) => typeof(Base).IsAssignableFrom(typeToConvert);
+
+        public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
+        {
+            return (JsonConverter)Activator.CreateInstance(
+                typeof(FhirJsonConverter<>).MakeGenericType(typeToConvert),
+                new object[] { _assembly, _serializerSettings, _deserializerSettings })!;
+        }
+    }
+
+
+    /// <summary>
+    /// FHIR Resource and datatype converter for FHIR deserialization.
+    /// </summary>
+    public class FhirJsonConverter<F> : JsonConverter<F> where F : Base
     {
         /// <summary>
         /// Constructs a <see cref="JsonConverter{T}"/> that (de)serializes FHIR json for the 
@@ -63,7 +94,7 @@ namespace Hl7.Fhir.Serialization
         /// <summary>
         /// Determines whether the specified type can be converted.
         /// </summary>
-        public override bool CanConvert(Type objectType) => typeof(Base).IsAssignableFrom(objectType);
+        public override bool CanConvert(Type objectType) => typeof(F) == objectType;
 
         private readonly FhirJsonPocoDeserializer _deserializer;
         private readonly FhirJsonPocoSerializer _serializer;
@@ -76,7 +107,7 @@ namespace Hl7.Fhir.Serialization
         /// <summary>
         /// Writes a specified value as JSON.
         /// </summary>
-        public override void Write(Utf8JsonWriter writer, Base poco, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, F poco, JsonSerializerOptions options)
         {
             _serializer.Serialize(poco, writer);
         }
@@ -84,11 +115,11 @@ namespace Hl7.Fhir.Serialization
         /// <summary>
         /// Reads and converts the JSON to a typed object.
         /// </summary>
-        public override Base Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        public override F Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             return typeof(Resource).IsAssignableFrom(typeToConvert)
-                ? _deserializer.DeserializeResource(ref reader)
-                : _deserializer.DeserializeObject(typeToConvert, ref reader);
+                ? (F)(Base)_deserializer.DeserializeResource(ref reader)
+                : (F)_deserializer.DeserializeObject(typeToConvert, ref reader);
         }
     }
 }

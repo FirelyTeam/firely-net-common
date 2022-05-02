@@ -10,6 +10,7 @@
 
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
 
+using Hl7.Fhir.Model;
 using System.Reflection;
 using System.Text.Json;
 
@@ -43,14 +44,28 @@ namespace Hl7.Fhir.Serialization
                 FhirJsonPocoDeserializerSettings deserializerSettings
                 )
         {
-            var converter = new FhirJsonConverter(modelAssembly, serializerSettings, deserializerSettings);
+            var converter = new FhirJsonConverterFactory(modelAssembly, serializerSettings, deserializerSettings);
             return options.ForFhir(converter);
+        }
+
+        /// <summary>
+        /// Initialize the options to serialize using the JsonFhirConverterFactory, producing compact output without whitespace.
+        /// </summary>
+        public static JsonSerializerOptions ForFhir(this JsonSerializerOptions options, FhirJsonConverterFactory converter)
+        {
+            var result = new JsonSerializerOptions(options)
+            {
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            };
+
+            result.Converters.Add(converter);
+            return result;
         }
 
         /// <summary>
         /// Initialize the options to serialize using the JsonFhirConverter, producing compact output without whitespace.
         /// </summary>
-        public static JsonSerializerOptions ForFhir(this JsonSerializerOptions options, FhirJsonConverter converter)
+        public static JsonSerializerOptions ForFhir<F>(this JsonSerializerOptions options, FhirJsonConverter<F> converter) where F : Base
         {
             var result = new JsonSerializerOptions(options)
             {
