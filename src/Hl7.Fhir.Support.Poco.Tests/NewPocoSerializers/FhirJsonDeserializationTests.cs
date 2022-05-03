@@ -713,7 +713,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
         private class MixedClass
         {
-            public TestPatient FhirPatient { get; set; }
+            public TestPatient? FhirPatient { get; set; }
 
             public string? HandledByTextJson { get; set; }
 
@@ -754,7 +754,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             mc2.Should().BeOfType<MixedClass>();
             mc2.FhirIdentifier!.Single().System.Should().Be("http://nu.nl");
             mc2.HandledByTextJson.Should().Be("Hi!");
-            mc2.FhirPatient.Active.Should().Be(true);
+            mc2.FhirPatient?.Active.Should().Be(true);
         }
     }
 }
