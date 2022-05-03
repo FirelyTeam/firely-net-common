@@ -51,7 +51,7 @@ namespace Hl7.Fhir.Validation
                 return true;
             else if (x is null || y is null)
                 return false;
-            else if (x.Location?.FirstOrDefault() == y.Location?.FirstOrDefault() && x.Details?.Text == y.Details?.Text)
+            else if (x.Expression?.FirstOrDefault() == y.Expression?.FirstOrDefault() && x.Details?.Text == y.Details?.Text)
                 return true;
             else
                 return false;
@@ -59,7 +59,7 @@ namespace Hl7.Fhir.Validation
 
         public int GetHashCode(OperationOutcome.IssueComponent issue)
         {
-            var hash = unchecked(issue?.Location?.FirstOrDefault()?.GetHashCode() ^ issue?.Details?.Text?.GetHashCode());
+            var hash = unchecked(issue?.Expression?.FirstOrDefault()?.GetHashCode() ^ issue?.Details?.Text?.GetHashCode());
             return (hash is null) ? 0 : hash.Value;
         }
 
