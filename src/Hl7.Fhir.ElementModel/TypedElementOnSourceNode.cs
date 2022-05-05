@@ -370,10 +370,10 @@ namespace Hl7.Fhir.ElementModel
                 childSet = parent.Children();
             else
             {
-                var hit = tryGetBySuffixedName(dis, name, out var info);
-                childSet = hit && info.IsChoiceElement ?
-                    parent.Children(name + "*") :
-                    parent.Children(name);
+                var hit = dis.TryGetValue(name, out var info);
+                childSet = hit
+                    ? (info.IsChoiceElement ? parent.Children(name + "*") : parent.Children(name))
+                    : Enumerable.Empty<ISourceNode>();
             }
 
             string lastName = null;

@@ -70,14 +70,13 @@ namespace Hl7.Fhir.Model
     /// </summary>
     [FhirElement("value", IsPrimitiveValue=true, XmlSerialization=XmlRepresentation.XmlAttr, InSummary=true, Order=30)]
     [DeclaredType(Type = typeof(SystemPrimitive.Time))]
+    [TimePattern]
     [DataMember]
     public string Value
     {
       get { return (string)ObjectValue; }
       set { ObjectValue = value; OnPropertyChanged("Value"); }
     }
-
-    public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
 
   }
 

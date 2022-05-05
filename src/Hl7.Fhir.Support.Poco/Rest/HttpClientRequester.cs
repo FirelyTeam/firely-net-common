@@ -28,7 +28,7 @@ namespace Hl7.Fhir.Rest
 
             Client = new HttpClient(messageHandler, disposeHandler);
             Client.DefaultRequestHeaders.Add("User-Agent", $".NET FhirClient for FHIR");
-            Client.Timeout = new TimeSpan(0, 0, 0, Settings.Timeout);
+            Client.Timeout = TimeSpan.FromMilliseconds(Settings.Timeout);
         }
 
         public HttpClientRequester(Uri baseUrl, FhirClientSettings settings, HttpClient client)

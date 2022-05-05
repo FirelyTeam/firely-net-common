@@ -196,14 +196,6 @@ namespace Hl7.Fhir.Utility
     }
 #endif
 
-#if NETSTANDARD1_6
-    public static class NetStd16TypeExtensions
-    {
-        public static bool IsAssignableFrom(this Type a, Type b) =>
-            a.GetTypeInfo().IsAssignableFrom(b.GetTypeInfo());
-    }
-#endif
-
     public static class ReflectionHelper
     {
         public static bool IsAValueType(this Type t)
@@ -249,22 +241,7 @@ namespace Hl7.Fhir.Utility
         {
             if (t == null) throw Error.ArgumentNull("t");
 
-#if NETSTANDARD1_6
-            // Unfortunately, netstandard1.6 has no method to filter on bindingflags :-(
-            // Have to do it ourselves
-            return t.GetRuntimeProperties().Where(p => hasPublicInstanceReadAccessor(p));
-            //return t.GetRuntimeProperties(); //(BindingFlags.Instance | BindingFlags.Public);
-            // return t.GetTypeInfo().DeclaredProperties.Union(t.GetTypeInfo().BaseType.GetTypeInfo().DeclaredProperties); //(BindingFlags.Instance | BindingFlags.Public);
-
-            static bool hasPublicInstanceReadAccessor(PropertyInfo p)
-            {
-                if (!p.CanRead) return false;
-                var getMethod = p.GetMethod;
-                return getMethod.IsPublic && !getMethod.IsStatic;
-            }
-#else
             return t.GetProperties(BindingFlags.Instance | BindingFlags.Public);
-#endif
         }
 
         /// <summary>
@@ -408,6 +385,14 @@ namespace Hl7.Fhir.Utility
 
 
         internal static IEnumerable<FieldInfo> FindEnumFields(Type t) => t.GetTypeInfo().DeclaredFields.Where(a => a.IsPublic && a.IsStatic);
+
+        public static bool IsRepeatingElement(object value) => IsRepeatingElement(value, out _);
+
+        public static bool IsRepeatingElement(object value, out ICollection element)
+        {
+            element = value as ICollection;
+            return element is not null && !element.GetType().IsArray;
+        }
 
         public static bool IsArray(object value) => value.GetType().IsArray;
 
