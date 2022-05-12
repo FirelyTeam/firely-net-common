@@ -5,8 +5,8 @@ using System.Collections.Generic;
 
 namespace Hl7.Fhir.Support.Tests
 {
+    [Obsolete("The class `ObjectListExtensions` is obsolete and will be removed in the next major release. Obsolete since 2021-09-22")]
     [TestClass]
-
     public class ObjectListExtensionTests
     {
         [TestMethod]

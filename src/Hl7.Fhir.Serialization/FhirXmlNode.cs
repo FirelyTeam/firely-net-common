@@ -45,10 +45,7 @@ namespace Hl7.Fhir.Serialization
         public XNamespace[] AllowedExternalNamespaces => _settings.AllowedExternalNamespaces;
         public bool DisallowSchemaLocation => _settings.DisallowSchemaLocation;
         public bool PermissiveParsing => _settings.PermissiveParsing;
-
-#if !NETSTANDARD1_6
         public bool ValidateFhirXhtml => _settings.ValidateFhirXhtml;
-#endif
 
         private XElement _containedResource;
 
@@ -134,10 +131,8 @@ namespace Hl7.Fhir.Serialization
             // don't move into xhtml
             if (Current.AtXhtmlDiv())
             {
-#if !NETSTANDARD1_6
                 if (!PermissiveParsing && ValidateFhirXhtml)
                     ValidateXhtml(new XDocument(Current), this, this);
-#endif
                 yield break;
             }
 
@@ -294,13 +289,6 @@ namespace Hl7.Fhir.Serialization
                 return Enumerable.Empty<object>();
         }
 
-#if !NETSTANDARD1_6
-        //public static void ValidateXhtml(string xmlText, IExceptionSource ies, object source)
-        //{
-        //    reportOnValidation(() =>
-        //       SerializationUtil.RunFhirXhtmlSchemaValidation(xmlText), ies, source);
-        //}
-
         public static void ValidateXhtml(XDocument doc, IExceptionSource ies, object source)
         {
             // TODO: When this is moved out of FhirXmlNode to a later validation phase,
@@ -317,7 +305,6 @@ namespace Hl7.Fhir.Serialization
                         Error.Format("Parser: Encountered narrative with incorrect Xhtml. Xsd validation reported: " + problems)));
             }
         }
-#endif
 
         private static void raiseFormatError(object source, IExceptionSource ies, string message, XObject position)
         {

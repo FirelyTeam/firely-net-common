@@ -6,6 +6,8 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
+#nullable enable
+
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Utility;
 using System.Collections.Generic;
@@ -28,28 +30,76 @@ namespace Hl7.FhirPath
             return _cache.GetValue(expression);
         }
 
-        public static IEnumerable<ITypedElement> Select(this ITypedElement input, string expression, EvaluationContext ctx = null)
+
+        /// <summary>
+        /// Evaluates an expression against a given context and returns the result(s)
+        /// </summary>
+        /// <param name="input">Input on which the expression is being evaluated</param>
+        /// <param name="expression">Expression which is to be evaluated</param>
+        /// <param name="ctx">Context of the evaluation</param>
+        /// <returns>The result(s) of the expression</returns>
+        public static IEnumerable<ITypedElement> Select(this ITypedElement input, string expression, EvaluationContext? ctx = null)
         {
             input = input.ToScopedNode();
             var evaluator = getCompiledExpression(expression);
             return evaluator(input, ctx ?? EvaluationContext.CreateDefault());
         }
 
-        public static object Scalar(this ITypedElement input, string expression, EvaluationContext ctx = null)
+
+        /// <summary>
+        /// Evaluates an expression against a given context and returns a single result
+        /// </summary>
+        /// <param name="input">Input on which the expression is being evaluated</param>
+        /// <param name="expression">Expression which is to be evaluated</param>
+        /// <param name="ctx">Context of the evaluation</param>
+        /// <returns>The single result of the expression, and null if the expression returns multiple results</returns>
+        public static object? Scalar(this ITypedElement input, string expression, EvaluationContext? ctx = null)
         {
             input = input.ToScopedNode();
             var evaluator = getCompiledExpression(expression);
             return evaluator.Scalar(input, ctx ?? EvaluationContext.CreateDefault());
         }
 
-        public static bool Predicate(this ITypedElement input, string expression, EvaluationContext ctx = null)
+
+        /// <summary>
+        /// Evaluates an expression and returns true for expression being evaluated as true or empty, otherwise false.
+        /// </summary>
+        /// <param name="input">Input on which the expression is being evaluated</param>
+        /// <param name="expression">Expression which is to be evaluated</param>
+        /// <param name="ctx">Context of the evaluation</param>
+        /// <returns>True if expression returns true of empty, otheriwse false</returns>
+        public static bool Predicate(this ITypedElement input, string expression, EvaluationContext? ctx = null)
         {
             input = input.ToScopedNode();
             var evaluator = getCompiledExpression(expression);
             return evaluator.Predicate(input, ctx ?? EvaluationContext.CreateDefault());
         }
 
-        public static bool IsBoolean(this ITypedElement input, string expression, bool value, EvaluationContext ctx = null)
+
+        /// <summary>
+        /// Evaluates an expression and returns true for expression being evaluated as true, and false if the expression returns false or empty.
+        /// </summary>
+        /// <param name="input">Input on which the expression is being evaluated</param>
+        /// <param name="expression">Expression which is to be evaluated</param>
+        /// <param name="ctx">Context of the evaluation</param>
+        /// <returns>True if expression returns true , and false if expression returns empty of false.</returns>
+        public static bool IsTrue(this ITypedElement input, string expression, EvaluationContext? ctx = null)
+        {
+            input = input.ToScopedNode();
+            var evaluator = getCompiledExpression(expression);
+            return evaluator.IsTrue(input, ctx ?? EvaluationContext.CreateDefault());
+        }
+
+
+        /// <summary>
+        ///Evaluates if the result of an expression is equal to a given boolean.
+        /// </summary>
+        /// <param name="input">Input on which the expression is being evaluated</param>
+        /// <param name="value">Boolean that is to be compared to the result of the expression</param>
+        /// <param name="expression">Expression which is to be evaluated</param>
+        /// <param name="ctx">Context of the evaluation</param>
+        /// <returns>True if the result of an expression is equal to a given boolean, otherwise false</returns>
+        public static bool IsBoolean(this ITypedElement input, string expression, bool value, EvaluationContext? ctx = null)
         {
             input = input.ToScopedNode();
 
@@ -58,3 +108,5 @@ namespace Hl7.FhirPath
         }
     }
 }
+
+#nullable restore

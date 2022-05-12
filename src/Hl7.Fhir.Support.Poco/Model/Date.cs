@@ -28,8 +28,10 @@
 
 */
 
-using System;
 using Hl7.Fhir.Serialization;
+using System;
+
+#nullable enable
 
 namespace Hl7.Fhir.Model
 {
@@ -53,19 +55,29 @@ namespace Hl7.Fhir.Model
         /// Gets the current date in the local timezone
         /// </summary>
         /// <returns>Gets the current date in the local timezone</returns>
-        public static Date Today() => new Date(DateTimeOffset.Now.ToString("yyyy-MM-dd"));
+        public static Date Today() => new(DateTimeOffset.Now.ToString("yyyy-MM-dd"));
 
         /// <summary>
         /// Gets the current date in the timezone UTC
         /// </summary>
         /// <returns>Gets the current date in the timezone UTC</returns>
-        public static Date UtcToday() => new Date(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd"));
+        public static Date UtcToday() => new(DateTimeOffset.UtcNow.ToString("yyyy-MM-dd"));
 
         [Obsolete("Use ToDateTimeOffset instead")]
-        public DateTime? ToDateTime() => 
-            Value == null ? null : (DateTime?)PrimitiveTypeConverter.ConvertTo<DateTimeOffset>(Value).DateTime;
+        public DateTime? ToDateTime() =>
+            Value == null ? null : PrimitiveTypeConverter.ConvertTo<DateTimeOffset>(Value).DateTime;
 
+        /// <summary>
+        /// Converts this instance of a (partial) date into a .NET <see cref="DateTimeOffset"/>.
+        /// </summary>
         public DateTimeOffset? ToDateTimeOffset() =>
-            Value == null ? null : (DateTimeOffset?)PrimitiveTypeConverter.ConvertTo<DateTimeOffset>(Value);
+            Value == null ? null : PrimitiveTypeConverter.ConvertTo<DateTimeOffset>(Value);
+
+        /// <summary>
+        /// Checks whether the given literal is correctly formatted.
+        /// </summary>
+        public static bool IsValidValue(string value) => ElementModel.Types.Date.TryParse(value, out var parsed) && !parsed.HasOffset;
     }
 }
+
+#nullable restore

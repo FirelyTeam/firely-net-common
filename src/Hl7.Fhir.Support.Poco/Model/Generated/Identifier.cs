@@ -98,7 +98,7 @@ namespace Hl7.Fhir.Model
     /// <summary>
     /// usual | official | temp | secondary | old (If known)
     /// </summary>
-    [FhirElement("use", InSummary=true, Order=30)]
+    [FhirElement("use", InSummary=true, IsModifier=true, Order=30)]
     [DeclaredType(Type = typeof(Code))]
     [DataMember]
     public Code<Hl7.Fhir.Model.Identifier.IdentifierUse> UseElement
@@ -313,6 +313,45 @@ namespace Hl7.Fhir.Model
         if (Period != null) yield return new ElementValue("period", Period);
         if (Assigner != null) yield return new ElementValue("assigner", Assigner);
       }
+    }
+
+    protected override bool TryGetValue(string key, out object value)
+    {
+      switch (key)
+      {
+        case "use":
+          value = UseElement;
+          return UseElement is not null;
+        case "type":
+          value = Type;
+          return Type is not null;
+        case "system":
+          value = SystemElement;
+          return SystemElement is not null;
+        case "value":
+          value = ValueElement;
+          return ValueElement is not null;
+        case "period":
+          value = Period;
+          return Period is not null;
+        case "assigner":
+          value = Assigner;
+          return Assigner is not null;
+        default:
+          return base.TryGetValue(key, out value);
+      };
+
+    }
+
+    protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+    {
+      foreach (var kvp in base.GetElementPairs()) yield return kvp;
+      if (UseElement is not null) yield return new KeyValuePair<string,object>("use",UseElement);
+      if (Type is not null) yield return new KeyValuePair<string,object>("type",Type);
+      if (SystemElement is not null) yield return new KeyValuePair<string,object>("system",SystemElement);
+      if (ValueElement is not null) yield return new KeyValuePair<string,object>("value",ValueElement);
+      if (Period is not null) yield return new KeyValuePair<string,object>("period",Period);
+      if (Assigner is not null) yield return new KeyValuePair<string,object>("assigner",Assigner);
     }
 
   }

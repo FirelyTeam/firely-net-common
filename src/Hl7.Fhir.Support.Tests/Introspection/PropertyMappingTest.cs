@@ -71,15 +71,18 @@ namespace Hl7.Fhir.Tests.Introspection
         [TestMethod]
         public void TestGetByName()
         {
-            var cm = ClassMapping.TryCreate(typeof(Extension), out var mapping);
-            mapping.FindMappedElementByName("url").Should().NotBeNull();
-            mapping.FindMappedElementByName("urlx").Should().BeNull();
-            mapping.FindMappedElementByName("ur").Should().BeNull();
-            mapping.FindMappedElementByName("value").Should().NotBeNull();
+            ClassMapping.TryCreate(typeof(Extension), out var cm).Should().BeTrue();
+            cm.FindMappedElementByName("url").Should().NotBeNull();
+            cm.FindMappedElementByName("urlx").Should().BeNull();
+            cm.FindMappedElementByName("ur").Should().BeNull();
+            cm.FindMappedElementByName("value").Should().NotBeNull();
 
-            mapping.FindMappedElementByChoiceName("value").Should().NotBeNull();
-            mapping.FindMappedElementByChoiceName("valu").Should().BeNull();
-            mapping.FindMappedElementByChoiceName("valueString").Should().NotBeNull();
+            cm.FindMappedElementByChoiceName("value").Should().NotBeNull();
+            cm.FindMappedElementByChoiceName("valu").Should().BeNull();
+            cm.FindMappedElementByChoiceName("valueString").Should().NotBeNull();
+
+            var urlChild = cm.FindMappedElementByName("url");
+            urlChild.DeclaringClass.Should().Be(cm);
         }
 
         [TestMethod]

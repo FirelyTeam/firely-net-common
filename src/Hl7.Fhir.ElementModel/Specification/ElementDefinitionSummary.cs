@@ -49,6 +49,7 @@ namespace Hl7.Fhir.Specification
             Order = source.Order;
             NonDefaultNamespace = source.NonDefaultNamespace;
             InSummary = source.InSummary;
+            IsModifier = source.IsModifier;
             IsRequired = source.IsRequired;
         }
 
@@ -69,6 +70,10 @@ namespace Hl7.Fhir.Specification
         public bool IsRequired { get; private set; }
 
         public bool InSummary { get; private set; }
+
+        /// <inheritdoc/>
+        public bool IsModifier { get; private set; }
+
         public XmlRepresentation Representation { get; private set; }
 
         public int Order { get; private set; }
