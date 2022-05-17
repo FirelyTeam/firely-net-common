@@ -1,8 +1,18 @@
-﻿using Hl7.Fhir.Specification;
+﻿/* 
+ * Copyright (c) 2021, Firely (info@fire.ly) and contributors
+ * See the file CONTRIBUTORS for details.
+ * 
+ * This file is licensed under the BSD 3-Clause license
+ * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
+ */
+
+using Hl7.Fhir.Specification;
 using System;
 
 namespace Hl7.Fhir.Utility
 {
+
+
     public class FhirReleaseParser
     {
         /// <summary>

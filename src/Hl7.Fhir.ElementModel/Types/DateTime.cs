@@ -30,9 +30,11 @@ namespace Hl7.Fhir.ElementModel.Types
 
         public static bool TryParse(string representation, out DateTime value) => tryParse(representation, out value);
 
+        public static string FormatDateTimeOffset(DateTimeOffset dto) => dto.ToString(FMT_FULL);
+
         public static DateTime FromDateTimeOffset(DateTimeOffset dto)
         {
-            var representation = dto.ToString(FMT_FULL);
+            var representation = FormatDateTimeOffset(dto);
             return Parse(representation);
         }
 
@@ -46,13 +48,13 @@ namespace Hl7.Fhir.ElementModel.Types
         public Date TruncateToDate() => Date.FromDateTimeOffset(
             ToDateTimeOffset(_parsedValue.Offset), Precision, includeOffset: HasOffset);
 
-        public int? Years => Precision >= DateTimePrecision.Year ? _parsedValue.Year : (int?)null;
-        public int? Months => Precision >= DateTimePrecision.Month ? _parsedValue.Month : (int?)null;
-        public int? Days => Precision >= DateTimePrecision.Day ? _parsedValue.Day : (int?)null;
-        public int? Hours => Precision >= DateTimePrecision.Hour ? _parsedValue.Hour : (int?)null;
-        public int? Minutes => Precision >= DateTimePrecision.Minute ? _parsedValue.Minute : (int?)null;
-        public int? Seconds => Precision >= DateTimePrecision.Second ? _parsedValue.Second : (int?)null;
-        public int? Millis => Precision >= DateTimePrecision.Fraction ? _parsedValue.Millisecond : (int?)null;
+        public int? Years => Precision >= DateTimePrecision.Year ? _parsedValue.Year : null;
+        public int? Months => Precision >= DateTimePrecision.Month ? _parsedValue.Month : null;
+        public int? Days => Precision >= DateTimePrecision.Day ? _parsedValue.Day : null;
+        public int? Hours => Precision >= DateTimePrecision.Hour ? _parsedValue.Hour : null;
+        public int? Minutes => Precision >= DateTimePrecision.Minute ? _parsedValue.Minute : null;
+        public int? Seconds => Precision >= DateTimePrecision.Second ? _parsedValue.Second : null;
+        public int? Millis => Precision >= DateTimePrecision.Fraction ? _parsedValue.Millisecond : null;
 
         public static DateTime operator +(DateTime dateTimeValue, Quantity addValue)
         {
@@ -123,7 +125,7 @@ namespace Hl7.Fhir.ElementModel.Types
         /// <summary>
         /// The span of time ahead/behind UTC
         /// </summary>
-        public TimeSpan? Offset => HasOffset ? _parsedValue.Offset : (TimeSpan?)null;
+        public TimeSpan? Offset => HasOffset ? _parsedValue.Offset : null;
 
         private readonly string _original;
         private readonly DateTimeOffset _parsedValue;

@@ -6,9 +6,6 @@
  * available at https://github.com/FirelyTeam/firely-net-sdk/blob/master/LICENSE
  */
 
-using System;
-using Hl7.Fhir.Utility;
-using Hl7.Fhir.Specification;
 using System.Collections.Generic;
 
 namespace Hl7.Fhir.ElementModel

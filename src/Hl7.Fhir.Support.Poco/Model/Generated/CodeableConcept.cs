@@ -167,6 +167,29 @@ namespace Hl7.Fhir.Model
       }
     }
 
+    protected override bool TryGetValue(string key, out object value)
+    {
+      switch (key)
+      {
+        case "coding":
+          value = Coding;
+          return Coding?.Any() == true;
+        case "text":
+          value = TextElement;
+          return TextElement is not null;
+        default:
+          return base.TryGetValue(key, out value);
+      };
+
+    }
+
+    protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+    {
+      foreach (var kvp in base.GetElementPairs()) yield return kvp;
+      if (Coding?.Any() == true) yield return new KeyValuePair<string,object>("coding",Coding);
+      if (TextElement is not null) yield return new KeyValuePair<string,object>("text",TextElement);
+    }
+
   }
 
 }

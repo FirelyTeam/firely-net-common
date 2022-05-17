@@ -78,8 +78,6 @@ namespace Hl7.Fhir.Model
       set { ObjectValue = value; OnPropertyChanged("Value"); }
     }
 
-    public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
-
   }
 
 }
