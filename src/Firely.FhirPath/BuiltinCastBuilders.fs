@@ -1,32 +1,9 @@
 ﻿module rec Firely.FhirPath.CastStepBuilding
 
 open System
+open System.Linq
 open System.Linq.Expressions
 open TypeExtensions
-open System.Collections.Generic
-
-type GenericParam = GenericParam of string
-
-let private buildGp(gpType: Type) = GenericParam(gpType.Name)
-
-type GenericParamAssignments() =
-    inherit Dictionary<GenericParam,Type>()
-
-type StepBuildResult<'a> = 
-    | Success of Expression:'a * Complexity:int * gps:GenericParamAssignments
-    | Restart of GenericParamAssignments
-    | Fail
-
-    member sbr.bind(f: GenericParamAssignments -> 'a -> StepBuildResult<'b>): StepBuildResult<'b> = 
-        match sbr with
-        | Fail -> Fail
-        | Restart x -> Restart x
-        | Success (g,c,gps) -> 
-            let m' = f gps g
-            match m' with
-            | Fail -> Fail
-            | Restart x -> Restart x
-            | Success(g',c',gps') -> Success(g',c+c',gps')
 
 type CastStepBuilder = Expression -> Type -> GenericParamAssignments -> StepBuildResult<Expression>
 
@@ -48,15 +25,15 @@ let ConvertLambda (source: Expression) (target:Type) gps =
         Fail
     else
     
-    let sourceFunc = source :?> LambdaExpression
-    let sourceArgumentExpressions = Seq.map (fun p -> p :> Expression) sourceFunc.Parameters |> List.ofSeq
-    let targetParameterTypes = target.GetDelegateParameters() |> List.ofArray;
+    let sourceFunc = source :?> LambdaExpression    
+    let targetParameterTypes = target.GetDelegateParameters();
 
-    if sourceArgumentExpressions.Length <> targetParameterTypes.Length then
+    if sourceFunc.Parameters.Count <> targetParameterTypes.Length then
         Fail
     else
 
-    let inputs = List.zip sourceArgumentExpressions targetParameterTypes
+    let sourceArgumentExpressions = sourceFunc.Parameters.Cast<Expression>()
+    let inputs = Seq.zip sourceArgumentExpressions targetParameterTypes |> List.ofSeq
     let castParams = BuildStepsMany3 inputs gps
 
     match castParams with
@@ -69,8 +46,37 @@ let ConvertLambda (source: Expression) (target:Type) gps =
                 
         let callWrapper = CallWrapperExpression(sourceFunc, el |> List.toArray, resultFuncType)
     
-        Success(callWrapper, c, gpa)
+        Success(callWrapper :> Expression, c, gpa)
 
+let ConvertGenericParam (source:Expression) (target:Type) (gps:GenericParamAssignments) = 
+    if not target.IsGenericParameter then
+        Fail
+    else
+    
+    let (hasValue,assigned) = gps.TryGetValue target
+
+    if hasValue then
+        let convertToSuggestedGp = BuildSteps source assigned gps
+        match convertToSuggestedGp with
+        | Success _ -> convertToSuggestedGp
+        | Fail -> Fail
+        | Restart _ ->   // ignore suggestion from restart? Mmmm...
+            let newGpa = new GenericParamAssignments(gps)
+            newGpa.Add(target, source.Type)
+            Restart newGpa
+    else
+        let newGpa = new GenericParamAssignments(gps)
+        newGpa.Add(target, source.Type)
+        Success(source, 0, newGpa)
+
+let ConvertFromCollection (source:Expression) (target:Type) (gps:GenericParamAssignments) = 
+    let canApproach = source.Type.IsCollection() && not (target.IsCollection())
+    if not canApproach then
+        Fail
+    else
+
+    let extractSingleElement = Success(CollectionToSingleExpression(source), 1, gps)
+    StepBuildResult.andThen extractSingleElement (fun g e -> BuildSteps e target g)
 
 let BuildSteps(source: Expression)(target: Type)(gp: GenericParamAssignments): StepBuildResult<Expression> =
     let start (first: CastStepBuilder) = first source target gp
@@ -80,57 +86,43 @@ let BuildSteps(source: Expression)(target: Type)(gp: GenericParamAssignments): S
         | Restart _ -> result
         | Fail -> next source target gp
 
-    start ConvertValue
-        ?= ConvertIdentity
-  //      ?= ConvertLambda
+    start ConvertIdentity
+        ?= ConvertGenericParam
+        ?= ConvertFromCollection
+        ?= ConvertLambda
+        ?= ConvertValue
 
-type AssignmentHypotheses() = 
-    inherit System.Collections.Generic.List<GenericParamAssignments>()
-
-let isSuccess = function | Success _ -> true | _ -> false
-
-let collectUntil (predicate: 'a->bool)(s: seq<'a>) =
-  /// Iterates over the enumerator, yielding elements and
-  /// stops after an element for which the predicate does not hold
-  let rec loop (en:IEnumerator<_>) = seq {
-    if en.MoveNext() then
-      // Always yield the current, stop if predicate does not hold
-      yield en.Current
-      if predicate en.Current then
-        yield! loop en }
-
-  // Get enumerator of the sequence and yield all results
-  // (making sure that the enumerator gets disposed)
-  seq { use en = s.GetEnumerator()
-        yield! loop en }
 
 let BuildStepsMany(inputs: list<Expression*Type>)(gps: GenericParamAssignments): StepBuildResult<Expression list> =    
-    let (e,t) = List.head inputs
-    let seed = BuildSteps e t gps
-    let scanner (acc:StepBuildResult<Expression>) (e,t) = acc.bind(fun gpa _ -> BuildSteps e t gpa)        
-    let preliminaryResults = inputs.Tail |> List.scan scanner seed |> collectUntil (fun i -> isSuccess i) |> List.ofSeq
+    if List.isEmpty inputs then 
+        Success([],0,gps)
+    else
+  
+    let addToList (e,t) gpa l =
+        let buildResult = BuildSteps e t gpa
+        match buildResult with
+        | Success (e,c,gps) -> Success(l @ [e],c,gps)
+        | Fail -> Fail
+        | Restart a -> Restart a
 
-    let lastResult = List.last preliminaryResults
-    let getSuccess = function | Success (x,_,_) -> x | _ -> raise (new InvalidOperationException("Only expected successess here."))
-    match lastResult with
-    | Success (_, c, gps) -> Success((List.map (fun (br:StepBuildResult<Expression>) -> (getSuccess br)) preliminaryResults), c, gps)
-    | Fail -> Fail
-    | Restart x -> Restart x
+    let seed = addToList (List.head inputs) gps []
+    let scanner2 (acc:StepBuildResult<Expression list>) p = StepBuildResult.andThen acc (fun gpa (l: Expression list) -> addToList p gpa l)
+    
+    inputs |> List.fold scanner2 seed
+
 
 let BuildStepsMany3 (inputs: list<Expression*Type>)(gps: GenericParamAssignments): StepBuildResult<Expression list> =
-    let rec tryBuild (hypotheses: AssignmentHypotheses) (inputs: list<Expression*Type>)(gps: GenericParamAssignments): StepBuildResult<Expression list> = 
+    let rec tryBuild hypotheses inputs gps = 
         let result = BuildStepsMany inputs gps
 
         match result with
         | Success _ -> result
         | Fail -> result
         | Restart gpa ->
-            if hypotheses.Contains(gpa) then
+            if List.contains (gpa.GetHashCode()) hypotheses then
                 Fail
             else
-                hypotheses.Add(gpa)
-                tryBuild hypotheses inputs gpa
+                tryBuild (hypotheses @ [gpa.GetHashCode()]) inputs gpa
         
-    let firstHypotheses = AssignmentHypotheses()
-    firstHypotheses.Add(gps)
+    let firstHypotheses = [gps.GetHashCode()]
     tryBuild firstHypotheses inputs gps

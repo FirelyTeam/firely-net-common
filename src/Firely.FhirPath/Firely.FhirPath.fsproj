@@ -13,9 +13,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Compile Include="CustomExpressions.fs" />
 		<Compile Include="TypeExtensions.fs" />
+		<Compile Include="CustomExpressions.fs" />
 		<Compile Include="CastBuilder.fs" />
+		<Compile Include="StepBuildResult.fs" />
 		<Compile Include="BuiltinCastBuilders.fs" />
 	</ItemGroup>
 

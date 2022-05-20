@@ -12,10 +12,10 @@ namespace HL7.FhirPath.Tests.NewCompiler
         [TestMethod]
         public void TestValueConverter()
         {
-            var parameterAssignments = new CastStepBuilding.GenericParamAssignments();
+            var parameterAssignments = new GenericParamAssignments();
             var result = CastStepBuilding.ConvertValue(Expression.Constant(3), typeof(long), parameterAssignments);
 
-            var sr = result.Should().BeOfType<CastStepBuilding.StepBuildResult<Expression>.Success>().Subject;
+            var sr = result.Should().BeOfType<StepBuildResult<Expression>.Success>().Subject;
             sr.Expression.Type.Should().Be(typeof(long));
             sr.Expression.NodeType.Should().Be(ExpressionType.Convert);
 

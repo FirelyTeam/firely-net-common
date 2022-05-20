@@ -10,7 +10,7 @@ type Type with
     
   member t.IsContainerOf(containerType: Type) = t.GetContainerInterface(containerType).IsSome
   
-  member t.IsCollection = t.IsContainerOf(typedefof<ICollection<_>>)
+  member t.IsCollection() = t.IsContainerOf(typedefof<ICollection<_>>)
 
   member t.GetContainerParamOf(containerType: Type): Type option = 
     let getExactlyOneArgument (t: Type) = t.GetGenericArguments() |> Array.tryExactlyOne
