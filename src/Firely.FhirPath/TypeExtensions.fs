@@ -5,7 +5,7 @@ open System.Collections.Generic
 
 type Type with
   member t.GetContainerInterface(containerType: Type): Type option =
-    seq { yield! t.GetInterfaces(); yield containerType }
+    seq { yield! t.GetInterfaces(); yield t }
     |> Seq.tryFind (fun x -> x.IsGenericType && x.GetGenericTypeDefinition() = containerType)
     
   member t.IsContainerOf(containerType: Type) = t.GetContainerInterface(containerType).IsSome
@@ -16,7 +16,7 @@ type Type with
     let getExactlyOneArgument (t: Type) = t.GetGenericArguments() |> Array.tryExactlyOne
     t.GetContainerInterface(containerType) |> Option.bind getExactlyOneArgument
 
-  member t.GetCollectionElement(): Type option = t.GetContainerInterface(typedefof<ICollection<_>>)
+  member t.GetCollectionElement(): Type option = t.GetContainerParamOf(typedefof<ICollection<_>>)
 
   member t.IsDelegate(): bool = t.IsGenericType && typeof<Delegate>.IsAssignableFrom(t)
 

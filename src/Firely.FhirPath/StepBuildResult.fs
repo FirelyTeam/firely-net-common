@@ -11,8 +11,7 @@ type StepBuildResult<'a> =
     | Restart of GenericParamAssignments
     | Fail
 
-module StepBuildResult =
-    let andThen(sbr: StepBuildResult<'a>)(f: GenericParamAssignments -> 'a -> StepBuildResult<'b>): StepBuildResult<'b> = 
+    member sbr.andThen(f: GenericParamAssignments -> 'a -> StepBuildResult<'b>): StepBuildResult<'b> = 
         match sbr with
         | Fail -> Fail
         | Restart x -> Restart x
