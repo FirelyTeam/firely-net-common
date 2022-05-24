@@ -49,8 +49,8 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition=" '$(Configuration)' == 'Debug' Or '$(Configuration)' == 'FullDebug' ">
-		<DebugType>portable</DebugType>
-		<DebugSymbols>True</DebugSymbols>
+		<DebugType>full</DebugType>
+		<DebugSymbols>true</DebugSymbols>
 		<NoWarn>1591</NoWarn>
 		<Optimize>false</Optimize>
 		<DefineConstants>$(DefineConstants);DEBUG;TRACE</DefineConstants>

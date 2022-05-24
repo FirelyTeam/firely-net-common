@@ -6,13 +6,6 @@ open System.Linq.Expressions
 open TypeExtensions
 
 /// <summary>
-/// Codifies the function signature of a function that builds a Linq.Expression to convert from an
-/// Expression representing an argument of a type to a parameter of another type.
-/// </summary>
-type CastStepBuilder = Expression -> Type -> GenericParamAssignments -> StepBuildResult<Expression>
-
-
-/// <summary>
 /// The trivial cast where no conversion is necessary, is tried first to short-cut building of
 /// more complex conversions.
 /// </summary
@@ -213,5 +206,4 @@ let internal buildCastMany (inputs: list<Expression*Type>)(gps: GenericParamAssi
 let BuildCastMany (inputs: seq<Tuple<Expression,Type>>, gps: GenericParamAssignments): StepBuildResult<seq<Expression>> =
     let inputs' = List.ofSeq inputs
     let result' = buildCastMany inputs' gps
-    //result'.map (fun el -> new System.Collections.Generic.List<Expression>(el))
     result'.map (fun el -> el :> seq<Expression>)

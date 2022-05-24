@@ -164,7 +164,7 @@ namespace HL7.FhirPath.Tests.NewCompiler
         [TestMethod]
         public void TestMatchMethod()
         {
-            var method = typeof(TestFunctions).GetMethods()[0];
+            var method = typeof(ITestFunctions).GetMethods()[0];
             var correct = new[] { Expression.Constant(4), Expression.Constant(5L), Expression.Constant(true) };
 
             MethodMatcher.MatchMethod(method, "DoIt", correct).IsSuccess.Should().BeTrue();
@@ -181,24 +181,24 @@ namespace HL7.FhirPath.Tests.NewCompiler
         [TestMethod]
         public void TestMatchMethods()
         {
-            var methods = typeof(TestFunctions).GetMethods();
+            var methods = typeof(ITestFunctions).GetMethods();
 
             // correct, but needs casts
             var correct1 = MethodMatcher.MatchMethods(methods, "DoIt", new[] { Expression.Constant(4), Expression.Constant(5L), Expression.Constant(true) });
-            var match = correct1.Should().BeOfType<MethodMatcher.MatchResult.Match>().Subject;
+            var match = correct1.Should().BeOfType<StepBuildResult<MethodMatch>.Success>().Subject;
 
             // correct, more direct match
             var correct2 = MethodMatcher.MatchMethods(methods, "DoIt", new[] { Expression.Constant(4), Expression.Constant(5), Expression.Constant(true) });
-            var match2 = correct2.Should().BeOfType<MethodMatcher.MatchResult.Match>().Subject;
+            var match2 = correct2.Should().BeOfType<StepBuildResult<MethodMatch>.Success>().Subject;
 
-            match2.Result.Complexity.Should().BeLessThan(match.Result.Complexity);
+            match2.Complexity.Should().BeLessThan(match.Complexity);
 
             // no match found
             var wrong = MethodMatcher.MatchMethods(methods, "DoIt", new[] { Expression.Constant("Hi!"), Expression.Constant(5L), Expression.Constant(true) });
-            wrong.IsMatch.Should().BeFalse();
+            wrong.IsFail.Should().BeTrue();
         }
 
-        private interface TestFunctions
+        private interface ITestFunctions
         {
             U DoIt<U>(ICollection<U> x, U y, bool z);
             bool DoIt(ICollection<int> x, int y, bool q);
