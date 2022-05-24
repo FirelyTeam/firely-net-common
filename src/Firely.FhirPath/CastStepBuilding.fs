@@ -22,30 +22,44 @@ let CastNoCast (source:Expression) target gps =
     else
         Fail
 
-let CastValue source target gps = 
+
+//let CastFromNullable (source:Expression) (target:Type) gps =
+//    let supported = source.Type.IsNullable() && not(target.IsNullable())
+
+
+let CastValue (source:Expression) target gps = 
+    let supported = source.Type = typeof<int> && target = typeof<int64>
+    if not supported then 
+        Fail
+    else
+
     try
         // TODO: This is actually quite a lot more flexible than the casts allowed by FhirPath
         // so we should set some hard limits here
+        // And if we don't allow long->int, we don't need 'Checked' either.
         let conversion = Expression.ConvertChecked(source,target) :> Expression
-        Success(conversion,1,gps)
+        Success(conversion,2,gps)
     with 
         | :? InvalidOperationException -> Fail
+        | :? ArgumentException -> Fail
 
 let CastLambda (source: Expression) (target:Type) gps = 
-    if not(source :? LambdaExpression && target.IsDelegate()) then
+    let supported = source.Type.IsDelegate() && target.IsDelegate()
+    
+    if not supported then
         Fail
     else
     
-    let sourceFunc = source :?> LambdaExpression    
+    let sourceParameterTypes = source.Type.GetDelegateParameters();
     let targetParameterTypes = target.GetDelegateParameters();
 
-    if sourceFunc.Parameters.Count <> targetParameterTypes.Length then
+    if sourceParameterTypes.Length <> targetParameterTypes.Length then
         Fail
     else
 
-    let sourceArgumentExpressions = sourceFunc.Parameters.Cast<Expression>()
+    let sourceArgumentExpressions = Seq.map (fun t -> Expression.Parameter(t) :> Expression) sourceParameterTypes
     let inputs = Seq.zip sourceArgumentExpressions targetParameterTypes |> List.ofSeq
-    let castParams = BuildCastMany inputs gps
+    let castParams = buildCastMany inputs gps
 
     match castParams with
     | Fail -> Fail
@@ -55,9 +69,9 @@ let CastLambda (source: Expression) (target:Type) gps =
             let funcParameters = el |> List.map (fun cp -> cp.Type) |> List.toArray
             Expression.GetFuncType(funcParameters)
                 
-        let callWrapper = CallWrapperExpression(sourceFunc, el |> List.toArray, resultFuncType)
+        let callWrapper = CallWrapperExpression(source, el |> List.toArray, resultFuncType)
     
-        Success(callWrapper :> Expression, c, gpa)
+        Success(callWrapper :> Expression, c+2, gpa)
 
 let CastGenericParam (source:Expression) (target:Type) (gps:GenericParamAssignments) = 
     if not target.IsGenericParameter then
@@ -70,15 +84,17 @@ let CastGenericParam (source:Expression) (target:Type) (gps:GenericParamAssignme
         let convertToSuggestedGp = BuildCast source assigned gps
         match convertToSuggestedGp with
         | Success _ -> convertToSuggestedGp
-        | Fail -> Fail
-        | Restart _ ->   // ignore suggestion from restart? Mmmm...
+        | Fail -> 
             let newGpa = new GenericParamAssignments(gps)
+            newGpa.Remove(target) |> ignore
             newGpa.Add(target, source.Type)
             Restart newGpa
+        | Restart a -> Restart a
+           
     else
         let newGpa = new GenericParamAssignments(gps)
         newGpa.Add(target, source.Type)
-        Success(source, 0, newGpa)
+        Success(source, 1, newGpa)
 
 let CastFromCollection (source:Expression) (target:Type) (gps:GenericParamAssignments) = 
     let canApproach = source.Type.IsCollection() && not (target.IsCollection())
@@ -86,7 +102,7 @@ let CastFromCollection (source:Expression) (target:Type) (gps:GenericParamAssign
         Fail
     else
 
-    let extractSingleElement = Success(CollectionToSingleExpression(source), 1, gps)
+    let extractSingleElement = Success(CollectionToSingleExpression(source), 2, gps)
     extractSingleElement.andThen (fun g e -> BuildCast e target g)
 
 
@@ -98,7 +114,7 @@ let CastToCollection (source:Expression) (target:Type) (gps:GenericParamAssignme
 
     let targetElementType = target.GetCollectionElement().Value;
     let convertSingleElement = BuildCast source targetElementType gps
-    let exprBuilder g e = Success(SingleToCollectionExpression(e) :> Expression,1,g)
+    let exprBuilder g e = Success(SingleToCollectionExpression(e) :> Expression,2,g)
     convertSingleElement.andThen exprBuilder
 
 
@@ -113,8 +129,9 @@ let CastInterCollection (source:Expression) (target:Type) (gps:GenericParamAssig
     
     let elementConversionParam = Expression.Parameter(sourceElementType)
     let elementConversion = BuildCast elementConversionParam targetElementType gps
-    let converterBuilder g e =         
-        let delegateType = Expression.GetFuncType([| sourceElementType; targetElementType |])
+    let converterBuilder g (e:Expression) =
+        let convertedElementType = e.Type
+        let delegateType = Expression.GetFuncType([| sourceElementType; convertedElementType |])
         let lambdaExpression = Expression.Lambda(delegateType,e,elementConversionParam)
         let converter = CollectionToCollectionExpression(source, lambdaExpression) :> Expression
         Success(converter, 2, gps)
@@ -168,7 +185,7 @@ let private attemptBuildStepsMany(inputs: list<Expression*Type>)(gps: GenericPar
 /// as a list of tuples (Expression,Type), where the Expression is the expression for the argument passed to the function,
 /// and the Type the the type of the corresponding argument of the function.
 /// </summary>
-let BuildCastMany (inputs: list<Expression*Type>)(gps: GenericParamAssignments): StepBuildResult<Expression list> =
+let internal buildCastMany (inputs: list<Expression*Type>)(gps: GenericParamAssignments): StepBuildResult<Expression list> =
     // given a hypotheses (set of generic parameter assignments),
     // try building the casts.
     let rec tryBuild hypotheses inputs gps = 
@@ -192,3 +209,9 @@ let BuildCastMany (inputs: list<Expression*Type>)(gps: GenericParamAssignments):
 
     // Start with the initial hypotheses given to us.
     tryBuild hypothesesSeen inputs gps
+
+let BuildCastMany (inputs: seq<Tuple<Expression,Type>>, gps: GenericParamAssignments): StepBuildResult<seq<Expression>> =
+    let inputs' = List.ofSeq inputs
+    let result' = buildCastMany inputs' gps
+    //result'.map (fun el -> new System.Collections.Generic.List<Expression>(el))
+    result'.map (fun el -> el :> seq<Expression>)

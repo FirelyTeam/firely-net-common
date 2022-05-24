@@ -15,9 +15,9 @@
 	<ItemGroup>
 		<Compile Include="TypeExtensions.fs" />
 		<Compile Include="CustomExpressions.fs" />
-		<Compile Include="CastBuilder.fs" />
 		<Compile Include="StepBuildResult.fs" />
-		<Compile Include="BuiltinCastBuilders.fs" />
+		<Compile Include="CastStepBuilding.fs" />
+		<Compile Include="MethodMatcher.fs" />
 	</ItemGroup>
 
 </Project>

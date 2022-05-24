@@ -2,10 +2,11 @@
 
 open System.Linq.Expressions
 open System
+open System.Reflection
 open TypeExtensions
 open System.Linq
 
-type CallWrapperExpression(source: LambdaExpression, parameters: Expression[], targetType: Type) = 
+type CallWrapperExpression(source: Expression, parameters: Expression[], targetType: Type) = 
     inherit Expression()
 
     override e.CanReduce = false
@@ -21,8 +22,12 @@ type CallWrapperExpression(source: LambdaExpression, parameters: Expression[], t
 
  type CollectionToSingleExpression(sourceList: Expression) = 
     inherit Expression()
-
-    override e.CanReduce = false
+    static let singleOrDefault = 
+        let methods = typeof<Enumerable>.GetMethods(BindingFlags.Static ||| BindingFlags.Public)
+        let methodSelector = fun (m:MethodInfo) -> m.Name = "SingleOrDefault" && m.GetParameters().Length = 1
+        Array.find methodSelector methods
+        
+    override e.CanReduce = true
 
     override e.NodeType = ExpressionType.Extension
 
@@ -32,6 +37,10 @@ type CallWrapperExpression(source: LambdaExpression, parameters: Expression[], t
         | None -> raise (new InvalidOperationException("sourceList should have been an expression returning a collection."))
 
     member val SourceList = sourceList with get
+
+    override e.Reduce(): Expression = 
+        let method = singleOrDefault.MakeGenericMethod(e.Type)
+        Expression.Call(method, e.SourceList)        
 
 type SingleToCollectionExpression(sourceElement: Expression) = 
     inherit Expression()
