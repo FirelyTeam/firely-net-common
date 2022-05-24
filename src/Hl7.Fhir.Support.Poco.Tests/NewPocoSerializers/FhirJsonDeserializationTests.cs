@@ -301,7 +301,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
             var deserializer = new FhirJsonPocoDeserializer(typeof(TestPatient).Assembly);
             var state = new FhirJsonPocoDeserializerState();
-            _ = deserializer.DeserializeResourceInternal(ref reader, state);
+            _ = deserializer.DeserializeResourceInternal(ref reader, state, stayOnLastToken: false);
             assertErrors(state.Errors, errors.Select(e => e.ErrorCode).ToArray());
             reader.TokenType.Should().Be(tokenAfterParsing);
         }
@@ -565,8 +565,6 @@ namespace Hl7.Fhir.Support.Poco.Tests
             var filename = Path.Combine("TestData", "fp-test-patient-errors.json");
             var jsonInput = File.ReadAllText(filename);
 
-            // For now, deserialize with the existing deserializer, until we have completed
-            // the dynamicserializer too.
             var options = new JsonSerializerOptions().ForFhir(typeof(TestPatient).Assembly);
 
             try
@@ -711,6 +709,52 @@ namespace Hl7.Fhir.Support.Poco.Tests
                     .Which.Deceased.Should().BeOfType<FhirDateTime>()
                     .Which.Value.Should().EndWith("+00:00");
             }
+        }
+
+        private class MixedClass
+        {
+            public TestPatient? FhirPatient { get; set; }
+
+            public string? HandledByTextJson { get; set; }
+
+            // This only works well when we construct deserializers using the ConverterFactory method
+            // from System.Text.Json
+            public List<Identifier>? FhirIdentifier { get; set; }
+        }
+
+
+        [TestMethod]
+        public void CanParseIsolatedDataType()
+        {
+            var reader = constructReader(new { system = "http://nu.nl", value = "bla" });
+
+            var options = new JsonSerializerOptions().ForFhir(typeof(TestPatient).Assembly);
+
+            var identifier = JsonSerializer.Deserialize<Identifier>(ref reader, options)!;
+            identifier.Should().BeOfType<Identifier>();
+            identifier.System.Should().Be("http://nu.nl");
+        }
+
+        [TestMethod]
+        public void CanParseMixedClass()
+        {
+            var options = new JsonSerializerOptions().ForFhir(typeof(TestPatient).Assembly);
+
+            var mc = new MixedClass
+            {
+                FhirIdentifier = new() { new Identifier("http://nu.nl", "bla") },
+                HandledByTextJson = "Hi!",
+                FhirPatient = new() { Active = true }
+            };
+
+            var json = JsonSerializer.Serialize(mc, options);
+
+            var mc2 = JsonSerializer.Deserialize<MixedClass>(json, options)!;
+
+            mc2.Should().BeOfType<MixedClass>();
+            mc2.FhirIdentifier!.Single().System.Should().Be("http://nu.nl");
+            mc2.HandledByTextJson.Should().Be("Hi!");
+            mc2.FhirPatient?.Active.Should().Be(true);
         }
     }
 }

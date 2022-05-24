@@ -40,7 +40,7 @@ namespace Hl7.FhirPath
         /// <returns>The result(s) of the expression</returns>
         public static IEnumerable<ITypedElement> Select(this ITypedElement input, string expression, EvaluationContext? ctx = null)
         {
-            input = wrapInScopedNode(input);
+            input = input.ToScopedNode();
             var evaluator = getCompiledExpression(expression);
             return evaluator(input, ctx ?? EvaluationContext.CreateDefault());
         }
@@ -55,7 +55,7 @@ namespace Hl7.FhirPath
         /// <returns>The single result of the expression, and null if the expression returns multiple results</returns>
         public static object? Scalar(this ITypedElement input, string expression, EvaluationContext? ctx = null)
         {
-            input = wrapInScopedNode(input);
+            input = input.ToScopedNode();
             var evaluator = getCompiledExpression(expression);
             return evaluator.Scalar(input, ctx ?? EvaluationContext.CreateDefault());
         }
@@ -70,7 +70,7 @@ namespace Hl7.FhirPath
         /// <returns>True if expression returns true of empty, otheriwse false</returns>
         public static bool Predicate(this ITypedElement input, string expression, EvaluationContext? ctx = null)
         {
-            input = wrapInScopedNode(input);
+            input = input.ToScopedNode();
             var evaluator = getCompiledExpression(expression);
             return evaluator.Predicate(input, ctx ?? EvaluationContext.CreateDefault());
         }
@@ -85,7 +85,7 @@ namespace Hl7.FhirPath
         /// <returns>True if expression returns true , and false if expression returns empty of false.</returns>
         public static bool IsTrue(this ITypedElement input, string expression, EvaluationContext? ctx = null)
         {
-            input = wrapInScopedNode(input);
+            input = input.ToScopedNode();
             var evaluator = getCompiledExpression(expression);
             return evaluator.IsTrue(input, ctx ?? EvaluationContext.CreateDefault());
         }
@@ -101,17 +101,10 @@ namespace Hl7.FhirPath
         /// <returns>True if the result of an expression is equal to a given boolean, otherwise false</returns>
         public static bool IsBoolean(this ITypedElement input, string expression, bool value, EvaluationContext? ctx = null)
         {
-            input = wrapInScopedNode(input);
+            input = input.ToScopedNode();
 
             var evaluator = getCompiledExpression(expression);
             return evaluator.IsBoolean(value, input, ctx ?? EvaluationContext.CreateDefault());
-        }
-
-        private static ITypedElement wrapInScopedNode(ITypedElement input)
-        {
-            if (input is not ScopedNode)
-                input = new ScopedNode(input);
-            return input;
         }
     }
 }

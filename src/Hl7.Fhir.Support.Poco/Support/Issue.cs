@@ -42,7 +42,12 @@ namespace Hl7.Fhir.Support
             // Put numeric code + readable message into a CodeableConcept
             ic.Details = ToCodeableConcept(message);
 
-            if (path != null) ic.Location = new List<string> { path };
+            if (path is not null)
+            {
+                ic.Expression = new List<string> { path };
+                // IssueComponent.Location is deprecated but we still set this because of backwards compatibility.
+                ic.Location = new List<string> { path };
+            }
 
             return ic;
         }
@@ -128,6 +133,7 @@ namespace Hl7.Fhir.Support
         // public static readonly Issue PROCESSING_CONSTRAINT_VALIDATION_INACTIVEX = Create(5001, OperationOutcome.IssueSeverity.Information, OperationOutcome.IssueType.Informational);
         public static readonly Issue PROCESSING_START_NESTED_VALIDATION = Create(5002, OperationOutcome.IssueSeverity.Information, OperationOutcome.IssueType.Informational);
         public static readonly Issue PROCESSING_CATASTROPHIC_FAILURE = Create(5003, OperationOutcome.IssueSeverity.Fatal, OperationOutcome.IssueType.Exception);
+        public static readonly Issue PROCESSING_REPEATED_ERROR = Create(5004, OperationOutcome.IssueSeverity.Error, OperationOutcome.IssueType.Informational);
 
         // Terminology specific errors    
         public static readonly Issue TERMINOLOGY_CODE_NOT_IN_VALUESET = Create(6001, OperationOutcome.IssueSeverity.Error, OperationOutcome.IssueType.CodeInvalid);

@@ -75,7 +75,7 @@ namespace Hl7.Fhir.Rest
             Status = status;
         }
 
-        internal static Exception BuildFhirOperationException(HttpStatusCode status, Resource body)
+        internal static Exception BuildFhirOperationException(HttpStatusCode status, Resource body, string bodyRaw = null)
         {
             string message;
 
@@ -92,6 +92,8 @@ namespace Hl7.Fhir.Rest
                 return new FhirOperationException($"{message}. OperationOutcome: {outcome}.", status, outcome);
             else if (body != null)
                 return new FhirOperationException($"{message}. Body contains a {body.TypeName}.", status);
+            else if (!string.IsNullOrEmpty(bodyRaw))
+                return new FhirOperationException($"{message}. Body: {bodyRaw}", status);
             else
                 return new FhirOperationException($"{message}. Body has no content.", status);
         }
