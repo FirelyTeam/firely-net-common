@@ -317,8 +317,9 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 yield return new object[] { new { resourceType = nameof(OperationOutcome), crap = 5 }, JsonTokenType.EndObject, ERR.UNKNOWN_PROPERTY_FOUND };
                 yield return new object[] { new { resourceType = nameof(Meta) },
                     JsonTokenType.EndObject, ERR.OBJECTS_CANNOT_BE_EMPTY, ERR.RESOURCE_TYPE_NOT_A_RESOURCE };
+                yield return new object[] { new { resourceType = "Patient", deceasedDateTime = "2022-05" }, JsonTokenType.EndObject };
+                yield return new object[] { new { resourceType = "Patient", deceasedDateTime = "2022-05", _deceasedDateTime = new { extension = new object[] { new { url = "test", valueString = "Smile" } }  } }, JsonTokenType.EndObject };
             }
-
         }
 
         public static IEnumerable<object[]> TestDeserializeNestedResource
