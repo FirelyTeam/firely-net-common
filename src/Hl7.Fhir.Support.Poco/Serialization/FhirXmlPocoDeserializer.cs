@@ -45,31 +45,31 @@ namespace Hl7.Fhir.Serialization
         private readonly ModelInspector _inspector;
 
 
-        /// <summary>
-        /// The kind of object we need to deserialize into, which will influence subtly
-        /// how the <see cref="deserializeElementInto{T}(T, ClassMapping, XmlReader, DeserializedObjectKind, FhirXmlPocoDeserializerState)" />
-        /// function will operate.
-        /// </summary>
-        private enum DeserializedObjectKind
-        {
-            /// <summary>
-            /// Deserialize into a complex datatype, and complain about the presence of
-            /// a resourceType element.
-            /// </summary>
-            Complex,
+        ///// <summary>
+        ///// The kind of object we need to deserialize into, which will influence subtly
+        ///// how the <see cref="deserializeElementInto{T}(T, ClassMapping, XmlReader, DeserializedObjectKind, FhirXmlPocoDeserializerState)" />
+        ///// function will operate.
+        ///// </summary>
+        //private enum DeserializedObjectKind
+        //{
+        //    /// <summary>
+        //    /// Deserialize into a complex datatype, and complain about the presence of
+        //    /// a resourceType element.
+        //    /// </summary>
+        //    Complex,
 
-            /// <summary>
-            /// Deserialize into a resource
-            /// </summary>
-            Resource,
+        //    /// <summary>
+        //    /// Deserialize into a resource
+        //    /// </summary>
+        //    Resource,
 
-            /// <summary>
-            /// Deserialize the non-value part of a FhirPrimitive, and do not call validation of
-            /// the instance yet, since it will be done when the FhirPrimitive has been constructed
-            /// completely, including its value part.
-            /// </summary>
-            FhirPrimitive
-        }
+        //    /// <summary>
+        //    /// Deserialize the non-value part of a FhirPrimitive, and do not call validation of
+        //    /// the instance yet, since it will be done when the FhirPrimitive has been constructed
+        //    /// completely, including its value part.
+        //    /// </summary>
+        //    FhirPrimitive
+        //}
 
         /// <summary>
         /// Deserialize the FHIR xml from the reader and create a new POCO object containing the data from the reader.
@@ -79,6 +79,8 @@ namespace Hl7.Fhir.Serialization
         public Resource DeserializeResource(XmlReader reader)
         {
             // If the stream has just been opened, move to the first token.
+
+            //TODO: Processing instructions only UTF-8
             reader.MoveToContent();
 
             FhirXmlPocoDeserializerState state = new();
@@ -102,7 +104,7 @@ namespace Hl7.Fhir.Serialization
                 try
                 {
                     state.Path.EnterResource(resourceMapping.Name);
-                    deserializeElementInto(newResource, resourceMapping, reader, DeserializedObjectKind.Resource, state);
+                    deserializeDatatypeInto(newResource, resourceMapping, reader, state);
 
 
                     if (!resourceMapping.IsResource)
@@ -117,32 +119,76 @@ namespace Hl7.Fhir.Serialization
                 {
                     state.Path.ExitResource();
                 }
-
-
             }
             return null;
         }
 
-        private void deserializeElementInto<T>(T target, ClassMapping mapping, XmlReader reader, DeserializedObjectKind kind, FhirXmlPocoDeserializerState state) where T : Base
+        private void deserializeDatatypeInto(Base target, ClassMapping mapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
-            while (shouldSkipNodeType(reader.NodeType))
-                if (!reader.Read())
-                    return;
+            // check if primitive from ClassMapping
+            if (mapping.IsFhirPrimitive)
+            {
+                // TODO check if element has children or attributes, or does the model validate this already?
+
+                // parse attributes
+                readAttributes((PrimitiveType)target, mapping, reader, state);
+            }
+
 
             //read the next object
             while (reader.Read())
             {
+                //check if we are currently on an element.
+                //check if correct namespace.
+                // TODO XHTML.
+                // TODO contained resources.
                 var name = reader.Name;
                 var (propMapping, propValueMapping, error) = tryGetMappedElementMetadata(_inspector, mapping, reader, name);
-
-                // move into first attribute
-                while (reader.MoveToNextAttribute())
-                {
-
-                }
+                // contained resource: propMapping.IsResourceChoice
+                // check propMapping if list -> readList or readSingle value 
+                var newProperty = readSingleValue(propValueMapping!, reader, state);
+                propMapping!.SetValue(target, newProperty);
             }
-
         }
+
+        private Base readSingleValue(ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
+        {
+            var instance = (Base)propValueMapping.Factory();
+            deserializeDatatypeInto(instance, propValueMapping, reader, state);
+            return instance;
+        }
+
+        private static void readAttributes(PrimitiveType target, ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
+        {
+            //move into first attribute
+            if (reader.MoveToFirstAttribute())
+            {
+                do
+                {
+                    //handle non-empty namespace on attributes.
+                    var propMapping = propValueMapping.FindMappedElementByName(reader.Name);
+                    //handle errors.
+                    readAttribute(target, propMapping!, reader, state);
+                } while (reader.MoveToNextAttribute());
+            }
+        }
+
+        ///Parse current attribute value to set the value property of the target.
+        private static void readAttribute(PrimitiveType target, PropertyMapping propMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
+        {
+            //parse current attribute to expected type
+            object parsedValue = parseValue(reader, propMapping.ImplementingType);
+            if (parsedValue != null)
+            {
+                propMapping.SetValue(target, parsedValue);
+            }
+            else
+            {
+                //handle error
+            }
+        }
+
+
 
         private bool shouldSkipNodeType(XmlNodeType nodeType)
         {
