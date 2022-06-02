@@ -3,6 +3,7 @@
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using System;
+using System.Collections;
 using System.Reflection;
 using System.Xml;
 using ERR = Hl7.Fhir.Serialization.FhirXmlException;
@@ -122,6 +123,29 @@ namespace Hl7.Fhir.Serialization
             }
             return null;
         }
+        internal Base? DeserializeDatatypeInternal(XmlReader reader, FhirXmlPocoDeserializerState state)
+        {
+            (ClassMapping? datatypeMapping, FhirXmlException? error) = DetermineClassMappingFromInstance(reader, _inspector);
+
+            if (datatypeMapping is not null)
+            {
+                // If we have at least a mapping, let's try to continue               
+                var newDatatype = (Base)datatypeMapping.Factory();
+
+                try
+                {
+                    state.Path.EnterElement(datatypeMapping.Name);
+                    deserializeDatatypeInto(newDatatype, datatypeMapping, reader, state);
+                    return newDatatype;
+                }
+                finally
+                {
+                    state.Path.ExitElement();
+                }
+            }
+            return null;
+        }
+
 
         private void deserializeDatatypeInto(Base target, ClassMapping mapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
@@ -134,7 +158,6 @@ namespace Hl7.Fhir.Serialization
                 readAttributes((PrimitiveType)target, mapping, reader, state);
             }
 
-
             //read the next object
             while (reader.Read())
             {
@@ -146,9 +169,30 @@ namespace Hl7.Fhir.Serialization
                 var (propMapping, propValueMapping, error) = tryGetMappedElementMetadata(_inspector, mapping, reader, name);
                 // contained resource: propMapping.IsResourceChoice
                 // check propMapping if list -> readList or readSingle value 
-                var newProperty = readSingleValue(propValueMapping!, reader, state);
-                propMapping!.SetValue(target, newProperty);
+                if (propMapping?.IsCollection == false)
+                {
+                    var newProperty = readSingleValue(propValueMapping!, reader, state);
+                    propMapping!.SetValue(target, newProperty);
+                }
+                else
+                {
+                    var newCollection = readList(propValueMapping!, reader, state);
+                    propMapping!.SetValue(target, newCollection);
+                }
             }
+        }
+
+        private IList? readList(ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
+        {
+            var list = propValueMapping.ListFactory();
+
+            do
+            {
+                list.Add(DeserializeDatatypeInternal(reader, state));
+            }
+            while (reader.ReadToNextSibling(reader.Name));
+
+            return list;
         }
 
         private Base readSingleValue(ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
@@ -158,7 +202,7 @@ namespace Hl7.Fhir.Serialization
             return instance;
         }
 
-        private static void readAttributes(PrimitiveType target, ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
+        private void readAttributes(PrimitiveType target, ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
             //move into first attribute
             if (reader.MoveToFirstAttribute())
@@ -174,10 +218,13 @@ namespace Hl7.Fhir.Serialization
         }
 
         ///Parse current attribute value to set the value property of the target.
-        private static void readAttribute(PrimitiveType target, PropertyMapping propMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
+        private void readAttribute(PrimitiveType target, PropertyMapping propMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
             //parse current attribute to expected type
-            object parsedValue = parseValue(reader, propMapping.ImplementingType);
+            var (parsedValue, error) = parseValue(reader, propMapping.ImplementingType);
+
+            state.Errors.Add(error);
+
             if (parsedValue != null)
             {
                 propMapping.SetValue(target, parsedValue);
@@ -188,7 +235,60 @@ namespace Hl7.Fhir.Serialization
             }
         }
 
+        private (object?, FhirXmlException?) parseValue(XmlReader reader, Type implementingType)
+        {
+            if (implementingType == typeof(string))
+                return (reader.Value, null);
+            else if (implementingType == typeof(bool))
+            {
+                return bool.TryParse(reader.Value, out var parsed)
+                    ? (parsed, null)
+                    : (reader.Value, ERR.STRING_ISNOTA_BOOLEAN.With(reader, reader.Value));
+            }
+            else if (implementingType == typeof(DateTimeOffset))
+            {
+                return ElementModel.Types.DateTime.TryParse(reader.Value, out var parsed)
+                    ? (parsed.ToDateTimeOffset(TimeSpan.Zero), null)
+                    : (reader.Value, ERR.STRING_ISNOTAN_INSTANT.With(reader, reader.Value));
+            }
+            else if (implementingType == typeof(byte[]))
+            {
+                return !Settings.DisableBase64Decoding ? getByteArrayValue(reader) : ((object?, ERR?))(reader.Value, null);
+            }
+            else if (implementingType == typeof(int))
+            {
+                return int.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTAN_INT.With(reader, reader.Value));
+            }
+            else if (implementingType == typeof(long))
+            {
+                return long.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTA_LONG.With(reader, reader.Value));
+            }
+            else if (implementingType == typeof(decimal))
+            {
+                return decimal.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTA_DECIMAL.With(reader, reader.Value));
+            }
+            else if (implementingType.IsEnum)
+            {
+                return new(reader.Value, null);
+            }
+            else
+            {
+                return new(reader.Value, null); //When does this happen? Should we throw an error?
+            }
 
+
+            static (object, ERR?) getByteArrayValue(XmlReader reader)
+            {
+                try
+                {
+                    return (Convert.FromBase64String(reader.Value), null);
+                }
+                catch (FormatException)
+                {
+                    return (reader.Value, ERR.INCORRECT_BASE64_DATA.With(reader));
+                }
+            }
+        }
 
         private bool shouldSkipNodeType(XmlNodeType nodeType)
         {
