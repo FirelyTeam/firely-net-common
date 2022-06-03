@@ -7,6 +7,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 
 namespace Hl7.Fhir.Support.Poco.Tests
@@ -81,6 +82,39 @@ namespace Hl7.Fhir.Support.Poco.Tests
             contactArray.GetArrayLength().Should().Be(1);
             contactArray[0].EnumerateObject().Should().BeEmpty();
         }
-    }
 
+        [TestMethod]
+        public void SerializesDictionaries()
+        {
+            var patient = new Dictionary<string, object>()
+            {
+                ["gender"] = "male",
+                ["identifier"] = new Identifier
+                {
+                    System = "system",
+                    Value = "example",
+                },
+                ["name"] = new List<Dictionary<string, object>>()
+                {
+                    new()  {
+                        ["family"] = "Visser"
+                    }
+                },
+                ["active"] = new FhirBoolean(true)
+                {
+                    Extension = new() { new("http://example.org/ext", new FhirString("Hi!")) }
+                }
+            };
+
+            //var options = new JsonSerializerOptions().ForFhir(typeof(TestPatient).Assembly);
+            //var json = JsonSerializer.Serialize(patient, options);
+            var serializer = new FhirJsonPocoSerializer(Specification.FhirRelease.R4);
+            var buf = new MemoryStream();
+            var writer = new Utf8JsonWriter(buf);
+            serializer.Serialize(patient, writer);
+            writer.Flush();
+            buf.Seek(0, SeekOrigin.Begin);
+            var s = Encoding.UTF8.GetString(buf.ToArray());
+        }
+    }
 }

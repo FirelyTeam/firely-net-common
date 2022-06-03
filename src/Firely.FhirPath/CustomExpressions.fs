@@ -26,16 +26,18 @@ type CallWrapperExpression(source: Expression, parameters: Expression[], targetT
         let methods = typeof<Enumerable>.GetMethods(BindingFlags.Static ||| BindingFlags.Public)
         let methodSelector = fun (m:MethodInfo) -> m.Name = "SingleOrDefault" && m.GetParameters().Length = 1
         Array.find methodSelector methods
-        
+    
+    static member ElementType(listType: Type): Type = 
+        match listType.GetCollectionElement() with
+        | Some t -> t
+        | None -> raise (new InvalidOperationException("sourceList should have been an expression returning a collection."))
+
     override e.CanReduce = true
 
     override e.NodeType = ExpressionType.Extension
 
-    override e.Type =
-        match sourceList.Type.GetCollectionElement() with
-        | Some t -> t
-        | None -> raise (new InvalidOperationException("sourceList should have been an expression returning a collection."))
-
+    override e.Type = CollectionToSingleExpression.ElementType(sourceList.Type)
+       
     member val SourceList = sourceList with get
 
     override e.Reduce(): Expression = 

@@ -81,7 +81,7 @@ namespace HL7.FhirPath.Tests.NewCompiler
         {
             var gpX = Type.MakeGenericMethodParameter(0);
 
-            var result = CastStepBuilding.BuildCast(Expression.Constant(3L), gpX, new GenericParamAssignments());
+            var result = CastStepBuilding.BuildCast(typeof(long), gpX, new GenericParamAssignments());
             var sr = result.Should().BeOfType<StepBuildResult<Expression>.Success>().Subject;
             sr.Expression.Should().BeOfType<ConstantExpression>();
             sr.Assignments.Should().HaveCount(1);
@@ -96,7 +96,7 @@ namespace HL7.FhirPath.Tests.NewCompiler
 
             // Now, given generic param X is a "long", pass it a "int32" param. This should be successful, resulting
             // in a conversion
-            var result = CastStepBuilding.BuildCast(Expression.Constant(3), gpX, gpa);
+            var result = CastStepBuilding.BuildCast(typeof(int), gpX, gpa);
             var sr = result.Should().BeOfType<StepBuildResult<Expression>.Success>().Subject;
             var conversion = sr.Expression.Should().BeOfType<UnaryExpression>().Subject;
             conversion.NodeType.Should().Be(ExpressionType.ConvertChecked);
@@ -114,7 +114,7 @@ namespace HL7.FhirPath.Tests.NewCompiler
             // Now, face the cast builder with the situation where generic param X is already "long", and
             // try to pass a string argument into that long parameter. It should suggest a restart with
             // the param X rebound to a string.
-            var result = CastStepBuilding.BuildCast(Expression.Constant("hi!"), gpX, gpa);
+            var result = CastStepBuilding.BuildCast(typeof(string), gpX, gpa);
             var restart = result.Should().BeOfType<StepBuildResult<Expression>.Restart>().Subject;
             restart.Suggestion[gpX].Should().Be(typeof(string));
         }
@@ -213,21 +213,22 @@ namespace HL7.FhirPath.Tests.NewCompiler
             return (string)dvp.GetValue(e)!;
         }
 
-        private StepBuildResult<Expression> build(Expression source, Type target, GenericParamAssignments? gpa = null) =>
+        private StepBuildResult<ExpressionGenerator> build(Expression source, Type target, GenericParamAssignments? gpa = null) =>
             CastStepBuilding.BuildCast(source, target, gpa ?? new GenericParamAssignments());
 
-        private StepBuildResult<Expression> test(Expression source, Type target, Type? converterType = null, ExpressionType? nodeType = null)
+        private StepBuildResult<ExpressionGenerator> test(Expression source, Type target, Type? converterType = null, ExpressionType? nodeType = null)
         {
             var parameterAssignments = new GenericParamAssignments();
-            var result = CastStepBuilding.BuildCast(source, target, parameterAssignments);
+            var result = CastStepBuilding.BuildCast(source.Type, target, parameterAssignments);
 
             if (converterType is not null)
             {
                 result.IsSuccess.Should().BeTrue();
-                var sr = (StepBuildResult<Expression>.Success)result;
-                sr.Expression.Type.Should().Be(target);
-                sr.Expression.GetType().Should().BeAssignableTo(converterType);
-                sr.Expression.NodeType.Should().Be(nodeType);
+                var sr = (StepBuildResult<ExpressionGenerator>.Success)result;
+                var generated = sr.Expression.Item.Invoke(source);
+                generated.Type.Should().Be(target);
+                generated.GetType().Should().BeAssignableTo(converterType);
+                generated.NodeType.Should().Be(nodeType);
             }
             else
                 result.IsFail.Should().BeTrue();
