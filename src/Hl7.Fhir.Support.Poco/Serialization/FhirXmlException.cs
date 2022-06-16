@@ -23,7 +23,7 @@ namespace Hl7.Fhir.Serialization
         public const string STRING_ISNOTA_BOOLEAN_CODE = "XML112";
 
         internal static readonly FhirXmlException INCORRECT_ROOT_NAMESPACE = new(INCORRECT_ROOT_NAMESPACE_CODE, "Root has missing or incorrect namespace. Namespace should be \"http://hl7.org/fhir\"");
-        internal static readonly FhirXmlException UNKNOWN_RESOURCE_TYPE = new(UNKNOWN_RESOURCE_TYPE_CODE, "Unknown type '{0}' found in 'resourceType' property.");
+        internal static readonly FhirXmlException UNKNOWN_RESOURCE_TYPE = new(UNKNOWN_RESOURCE_TYPE_CODE, "Unknown type '{0}' found in root property.");
         internal static readonly FhirXmlException RESOURCE_TYPE_NOT_A_RESOURCE = new(RESOURCE_TYPE_NOT_A_RESOURCE_CODE, "Data type '{0}' in property 'resourceType' is not a type of resource.");
         internal static readonly FhirXmlException UNKNOWN_PROPERTY_FOUND = new(UNKNOWN_PROPERTY_FOUND_CODE, "Encountered unrecognized property '{0}'.");
         internal static readonly FhirXmlException CHOICE_ELEMENT_HAS_NO_TYPE = new(CHOICE_ELEMENT_HAS_NO_TYPE_CODE, "Choice element '{0}' is not suffixed with a type.");
