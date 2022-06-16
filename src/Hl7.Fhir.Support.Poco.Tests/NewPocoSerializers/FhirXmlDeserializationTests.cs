@@ -29,8 +29,7 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
         [TestMethod]
         public void TryDeserializeResourceSinglePrimitive()
         {
-
-            var content = "<Patient><active value=\"true\"/></Patient>";
+            var content = "<Patient xmlns=\"http://hl7.org/fhir\"><active value=\"true\"/></Patient>";
 
             var reader = constructReader(content);
             reader.Read();
@@ -47,7 +46,7 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
         public void TryDeserializeResourceMultiplePrimitives()
         {
 
-            var content = "<Patient><active value=\"true\"/><gender value=\"female\"/>";
+            var content = "<Patient xmlns=\"http://hl7.org/fhir\"><active value=\"true\"/><gender value=\"female\"/></Patient>";
 
             var reader = constructReader(content);
             reader.Read();
@@ -64,7 +63,7 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
         public void TryDeserializeComplexResource()
         {
 
-            var content = "<Patient><active value=\"true\"/><name><given value=\"foo\"/><given value=\"bar\"/></name><name><given value=\"foo2\"/><given value=\"bar2\"/></name></Patient>";
+            var content = "<Patient xmlns=\"http://hl7.org/fhir\"><active value=\"true\"/><name id=\"1337\"><given value=\"foo\"/><given value=\"bar\"/></name><name><given value=\"foo2\"/><given value=\"bar2\"/></name></Patient>";
 
             var reader = constructReader(content);
             reader.Read();
@@ -76,9 +75,9 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
             resource.As<TestPatient>().Active.Value.Should().Be(true);
 
             resource.As<TestPatient>().Name.Should().HaveCount(2);
-            resource.As<TestPatient>().Name[0].Given.Should().HaveCount(2);
-            resource.As<TestPatient>().Name[1].Given.Should().HaveCount(2);
-
+            resource.As<TestPatient>().Name[0].ElementId.Should().Be("1337");
+            resource.As<TestPatient>().Name[0].Given.Should().Equal("foo", "bar");
+            resource.As<TestPatient>().Name[1].Given.Should().Equal("foo2", "bar2");
         }
 
 
@@ -94,8 +93,24 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
             var datatype = deserializer.DeserializeDatatype(typeof(TestHumanName), reader);
 
             datatype.Should().BeOfType<TestHumanName>();
-            var patient = (TestHumanName)datatype;
             datatype.As<TestHumanName>().Given.Should().HaveCount(2);
+        }
+
+        [TestMethod]
+        public void TryDeserializeWrongListValue()
+        {
+            var content = "<name><given value=\"foo\"/><family value=\"oof\"/><given value=\"bar\"/></name>";
+
+            var reader = constructReader(content);
+            reader.Read();
+
+            var deserializer = getTestDeserializer(new());
+            var datatype = deserializer.DeserializeDatatype(typeof(TestHumanName), reader);
+
+
+            datatype.Should().BeOfType<TestHumanName>();
+            datatype.As<TestHumanName>().Given.Should().HaveCount(2);
+            datatype.As<TestHumanName>().Family.Should().Be("oof");
         }
 
 
