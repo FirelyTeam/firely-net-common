@@ -65,6 +65,7 @@ namespace Hl7.Fhir.Serialization
             return !state.Errors.HasExceptions
                 ? result!
                 : throw new DeserializationFailedException(result, state.Errors);
+
         }
 
         public Base DeserializeDatatype(Type targetType, XmlReader reader)
@@ -76,11 +77,8 @@ namespace Hl7.Fhir.Serialization
 
             FhirXmlPocoDeserializerState state = new();
 
-            var mapping = _inspector.FindOrImportClassMapping(targetType) ??
-               throw new ArgumentException($"Type '{targetType}' could not be located in model assembly '{Assembly}' and can " +
-                   $"therefore not be used for deserialization. " + reader.GenerateLocationMessage(), nameof(targetType));
 
-            var result = DeserializeDatatypeInternal(mapping, reader, state);
+            var result = DeserializeDatatypeInternal(targetType, reader, state);
 
             return !state.Errors.HasExceptions
                 ? result!
@@ -89,9 +87,11 @@ namespace Hl7.Fhir.Serialization
 
         internal Resource? DeserializeResourceInternal(XmlReader reader, FhirXmlPocoDeserializerState state)
         {
+
             (ClassMapping? resourceMapping, FhirXmlException? error) = DetermineClassMappingFromInstance(reader, _inspector);
 
             state.Errors.Add(error);
+
             if (resourceMapping is not null)
             {
                 // If we have at least a mapping, let's try to continue               
@@ -115,17 +115,24 @@ namespace Hl7.Fhir.Serialization
                     state.Path.ExitResource();
                 }
             }
-            return null;
+            else
+            {
+                return null;
+            }
         }
 
-        internal Base? DeserializeDatatypeInternal(ClassMapping datatypeMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
+        internal Base? DeserializeDatatypeInternal(Type targetType, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
+            var mapping = _inspector.FindOrImportClassMapping(targetType) ??
+              throw new ArgumentException($"Type '{targetType}' could not be located in model assembly '{Assembly}' and can " +
+                  $"therefore not be used for deserialization. " + reader.GenerateLocationMessage(), nameof(targetType));
 
-            if (datatypeMapping is not null)
+
+            if (mapping is not null)
             {
                 // If we have at least a mapping, let's try to continue               
-                var newDatatype = (Base)datatypeMapping.Factory();
-                deserializeDatatypeInto(newDatatype, datatypeMapping, reader, state);
+                var newDatatype = (Base)mapping.Factory();
+                deserializeDatatypeInto(newDatatype, mapping, reader, state);
                 return newDatatype;
             }
             return null;
@@ -163,36 +170,47 @@ namespace Hl7.Fhir.Serialization
                 while (reader.NodeType != XmlNodeType.EndElement)
                 {
                     // check if we are currently on an element.
-                    // check if correct namespace.
-                    // TODO XHTML.
-                    // TODO contained resources.
+                    // TODO: check if correct namespace.
                     var name = reader.Name;
                     var (propMapping, propValueMapping, error) = tryGetMappedElementMetadata(_inspector, mapping, reader, name);
-                    // contained resource: propMapping.IsResourceChoice
+                    state.Errors.Add(error);
 
                     if (propMapping is not null)
                     {
+                        if (propMapping.SerializationHint == Specification.XmlRepresentation.XHtml)
+                        {
+                            var newValue = readXhtml(propValueMapping, reader, state);
+                            propMapping!.SetValue(target, newValue);
+                        }
                         // check propMapping if list -> readList or readSingle value 
-                        if (propMapping.IsCollection == true)
+                        else if (propMapping.IsCollection == true)
                         {
                             var newCollection = createOrExpandList(target, propValueMapping!, propMapping, reader, encounteredListElements, state);
                             propMapping!.SetValue(target, newCollection);
+
                         }
                         else
                         {
-                            var newProperty = readSingleValue(propValueMapping!, reader, state);
-                            propMapping!.SetValue(target, newProperty);
+                            var newValue = readSingleValue(propValueMapping!, reader, state);
+                            propMapping!.SetValue(target, newValue);
                         }
                     }
                     else
                     {
-                        //ERR.UNKNOWN_PROPERTY_FOUND;
-                        //TODO: Create extension method to skip current element, and move to next.
+                        //we don't know this property: error is already thrown in "tryGetMappedElementMetadata(_inspector, mapping, reader, name)";
+                        reader.Skip();
                     }
                 }
             }
             reader.Read();
             state.Path.ExitElement();
+        }
+
+        private string readXhtml(ClassMapping? propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
+        {
+            //TODO: check for correct namespace. (http://www.w3.org/1999/xhtml)
+            var xhtml = reader.ReadInnerXml();
+            return xhtml;
         }
 
         //Will create a new list, or adds encountered values to an already existing list (and reports a user error).
@@ -202,10 +220,9 @@ namespace Hl7.Fhir.Serialization
             //Was there already a list created previously? -> User error! But let's fix it, and expand the list with the newly encountered element(s).
             if (encounteredListElements.Contains(reader.Name))
             {
-                //TODO: state.Errors.Add() add extension that element is in the wrong order.
-
+                //TODO: state.Errors.Add() add error that element is in the wrong order.
                 var currentList = (IList?)propMapping.GetValue(target)!;
-                newCollection = (currentList is not null) ? expandCurrentList(currentList, propValueMapping, propMapping, reader, state) : readList(propValueMapping!, reader, state);
+                newCollection = (currentList is not null) ? expandCurrentList(currentList, propValueMapping, reader, state) : readList(propValueMapping!, reader, state);
             }
             else //Create a new list.
             {
@@ -216,7 +233,7 @@ namespace Hl7.Fhir.Serialization
         }
 
         //Retrieves previously created list, and add currently encountered values.
-        private IList? expandCurrentList(IList currentEntries, ClassMapping propValueMapping, PropertyMapping propMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
+        private IList expandCurrentList(IList currentEntries, ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
             var newEntries = readList(propValueMapping!, reader, state);
 
@@ -230,28 +247,54 @@ namespace Hl7.Fhir.Serialization
             return currentEntries;
         }
 
-
-
         //When done, the reader will be at the next token after the last element of the list or end of the file.
         private IList? readList(ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
             var list = propValueMapping.ListFactory();
+
+            return propValueMapping.IsResource
+                ? readResourceList(reader, state, list)
+                : readDatatypeList(propValueMapping, reader, state, list);
+        }
+
+        private IList readDatatypeList(ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state, IList list)
+        {
             var name = reader.Name;
 
             while (reader.Name == name)
             {
-                var newDatatype = (Base)propValueMapping.Factory();
-                deserializeDatatypeInto(newDatatype, propValueMapping, reader, state);
-                list.Add(newDatatype);
+                var newEntry = (Base)propValueMapping.Factory();
+                deserializeDatatypeInto(newEntry, propValueMapping, reader, state);
+                list.Add(newEntry);
             }
             return list;
         }
 
-        private Base readSingleValue(ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
+        private IList readResourceList(XmlReader reader, FhirXmlPocoDeserializerState state, IList list)
         {
-            var instance = (Base)propValueMapping.Factory();
-            deserializeDatatypeInto(instance, propValueMapping, reader, state);
-            return instance;
+            var name = reader.Name;
+            while (reader.Name == name)
+            {
+                reader.Read(); // move to first child; e.g. from <contained> to the actual resource;
+                list.Add(DeserializeResourceInternal(reader, state));
+                reader.Read(); // move back to e.g. </contained>
+            }
+            return list;
+        }
+
+        private Base? readSingleValue(ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
+        {
+            if (propValueMapping.IsResource)
+            {
+                return DeserializeResourceInternal(reader, state);
+            }
+            else
+            {
+                var newDatatype = (Base)propValueMapping.Factory();
+                deserializeDatatypeInto(newDatatype, propValueMapping, reader, state);
+                return newDatatype;
+            }
+
         }
 
         private void readAttributes(Base target, ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
@@ -382,7 +425,6 @@ namespace Hl7.Fhir.Serialization
         {
             var (resourceType, error) = determineResourceType(reader);
 
-
             if (resourceType is not null)
             {
                 var resourceMapping = inspector.FindClassMapping(resourceType);
@@ -443,18 +485,13 @@ namespace Hl7.Fhir.Serialization
                         : (default, ERR.CHOICE_ELEMENT_HAS_UNKOWN_TYPE.With(r, propertyMapping.Name, typeSuffix));
             }
         }
-
-
-
     }
+
     internal class FhirXmlPocoDeserializerState
     {
         public readonly ExceptionAggregator Errors = new();
         public readonly PathStack Path = new();
     }
-
-
-
 }
 
 #nullable restore

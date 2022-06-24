@@ -43,6 +43,40 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
 
 
         [TestMethod]
+        public void TryDeserializeNarrative()
+        {
+            var content = "<Patient xmlns=\"http://hl7.org/fhir\"><text><status value=\"generated\"/><div xmlns=\"http://www.w3.org/1999/xhtml\">this is text</div></text><active value=\"true\"/></Patient>";
+
+            var reader = constructReader(content);
+            reader.Read();
+
+            var deserializer = getTestDeserializer(new());
+            var resource = deserializer.DeserializeResource(reader);
+
+            resource.As<TestPatient>().Text.Status.Should().Be(Narrative.NarrativeStatus.Generated);
+            resource.As<TestPatient>().Text.Div.Should().Be("this is text");
+        }
+
+
+        [TestMethod]
+        public void TryDeserializeExtensions()
+        {
+            var content = "<Patient xmlns=\"http://hl7.org/fhir\"><extension url=\"http://fire.ly/fhir/StructureDefinition/extension-test\"><valueString value =\"foo\"/></extension><active value=\"true\"/></Patient>";
+
+            var reader = constructReader(content);
+            reader.Read();
+
+            var deserializer = getTestDeserializer(new());
+            var resource = deserializer.DeserializeResource(reader);
+
+            resource.Should().BeOfType<TestPatient>();
+            resource.As<TestPatient>().Active.Value.Should().Be(true);
+            resource.As<TestPatient>().Extension.Should().HaveCount(1);
+            resource.As<TestPatient>().Extension[0].Url.Should().Be("http://fire.ly/fhir/StructureDefinition/extension-test");
+            resource.As<TestPatient>().Extension[0].Value.As<FhirString>().Value.Should().Be("foo");
+        }
+
+        [TestMethod]
         public void TryDeserializeResourceMultiplePrimitives()
         {
 
@@ -59,10 +93,30 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
             resource.As<TestPatient>().Gender.Value.Should().Be(TestAdministrativeGender.Female);
         }
 
+
+        [TestMethod]
+        public void TryDeserializeContainedResource()
+        {
+
+            var content = "<Patient xmlns=\"http://hl7.org/fhir\"><contained><Patient><multipleBirthBoolean value = \"true\"/></Patient></contained><contained><Patient><active value = \"true\"/></Patient></contained><active value=\"true\"/><gender value=\"female\"/></Patient>";
+
+            var reader = constructReader(content);
+            reader.Read();
+
+            var deserializer = getTestDeserializer(new());
+            var resource = deserializer.DeserializeResource(reader);
+
+            resource.Should().BeOfType<TestPatient>();
+            resource.As<TestPatient>().Active.Value.Should().Be(true);
+            resource.As<TestPatient>().Gender.Value.Should().Be(TestAdministrativeGender.Female);
+            resource.As<TestPatient>().Contained.Should().HaveCount(2);
+            resource.As<TestPatient>().Contained[0].As<TestPatient>().MultipleBirth.As<FhirBoolean>().Value.Should().Be(true);
+            resource.As<TestPatient>().Contained[1].As<TestPatient>().Active.Value.Should().Be(true);
+        }
+
         [TestMethod]
         public void TryDeserializeComplexResource()
         {
-
             var content = "<Patient xmlns=\"http://hl7.org/fhir\"><active value=\"true\"/><name id=\"1337\"><given value=\"foo\"/><given value=\"bar\"/></name><name><given value=\"foo2\"/><given value=\"bar2\"/></name></Patient>";
 
             var reader = constructReader(content);
@@ -113,6 +167,27 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
             datatype.As<TestHumanName>().Family.Should().Be("oof");
         }
 
+
+        [TestMethod]
+        public void TryDeserializeUnknownElement()
+        {
+            var content = "<name><given value=\"foo\"/><foo value = \"bar\"/><family value =\"oof\"/></name>";
+
+            var reader = constructReader(content);
+            reader.Read();
+
+            var state = new FhirXmlPocoDeserializerState();
+            string errorcode = "XML104";
+            var deserializer = getTestDeserializer(new());
+            var datatype = deserializer.DeserializeDatatypeInternal(typeof(TestHumanName), reader, state);
+
+            datatype.Should().BeOfType<TestHumanName>();
+            datatype.As<TestHumanName>().GivenElement[0].Value.Should().Be("foo");
+            datatype.As<TestHumanName>().Family.Should().Be("oof");
+
+            state.Errors.Should().HaveCount(1);
+            state.Errors.Should().OnlyContain(ce => ce.ErrorCode == errorcode);
+        }
 
         private static XmlReader constructReader(string xml)
         {
