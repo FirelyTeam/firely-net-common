@@ -4,7 +4,6 @@ using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Reflection;
 using System.Xml;
 using ERR = Hl7.Fhir.Serialization.FhirXmlException;
@@ -87,7 +86,6 @@ namespace Hl7.Fhir.Serialization
 
         internal Resource? DeserializeResourceInternal(XmlReader reader, FhirXmlPocoDeserializerState state)
         {
-
             (ClassMapping? resourceMapping, FhirXmlException? error) = DetermineClassMappingFromInstance(reader, _inspector);
 
             state.Errors.Add(error);
@@ -164,41 +162,56 @@ namespace Hl7.Fhir.Serialization
             //Empty elements have no children e.g. <foo value="bar/>)
             if (!reader.IsEmptyElement)
             {
-                reader.Read();
-                var encounteredListElements = new List<string>();
                 //read the next object
+                reader.Read();
+
+                int highestOrder = 0;
+
                 while (reader.NodeType != XmlNodeType.EndElement)
                 {
-                    // check if we are currently on an element.
-                    // TODO: check if correct namespace.
-                    var name = reader.Name;
-                    var (propMapping, propValueMapping, error) = tryGetMappedElementMetadata(_inspector, mapping, reader, name);
-                    state.Errors.Add(error);
 
-                    if (propMapping is not null)
+                    if (!shouldSkipNodeType(reader.NodeType))
                     {
-                        if (propMapping.SerializationHint == Specification.XmlRepresentation.XHtml)
-                        {
-                            var newValue = readXhtml(propValueMapping, reader, state);
-                            propMapping!.SetValue(target, newValue);
-                        }
-                        // check propMapping if list -> readList or readSingle value 
-                        else if (propMapping.IsCollection == true)
-                        {
-                            var newCollection = createOrExpandList(target, propValueMapping!, propMapping, reader, encounteredListElements, state);
-                            propMapping!.SetValue(target, newCollection);
+                        // check if we are currently on an element.
+                        var (propMapping, propValueMapping, error) = tryGetMappedElementMetadata(_inspector, mapping, reader, reader.Name);
+                        state.Errors.Add(error);
 
+                        if (propMapping is not null)
+                        {
+                            //check if element is in the correct order.
+                            if (propMapping.Order >= highestOrder)
+                            {
+                                highestOrder = propMapping.Order;
+                            }
+                            else
+                            {
+                                state.Errors.Add(ERR.UNEXPECTED_ELEMENT.With(reader, reader.Name));
+                            }
+
+                            //check is element is narative
+                            if (propMapping.SerializationHint == Specification.XmlRepresentation.XHtml)
+                            {
+                                var newValue = readXhtml(propValueMapping, reader, state);
+                                propMapping!.SetValue(target, newValue);
+                            }
+                            //check propMapping if list -> readList or readSingle value 
+                            else if (propMapping.IsCollection == true)
+                            {
+                                var newCollection = createOrExpandList(target, propValueMapping!, propMapping, reader, state);
+                                propMapping!.SetValue(target, newCollection);
+
+                            }
+                            else
+                            {
+                                var newValue = readSingleValue(propValueMapping!, reader, state);
+                                propMapping!.SetValue(target, newValue);
+                            }
                         }
                         else
                         {
-                            var newValue = readSingleValue(propValueMapping!, reader, state);
-                            propMapping!.SetValue(target, newValue);
+                            //we don't know this property: error is already thrown in "tryGetMappedElementMetadata(_inspector, mapping, reader, name)";
+                            reader.Skip();
                         }
-                    }
-                    else
-                    {
-                        //we don't know this property: error is already thrown in "tryGetMappedElementMetadata(_inspector, mapping, reader, name)";
-                        reader.Skip();
                     }
                 }
             }
@@ -208,31 +221,25 @@ namespace Hl7.Fhir.Serialization
 
         private string readXhtml(ClassMapping? propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
-            //TODO: check for correct namespace. (http://www.w3.org/1999/xhtml)
+            if (reader.NamespaceURI != "http://www.w3.org/1999/xhtml")
+            {
+                state.Errors.Add(ERR.INCORRECT_XHTML_NAMESPACE.With(reader));
+            }
             var xhtml = reader.ReadInnerXml();
             return xhtml;
         }
 
         //Will create a new list, or adds encountered values to an already existing list (and reports a user error).
-        private IList? createOrExpandList(Base target, ClassMapping propValueMapping, PropertyMapping propMapping, XmlReader reader, List<string> encounteredListElements, FhirXmlPocoDeserializerState state)
+        private IList? createOrExpandList(Base target, ClassMapping propValueMapping, PropertyMapping propMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
-            IList? newCollection;
-            //Was there already a list created previously? -> User error! But let's fix it, and expand the list with the newly encountered element(s).
-            if (encounteredListElements.Contains(reader.Name))
-            {
-                //TODO: state.Errors.Add() add error that element is in the wrong order.
-                var currentList = (IList?)propMapping.GetValue(target)!;
-                newCollection = (currentList is not null) ? expandCurrentList(currentList, propValueMapping, reader, state) : readList(propValueMapping!, reader, state);
-            }
-            else //Create a new list.
-            {
-                encounteredListElements.Add(reader.Name);
-                newCollection = readList(propValueMapping!, reader, state);
-            }
-            return newCollection;
+            var currentList = (IList?)propMapping.GetValue(target);
+            //Was there already a list created previously? -> User error!
+            //But let's fix it, and expand the list with the newly encountered element(s).
+            //Error is already thrown using an "Enexcpeted element" error in "deserializeDatatypeInto"
+            return (currentList!.Count != 0) ? expandCurrentList(currentList, propValueMapping, reader, state) : readList(propValueMapping!, reader, state);
         }
 
-        //Retrieves previously created list, and add currently encountered values.
+        //Retrieves previously created list, and add newly encountered values.
         private IList expandCurrentList(IList currentEntries, ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
             var newEntries = readList(propValueMapping!, reader, state);
@@ -313,8 +320,10 @@ namespace Hl7.Fhir.Serialization
                         }
                         else
                         {
-                            //skip namespace
-                            //TODO: unknown property. 
+                            if (reader.Name != "xmlns") // attribute is not a FHIR attribute, and not a namespace;
+                            {
+                                state.Errors.Add(ERR.UNKNOWN_ATTRIBUTE.With(reader, reader.Name));
+                            }
                         }
 
                     } while (reader.MoveToNextAttribute());
@@ -343,10 +352,6 @@ namespace Hl7.Fhir.Serialization
                 {
                     propMapping.SetValue(target, parsedValue);
                 }
-            }
-            else
-            {
-                //TODO: handle error
             }
         }
 
@@ -460,7 +465,7 @@ namespace Hl7.Fhir.Serialization
                 ?? parentMapping.FindMappedElementByChoiceName(propertyName);
 
             if (propertyMapping is null)
-                return (null, null, ERR.UNKNOWN_PROPERTY_FOUND.With(reader, propertyName));
+                return (null, null, ERR.UNKNOWN_ELEMENT.With(reader, propertyName));
 
             (ClassMapping? propertyValueMapping, FhirXmlException? error) = propertyMapping.Choice switch
             {

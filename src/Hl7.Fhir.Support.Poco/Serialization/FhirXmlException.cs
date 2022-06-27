@@ -12,7 +12,7 @@ namespace Hl7.Fhir.Serialization
         public const string INCORRECT_ROOT_NAMESPACE_CODE = "XML101";
         public const string UNKNOWN_RESOURCE_TYPE_CODE = "XML102";
         public const string RESOURCE_TYPE_NOT_A_RESOURCE_CODE = "XML103";
-        public const string UNKNOWN_PROPERTY_FOUND_CODE = "XML104";
+        public const string UNKNOWN_ELEMENT_CODE = "XML104";
         public const string CHOICE_ELEMENT_HAS_NO_TYPE_CODE = "XML105";
         public const string CHOICE_ELEMENT_HAS_UNKOWN_TYPE_CODE = "XML106";
         public const string STRING_ISNOTAN_INSTANT_CODE = "XML107";
@@ -21,11 +21,14 @@ namespace Hl7.Fhir.Serialization
         public const string STRING_ISNOTA_LONG_CODE = "XML110";
         public const string STRING_ISNOTA_DECIMAL_CODE = "XML111";
         public const string STRING_ISNOTA_BOOLEAN_CODE = "XML112";
+        public const string INCORRECT_XHTML_NAMESPACE_CODE = "XML113";
+        public const string UNKNOWN_ATTRIBUTE_CODE = "XML114";
+        public const string UNEXPECTED_ELEMENT_CODE = "XML115";
 
         internal static readonly FhirXmlException INCORRECT_ROOT_NAMESPACE = new(INCORRECT_ROOT_NAMESPACE_CODE, "Root has missing or incorrect namespace. Namespace should be \"http://hl7.org/fhir\"");
         internal static readonly FhirXmlException UNKNOWN_RESOURCE_TYPE = new(UNKNOWN_RESOURCE_TYPE_CODE, "Unknown type '{0}' found in root property.");
         internal static readonly FhirXmlException RESOURCE_TYPE_NOT_A_RESOURCE = new(RESOURCE_TYPE_NOT_A_RESOURCE_CODE, "Data type '{0}' in property 'resourceType' is not a type of resource.");
-        internal static readonly FhirXmlException UNKNOWN_PROPERTY_FOUND = new(UNKNOWN_PROPERTY_FOUND_CODE, "Encountered unrecognized property '{0}'.");
+        internal static readonly FhirXmlException UNKNOWN_ELEMENT = new(UNKNOWN_ELEMENT_CODE, "Encountered unrecognized element '{0}'.");
         internal static readonly FhirXmlException CHOICE_ELEMENT_HAS_NO_TYPE = new(CHOICE_ELEMENT_HAS_NO_TYPE_CODE, "Choice element '{0}' is not suffixed with a type.");
         internal static readonly FhirXmlException CHOICE_ELEMENT_HAS_UNKOWN_TYPE = new(CHOICE_ELEMENT_HAS_UNKOWN_TYPE_CODE, "Choice element '{0}' is suffixed with an unrecognized type '{1}'.");
         internal static readonly FhirXmlException STRING_ISNOTAN_INSTANT = new(STRING_ISNOTAN_INSTANT_CODE, "Literal string '{0}' cannot be parsed as an instant.");
@@ -34,6 +37,9 @@ namespace Hl7.Fhir.Serialization
         internal static readonly FhirXmlException STRING_ISNOTA_LONG = new(STRING_ISNOTA_LONG_CODE, "Literal string '{0}' cannot be parsed as a long integer.");
         internal static readonly FhirXmlException STRING_ISNOTA_DECIMAL = new(STRING_ISNOTA_DECIMAL_CODE, "Literal string '{0}' cannot be parsed as a decimal.");
         internal static readonly FhirXmlException STRING_ISNOTA_BOOLEAN = new(STRING_ISNOTA_BOOLEAN_CODE, "Literal string '{0}' cannot be parsed as a boolean.");
+        internal static readonly FhirXmlException INCORRECT_XHTML_NAMESPACE = new(INCORRECT_XHTML_NAMESPACE_CODE, "Narrative has missing or incorrect namespace. Namespace should be \"http://www.w3.org/1999/xhtml\"");
+        internal static readonly FhirXmlException UNKNOWN_ATTRIBUTE = new(UNKNOWN_ATTRIBUTE_CODE, "Encountered unrecognized attribute '{0}'.");
+        internal static readonly FhirXmlException UNEXPECTED_ELEMENT = new(UNEXPECTED_ELEMENT_CODE, "Encountered unexpected element '{0}', please check the order of the xml");
 
         public FhirXmlException(string errorCode, string message) : base(errorCode, message)
         {

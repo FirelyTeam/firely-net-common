@@ -153,25 +153,28 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
         [TestMethod]
         public void TryDeserializeWrongListValue()
         {
-            var content = "<name><given value=\"foo\"/><family value=\"oof\"/><given value=\"bar\"/></name>";
+            var content = "<name><family value=\"oof\"/><given value=\"foo\"/><given value=\"rab\"/><prefix value=\"mr.\"/><given value=\"bar\"/></name>";
 
             var reader = constructReader(content);
             reader.Read();
+            var state = new FhirXmlPocoDeserializerState();
 
             var deserializer = getTestDeserializer(new());
-            var datatype = deserializer.DeserializeDatatype(typeof(TestHumanName), reader);
-
+            var datatype = deserializer.DeserializeDatatypeInternal(typeof(TestHumanName), reader, state);
 
             datatype.Should().BeOfType<TestHumanName>();
-            datatype.As<TestHumanName>().Given.Should().HaveCount(2);
+            datatype.As<TestHumanName>().Given.Should().HaveCount(3);
             datatype.As<TestHumanName>().Family.Should().Be("oof");
+
+            state.Errors.Should().OnlyContain(ce => ce.ErrorCode == "XML115");
+
         }
 
 
         [TestMethod]
         public void TryDeserializeUnknownElement()
         {
-            var content = "<name><given value=\"foo\"/><foo value = \"bar\"/><family value =\"oof\"/></name>";
+            var content = "<name><family value =\"oof\"/><foo value = \"bar\"/><given value=\"foo\"/></name>";
 
             var reader = constructReader(content);
             reader.Read();
@@ -185,7 +188,6 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
             datatype.As<TestHumanName>().GivenElement[0].Value.Should().Be("foo");
             datatype.As<TestHumanName>().Family.Should().Be("oof");
 
-            state.Errors.Should().HaveCount(1);
             state.Errors.Should().OnlyContain(ce => ce.ErrorCode == errorcode);
         }
 
