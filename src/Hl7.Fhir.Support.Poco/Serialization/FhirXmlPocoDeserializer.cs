@@ -52,9 +52,7 @@ namespace Hl7.Fhir.Serialization
         /// <returns>A fully initialized POCO with the data from the reader.</returns>
         public Resource DeserializeResource(XmlReader reader)
         {
-            // If the stream has just been opened, move to the first token.
-
-            //TODO: Processing instructions only UTF-8
+            // If the stream has just been opened, move to the first token. (skip processing instructions, comments, whitespaces etc.)
             reader.MoveToContent();
 
             FhirXmlPocoDeserializerState state = new();
@@ -67,11 +65,10 @@ namespace Hl7.Fhir.Serialization
 
         }
 
+
         public Base DeserializeDatatype(Type targetType, XmlReader reader)
         {
-            // If the stream has just been opened, move to the first token.
-
-            //TODO: Processing instructions only UTF-8
+            // If the stream has just been opened, move to the first token. (skip processing instructions, comments, whitespaces etc.)
             reader.MoveToContent();
 
             FhirXmlPocoDeserializerState state = new();
@@ -136,13 +133,7 @@ namespace Hl7.Fhir.Serialization
             return null;
         }
 
-        /// <summary>
-        /// We expect to start at the open tag op the element. When done, the reader will be at the next token after this element or end of the file.
-        /// </summary>
-        /// <param name="target"></param>
-        /// <param name="mapping"></param>
-        /// <param name="reader"></param>
-        /// <param name="state"></param>
+        // We expect to start at the open tag op the element. When done, the reader will be at the next token after this element or end of the file.
         private void deserializeDatatypeInto(Base target, ClassMapping mapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
             state.Path.EnterElement(mapping.Name);
@@ -150,8 +141,8 @@ namespace Hl7.Fhir.Serialization
             //check if on opening tag
             if (reader.NodeType != XmlNodeType.Element)
             {
-                //throw exception, we have made a mistake
-                throw new Exception("error, not a start tag");
+                //TODO: throw exception, we have made a mistake
+                throw new InvalidOperationException($"Xml node {reader.Name} is not an element, but a {reader.NodeType}");
             }
 
             if (reader.HasAttributes)
