@@ -169,6 +169,8 @@ namespace Hl7.Fhir.Serialization
 
                         if (propMapping is not null)
                         {
+                            var incorrectOrder = false;
+
                             //check if element is in the correct order.
                             if (propMapping.Order >= highestOrder)
                             {
@@ -177,9 +179,10 @@ namespace Hl7.Fhir.Serialization
                             else
                             {
                                 state.Errors.Add(ERR.UNEXPECTED_ELEMENT.With(reader, reader.Name));
+                                incorrectOrder = true;
                             }
 
-                            //check is element is narative
+                            //check if element is narrative
                             if (propMapping.SerializationHint == Specification.XmlRepresentation.XHtml)
                             {
                                 var newValue = readXhtml(propValueMapping, reader, state);
@@ -188,7 +191,7 @@ namespace Hl7.Fhir.Serialization
                             //check propMapping if list -> readList or readSingle value 
                             else if (propMapping.IsCollection == true)
                             {
-                                var newCollection = createOrExpandList(target, propValueMapping!, propMapping, reader, state);
+                                var newCollection = createOrExpandList(target, incorrectOrder, propValueMapping!, propMapping, reader, state);
                                 propMapping!.SetValue(target, newCollection);
 
                             }
@@ -221,13 +224,21 @@ namespace Hl7.Fhir.Serialization
         }
 
         //Will create a new list, or adds encountered values to an already existing list (and reports a user error).
-        private IList? createOrExpandList(Base target, ClassMapping propValueMapping, PropertyMapping propMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
+        private IList? createOrExpandList(Base target, bool expandCandidate, ClassMapping propValueMapping, PropertyMapping propMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
-            var currentList = (IList?)propMapping.GetValue(target);
-            //Was there already a list created previously? -> User error!
-            //But let's fix it, and expand the list with the newly encountered element(s).
-            //Error is already thrown using an "Enexcpeted element" error in "deserializeDatatypeInto"
-            return (currentList!.Count != 0) ? expandCurrentList(currentList, propValueMapping, reader, state) : readList(propValueMapping!, reader, state);
+            //only check for previously created list if the element is in the incorrect place.
+            if (expandCandidate)
+            {
+                var currentList = (IList?)propMapping.GetValue(target);
+                //Was there already a list created previously? -> User error!
+                //But let's fix it, and expand the list with the newly encountered element(s).
+                //Error is already thrown using an "Unexpected element" error in "deserializeDatatypeInto"
+                return (currentList!.Count != 0) ? expandCurrentList(currentList, propValueMapping, reader, state) : readList(propValueMapping!, reader, state);
+            }
+            else
+            {
+                return readList(propValueMapping!, reader, state);
+            }
         }
 
         //Retrieves previously created list, and add newly encountered values.
