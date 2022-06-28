@@ -117,7 +117,18 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
         [TestMethod]
         public void TryDeserializeComplexResource()
         {
-            var content = "<Patient xmlns=\"http://hl7.org/fhir\"><active value=\"true\"/><name id=\"1337\"><given value=\"foo\"/><given value=\"bar\"/></name><name><given value=\"foo2\"/><given value=\"bar2\"/></name></Patient>";
+            var content =
+            "<Patient xmlns=\"http://hl7.org/fhir\">" +
+                "<active value=\"true\"/>" +
+                "<name id=\"1337\">" +
+                    "<given value=\"foo\"/>" +
+                    "<given value=\"bar\"/>" +
+                "</name>" +
+                "<name>" +
+                    "<given value=\"foo2\"/>" +
+                    "<given value=\"bar2\"/>" +
+                "</name>" +
+             "</Patient>";
 
             var reader = constructReader(content);
             reader.Read();
@@ -153,7 +164,13 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
         [TestMethod]
         public void TryDeserializeWrongListValue()
         {
-            var content = "<name><family value=\"oof\"/><given value=\"foo\"/><given value=\"rab\"/><prefix value=\"mr.\"/><given value=\"bar\"/></name>";
+            var content = "<name>" +
+                                "<family value=\"oof\"/>" +
+                                "<given value=\"foo\"/>" +
+                                "<given value=\"rab\"/>" +
+                                "<prefix value=\"mr.\"/>" +
+                                "<given value=\"bar\"/>" +
+                          "</name>";
 
             var reader = constructReader(content);
             reader.Read();
