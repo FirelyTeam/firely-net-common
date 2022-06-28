@@ -191,6 +191,31 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
             state.Errors.Should().OnlyContain(ce => ce.ErrorCode == errorcode);
         }
 
+        [TestMethod]
+        public void TryDeserializeRecursiveElements()
+        {
+            var content =
+            "<CodeSystem>" +
+                "<concept>" +
+                    "<code value = \"foo\" />" +
+                    "<concept>" +
+                        "<code value = \"bar\" />" +
+                    "</concept>" +
+                "</concept>" +
+            "</CodeSystem >";
+
+            var reader = constructReader(content);
+            reader.Read();
+
+            var state = new FhirXmlPocoDeserializerState();
+            var deserializer = getTestDeserializer(new());
+            var resource = deserializer.DeserializeResourceInternal(reader, state);
+            resource.Should().NotBeNull();
+
+            resource.As<TestCodeSystem>().Concept[0].Code.Should().Be("foo");
+            resource.As<TestCodeSystem>().Concept[0].Concept[0].Code.Should().Be("bar");
+        }
+
         private static XmlReader constructReader(string xml)
         {
             var stringReader = new StringReader(xml);
@@ -200,5 +225,7 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
 
         private static FhirXmlPocoDeserializer getTestDeserializer(FhirXmlPocoDeserializerSettings settings) =>
                 new(typeof(TestPatient).Assembly, settings);
+
+
     }
 }

@@ -73,7 +73,6 @@ namespace Hl7.Fhir.Serialization
 
             FhirXmlPocoDeserializerState state = new();
 
-
             var result = DeserializeDatatypeInternal(targetType, reader, state);
 
             return !state.Errors.HasExceptions
@@ -270,7 +269,7 @@ namespace Hl7.Fhir.Serialization
         {
             var name = reader.Name;
 
-            while (reader.Name == name)
+            while (reader.Name == name && reader.NodeType != XmlNodeType.EndElement)
             {
                 var newEntry = (Base)propValueMapping.Factory();
                 deserializeDatatypeInto(newEntry, propValueMapping, reader, state);
