@@ -4,6 +4,7 @@ using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using System;
 using System.Collections;
+using System.Globalization;
 using System.Reflection;
 using System.Xml;
 using ERR = Hl7.Fhir.Serialization.FhirXmlException;
@@ -390,15 +391,15 @@ namespace Hl7.Fhir.Serialization
             }
             else if (implementingType == typeof(decimal))
             {
-                return decimal.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTA_DECIMAL.With(reader, reader.Value));
+                return decimal.TryParse(reader.Value, NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTA_DECIMAL.With(reader, reader.Value));
             }
             else if (implementingType == typeof(double))
             {
-                return double.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTA_DOUBLE.With(reader, reader.Value));
+                return double.TryParse(reader.Value, NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTA_DOUBLE.With(reader, reader.Value));
             }
             else if (implementingType == typeof(float))
             {
-                return float.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTA_FLOAT.With(reader, reader.Value));
+                return float.TryParse(reader.Value, NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTA_FLOAT.With(reader, reader.Value));
             }
             else if (implementingType == typeof(ulong))
             {
