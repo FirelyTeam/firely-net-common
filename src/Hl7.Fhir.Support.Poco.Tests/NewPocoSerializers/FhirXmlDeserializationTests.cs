@@ -2,29 +2,73 @@
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.IO;
 using System.Xml;
+using ERR = Hl7.Fhir.Serialization.FhirXmlException;
 
 namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
 {
     [TestClass]
     public class FhirXmlDeserializationTests
     {
+        [DataTestMethod]
+        [DataRow("<active value =\"true\"/>", typeof(FhirBoolean), true, null)]
+        [DataRow("<multipleBirthInteger value =\"1\"/>", typeof(Integer), 1, null)]
+        [DataRow("<Birthdate value =\"2000-01-01\"/>", typeof(FhirDateTime), "2000-01-01", null)]
         [TestMethod]
-        public void TryDeserializePrimitiveValue()
+        public void TryDeserializePrimitives(string xmlPrimitive, Type expectedFhirType, object expectedValue, string error)
         {
-
-            var content = "<active value=\"true\"/>";
-
-            var reader = constructReader(content);
+            var reader = constructReader(xmlPrimitive);
             reader.Read();
 
             var deserializer = getTestDeserializer(new());
-            var datatype = deserializer.DeserializeDatatype(typeof(FhirBoolean), reader);
+            var datatype = deserializer.DeserializeDatatype(expectedFhirType, reader);
 
-            datatype.Should().BeOfType<FhirBoolean>();
-            datatype.As<FhirBoolean>().Value.Should().Be(true);
+            datatype.Should().BeOfType(expectedFhirType);
+            datatype.As<PrimitiveType>().ObjectValue.Should().Be(expectedValue);
         }
+
+        [DataTestMethod]
+        [DataRow("<foo value =\"true\"/>", typeof(bool), true, null)]
+        [DataRow("<foo value =\"1\"/>", typeof(bool), "1", ERR.STRING_ISNOTA_BOOLEAN_CODE)]
+        [DataRow("<foo value =\"2000-01-01\"/>", typeof(DateTimeOffset), "2000-01-01", null)]
+        [DataRow("<foo value =\"foo\"/>", typeof(DateTimeOffset), "foo", ERR.STRING_ISNOTAN_INSTANT_CODE)]
+        [DataRow("<foo value =\"foo\"/>", typeof(byte[]), "foo", ERR.INCORRECT_BASE64_DATA_CODE)]
+        [DataRow("<foo value =\"true\"/>", typeof(bool), true, null)]
+        [DataRow("<foo value =\"1\"/>", typeof(int), 1, null)]
+        [DataRow("<foo value =\"1.1\"/>", typeof(int), "1.1", ERR.STRING_ISNOTAN_INT_CODE)]
+        [DataRow("<foo value =\"1\"/>", typeof(long), 1, null)]
+        [DataRow("<foo value =\"1.1\"/>", typeof(long), "1.1", ERR.STRING_ISNOTA_LONG_CODE)]
+        [DataRow("<foo value =\"1\"/>", typeof(uint), 1, ERR.STRING_ISNOTAN_UINT_CODE)]
+        [DataRow("<foo value =\"-1\"/>", typeof(uint), "-1", ERR.STRING_ISNOTAN_UINT_CODE)]
+        [DataRow("<foo value =\"3.140,03\"/>", typeof(decimal), 3140.03, null)]
+        [DataRow("<foo value =\"3,14e500\"/>", typeof(decimal), "3,14e500", ERR.STRING_ISNOTA_DECIMAL_CODE)]
+        [DataRow("<foo value =\"3.140,03\"/>", typeof(double), 3140.03, null)]
+        [DataRow("<foo value =\"1\"/>", typeof(ulong), 1, ERR.STRING_ISNOTAN_ULONG_CODE)]
+        [DataRow("<foo value =\"-1\"/>", typeof(ulong), "-1", ERR.STRING_ISNOTAN_ULONG_CODE)]
+        [DataRow("<foo value =\"1\"/>", typeof(float), 1, null)]
+        public void TryDeserializePrimitiveValue(string xmlPrimitive, Type implementingType, object expectedValue, string expectedErrorCode)
+        {
+            var reader = constructReader(xmlPrimitive);
+            reader.MoveToContent();
+            reader.MoveToFirstAttribute();
+
+            var deserializer = getTestDeserializer(new());
+            var (value, error) = deserializer.ParsePrimitiveValue(reader, implementingType);
+
+            error?.ErrorCode.Should().Be(expectedErrorCode);
+
+            if (implementingType == typeof(DateTimeOffset) && expectedErrorCode is null)
+            {
+                value.Should().BeOfType<DateTimeOffset>().Which.ToFhirDate().Should().Be((string)expectedValue);
+            }
+            else
+            {
+                value.Should().Be(expectedValue);
+            }
+        }
+
 
         [TestMethod]
         public void TryDeserializeResourceSinglePrimitive()
@@ -183,7 +227,7 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
             datatype.As<TestHumanName>().Given.Should().HaveCount(3);
             datatype.As<TestHumanName>().Family.Should().Be("oof");
 
-            state.Errors.Should().OnlyContain(ce => ce.ErrorCode == "XML115");
+            state.Errors.Should().OnlyContain(ce => ce.ErrorCode == ERR.UNEXPECTED_ELEMENT_CODE);
 
         }
 
@@ -197,7 +241,6 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
             reader.Read();
 
             var state = new FhirXmlPocoDeserializerState();
-            string errorcode = "XML104";
             var deserializer = getTestDeserializer(new());
             var datatype = deserializer.DeserializeDatatypeInternal(typeof(TestHumanName), reader, state);
 
@@ -205,7 +248,7 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
             datatype.As<TestHumanName>().GivenElement[0].Value.Should().Be("foo");
             datatype.As<TestHumanName>().Family.Should().Be("oof");
 
-            state.Errors.Should().OnlyContain(ce => ce.ErrorCode == errorcode);
+            state.Errors.Should().OnlyContain(ce => ce.ErrorCode == ERR.UNKNOWN_ELEMENT_CODE);
         }
 
         [TestMethod]

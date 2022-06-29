@@ -341,7 +341,7 @@ namespace Hl7.Fhir.Serialization
         private void readAttribute(Base target, PropertyMapping propMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
             //parse current attribute to expected type
-            var (parsedValue, error) = parseValue(reader, propMapping.ImplementingType);
+            var (parsedValue, error) = ParsePrimitiveValue(reader, propMapping.ImplementingType);
 
             state.Errors.Add(error);
 
@@ -356,7 +356,7 @@ namespace Hl7.Fhir.Serialization
             }
         }
 
-        private (object?, FhirXmlException?) parseValue(XmlReader reader, Type implementingType)
+        internal (object?, FhirXmlException?) ParsePrimitiveValue(XmlReader reader, Type implementingType)
         {
             if (implementingType == typeof(string))
                 return (reader.Value, null);
@@ -380,6 +380,10 @@ namespace Hl7.Fhir.Serialization
             {
                 return int.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTAN_INT.With(reader, reader.Value));
             }
+            else if (implementingType == typeof(uint))
+            {
+                return uint.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTAN_UINT.With(reader, reader.Value));
+            }
             else if (implementingType == typeof(long))
             {
                 return long.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTA_LONG.With(reader, reader.Value));
@@ -387,6 +391,18 @@ namespace Hl7.Fhir.Serialization
             else if (implementingType == typeof(decimal))
             {
                 return decimal.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTA_DECIMAL.With(reader, reader.Value));
+            }
+            else if (implementingType == typeof(double))
+            {
+                return double.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTA_DOUBLE.With(reader, reader.Value));
+            }
+            else if (implementingType == typeof(float))
+            {
+                return float.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTA_FLOAT.With(reader, reader.Value));
+            }
+            else if (implementingType == typeof(ulong))
+            {
+                return ulong.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTAN_ULONG.With(reader, reader.Value));
             }
             else if (implementingType.IsEnum)
             {

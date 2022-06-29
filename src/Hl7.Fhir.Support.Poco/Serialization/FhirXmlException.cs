@@ -19,11 +19,15 @@ namespace Hl7.Fhir.Serialization
         public const string INCORRECT_BASE64_DATA_CODE = "XML108";
         public const string STRING_ISNOTAN_INT_CODE = "XML109";
         public const string STRING_ISNOTA_LONG_CODE = "XML110";
-        public const string STRING_ISNOTA_DECIMAL_CODE = "XML111";
-        public const string STRING_ISNOTA_BOOLEAN_CODE = "XML112";
-        public const string INCORRECT_XHTML_NAMESPACE_CODE = "XML113";
-        public const string UNKNOWN_ATTRIBUTE_CODE = "XML114";
-        public const string UNEXPECTED_ELEMENT_CODE = "XML115";
+        public const string STRING_ISNOTAN_UINT_CODE = "XML111";
+        public const string STRING_ISNOTA_DECIMAL_CODE = "XML112";
+        public const string STRING_ISNOTA_DOUBLE_CODE = "XML113";
+        public const string STRING_ISNOTA_FLOAT_CODE = "XML114";
+        public const string STRING_ISNOTAN_ULONG_CODE = "XML115";
+        public const string STRING_ISNOTA_BOOLEAN_CODE = "XML116";
+        public const string INCORRECT_XHTML_NAMESPACE_CODE = "XML117";
+        public const string UNKNOWN_ATTRIBUTE_CODE = "XML118";
+        public const string UNEXPECTED_ELEMENT_CODE = "XML119";
 
         internal static readonly FhirXmlException INCORRECT_ROOT_NAMESPACE = new(INCORRECT_ROOT_NAMESPACE_CODE, "Root has missing or incorrect namespace. Namespace should be \"http://hl7.org/fhir\"");
         internal static readonly FhirXmlException UNKNOWN_RESOURCE_TYPE = new(UNKNOWN_RESOURCE_TYPE_CODE, "Unknown type '{0}' found in root property.");
@@ -35,7 +39,11 @@ namespace Hl7.Fhir.Serialization
         internal static readonly FhirXmlException INCORRECT_BASE64_DATA = new(INCORRECT_BASE64_DATA_CODE, "Encountered incorrectly encoded base64 data.");
         internal static readonly FhirXmlException STRING_ISNOTAN_INT = new(STRING_ISNOTAN_INT_CODE, "Literal string '{0}' cannot be parsed as an integer.");
         internal static readonly FhirXmlException STRING_ISNOTA_LONG = new(STRING_ISNOTA_LONG_CODE, "Literal string '{0}' cannot be parsed as a long integer.");
+        internal static readonly FhirXmlException STRING_ISNOTAN_UINT = new(STRING_ISNOTAN_UINT_CODE, "Literal string '{0}' cannot be parsed as an unsigned integer.");
         internal static readonly FhirXmlException STRING_ISNOTA_DECIMAL = new(STRING_ISNOTA_DECIMAL_CODE, "Literal string '{0}' cannot be parsed as a decimal.");
+        internal static readonly FhirXmlException STRING_ISNOTA_DOUBLE = new(STRING_ISNOTA_DOUBLE_CODE, "Literal string '{0}' cannot be parsed as a double.");
+        internal static readonly FhirXmlException STRING_ISNOTA_FLOAT = new(STRING_ISNOTA_FLOAT_CODE, "Literal string '{0}' cannot be parsed as a float.");
+        internal static readonly FhirXmlException STRING_ISNOTAN_ULONG = new(STRING_ISNOTAN_ULONG_CODE, "Literal string '{0}' cannot be parsed as an unsigned long.");
         internal static readonly FhirXmlException STRING_ISNOTA_BOOLEAN = new(STRING_ISNOTA_BOOLEAN_CODE, "Literal string '{0}' cannot be parsed as a boolean.");
         internal static readonly FhirXmlException INCORRECT_XHTML_NAMESPACE = new(INCORRECT_XHTML_NAMESPACE_CODE, "Narrative has missing or incorrect namespace. Namespace should be \"http://www.w3.org/1999/xhtml\"");
         internal static readonly FhirXmlException UNKNOWN_ATTRIBUTE = new(UNKNOWN_ATTRIBUTE_CODE, "Encountered unrecognized attribute '{0}'.");
