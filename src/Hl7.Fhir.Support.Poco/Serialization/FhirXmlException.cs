@@ -15,19 +15,21 @@ namespace Hl7.Fhir.Serialization
         public const string UNKNOWN_ELEMENT_CODE = "XML104";
         public const string CHOICE_ELEMENT_HAS_NO_TYPE_CODE = "XML105";
         public const string CHOICE_ELEMENT_HAS_UNKOWN_TYPE_CODE = "XML106";
-        public const string STRING_ISNOTAN_INSTANT_CODE = "XML107";
-        public const string INCORRECT_BASE64_DATA_CODE = "XML108";
-        public const string STRING_ISNOTAN_INT_CODE = "XML109";
-        public const string STRING_ISNOTA_LONG_CODE = "XML110";
-        public const string STRING_ISNOTAN_UINT_CODE = "XML111";
-        public const string STRING_ISNOTA_DECIMAL_CODE = "XML112";
-        public const string STRING_ISNOTA_DOUBLE_CODE = "XML113";
-        public const string STRING_ISNOTA_FLOAT_CODE = "XML114";
-        public const string STRING_ISNOTAN_ULONG_CODE = "XML115";
-        public const string STRING_ISNOTA_BOOLEAN_CODE = "XML116";
-        public const string INCORRECT_XHTML_NAMESPACE_CODE = "XML117";
-        public const string UNKNOWN_ATTRIBUTE_CODE = "XML118";
-        public const string UNEXPECTED_ELEMENT_CODE = "XML119";
+        public const string INCORRECT_XHTML_NAMESPACE_CODE = "XML107";
+        public const string UNKNOWN_ATTRIBUTE_CODE = "XML108";
+        public const string UNEXPECTED_ELEMENT_CODE = "XML109";
+
+        public const string STRING_ISNOTAN_INSTANT_CODE = "XML201";
+        public const string INCORRECT_BASE64_DATA_CODE = "XML202";
+        public const string STRING_ISNOTAN_INT_CODE = "XML203";
+        public const string STRING_ISNOTA_LONG_CODE = "XML204";
+        public const string STRING_ISNOTAN_UINT_CODE = "XML205";
+        public const string STRING_ISNOTA_DECIMAL_CODE = "XML206";
+        public const string STRING_ISNOTA_DOUBLE_CODE = "XML207";
+        public const string STRING_ISNOTA_FLOAT_CODE = "XML208";
+        public const string STRING_ISNOTAN_ULONG_CODE = "XML209";
+        public const string STRING_ISNOTA_BOOLEAN_CODE = "XML210";
+
 
         internal static readonly FhirXmlException INCORRECT_ROOT_NAMESPACE = new(INCORRECT_ROOT_NAMESPACE_CODE, "Root has missing or incorrect namespace. Namespace should be \"http://hl7.org/fhir\"");
         internal static readonly FhirXmlException UNKNOWN_RESOURCE_TYPE = new(UNKNOWN_RESOURCE_TYPE_CODE, "Unknown type '{0}' found in root property.");
