@@ -46,7 +46,7 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
         [DataRow("<foo value =\"3.140,03\"/>", typeof(double), 3140.03, null, DisplayName = "XmlDouble1")]
         [DataRow("<foo value =\"1\"/>", typeof(ulong), 1, ERR.STRING_ISNOTAN_ULONG_CODE, DisplayName = "XmlUlong1")]
         [DataRow("<foo value =\"-1\"/>", typeof(ulong), "-1", ERR.STRING_ISNOTAN_ULONG_CODE, DisplayName = "XmlUlong2")]
-        [DataRow("<foo value =\"1\"/>", typeof(float), 1, null, ERR.STRING_ISNOTAN_ULONG_CODE, DisplayName = "XmlFloat1")]
+        [DataRow("<foo value =\"1\"/>", typeof(float), 1, null, DisplayName = "XmlFloat1")]
         public void TryDeserializePrimitiveValue(string xmlPrimitive, Type implementingType, object expectedValue, string expectedErrorCode)
         {
             var reader = constructReader(xmlPrimitive);
