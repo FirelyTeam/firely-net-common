@@ -95,7 +95,7 @@ namespace Hl7.Fhir.Serialization
 
                 try
                 {
-                    state.Path.EnterResource(resourceMapping.Name);
+                    //state.Path.EnterResource(resourceMapping.Name);
                     deserializeDatatypeInto(newResource, resourceMapping, reader, state);
 
                     if (!resourceMapping.IsResource)
@@ -108,7 +108,7 @@ namespace Hl7.Fhir.Serialization
                 }
                 finally
                 {
-                    state.Path.ExitResource();
+                    //state.Path.ExitResource();
                 }
             }
             else
@@ -137,7 +137,7 @@ namespace Hl7.Fhir.Serialization
         // We expect to start at the open tag op the element. When done, the reader will be at the next token after this element or end of the file.
         private void deserializeDatatypeInto(Base target, ClassMapping mapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
-            state.Path.EnterElement(mapping.Name);
+            state.Path.EnterElement(reader.Name);
 
             //check if on opening tag
             if (reader.NodeType != XmlNodeType.Element)
@@ -158,6 +158,7 @@ namespace Hl7.Fhir.Serialization
                 reader.Read();
 
                 int highestOrder = 0;
+                var oldErrors = state.Errors.Count;
 
                 while (reader.NodeType != XmlNodeType.EndElement)
                 {
@@ -208,6 +209,17 @@ namespace Hl7.Fhir.Serialization
                             reader.Skip();
                         }
                     }
+                }
+
+                if (Settings.Validator is not null && oldErrors == state.Errors.Count)
+                {
+                    var (lineNumber, position) = reader.GenerateLineInfo();
+                    var context = new InstanceDeserializationContext(
+                        state.Path.GetPath(),
+                        lineNumber, position,
+                        mapping!);
+
+                    PocoDeserializationHelper.RunInstanceValidation(target, Settings.Validator, context, state.Errors);
                 }
             }
             reader.Read();
@@ -364,6 +376,8 @@ namespace Hl7.Fhir.Serialization
         ///Parse current attribute value to set the value property of the target.
         private void readAttribute(Base target, PropertyMapping propMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
+            int oldErrors = state.Errors.Count;
+
             //parse current attribute to expected type
             var (parsedValue, error) = ParsePrimitiveValue(reader, propMapping.ImplementingType);
 
@@ -378,6 +392,19 @@ namespace Hl7.Fhir.Serialization
                     propMapping.SetValue(target, parsedValue);
                 }
             }
+
+            if (Settings.Validator is not null && oldErrors == state.Errors.Count)
+            {
+                var (lineNumber, position) = reader.GenerateLineInfo();
+                var context = new PropertyDeserializationContext(
+                    state.Path.GetPath(),
+                    propMapping.Name,
+                    lineNumber, position,
+                    propMapping);
+
+                PocoDeserializationHelper.RunPropertyValidation(target, Settings.Validator, context, state.Errors);
+            }
+
         }
 
         internal (object?, FhirXmlException?) ParsePrimitiveValue(XmlReader reader, Type implementingType)

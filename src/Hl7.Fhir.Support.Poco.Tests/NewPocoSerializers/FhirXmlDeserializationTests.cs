@@ -1,13 +1,14 @@
 ﻿using FluentAssertions;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
+using Hl7.Fhir.Validation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.IO;
 using System.Xml;
 using ERR = Hl7.Fhir.Serialization.FhirXmlException;
 
-namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
+namespace Hl7.Fhir.Support.Poco.Tests
 {
     [TestClass]
     public class FhirXmlDeserializationTests
@@ -294,7 +295,7 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
         public void TryDeserializeRecursiveElements()
         {
             var content =
-            "<CodeSystem>" +
+            "<CodeSystem xmlns=\"http://hl7.org/fhir\">" +
                 "<concept>" +
                     "<code value = \"foo\" />" +
                     "<concept>" +
@@ -315,6 +316,35 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
             resource.As<TestCodeSystem>().Concept[0].Concept[0].Code.Should().Be("bar");
         }
 
+        [TestMethod]
+        public void TestUpdatePrimitiveValue()
+        {
+            test(new CustomComplexValidator());
+            test(new CustomDataTypeValidator());
+
+            static void test(IDeserializationValidator validator)
+            {
+                var xml = "<Patient xmlns=\"http://hl7.org/fhir\"><deceasedDateTime value=\"2070-01-01T12:01:02Z\"/></Patient>";
+                var reader = constructReader(xml);
+                reader.Read();
+
+                var serializer = getTestDeserializer(new FhirXmlPocoDeserializerSettings { Validator = validator });
+                var state = new FhirXmlPocoDeserializerState();
+
+                var result = serializer.DeserializeResourceInternal(reader, state);
+                //var (result, errors) = deserializeComplex(typeof(TestPatient),
+                //    new { resourceType = "Patient", deceasedDateTime = "2070-01-01T12:01:02Z" },
+                //        out _, new() { Validator = validator });
+
+                state.Errors.HasExceptions.Should().BeTrue();
+                state.Errors.Should().AllBeOfType<CodedValidationException>()
+                    .And.ContainSingle(e => ((CodedValidationException)e).ErrorCode == CodedValidationException.DATETIME_LITERAL_INVALID_CODE);
+                result.Should().BeOfType<TestPatient>()
+                    .Which.Deceased.Should().BeOfType<FhirDateTime>()
+                    .Which.Value.Should().EndWith("+00:00");
+            }
+        }
+
         private static XmlReader constructReader(string xml)
         {
             var stringReader = new StringReader(xml);
@@ -324,6 +354,63 @@ namespace Hl7.Fhir.Support.Poco.Tests.NewPocoSerializers
 
         private static FhirXmlPocoDeserializer getTestDeserializer(FhirXmlPocoDeserializerSettings settings) =>
                 new(typeof(TestPatient).Assembly, settings);
+
+        private class CustomComplexValidator : IDeserializationValidator
+        {
+            public void ValidateInstance(object instance, in InstanceDeserializationContext context, out CodedValidationException[]? reportedErrors)
+            {
+                reportedErrors = null;
+            }
+
+            public void ValidateProperty(object instance, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors)
+            {
+                reportedErrors = null;
+
+                if (instance is not FhirDateTime f) return;
+                if (context.Path != "Patient.deceasedDateTime") return;
+
+                context.ElementMapping.DeclaringClass.Name.Should().Be("dateTime");
+                context.PropertyName.Should().Be("value");
+                context.ElementMapping.Name.Should().Be("value");
+
+                // Invalid value, but since this value has already been validated during
+                // deserialization of the FhirDateTime, validation will not be triggered!
+                if (f.Value.EndsWith("Z")) f.Value = f.Value.TrimEnd('Z') + "+00:00";
+
+                reportedErrors = new[] { CodedValidationException.DATETIME_LITERAL_INVALID };
+            }
+
+        }
+
+        private class CustomDataTypeValidator : IDeserializationValidator
+        {
+            public void ValidateInstance(object instance, in InstanceDeserializationContext context, out CodedValidationException[]? reportedErrors)
+            {
+                if (context.InstanceMapping.Name == "Patient")
+                {
+                    var patient = instance.Should().BeOfType<TestPatient>().Subject;
+
+                    if (patient.As<TestPatient>().Deceased is FhirDateTime dt)
+                    {
+                        if (dt.Value.EndsWith("Z")) dt.Value = dt.Value.TrimEnd('Z') + "+00:00";
+                        reportedErrors = new[] { CodedValidationException.DATETIME_LITERAL_INVALID };
+                    }
+                    else
+                    {
+                        reportedErrors = null;
+                    }
+                }
+                else
+                {
+                    reportedErrors = null;
+                }
+            }
+
+            public void ValidateProperty(object instance, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors)
+            {
+                reportedErrors = null;
+            }
+        }
 
 
     }
