@@ -4,6 +4,7 @@ using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using System.Xml;
@@ -282,12 +283,34 @@ namespace Hl7.Fhir.Serialization
         private IList readResourceList(XmlReader reader, FhirXmlPocoDeserializerState state, IList list)
         {
             var name = reader.Name;
-            while (reader.Name == name)
+            var depth = reader.Depth;
+
+            while (reader.Name == name && reader.NodeType != XmlNodeType.EndElement)
             {
-                reader.Read(); // move to first child; e.g. from <contained> to the actual resource;
-                list.Add(DeserializeResourceInternal(reader, state));
-                reader.Read(); // move back to e.g. </contained>
+                var containedList = new List<Resource?>() { };
+                reader.Read(); // move to first child; e.g. from <contained> to the actual resource;       
+                if (reader.NodeType != XmlNodeType.EndElement)
+                {
+                    //read all resources in the resource container, even if there are multiple (which is not allowed)
+                    while (reader.Depth != depth && reader.NodeType != XmlNodeType.EndElement)
+                    {
+                        var resource = DeserializeResourceInternal(reader, state);
+                        if (resource != null)
+                        {
+                            containedList.Add(resource);
+                        }
+                    }
+                }
+                if (containedList.Count > 1)
+                {
+                    state.Errors.Add(ERR.MULTIPLE_RESOURCES_IN_RESOURCE_CONTAINER.With(reader));
+                }
+                containedList.ForEach(r => list.Add(r));
+
+                //move from endTag of resource container to next element, which can be another resource container ofcourse.
+                reader.Read();
             }
+
             return list;
         }
 

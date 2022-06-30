@@ -18,6 +18,7 @@ namespace Hl7.Fhir.Serialization
         public const string INCORRECT_XHTML_NAMESPACE_CODE = "XML107";
         public const string UNKNOWN_ATTRIBUTE_CODE = "XML108";
         public const string UNEXPECTED_ELEMENT_CODE = "XML109";
+        public const string MULTIPLE_RESOURCES_IN_RESOURCE_CONTAINER_CODE = "XML110";
 
         public const string STRING_ISNOTAN_INSTANT_CODE = "XML201";
         public const string INCORRECT_BASE64_DATA_CODE = "XML202";
@@ -31,7 +32,7 @@ namespace Hl7.Fhir.Serialization
         public const string STRING_ISNOTA_BOOLEAN_CODE = "XML210";
 
 
-        internal static readonly FhirXmlException INCORRECT_ROOT_NAMESPACE = new(INCORRECT_ROOT_NAMESPACE_CODE, "Root has missing or incorrect namespace. Namespace should be \"http://hl7.org/fhir\"");
+        internal static readonly FhirXmlException INCORRECT_ROOT_NAMESPACE = new(INCORRECT_ROOT_NAMESPACE_CODE, "Root has missing or incorrect namespace. Namespace should be \"http://hl7.org/fhir\".");
         internal static readonly FhirXmlException UNKNOWN_RESOURCE_TYPE = new(UNKNOWN_RESOURCE_TYPE_CODE, "Unknown type '{0}' found in root property.");
         internal static readonly FhirXmlException RESOURCE_TYPE_NOT_A_RESOURCE = new(RESOURCE_TYPE_NOT_A_RESOURCE_CODE, "Data type '{0}' in property 'resourceType' is not a type of resource.");
         internal static readonly FhirXmlException UNKNOWN_ELEMENT = new(UNKNOWN_ELEMENT_CODE, "Encountered unrecognized element '{0}'.");
@@ -49,7 +50,8 @@ namespace Hl7.Fhir.Serialization
         internal static readonly FhirXmlException STRING_ISNOTA_BOOLEAN = new(STRING_ISNOTA_BOOLEAN_CODE, "Literal string '{0}' cannot be parsed as a boolean.");
         internal static readonly FhirXmlException INCORRECT_XHTML_NAMESPACE = new(INCORRECT_XHTML_NAMESPACE_CODE, "Narrative has missing or incorrect namespace. Namespace should be \"http://www.w3.org/1999/xhtml\"");
         internal static readonly FhirXmlException UNKNOWN_ATTRIBUTE = new(UNKNOWN_ATTRIBUTE_CODE, "Encountered unrecognized attribute '{0}'.");
-        internal static readonly FhirXmlException UNEXPECTED_ELEMENT = new(UNEXPECTED_ELEMENT_CODE, "Encountered unexpected element '{0}', please check the order of the xml");
+        internal static readonly FhirXmlException UNEXPECTED_ELEMENT = new(UNEXPECTED_ELEMENT_CODE, "Encountered unexpected element '{0}', please check the order of the xml.");
+        internal static readonly FhirXmlException MULTIPLE_RESOURCES_IN_RESOURCE_CONTAINER = new(MULTIPLE_RESOURCES_IN_RESOURCE_CONTAINER_CODE, "Encountered multiple resources in a resource container while only one is allowed.");
 
         public FhirXmlException(string errorCode, string message) : base(errorCode, message)
         {
@@ -70,9 +72,6 @@ namespace Hl7.Fhir.Serialization
 
             return new FhirXmlException(ErrorCode, message, inner);
         }
-
-
-
     }
 }
 
