@@ -320,6 +320,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         {
             test(new FhirJsonDeserializationTests.CustomComplexValidator());
             test(new FhirJsonDeserializationTests.CustomDataTypeValidator());
+            test(new FhirJsonDeserializationTests.CustomPropertyValueValidator());
 
             static void test(IDeserializationValidator validator)
             {

@@ -4,9 +4,9 @@ namespace Hl7.Fhir.Serialization
 {
     internal static class PocoDeserializationHelper
     {
-        internal static void RunPropertyValidation(object? instance, IDeserializationValidator validator, PropertyDeserializationContext context, ExceptionAggregator aggregator)
+        internal static void RunPropertyValidation(ref object? instance, IDeserializationValidator validator, PropertyDeserializationContext context, ExceptionAggregator aggregator)
         {
-            validator.ValidateProperty(instance, context, out var errors);
+            validator.ValidateProperty(ref instance, context, out var errors);
             aggregator.Add(errors);
             return;
         }

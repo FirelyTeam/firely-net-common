@@ -647,7 +647,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 reportedErrors = null;
             }
 
-            public void ValidateProperty(object? instance, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors)
+            public void ValidateProperty(ref object? instance, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors)
             {
                 reportedErrors = null;
 
@@ -662,6 +662,35 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 // deserialization of the FhirDateTime, validation will not be triggered!
                 if (f.Value.EndsWith("Z")) f.Value = f.Value.TrimEnd('Z') + "+00:00";
 
+                reportedErrors = new[] { COVE.DATETIME_LITERAL_INVALID };
+            }
+
+        }
+
+        internal class CustomPropertyValueValidator : IDeserializationValidator
+        {
+            public void ValidateInstance(object? instance, in InstanceDeserializationContext context, out COVE[]? reportedErrors)
+            {
+                reportedErrors = null;
+            }
+
+            public void ValidateProperty(ref object? instance, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors)
+            {
+                reportedErrors = null;
+
+                if (instance is not String f) return;
+                if (context.Path != "Patient.deceased.value") return;
+
+                context.ElementMapping.DeclaringClass.Name.Should().Be("dateTime");
+                context.PropertyName.Should().Be("value");
+                context.ElementMapping.Name.Should().Be("value");
+
+                // Invalid value, but since this value has already been validated during
+                // deserialization of the FhirDateTime, validation will not be triggered!
+                if (f.EndsWith("Z"))
+                {
+                    instance = f.TrimEnd('Z') + "+00:00";
+                }
                 reportedErrors = new[] { COVE.DATETIME_LITERAL_INVALID };
             }
 
@@ -684,7 +713,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 }
             }
 
-            public void ValidateProperty(object? instance, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors)
+            public void ValidateProperty(ref object? instance, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors)
             {
                 reportedErrors = null;
             }
@@ -693,8 +722,9 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [TestMethod]
         public void TestUpdatePrimitiveValue()
         {
-            test(new CustomComplexValidator());
-            test(new CustomDataTypeValidator());
+            //test(new CustomComplexValidator());
+            //test(new CustomDataTypeValidator());
+            test(new CustomPropertyValueValidator());
 
             static void test(IDeserializationValidator validator)
             {

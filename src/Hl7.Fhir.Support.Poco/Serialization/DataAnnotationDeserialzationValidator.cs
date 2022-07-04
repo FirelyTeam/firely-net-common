@@ -41,8 +41,8 @@ namespace Hl7.Fhir.Serialization
             NarrativeValidation = narrativeValidation;
         }
 
-        /// <inheritdoc cref="IDeserializationValidator.ValidateProperty(object?, in PropertyDeserializationContext, out CodedValidationException[])"/>
-        public void ValidateProperty(object? instance, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors)
+        /// <inheritdoc cref="IDeserializationValidator.ValidateProperty(ref object?, in PropertyDeserializationContext, out CodedValidationException[])"/>
+        public void ValidateProperty(ref object? instance, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors)
         {
             var validationContext = new ValidationContext(instance ?? new object())
                 .SetValidateRecursively(false)    // Don't go deeper - we've already validated the children because we're parsing bottom-up.

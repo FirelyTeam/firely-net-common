@@ -364,10 +364,10 @@ namespace Hl7.Fhir.Serialization
                 {
                     delayedValidations.Schedule(
                         propertyMapping.Name + PROPERTY_VALIDATION_KEY_SUFFIX,
-                        () => PocoDeserializationHelper.RunPropertyValidation(result, Settings.Validator!, deserializationContext, state.Errors));
+                        () => PocoDeserializationHelper.RunPropertyValidation(ref result, Settings.Validator!, deserializationContext, state.Errors));
                 }
                 else
-                    PocoDeserializationHelper.RunPropertyValidation(result, Settings.Validator!, deserializationContext, state.Errors);
+                    PocoDeserializationHelper.RunPropertyValidation(ref result, Settings.Validator!, deserializationContext, state.Errors);
             }
 
             propertyMapping.SetValue(target, result);
@@ -538,24 +538,33 @@ namespace Hl7.Fhir.Serialization
                     throw new InvalidOperationException($"All subclasses of {nameof(PrimitiveType)} should have a property representing the value element, " +
                         $"but {propertyValueMapping.Name} has not. " + reader.GenerateLocationMessage());
 
-                var (result, error) = DeserializePrimitiveValue(ref reader, primitiveValueProperty.ImplementingType);
-
-                // Only do validation when no parse errors were encountered, otherwise we'll just
-                // produce spurious messages.
-                if (error is not null)
-                    state.Errors.Add(error);
-                else if (Settings.Validator is not null)
+                state.Path.EnterElement("value");
+                try
                 {
-                    var propertyValueContext = new PropertyDeserializationContext(
-                        state.Path.GetPath(),
-                        "value",
-                        line, pos,
-                        primitiveValueProperty);
 
-                    PocoDeserializationHelper.RunPropertyValidation(result, Settings.Validator, propertyValueContext, state.Errors);
+                    var (result, error) = DeserializePrimitiveValue(ref reader, primitiveValueProperty.ImplementingType);
+
+                    // Only do validation when no parse errors were encountered, otherwise we'll just
+                    // produce spurious messages.
+                    if (error is not null)
+                        state.Errors.Add(error);
+                    else if (Settings.Validator is not null)
+                    {
+
+                        var propertyValueContext = new PropertyDeserializationContext(
+                            state.Path.GetPath(),
+                            "value",
+                            line, pos,
+                            primitiveValueProperty);
+
+                        PocoDeserializationHelper.RunPropertyValidation(ref result, Settings.Validator, propertyValueContext, state.Errors);
+                    }
+                    targetPrimitive.ObjectValue = result;
                 }
-
-                targetPrimitive.ObjectValue = result;
+                finally
+                {
+                    state.Path.ExitElement();
+                }
             }
             else
             {

@@ -240,7 +240,7 @@ namespace Hl7.Fhir.Serialization
                     lineNumber, position,
                     propMapping);
 
-                PocoDeserializationHelper.RunPropertyValidation(result, Settings.Validator, context, state.Errors);
+                PocoDeserializationHelper.RunPropertyValidation(ref result, Settings.Validator, context, state.Errors);
             }
             propMapping.SetValue(target, result);
         }
@@ -411,27 +411,26 @@ namespace Hl7.Fhir.Serialization
 
             if (parsedValue != null)
             {
+                if (Settings.Validator is not null && oldErrors == state.Errors.Count)
+                {
+                    var (lineNumber, position) = reader.GenerateLineInfo();
+                    var name = reader.Name;
+
+                    var context = new PropertyDeserializationContext(
+                        state.Path.GetPath(),
+                        name,
+                        lineNumber, position,
+                        propMapping);
+
+                    PocoDeserializationHelper.RunPropertyValidation(ref parsedValue, Settings.Validator, context, state.Errors);
+                }
+
                 if (target is PrimitiveType primitive)
                     primitive.ObjectValue = parsedValue;
                 else
                 {
                     propMapping.SetValue(target, parsedValue);
                 }
-            }
-
-
-            if (Settings.Validator is not null && oldErrors == state.Errors.Count)
-            {
-                var (lineNumber, position) = reader.GenerateLineInfo();
-                var name = reader.Name;
-
-                var context = new PropertyDeserializationContext(
-                    state.Path.GetPath(),
-                    name,
-                    lineNumber, position,
-                    propMapping);
-
-                PocoDeserializationHelper.RunPropertyValidation(parsedValue, Settings.Validator, context, state.Errors);
             }
         }
 
