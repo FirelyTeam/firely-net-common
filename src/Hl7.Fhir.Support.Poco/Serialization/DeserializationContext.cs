@@ -59,8 +59,6 @@ namespace Hl7.Fhir.Serialization
         public PropertyMapping ElementMapping { get; }
     }
 
-
-
     /// <summary>
     /// Contains contextual information for the instance that is currently being deserialized and is passed 
     /// to delegate methods implementing parts of user-definable deserialization and validation logic.

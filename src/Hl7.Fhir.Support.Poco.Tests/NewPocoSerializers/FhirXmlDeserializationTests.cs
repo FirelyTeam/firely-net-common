@@ -124,7 +124,6 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [TestMethod]
         public void TryDeserializeResourceMultiplePrimitives()
         {
-
             var content = "<Patient xmlns=\"http://hl7.org/fhir\"><active value=\"true\"/><gender value=\"female\"/></Patient>";
 
             var reader = constructReader(content);
@@ -317,10 +316,10 @@ namespace Hl7.Fhir.Support.Poco.Tests
         }
 
         [TestMethod]
-        public void TestUpdatePrimitiveValue()
+        public void TestCustomValidators()
         {
-            test(new CustomComplexValidator());
-            test(new CustomDataTypeValidator());
+            test(new FhirJsonDeserializationTests.CustomComplexValidator());
+            test(new FhirJsonDeserializationTests.CustomDataTypeValidator());
 
             static void test(IDeserializationValidator validator)
             {
@@ -332,9 +331,6 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 var state = new FhirXmlPocoDeserializerState();
 
                 var result = serializer.DeserializeResourceInternal(reader, state);
-                //var (result, errors) = deserializeComplex(typeof(TestPatient),
-                //    new { resourceType = "Patient", deceasedDateTime = "2070-01-01T12:01:02Z" },
-                //        out _, new() { Validator = validator });
 
                 state.Errors.HasExceptions.Should().BeTrue();
                 state.Errors.Should().AllBeOfType<CodedValidationException>()
@@ -354,64 +350,6 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
         private static FhirXmlPocoDeserializer getTestDeserializer(FhirXmlPocoDeserializerSettings settings) =>
                 new(typeof(TestPatient).Assembly, settings);
-
-        private class CustomComplexValidator : IDeserializationValidator
-        {
-            public void ValidateInstance(object instance, in InstanceDeserializationContext context, out CodedValidationException[]? reportedErrors)
-            {
-                reportedErrors = null;
-            }
-
-            public void ValidateProperty(object instance, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors)
-            {
-                reportedErrors = null;
-
-                if (instance is not FhirDateTime f) return;
-                if (context.Path != "Patient.deceasedDateTime") return;
-
-                context.ElementMapping.DeclaringClass.Name.Should().Be("dateTime");
-                context.PropertyName.Should().Be("value");
-                context.ElementMapping.Name.Should().Be("value");
-
-                // Invalid value, but since this value has already been validated during
-                // deserialization of the FhirDateTime, validation will not be triggered!
-                if (f.Value.EndsWith("Z")) f.Value = f.Value.TrimEnd('Z') + "+00:00";
-
-                reportedErrors = new[] { CodedValidationException.DATETIME_LITERAL_INVALID };
-            }
-
-        }
-
-        private class CustomDataTypeValidator : IDeserializationValidator
-        {
-            public void ValidateInstance(object instance, in InstanceDeserializationContext context, out CodedValidationException[]? reportedErrors)
-            {
-                if (context.InstanceMapping.Name == "Patient")
-                {
-                    var patient = instance.Should().BeOfType<TestPatient>().Subject;
-
-                    if (patient.As<TestPatient>().Deceased is FhirDateTime dt)
-                    {
-                        if (dt.Value.EndsWith("Z")) dt.Value = dt.Value.TrimEnd('Z') + "+00:00";
-                        reportedErrors = new[] { CodedValidationException.DATETIME_LITERAL_INVALID };
-                    }
-                    else
-                    {
-                        reportedErrors = null;
-                    }
-                }
-                else
-                {
-                    reportedErrors = null;
-                }
-            }
-
-            public void ValidateProperty(object instance, in PropertyDeserializationContext context, out CodedValidationException[]? reportedErrors)
-            {
-                reportedErrors = null;
-            }
-        }
-
 
     }
 }

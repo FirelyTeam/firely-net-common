@@ -640,7 +640,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             }
         }
 
-        private class CustomComplexValidator : IDeserializationValidator
+        internal class CustomComplexValidator : IDeserializationValidator
         {
             public void ValidateInstance(object? instance, in InstanceDeserializationContext context, out COVE[]? reportedErrors)
             {
@@ -667,7 +667,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
         }
 
-        private class CustomDataTypeValidator : IDeserializationValidator
+        internal class CustomDataTypeValidator : IDeserializationValidator
         {
             public void ValidateInstance(object? instance, in InstanceDeserializationContext context, out COVE[]? reportedErrors)
             {

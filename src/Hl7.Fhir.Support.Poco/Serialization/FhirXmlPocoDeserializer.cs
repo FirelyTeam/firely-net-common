@@ -95,7 +95,7 @@ namespace Hl7.Fhir.Serialization
 
                 try
                 {
-                    //state.Path.EnterResource(resourceMapping.Name);
+                    state.Path.EnterResource(resourceMapping.Name);
                     deserializeDatatypeInto(newResource, resourceMapping, reader, state);
 
                     if (!resourceMapping.IsResource)
@@ -108,7 +108,7 @@ namespace Hl7.Fhir.Serialization
                 }
                 finally
                 {
-                    //state.Path.ExitResource();
+                    state.Path.ExitResource();
                 }
             }
             else
@@ -137,7 +137,8 @@ namespace Hl7.Fhir.Serialization
         // We expect to start at the open tag op the element. When done, the reader will be at the next token after this element or end of the file.
         private void deserializeDatatypeInto(Base target, ClassMapping mapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
-            state.Path.EnterElement(reader.Name);
+            var oldErrors = state.Errors.Count;
+            var (lineNumber, position) = reader.GenerateLineInfo();
 
             //check if on opening tag
             if (reader.NodeType != XmlNodeType.Element)
@@ -156,14 +157,11 @@ namespace Hl7.Fhir.Serialization
             {
                 //read the next object
                 reader.Read();
-
                 int highestOrder = 0;
-                var oldErrors = state.Errors.Count;
 
                 while (reader.NodeType != XmlNodeType.EndElement)
                 {
-
-                    if (!shouldSkipNodeType(reader.NodeType))
+                    if (!FhirXmlPocoDeserializer.shouldSkipNodeType(reader.NodeType))
                     {
                         // check if we are currently on an element.
                         var (propMapping, propValueMapping, error) = tryGetMappedElementMetadata(_inspector, mapping, reader, reader.Name);
@@ -171,36 +169,17 @@ namespace Hl7.Fhir.Serialization
 
                         if (propMapping is not null)
                         {
-                            var incorrectOrder = false;
+                            state.Path.EnterElement(propMapping.Name);
+                            (var order, var incorrectOrder) = checkOrder(reader, state, highestOrder, propMapping);
+                            highestOrder = order;
 
-                            //check if element is in the correct order.
-                            if (propMapping.Order >= highestOrder)
+                            try
                             {
-                                highestOrder = propMapping.Order;
+                                deserializePropertyValue(target, reader, state, oldErrors, incorrectOrder, propMapping, propValueMapping);
                             }
-                            else
+                            finally
                             {
-                                state.Errors.Add(ERR.UNEXPECTED_ELEMENT.With(reader, reader.Name));
-                                incorrectOrder = true;
-                            }
-
-                            //check if element is narrative
-                            if (propMapping.SerializationHint == Specification.XmlRepresentation.XHtml)
-                            {
-                                var newValue = readXhtml(propValueMapping, reader, state);
-                                propMapping!.SetValue(target, newValue);
-                            }
-                            //check propMapping if list -> readList or readSingle value 
-                            else if (propMapping.IsCollection == true)
-                            {
-                                var newCollection = createOrExpandList(target, incorrectOrder, propValueMapping!, propMapping, reader, state);
-                                propMapping!.SetValue(target, newCollection);
-
-                            }
-                            else
-                            {
-                                var newValue = readSingleValue(propValueMapping!, reader, state);
-                                propMapping!.SetValue(target, newValue);
+                                state.Path.ExitElement();
                             }
                         }
                         else
@@ -210,23 +189,63 @@ namespace Hl7.Fhir.Serialization
                         }
                     }
                 }
-
-                if (Settings.Validator is not null && oldErrors == state.Errors.Count)
-                {
-                    var (lineNumber, position) = reader.GenerateLineInfo();
-                    var context = new InstanceDeserializationContext(
-                        state.Path.GetPath(),
-                        lineNumber, position,
-                        mapping!);
-
-                    PocoDeserializationHelper.RunInstanceValidation(target, Settings.Validator, context, state.Errors);
-                }
             }
+            if (Settings.Validator is not null && oldErrors == state.Errors.Count)
+            {
+                var context = new InstanceDeserializationContext(
+                    state.Path.GetPath(),
+                    lineNumber, position,
+                    mapping!);
+
+                PocoDeserializationHelper.RunInstanceValidation(target, Settings.Validator, context, state.Errors);
+            }
+
             reader.Read();
-            state.Path.ExitElement();
+
         }
 
-        private string readXhtml(ClassMapping? propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
+        private (int highestOrder, bool incorrectOrder) checkOrder(XmlReader reader, FhirXmlPocoDeserializerState state, int highestOrder, PropertyMapping propMapping)
+        {
+            var incorrectOrder = false;
+            //check if element is in the correct order.
+            if (propMapping.Order >= highestOrder)
+            {
+                highestOrder = propMapping.Order;
+            }
+            else
+            {
+                state.Errors.Add(ERR.UNEXPECTED_ELEMENT.With(reader, reader.Name));
+                incorrectOrder = true;
+            }
+            return (highestOrder, incorrectOrder);
+        }
+
+        private void deserializePropertyValue(Base target, XmlReader reader, FhirXmlPocoDeserializerState state, int oldErrors, bool incorrectOrder, PropertyMapping propMapping, ClassMapping? propValueMapping)
+        {
+            var (lineNumber, position) = reader.GenerateLineInfo();
+            var name = reader.Name;
+
+            object? result = propMapping switch
+            {
+                { SerializationHint: Specification.XmlRepresentation.XHtml } => FhirXmlPocoDeserializer.readXhtml(propValueMapping, reader, state),
+                { IsCollection: true } => createOrExpandList(target, incorrectOrder, propValueMapping!, propMapping, reader, state),
+                _ => readSingleValue(propValueMapping!, reader, state)
+            };
+
+            if (Settings.Validator is not null && oldErrors == state.Errors.Count)
+            {
+                var context = new PropertyDeserializationContext(
+                    state.Path.GetPath(),
+                    name,
+                    lineNumber, position,
+                    propMapping);
+
+                PocoDeserializationHelper.RunPropertyValidation(result, Settings.Validator, context, state.Errors);
+            }
+            propMapping.SetValue(target, result);
+        }
+
+        private static string readXhtml(ClassMapping? propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
             if (reader.NamespaceURI != "http://www.w3.org/1999/xhtml")
             {
@@ -338,7 +357,6 @@ namespace Hl7.Fhir.Serialization
                 deserializeDatatypeInto(newDatatype, propValueMapping, reader, state);
                 return newDatatype;
             }
-
         }
 
         private void readAttributes(Base target, ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
@@ -353,7 +371,15 @@ namespace Hl7.Fhir.Serialization
                         var propMapping = propValueMapping.FindMappedElementByName(reader.Name);
                         if (propMapping is not null)
                         {
-                            readAttribute(target, propMapping!, reader, state);
+                            state.Path.EnterElement(propMapping.Name);
+                            try
+                            {
+                                readAttribute(target, propMapping!, reader, state);
+                            }
+                            finally
+                            {
+                                state.Path.ExitElement();
+                            }
                         }
                         else
                         {
@@ -377,8 +403,8 @@ namespace Hl7.Fhir.Serialization
         private void readAttribute(Base target, PropertyMapping propMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
             int oldErrors = state.Errors.Count;
-
             //parse current attribute to expected type
+
             var (parsedValue, error) = ParsePrimitiveValue(reader, propMapping.ImplementingType);
 
             state.Errors.Add(error);
@@ -393,18 +419,20 @@ namespace Hl7.Fhir.Serialization
                 }
             }
 
+
             if (Settings.Validator is not null && oldErrors == state.Errors.Count)
             {
                 var (lineNumber, position) = reader.GenerateLineInfo();
+                var name = reader.Name;
+
                 var context = new PropertyDeserializationContext(
                     state.Path.GetPath(),
-                    propMapping.Name,
+                    name,
                     lineNumber, position,
                     propMapping);
 
-                PocoDeserializationHelper.RunPropertyValidation(target, Settings.Validator, context, state.Errors);
+                PocoDeserializationHelper.RunPropertyValidation(parsedValue, Settings.Validator, context, state.Errors);
             }
-
         }
 
         internal (object?, FhirXmlException?) ParsePrimitiveValue(XmlReader reader, Type implementingType)
@@ -478,7 +506,7 @@ namespace Hl7.Fhir.Serialization
             }
         }
 
-        private bool shouldSkipNodeType(XmlNodeType nodeType)
+        private static bool shouldSkipNodeType(XmlNodeType nodeType)
         {
             return nodeType == XmlNodeType.Comment
                 || nodeType == XmlNodeType.XmlDeclaration
