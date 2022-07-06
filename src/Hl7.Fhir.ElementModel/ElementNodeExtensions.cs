@@ -103,11 +103,7 @@ namespace Hl7.Fhir.ElementModel
             }
 
             // Note: fall-through in all failure cases - return empty collection
-#if NET40
-            return new ReadOnlyList<IElementDefinitionSummary>();
-#else
             return new List<IElementDefinitionSummary>();
-#endif
         }
 
         public static ScopedNode ToScopedNode(this ITypedElement node) =>

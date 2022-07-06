@@ -80,12 +80,7 @@ namespace Hl7.Fhir.Validation
 
         private static ValidationContext buildContext(bool recurse, NarrativeValidationKind kind, object instance)
         {
-            ValidationContext newContext =
-#if NET40
-                new ValidationContext(instance, null, null);
-#else
-                new(instance);
-#endif
+            ValidationContext newContext = new(instance);
 
             newContext.SetValidateRecursively(recurse);
             newContext.SetNarrativeValidationKind(kind);

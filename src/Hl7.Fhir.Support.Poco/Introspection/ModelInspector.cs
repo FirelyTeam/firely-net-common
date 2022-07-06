@@ -112,11 +112,7 @@ namespace Hl7.Fhir.Introspection
         {
             if (assembly == null) throw Error.ArgumentNull(nameof(assembly));
 
-#if NET40
-            IEnumerable<Type> exportedTypes = assembly.GetExportedTypes();
-#else
             IEnumerable<Type> exportedTypes = assembly.ExportedTypes;
-#endif
 
             return exportedTypes.Select(t => ImportType(t))
                 .Where(cm => cm is not null)
