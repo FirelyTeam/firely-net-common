@@ -107,11 +107,7 @@ namespace Hl7.Fhir.ElementModel
 
         public IEnumerable<ITypedElement> Children(string? name = null) => Enumerable.Empty<ITypedElement>();
         IReadOnlyCollection<IElementDefinitionSummary> IStructureDefinitionSummary.GetElements() =>
-#if NET40
-            new ReadOnlyList<IElementDefinitionSummary>();
-#else
             new List<IElementDefinitionSummary>();
-#endif
 
         public override string ToString() => Value != null ? PrimitiveTypeConverter.ConvertTo<string>(Value) : "";
 
