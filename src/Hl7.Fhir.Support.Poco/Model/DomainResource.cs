@@ -27,11 +27,12 @@
   
 */
 
+using Hl7.Fhir.Utility;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Linq;
-using Hl7.Fhir.Utility;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
 
 namespace Hl7.Fhir.Model
 {
@@ -48,10 +49,10 @@ namespace Hl7.Fhir.Model
             if (this.Contained != null)
             {
                 if (!Contained.OfType<DomainResource>().All(dr => dr.Text == null))
-                    result.Add(new ValidationResult("Resource has contained resources with narrative"));
+                    result.Add(COVE.CONTAINED_RESOURCE_CANNOT_HAVE_NARRATIVE.AsResult(validationContext));
 
                 if (!Contained.OfType<DomainResource>().All(cr => cr.Contained == null || !cr.Contained.Any()))
-                    result.Add(new ValidationResult("Resource has contained resources with nested contained resources"));
+                    result.Add(COVE.CONTAINED_RESOURCES_CANNOT_BE_NESTED.AsResult(validationContext));
             }
 
             return result;

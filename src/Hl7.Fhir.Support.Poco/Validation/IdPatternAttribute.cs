@@ -8,28 +8,29 @@
 
 using Hl7.Fhir.Model;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
+
+#nullable enable
 
 namespace Hl7.Fhir.Validation
 {
+    /// <summary>
+    /// Validates an id value against the FHIR rules for id.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
     public class IdPatternAttribute : ValidationAttribute
-    {      
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
-        {
-            if (value == null) return ValidationResult.Success;
-
-            if (value.GetType() != typeof(string))
-                throw new ArgumentException("IdPatternAttribute can only be applied to string properties");
-
-            if (Id.IsValidValue(value as string))
-                return ValidationResult.Success;
-            else
-                return DotNetAttributeValidation.BuildResult(validationContext, "{0} is not a correctly formatted Id", value as string);
-        }
+    {
+        /// <inheritdoc />
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext) =>
+            value switch
+            {
+                null => ValidationResult.Success,
+                string s when Id.IsValidValue(s) => ValidationResult.Success,
+                string s => COVE.ID_LITERAL_INVALID.AsResult(validationContext, s),
+                _ => throw new ArgumentException($"{nameof(IdPatternAttribute)} attributes can only be applied to string properties.")
+            };
     }
 }
+
+#nullable restore

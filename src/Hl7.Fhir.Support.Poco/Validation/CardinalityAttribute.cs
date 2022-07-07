@@ -6,13 +6,19 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using System;
-using System.Collections;
-using System.ComponentModel.DataAnnotations;
 using Hl7.Fhir.Utility;
+using System;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
+
+#nullable enable
 
 namespace Hl7.Fhir.Validation
 {
+    /// <summary>
+    /// Validates a List instance against the cardinality min/max rules.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
     public class CardinalityAttribute : ValidationAttribute
     {
@@ -22,30 +28,40 @@ namespace Hl7.Fhir.Validation
             Max = 1;
         }
 
+        /// <summary>
+        /// The minimum number of occurrences.
+        /// </summary>
         public int Min { get; set; }
+
+        /// <summary>
+        /// The maximum number of occurences. Use <c>-1</c> for unlimited.
+        /// </summary>
         public int Max { get; set; }
 
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        /// <inheritdoc/>
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
         {
-            if (value == null)
+            if (value is null)
                 return (Min == 0) ? ValidationResult.Success :
-                    DotNetAttributeValidation.BuildResult(validationContext, "Element with min. cardinality {0} cannot be null", Min);
+                    COVE.MANDATORY_ELEMENT_CANNOT_BE_NULL.AsResult(validationContext, Min);
 
             var count = 1;
 
-            if (value is IList && !ReflectionHelper.IsArray(value))
+            if (ReflectionHelper.IsRepeatingElement(value, out var list))
             {
-                var list = value as IList;
-                foreach(var elem in list)
-                   if(elem == null) return DotNetAttributeValidation.BuildResult(validationContext,"Repeating element cannot have empty/null values");
+                if (list.Cast<object>().Any(item => item is null))
+                    return COVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL.AsResult(validationContext);
                 count = list.Count;
             }
 
-            if (count < Min) return DotNetAttributeValidation.BuildResult(validationContext,"Element has {0} elements, but min. cardinality is {1}", count, Min);
-
-            if (Max != -1 && count > Max) return DotNetAttributeValidation.BuildResult(validationContext,"Element has {0} elements, but max. cardinality is {1}", count, Max);
+            if (count < Min)
+                return COVE.INCORRECT_CARDINALITY_MIN.AsResult(validationContext, count, Min);
+            if (Max != -1 && count > Max)
+                return COVE.INCORRECT_CARDINALITY_MAX.AsResult(validationContext, count, Max);
 
             return ValidationResult.Success;
         }
     }
 }
+
+#nullable restore

@@ -31,13 +31,12 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public bool PermissiveParsing { get; set; } = true;
 
-#if !NETSTANDARD1_6
         /// <summary>
         /// Validate narrative against the FHIR Xhtml schema.
         /// </summary>
         /// <remarks>Validation of xhtml is expensive, so turned off by default.</remarks>
         public bool ValidateFhirXhtml { get; set; } // = false;
-#endif
+
         /// <summary>Default constructor. Creates a new <see cref="FhirXmlParsingSettings"/> instance with default property values.</summary>
         public FhirXmlParsingSettings() { }
 
@@ -59,10 +58,7 @@ namespace Hl7.Fhir.Serialization
             other.AllowedExternalNamespaces = (XNamespace[])AllowedExternalNamespaces?.Clone();
             other.DisallowSchemaLocation = DisallowSchemaLocation;
             other.PermissiveParsing = PermissiveParsing;
-
-#if !NETSTANDARD1_6
             other.ValidateFhirXhtml = ValidateFhirXhtml;
-#endif
         }
 
         /// <summary>Creates a new <see cref="FhirXmlParsingSettings"/> object that is a copy of the current instance.</summary>

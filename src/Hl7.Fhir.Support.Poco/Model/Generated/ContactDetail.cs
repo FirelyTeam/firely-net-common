@@ -167,6 +167,29 @@ namespace Hl7.Fhir.Model
       }
     }
 
+    protected override bool TryGetValue(string key, out object value)
+    {
+      switch (key)
+      {
+        case "name":
+          value = NameElement;
+          return NameElement is not null;
+        case "telecom":
+          value = Telecom;
+          return Telecom?.Any() == true;
+        default:
+          return base.TryGetValue(key, out value);
+      };
+
+    }
+
+    protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+    {
+      foreach (var kvp in base.GetElementPairs()) yield return kvp;
+      if (NameElement is not null) yield return new KeyValuePair<string,object>("name",NameElement);
+      if (Telecom?.Any() == true) yield return new KeyValuePair<string,object>("telecom",Telecom);
+    }
+
   }
 
 }

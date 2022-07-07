@@ -219,6 +219,37 @@ namespace Hl7.Fhir.Model
         }
       }
 
+      protected override bool TryGetValue(string key, out object value)
+      {
+        switch (key)
+        {
+          case "name":
+            value = NameElement;
+            return NameElement is not null;
+          case "value":
+            value = Value;
+            return Value is not null;
+          case "resource":
+            value = Resource;
+            return Resource is not null;
+          case "part":
+            value = Part;
+            return Part?.Any() == true;
+          default:
+            return base.TryGetValue(key, out value);
+        };
+
+      }
+
+      protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+      {
+        foreach (var kvp in base.GetElementPairs()) yield return kvp;
+        if (NameElement is not null) yield return new KeyValuePair<string,object>("name",NameElement);
+        if (Value is not null) yield return new KeyValuePair<string,object>("value",Value);
+        if (Resource is not null) yield return new KeyValuePair<string,object>("resource",Resource);
+        if (Part?.Any() == true) yield return new KeyValuePair<string,object>("part",Part);
+      }
+
     }
 
     /// <summary>
@@ -295,6 +326,25 @@ namespace Hl7.Fhir.Model
         foreach (var item in base.NamedChildren) yield return item;
         foreach (var elem in Parameter) { if (elem != null) yield return new ElementValue("parameter", elem); }
       }
+    }
+
+    protected override bool TryGetValue(string key, out object value)
+    {
+      switch (key)
+      {
+        case "parameter":
+          value = Parameter;
+          return Parameter?.Any() == true;
+        default:
+          return base.TryGetValue(key, out value);
+      };
+
+    }
+
+    protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+    {
+      foreach (var kvp in base.GetElementPairs()) yield return kvp;
+      if (Parameter?.Any() == true) yield return new KeyValuePair<string,object>("parameter",Parameter);
     }
 
   }

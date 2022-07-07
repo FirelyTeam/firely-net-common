@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Globalization;
-using System.Text;
-
-#if !NETSTANDARD
+#if NET452
 using System.Runtime.Serialization;
 using System.Security.Permissions;
 #endif
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Hl7.Fhir.Utility

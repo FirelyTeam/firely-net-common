@@ -365,7 +365,6 @@ namespace Hl7.Fhir.Serialization
         {
             yield return checkArrayUse;
 
-#if !NETSTANDARD1_6
             yield return checkXhtml;
 
             object checkXhtml(ITypedElement nav, IExceptionSource ies, object _)
@@ -394,7 +393,6 @@ namespace Hl7.Fhir.Serialization
                 }
                 return null;
             }
-#endif
 
             object checkArrayUse(ITypedElement nav, IExceptionSource ies, object _)
             {

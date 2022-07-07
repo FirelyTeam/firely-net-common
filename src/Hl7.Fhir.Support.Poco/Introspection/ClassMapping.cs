@@ -15,6 +15,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -86,16 +87,19 @@ namespace Hl7.Fhir.Introspection
             // Now continue with the normal algorithm, types adorned with the [FhirTypeAttribute]
             if (GetAttribute<FhirTypeAttribute>(type.GetTypeInfo(), release) is not { } typeAttribute) return false;
 
-            result = new ClassMapping(collectTypeName(typeAttribute, type), type, release)
+            var newMapping = new ClassMapping(collectTypeName(typeAttribute, type), type, release)
             {
                 IsResource = typeAttribute.IsResource || type.CanBeTreatedAsType(typeof(Resource)),
                 IsCodeOfT = ReflectionHelper.IsClosedGenericType(type) &&
                                 ReflectionHelper.IsConstructedFromGenericTypeDefinition(type, typeof(Code<>)),
                 IsFhirPrimitive = typeof(PrimitiveType).IsAssignableFrom(type),
                 IsNestedType = typeAttribute.IsNestedType,
-                _mappingInitializer = () => inspectProperties(type, release),
-                Canonical = typeAttribute.Canonical
+                Canonical = typeAttribute.Canonical,
+                ValidationAttributes = GetAttributes<ValidationAttribute>(type.GetTypeInfo(), release).ToArray()
             };
+
+            newMapping._mappingInitializer = () => inspectProperties(type, newMapping, release);
+            result = newMapping;
 
             return true;
         }
@@ -118,6 +122,8 @@ namespace Hl7.Fhir.Introspection
         /// <summary>
         /// The FHIR release which this mapping reflects.
         /// </summary>
+        /// <remarks>The mapping will contain the metadata that applies to this version (or older), using the
+        /// newest metadata when multiple exist.</remarks>
         public FhirRelease? Release { get; }
 
         /// <summary>
@@ -187,6 +193,17 @@ namespace Hl7.Fhir.Introspection
             }
         }
 
+        /// <summary>
+        /// The collection of zero or more <see cref="ValidationAttribute"/> (or subclasses) declared
+        /// on this class.
+        /// </summary>
+        public ValidationAttribute[] ValidationAttributes { get; private set; } =
+#if NET452
+            new ValidationAttribute[0];
+#else
+            Array.Empty<ValidationAttribute>();
+#endif
+
         private PropertyMappingCollection? _mappings;
         private Func<PropertyMappingCollection> _mappingInitializer;
 
@@ -231,14 +248,27 @@ namespace Hl7.Fhir.Introspection
             if (FindMappedElementByName(name) is { } pm) return pm;
 
             // Now, check the choice elements for a match.
-            return propertyMappings.ChoiceProperties
-                .Where(m => name.StartsWith(m.Name))
-                .FirstOrDefault();
+            var matches = propertyMappings.ChoiceProperties
+                .Where(m => name.StartsWith(m.Name)).ToList();
+
+            // Loop through possible matches and return the longest match.
+            if (matches.Any())
+            {
+                return (matches.Count == 1)
+                        ? matches[0]
+                        : matches.Aggregate((l, r) => l.Name.Length > r.Name.Length ? l : r);
+            }
+            else
+            {
+                return null;
+            }
         }
 
-        internal static T? GetAttribute<T>(MemberInfo t, FhirRelease version) where T : Attribute
+        internal static T? GetAttribute<T>(MemberInfo t, FhirRelease version) where T : Attribute => GetAttributes<T>(t, version).LastOrDefault();
+
+        internal static IEnumerable<T> GetAttributes<T>(MemberInfo t, FhirRelease version) where T : Attribute
         {
-            return ReflectionHelper.GetAttributes<T>(t).LastOrDefault(isRelevant);
+            return ReflectionHelper.GetAttributes<T>(t).Where(isRelevant);
 
             bool isRelevant(Attribute a) => a is not IFhirVersionDependent vd || a.AppliesToRelease(version);
         }
@@ -256,7 +286,8 @@ namespace Hl7.Fhir.Introspection
             };
 
         /// <inheritdoc />
-        bool IStructureDefinitionSummary.IsAbstract => NativeType.GetTypeInfo().IsAbstract;
+        bool IStructureDefinitionSummary.IsAbstract =>
+           ((IStructureDefinitionSummary)this).TypeName == "BackboneElement" || NativeType.GetTypeInfo().IsAbstract;
 
         /// <inheritdoc />
         bool IStructureDefinitionSummary.IsResource => IsResource;
@@ -290,13 +321,13 @@ namespace Hl7.Fhir.Introspection
 
         // Enumerate this class' properties using reflection, create PropertyMappings
         // for them and add them to the PropertyMappings.
-        private static PropertyMappingCollection inspectProperties(Type nativeType, FhirRelease fhirVersion)
+        private static PropertyMappingCollection inspectProperties(Type nativeType, ClassMapping declaringClass, FhirRelease fhirVersion)
         {
             var byName = new Dictionary<string, PropertyMapping>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var property in ReflectionHelper.FindPublicProperties(nativeType))
             {
-                if (!PropertyMapping.TryCreate(property, out var propMapping, fhirVersion)) continue;
+                if (!PropertyMapping.TryCreate(property, out var propMapping, declaringClass, fhirVersion)) continue;
 
                 var propKey = propMapping!.Name;
 

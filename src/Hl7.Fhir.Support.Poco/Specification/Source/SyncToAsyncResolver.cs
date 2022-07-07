@@ -6,8 +6,8 @@
  * available at https://github.com/FirelyTeam/firely-net-sdk/blob/master/LICENSE
  */
 
-using System;
 using Hl7.Fhir.Model;
+using System;
 using System.Threading.Tasks;
 
 namespace Hl7.Fhir.Specification.Source
@@ -25,21 +25,13 @@ namespace Hl7.Fhir.Specification.Source
         {
             var result = SyncResolver.ResolveByUri(uri);
 
-#if NET40
-            return TaskEx.FromResult(result);
-#else
             return Task.FromResult(result);
-#endif
         }
 
         public Task<Resource> ResolveByCanonicalUriAsync(string uri)
         {
             var result = SyncResolver.ResolveByCanonicalUri(uri);
-#if NET40
-            return TaskEx.FromResult(result);
-#else
             return Task.FromResult(result);
-#endif
         }
     }
 

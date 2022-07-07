@@ -58,7 +58,7 @@ namespace Hl7.Fhir.Model
     /// <summary>
     /// Extensions that cannot be ignored even if unrecognized
     /// </summary>
-    [FhirElement("modifierExtension", InSummary=true, Order=30)]
+    [FhirElement("modifierExtension", InSummary=true, IsModifier=true, Order=30)]
     [Cardinality(Min=0,Max=-1)]
     [DataMember]
     public List<Hl7.Fhir.Model.Extension> ModifierExtension
@@ -124,6 +124,25 @@ namespace Hl7.Fhir.Model
         foreach (var item in base.NamedChildren) yield return item;
         foreach (var elem in ModifierExtension) { if (elem != null) yield return new ElementValue("modifierExtension", elem); }
       }
+    }
+
+    protected override bool TryGetValue(string key, out object value)
+    {
+      switch (key)
+      {
+        case "modifierExtension":
+          value = ModifierExtension;
+          return ModifierExtension?.Any() == true;
+        default:
+          return base.TryGetValue(key, out value);
+      };
+
+    }
+
+    protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+    {
+      foreach (var kvp in base.GetElementPairs()) yield return kvp;
+      if (ModifierExtension?.Any() == true) yield return new KeyValuePair<string,object>("modifierExtension",ModifierExtension);
     }
 
   }

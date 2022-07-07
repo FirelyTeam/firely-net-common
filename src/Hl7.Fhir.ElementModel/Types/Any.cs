@@ -147,6 +147,8 @@ namespace Hl7.Fhir.ElementModel.Types
                         return new String(en.GetLiteral());
                     case Uri u:
                         return new String(u.OriginalString);
+                    case byte[] bytes:
+                        return new String(System.Convert.ToBase64String(bytes));
                     default:
                         return null;
                 }

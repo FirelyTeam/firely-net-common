@@ -28,24 +28,35 @@
 
 */
 
-using Hl7.Fhir.Introspection;
-using Hl7.Fhir.Validation;
-using System.Runtime.Serialization;
-using Hl7.Fhir.Specification;
+#nullable enable
+
 using System.Text.RegularExpressions;
-using System;
 
 namespace Hl7.Fhir.Model
 {
     public partial class Uuid
     {
+        /// <summary>
+        /// Generates a new, random Uuid.
+        /// </summary>
+        /// <returns></returns>
         public static Uuid Generate()
         {
             var newUuid = "urn:uuid:" + System.Guid.NewGuid().ToString();
             return new Uuid(newUuid);
         }
 
-        public FhirUri AsUri() => new FhirUri(Value);
+        /// <summary>
+        /// Creates a new <see cref="FhirUri"/> based on the value of this uuid.
+        /// </summary>
+        public FhirUri AsUri() => new(Value);
+
+        /// <summary>
+        /// Checks whether the given literal is correctly formatted.
+        /// </summary>
+        public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
     }
 
 }
+
+#nullable restore

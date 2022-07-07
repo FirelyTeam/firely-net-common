@@ -8,29 +8,29 @@
 
 using Hl7.Fhir.Model;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
+
+#nullable enable
 
 namespace Hl7.Fhir.Validation
 {
+    /// <summary>
+    /// Validates an Oid value against the FHIR rules for oid.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
     public class OidPatternAttribute : ValidationAttribute
     {
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
-        {
-            if (value == null) return ValidationResult.Success;
-
-            if (value.GetType() != typeof(string))
-                throw new ArgumentException("OidPatternAttribute can only be applied to string properties");
-
-            if (Oid.IsValidValue(value as string))
-                return ValidationResult.Success;
-            else
-                return DotNetAttributeValidation.BuildResult(validationContext, "{0} is not a correctly formatted Oid", (string)value);
-        }
-
+        /// <inheritdoc />
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext) =>
+            value switch
+            {
+                null => ValidationResult.Success,
+                string s when Oid.IsValidValue(s) => ValidationResult.Success,
+                string s => COVE.OID_LITERAL_INVALID.AsResult(validationContext, s),
+                _ => throw new ArgumentException($"{nameof(OidPatternAttribute)} attributes can only be applied to string properties.")
+            };
     }
 }
+
+#nullable restore

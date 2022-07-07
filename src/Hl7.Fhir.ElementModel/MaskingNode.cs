@@ -129,7 +129,9 @@ namespace Hl7.Fhir.ElementModel
             {
                 mandatory = _settings.IncludeMandatory && ed.IsRequired;
                 included |= mandatory;
-                included |= _settings.IncludeInSummary && ed.InSummary;
+                included |= _settings.IncludeInSummary && (ed.InSummary || ed.IsModifier);
+                // Also include Element.id in the summary. Not a nice way to determine this, but for now the only way. 
+                included |= _settings.IncludeInSummary && ed.ElementName == "id" && scope.InstanceType == "string";
             }
 
             var loc = scope.LocalLocation;

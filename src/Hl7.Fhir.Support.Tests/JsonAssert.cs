@@ -81,7 +81,7 @@ namespace Hl7.Fhir.Tests
             var expecteds = expected.Children().Where(c => isRelevant(c));
             var actuals = actual.Children().Where(c => isRelevant(c));
 
-            if (expecteds.First().Type == JTokenType.Property)
+            if (expecteds.FirstOrDefault()?.Type == JTokenType.Property)
             {
                 expecteds = expecteds.OrderBy(p => ((JProperty)p).Name);
                 actuals = actuals.Cast<JProperty>().OrderBy(p => p.Name);

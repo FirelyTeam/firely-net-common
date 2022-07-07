@@ -44,10 +44,10 @@ namespace Hl7.Fhir.ElementModel
             if (value == null) throw new ArgumentNullException(nameof(value));
 
             var systemType = TypeSpecifier.ForNativeType(value.GetType());
-            if(!TypeSpecifier.PrimitiveTypes.Contains(systemType))
+            if (!TypeSpecifier.PrimitiveTypes.Contains(systemType))
                 throw new ArgumentException("The supplied value cannot be represented with a System primitive.", nameof(value));
-           
-            if(!ElementNode.TryConvertToElementValue(value, out object? convertedValue))
+
+            if (!ElementNode.TryConvertToElementValue(value, out object? convertedValue))
                 throw new NotSupportedException($"There is no known System type corresponding to the .NET type {value.GetType().Name} of this instance (with value '{value}').");
 
             Value = convertedValue!;
@@ -75,6 +75,9 @@ namespace Hl7.Fhir.ElementModel
         bool IElementDefinitionSummary.IsRequired => false;
 
         bool IElementDefinitionSummary.InSummary => false;
+
+        /// <inheritdoc/>
+        bool IElementDefinitionSummary.IsModifier => false;
 
         bool IElementDefinitionSummary.IsChoiceElement => false;
 
@@ -104,11 +107,7 @@ namespace Hl7.Fhir.ElementModel
 
         public IEnumerable<ITypedElement> Children(string? name = null) => Enumerable.Empty<ITypedElement>();
         IReadOnlyCollection<IElementDefinitionSummary> IStructureDefinitionSummary.GetElements() =>
-#if NET40
-            new ReadOnlyList<IElementDefinitionSummary>();
-#else
             new List<IElementDefinitionSummary>();
-#endif
 
         public override string ToString() => Value != null ? PrimitiveTypeConverter.ConvertTo<string>(Value) : "";
 

@@ -296,6 +296,45 @@ namespace Hl7.Fhir.Model
       }
     }
 
+    protected override bool TryGetValue(string key, out object value)
+    {
+      switch (key)
+      {
+        case "versionId":
+          value = VersionIdElement;
+          return VersionIdElement is not null;
+        case "lastUpdated":
+          value = LastUpdatedElement;
+          return LastUpdatedElement is not null;
+        case "source":
+          value = SourceElement;
+          return SourceElement is not null;
+        case "profile":
+          value = ProfileElement;
+          return ProfileElement?.Any() == true;
+        case "security":
+          value = Security;
+          return Security?.Any() == true;
+        case "tag":
+          value = Tag;
+          return Tag?.Any() == true;
+        default:
+          return base.TryGetValue(key, out value);
+      };
+
+    }
+
+    protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+    {
+      foreach (var kvp in base.GetElementPairs()) yield return kvp;
+      if (VersionIdElement is not null) yield return new KeyValuePair<string,object>("versionId",VersionIdElement);
+      if (LastUpdatedElement is not null) yield return new KeyValuePair<string,object>("lastUpdated",LastUpdatedElement);
+      if (SourceElement is not null) yield return new KeyValuePair<string,object>("source",SourceElement);
+      if (ProfileElement?.Any() == true) yield return new KeyValuePair<string,object>("profile",ProfileElement);
+      if (Security?.Any() == true) yield return new KeyValuePair<string,object>("security",Security);
+      if (Tag?.Any() == true) yield return new KeyValuePair<string,object>("tag",Tag);
+    }
+
   }
 
 }

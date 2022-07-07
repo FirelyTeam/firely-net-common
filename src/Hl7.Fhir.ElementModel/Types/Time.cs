@@ -57,7 +57,7 @@ namespace Hl7.Fhir.ElementModel.Types
         /// <summary>
         /// The span of time ahead/behind UTC
         /// </summary>
-        public TimeSpan? Offset => HasOffset ? _parsedValue.Offset : (TimeSpan?)null;
+        public TimeSpan? Offset => HasOffset ? _parsedValue.Offset : null;
 
         private readonly string _original;
         private readonly DateTimeOffset _parsedValue;
@@ -131,6 +131,7 @@ namespace Hl7.Fhir.ElementModel.Types
 
             var success = DateTimeOffset.TryParse(parseableDT, out var parsedValue);
             value = new Time(representation, parsedValue, prec, offset.Success);
+
             return success;
         }
 

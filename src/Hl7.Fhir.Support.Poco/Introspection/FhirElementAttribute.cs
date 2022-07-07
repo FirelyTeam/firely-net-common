@@ -29,12 +29,14 @@
 */
 
 using Hl7.Fhir.Specification;
+using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+
+#nullable enable
 
 namespace Hl7.Fhir.Introspection
 {
@@ -53,6 +55,9 @@ namespace Hl7.Fhir.Introspection
             XmlSerialization = representation;
         }
 
+        /// <summary>
+        /// Whether this element allows instances of more than one type.
+        /// </summary>
         public ChoiceType Choice { get; set; } = ChoiceType.None;
 
         /// <summary>
@@ -72,29 +77,35 @@ namespace Hl7.Fhir.Introspection
 
         public int Order { get; set; }
 
+        /// <summary>
+        /// The order of the element in the Xml representation.
+        /// </summary>
         public bool InSummary { get; set; }
 
-        public string[] FiveWs { get; set; }
+        /// <summary>
+        /// If this modifies the meaning of other elements
+        /// </summary>
+        public bool IsModifier { get; set; }
+
+        public string FiveWs { get; set; } = string.Empty;
 
         // This attribute is a subclass of ValidationAttribute so that IsValid() is called on every 
         // FhirElement while validating. This allows us to extend validation into each FhirElement,
         // while normally, the .NET validation will only validate one level, but will not recurse
         // into each element. This is controllable by the SetValidateRecursively extension of the
         // ValidationContext
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
         {
-            if (validationContext == null) throw new ArgumentNullException("validationContext");
+            if (validationContext is null) throw new ArgumentNullException(nameof(validationContext));
 
-            if (value == null) return ValidationResult.Success;
+            if (value is null) return ValidationResult.Success;
 
             // If we should not validate 'value's elements, return immediately
             if (!validationContext.ValidateRecursively()) return ValidationResult.Success;
 
-            IEnumerable list = value as IEnumerable;
             var result = new List<ValidationResult>();
 
-            // If value is an enumerated type, validate all elements of the list
-            if (list != null)
+            if (ReflectionHelper.IsRepeatingElement(value, out var list))
             {
                 foreach (var element in list)
                 {
@@ -112,9 +123,11 @@ namespace Hl7.Fhir.Introspection
             return result.FirstOrDefault();
         }
 
-        private static void validateElement(object value, ValidationContext validationContext, List<ValidationResult> result)
+        private void validateElement(object value, ValidationContext validationContext, List<ValidationResult> result)
         {
-            DotNetAttributeValidation.TryValidate(value, result, validationContext.ValidateRecursively());
+            DotNetAttributeValidation.TryValidate(value, validationContext.IntoPath(value, validationContext.MemberName ?? Name), result);
         }
     }
 }
+
+#nullable restore

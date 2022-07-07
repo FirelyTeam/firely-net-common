@@ -88,7 +88,7 @@ stages:
       displayName: Pack
       inputs:
         command: pack
-        searchPatternPack: '**/*.csproj;!**/*.Tests.csproj;!**/Sprache.csproj'
+        searchPatternPack: '**/*.csproj;!**/*.Tests.csproj;!**/Sprache.csproj;!**/Benchmarks.csproj'
         configurationToPack: $(buildConfiguration)
         nobuild: true
         verbosityPack: Normal

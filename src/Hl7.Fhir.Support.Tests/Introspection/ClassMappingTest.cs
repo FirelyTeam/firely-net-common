@@ -21,52 +21,6 @@ namespace Hl7.Fhir.Tests.Introspection
     public class ClassMappingTest
     {
         [TestMethod]
-        public void TestReflectionCache()
-        {
-#pragma warning disable CS0618 // Type or member is obsolete
-            var way = ReflectionCache.Current.Get(typeof(Way));
-            var way2 = ReflectionCache.Current.Get(typeof(Way2));
-            var way3 = ReflectionCache.Current.Get(typeof(Way));
-            _ = ReflectionCache.Current.Get(typeof(string));
-            _ = ReflectionCache.Current.Get(typeof(int));
-#pragma warning restore CS0618 // Type or member is obsolete
-            Assert.AreSame(way, way3, "Reflected types don't seem to be cached");
-            Assert.AreNotSame(way, way2);
-        }
-
-        [TestMethod]
-        public void Test‎‎‎ReflectedTypeCreation()
-        {
-#pragma warning disable CS0618 // Type or member is obsolete
-            var way = new ReflectedType(typeof(Way));
-#pragma warning restore CS0618 // Type or member is obsolete
-            Assert.AreEqual(typeof(Way), way.Reflected);
-            Assert.AreEqual(4, way.Attributes.Count);    // my 3 + 1 DebuggerDisplayAttribute
-
-            // Test properties are reflected only once
-            var wayProps = way.Properties;
-            var wayProps2 = way.Properties;
-            Assert.AreSame(wayProps, wayProps2, "Properties don't seem to be cached");
-
-            // Test list all properties
-            var onlyMyProps = wayProps.Where(p => p.Reflected.DeclaringType == typeof(Way));
-            Assert.AreEqual(1, onlyMyProps.Count());
-            Assert.IsTrue(wayProps.Count > 1);
-
-            // Test get property by name
-            Assert.IsFalse(way.TryGetProperty("xxx", out var _));
-            Assert.IsTrue(way.TryGetProperty("Member", out var memberProp));
-            Assert.IsTrue(onlyMyProps.Contains(memberProp));
-            Assert.AreEqual("Member", memberProp.Name);
-
-            // Test getter/setter
-            var wayInstance = new Way();
-            memberProp.Set(wayInstance, "test");
-            Assert.AreEqual("test", memberProp.Get(wayInstance));
-            Assert.AreEqual("test", wayInstance.Member);
-        }
-
-        [TestMethod]
         public void TestResourceMappingCreation()
         {
             Assert.IsTrue(ClassMapping.TryCreate(typeof(Way), out var mapping));
@@ -142,7 +96,7 @@ namespace Hl7.Fhir.Tests.Introspection
 
 
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
-    sealed class TestAttribute : Attribute
+    internal sealed class TestAttribute : Attribute
     {
         public TestAttribute(string data) => PositionalString = data;
 

@@ -49,13 +49,13 @@ namespace Hl7.Fhir.Rest
 
             var body = response.GetBodyAsText();
             if (!string.IsNullOrEmpty(body))
-            {               
+            {
                 result.TypedElement = await parseResourceAsync(body, response.ContentType, provider, response.IsSuccessful()).ConfigureAwait(false);
             }
 
             return result;
         }
-        
+
         private static ITypedElement parseResource(string bodyText, string contentType, IStructureDefinitionSummaryProvider provider, bool throwOnFormatException)
         {
             if (bodyText == null) throw Error.ArgumentNull(nameof(bodyText));
@@ -78,7 +78,8 @@ namespace Hl7.Fhir.Rest
                     ? FhirJsonNode.Parse(bodyText).ToTypedElement(provider)
                     : FhirXmlNode.Parse(bodyText).ToTypedElement(provider);
             }
-            catch (FormatException) when (!throwOnFormatException)
+            catch (Exception ex) when (ex is FormatException && !throwOnFormatException ||
+                                       ex is InvalidOperationException)
             {
                 return null;
             }
@@ -88,7 +89,7 @@ namespace Hl7.Fhir.Rest
         {
             if (bodyText == null) throw Error.ArgumentNull(nameof(bodyText));
             if (provider == null) throw Error.ArgumentNull(nameof(provider));
-           
+
             var fhirType = ContentType.GetResourceFormatFromContentType(contentType);
 
             if (fhirType == ResourceFormat.Unknown)
@@ -99,15 +100,16 @@ namespace Hl7.Fhir.Rest
             if (!SerializationUtil.ProbeIsJson(bodyText) && !SerializationUtil.ProbeIsXml(bodyText))
                 throw new UnsupportedBodyTypeException(
                         "Endpoint said it returned '{0}', but the body is not recognized as either xml or json.".FormatWith(contentType), contentType, bodyText);
-            
+
             try
             {
-               return (fhirType == ResourceFormat.Json)
-                    ? (await FhirJsonNode.ParseAsync(bodyText).ConfigureAwait(false)).ToTypedElement(provider)
-                    : (await FhirXmlNode.ParseAsync(bodyText).ConfigureAwait(false)).ToTypedElement(provider);
+                return (fhirType == ResourceFormat.Json)
+                     ? (await FhirJsonNode.ParseAsync(bodyText).ConfigureAwait(false)).ToTypedElement(provider)
+                     : (await FhirXmlNode.ParseAsync(bodyText).ConfigureAwait(false)).ToTypedElement(provider);
             }
-            catch (FormatException) when (!throwOnFormatException)
-            {           
+            catch (Exception ex) when (ex is FormatException && !throwOnFormatException ||
+                                       ex is InvalidOperationException)
+            {
                 return null;
             }
         }

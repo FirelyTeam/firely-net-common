@@ -27,11 +27,9 @@
   
 */
 
-using System;
-using Hl7.Fhir.Introspection;
-using System.Runtime.Serialization;
-using Hl7.Fhir.Specification;
+#nullable enable
 
+using System;
 
 namespace Hl7.Fhir.Model
 {
@@ -41,6 +39,23 @@ namespace Hl7.Fhir.Model
         {
             Value = uri.OriginalString;
         }
+
+        /// <summary>
+        /// Checks whether the given literal is correctly formatted.
+        /// </summary>
+        public static bool IsValidValue(string value)
+        {
+            try
+            {
+                var uri = new Uri(value, UriKind.RelativeOrAbsolute);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
-    
 }
+
+#nullable restore

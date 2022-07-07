@@ -32,6 +32,7 @@ using Hl7.Fhir.Specification;
 using Hl7.Fhir.Validation;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
 using SystemPrimitive = Hl7.Fhir.ElementModel.Types;
 
@@ -53,7 +54,7 @@ namespace Hl7.Fhir.Model
         /// <summary>
         /// Unique id for inter-element referencing
         /// </summary>
-        [FhirElement("id", XmlSerialization = XmlRepresentation.XmlAttr, InSummary = true, Order = 10)]
+        [FhirElement("id", XmlSerialization = XmlRepresentation.XmlAttr, Order = 10)]
         [DeclaredType(Type = typeof(SystemPrimitive.String))]
         [DataMember]
         public string ElementId
@@ -135,6 +136,27 @@ namespace Hl7.Fhir.Model
             }
         }
 
+        protected override bool TryGetValue(string key, out object value)
+        {
+            switch (key)
+            {
+                case "id":
+                    value = ElementId;
+                    return ElementId is not null;
+                case "extension":
+                    value = Extension;
+                    return Extension?.Any() == true;
+                default:
+                    return base.TryGetValue(key, out value);
+            };
+        }
+
+        protected override IEnumerable<KeyValuePair<string, object>> GetElementPairs()
+        {
+            foreach (var kvp in base.GetElementPairs()) yield return kvp;
+            if (ElementId is not null) yield return new KeyValuePair<string, object>("id", ElementId);
+            if (Extension?.Any() == true) yield return new KeyValuePair<string, object>("extension", Extension);
+        }
     }
 
 }

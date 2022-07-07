@@ -30,7 +30,7 @@ namespace Hl7.Fhir.ElementModel
         {
             Current = root;
             _inspector = inspector;
-            _myClassMapping = _inspector.ImportType(root.GetType());
+            _myClassMapping = _inspector.FindOrImportClassMapping(root.GetType());
 
             InstanceType = ((IStructureDefinitionSummary)_myClassMapping).TypeName;
             Definition = ElementDefinitionSummary.ForRoot(_myClassMapping, rootName ?? root.TypeName);
@@ -46,7 +46,7 @@ namespace Hl7.Fhir.ElementModel
 
             var instanceType = definition.Choice != ChoiceType.None ?
                         instance.GetType() : determineInstanceType(definition);
-            _myClassMapping = _inspector.ImportType(instanceType);
+            _myClassMapping = _inspector.FindOrImportClassMapping(instanceType);
             InstanceType = ((IStructureDefinitionSummary)_myClassMapping).TypeName;
             Definition = definition ?? throw Error.ArgumentNull(nameof(definition));
 
@@ -123,7 +123,7 @@ namespace Hl7.Fhir.ElementModel
         public string Name => Definition.ElementName;
 
         private object _value = null;
-        private object _objectValue = null;
+        private object _lastCachedValue = null;
 
         public object Value
         {
@@ -131,10 +131,10 @@ namespace Hl7.Fhir.ElementModel
             {
                 if (Current is PrimitiveType p && p.ObjectValue != null)
                 {
-                    if (p.ObjectValue != _objectValue)
+                    if (p.ObjectValue != _lastCachedValue)
                     {
-                        _value = internalValue;
-                        _objectValue = p.ObjectValue;
+                        _value = ToITypedElementValue();
+                        _lastCachedValue = p.ObjectValue;
                     }
 
                     return _value;
@@ -144,52 +144,48 @@ namespace Hl7.Fhir.ElementModel
             }
         }
 
-
-        public object internalValue
+        internal object ToITypedElementValue()
         {
-            get
+            try
             {
-                try
+                switch (Current)
                 {
-                    switch (Current)
-                    {
-                        case Hl7.Fhir.Model.Instant ins when ins.Value.HasValue:
-                            return P.DateTime.FromDateTimeOffset(ins.Value.Value);
-                        case Hl7.Fhir.Model.Time time when time.Value is { }:
-                            return P.Time.Parse(time.Value);
-                        case Hl7.Fhir.Model.Date dt when dt.Value is { }:
-                            return P.Date.Parse(dt.Value);
-                        case FhirDateTime fdt when fdt.Value is { }:
-                            return P.DateTime.Parse(fdt.Value);
-                        case Hl7.Fhir.Model.Integer fint:
-                            if (!fint.Value.HasValue)
-                                return null;
-                            return (int)fint.Value;
-                        case Hl7.Fhir.Model.Integer64 fint64:
-                            if (!fint64.Value.HasValue)
-                                return null;
-                            return (long)fint64.Value;
-                        case Hl7.Fhir.Model.PositiveInt pint:
-                            if (!pint.Value.HasValue)
-                                return null;
-                            return (int)pint.Value;
-                        case Hl7.Fhir.Model.UnsignedInt unsint:
-                            if (!unsint.Value.HasValue)
-                                return null;
-                            return (int)unsint.Value;
-                        case Hl7.Fhir.Model.Base64Binary b64:
-                            return b64.Value != null ? PrimitiveTypeConverter.ConvertTo<string>(b64.Value) : null;
-                        case PrimitiveType prim:
-                            return prim.ObjectValue;
-                        default:
+                    case Hl7.Fhir.Model.Instant ins when ins.Value.HasValue:
+                        return P.DateTime.FromDateTimeOffset(ins.Value.Value);
+                    case Hl7.Fhir.Model.Time time when time.Value is { }:
+                        return P.Time.Parse(time.Value);
+                    case Hl7.Fhir.Model.Date dt when dt.Value is { }:
+                        return P.Date.Parse(dt.Value);
+                    case FhirDateTime fdt when fdt.Value is { }:
+                        return P.DateTime.Parse(fdt.Value);
+                    case Hl7.Fhir.Model.Integer fint:
+                        if (!fint.Value.HasValue)
                             return null;
-                    }
+                        return (int)fint.Value;
+                    case Hl7.Fhir.Model.Integer64 fint64:
+                        if (!fint64.Value.HasValue)
+                            return null;
+                        return (long)fint64.Value;
+                    case Hl7.Fhir.Model.PositiveInt pint:
+                        if (!pint.Value.HasValue)
+                            return null;
+                        return (int)pint.Value;
+                    case Hl7.Fhir.Model.UnsignedInt unsint:
+                        if (!unsint.Value.HasValue)
+                            return null;
+                        return (int)unsint.Value;
+                    case Hl7.Fhir.Model.Base64Binary b64:
+                        return b64.Value != null ? PrimitiveTypeConverter.ConvertTo<string>(b64.Value) : null;
+                    case PrimitiveType prim:
+                        return prim.ObjectValue;
+                    default:
+                        return null;
                 }
-                catch (FormatException)
-                {
-                    // If it fails, just return the unparsed contents
-                    return (Current as PrimitiveType)?.ObjectValue;
-                }
+            }
+            catch (FormatException)
+            {
+                // If it fails, just return the unparsed contents
+                return (Current as PrimitiveType)?.ObjectValue;
             }
         }
 

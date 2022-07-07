@@ -29,17 +29,72 @@
 */
 
 using Hl7.Fhir.Utility;
+using System;
 using System.Linq;
+using System.Xml;
+
+#nullable enable
 
 namespace Hl7.Fhir.Model
 {
+    /// <summary>
+    /// Helper functions to work with FHIR XHtml in narrative.
+    /// </summary>
     public partial class XHtml
     {
+        /// <summary>
+        /// Checks whether the given literal is correctly formatted.
+        /// </summary>
+        [Obsolete("Use the more explicit IsValidNarrativeXhtml function instead (or IsValidXml if that is more appropriate).")]
+        public static bool IsValidValue(string value) => IsValidNarrativeXhtml(value);
+
 #if NETSTANDARD1_6
-        public static bool IsValidValue(string _) => true;
+        /// <summary>
+        /// Verifies the given string of XML against the FHIR narrative requirements from https://www.hl7.org/fhir/narrative.html. Note
+        /// that due to unavailability of XML validation under netstandard1.6, this function always returns true.
+        /// </summary>
+        public static bool IsValidNarrativeXhtml(string _, out string[] errors)
+        {
+            errors = new string[0];
+            return true;
+        }
+
+        /// <inheritdoc cref="IsValidNarrativeXhtml(string, out string[])"/>
+        public static bool IsValidNarrativeXhtml(string value) => IsValidNarrativeXhtml(value, out _);
 #else
-        public static bool IsValidValue(string value) => !SerializationUtil.RunFhirXhtmlSchemaValidation(value).Any();
+
+        /// <summary>
+        /// Verifies the given string of XML against the FHIR narrative requirements from https://www.hl7.org/fhir/narrative.html. 
+        /// </summary>
+        public static bool IsValidNarrativeXhtml(string value, out string[] errors)
+        {
+            errors = SerializationUtil.RunFhirXhtmlSchemaValidation(value);
+            return !errors.Any();
+        }
+
+        /// <inheritdoc cref="IsValidNarrativeXhtml(string, out string[])"/>
+        public static bool IsValidNarrativeXhtml(string value) => IsValidNarrativeXhtml(value, out _);
 #endif
 
+        /// <summary>
+        /// Validates whether the given string of Xml is well-formatted.
+        /// </summary>
+        public static bool IsValidXml(string value, out string? error)
+        {
+            try
+            {
+                using var reader = SerializationUtil.XmlReaderFromXmlText(value);
+                while (reader.Read()) ;
+                error = default;
+                return true;
+            }
+            catch (XmlException xmlE)
+            {
+                error = xmlE.Message;
+                return false;
+            }
+        }
     }
 }
+
+#nullable restore

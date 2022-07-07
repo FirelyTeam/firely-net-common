@@ -23,6 +23,12 @@ namespace Hl7.Fhir.Rest
         public bool UseFormatParameter;
 
         /// <summary>
+        /// When <see langword="true"/> the MIME-type parameter fhirVersion will be added the Accept header. This is necessary 
+        /// when the FHIR server supports multiple FHIR versions.
+        /// </summary>
+        public bool UseFhirVersionInAcceptHeader = false;
+
+        /// <summary>
         /// The timeout (in milliseconds) to be used when making calls to the FHIR server
         /// </summary>
         public int Timeout = 100 * 1000;
@@ -81,6 +87,7 @@ namespace Hl7.Fhir.Rest
             other.PreferredReturn = PreferredReturn;
             other.Timeout = Timeout;
             other.UseFormatParameter = UseFormatParameter;
+            other.UseFhirVersionInAcceptHeader = UseFhirVersionInAcceptHeader;
             other.VerifyFhirVersion = VerifyFhirVersion;
             other.PreferredParameterHandling = PreferredParameterHandling;
         }

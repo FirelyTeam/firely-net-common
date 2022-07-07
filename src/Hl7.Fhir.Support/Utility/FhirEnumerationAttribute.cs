@@ -29,26 +29,23 @@
 */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Hl7.Fhir.Utility
 {
     [AttributeUsage(AttributeTargets.Enum, Inherited = false, AllowMultiple = false)]
     public sealed class FhirEnumerationAttribute : Attribute
     {
-        readonly string bindingName;
+        private readonly string _bindingName;
 
         // This is a positional argument
         public FhirEnumerationAttribute(string bindingName)
         {
-            this.bindingName = bindingName;
+            this._bindingName = bindingName;
         }
 
         public string BindingName
         {
-            get { return bindingName; }
+            get { return _bindingName; }
         }
     }
 }

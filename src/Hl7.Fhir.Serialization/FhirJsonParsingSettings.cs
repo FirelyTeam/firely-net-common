@@ -25,13 +25,11 @@ namespace Hl7.Fhir.Serialization
         /// </summary>
         public bool AllowJsonComments { get; set; } // = false;
 
-#if !NETSTANDARD1_6
         /// <summary>
         /// Validate narrative against the FHIR Xhtml schema.
         /// </summary>
         /// <remarks>Validation of xhtml is expensive, so turned off by default.</remarks>
         public bool ValidateFhirXhtml { get; set; } // = false;
-#endif
 
         /// <summary>Default constructor. Creates a new <see cref="FhirJsonParsingSettings"/> instance with default property values.</summary>
         public FhirJsonParsingSettings() { }
@@ -53,10 +51,7 @@ namespace Hl7.Fhir.Serialization
 
             other.PermissiveParsing = PermissiveParsing;
             other.AllowJsonComments = AllowJsonComments;
-
-#if !NETSTANDARD1_6
             other.ValidateFhirXhtml = ValidateFhirXhtml;
-#endif
         }
 
         /// <summary>Creates a new <see cref="FhirJsonParsingSettings"/> object that is a copy of the current instance.</summary>

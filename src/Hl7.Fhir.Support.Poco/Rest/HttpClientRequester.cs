@@ -28,7 +28,7 @@ namespace Hl7.Fhir.Rest
 
             Client = new HttpClient(messageHandler, disposeHandler);
             Client.DefaultRequestHeaders.Add("User-Agent", $".NET FhirClient for FHIR");
-            Client.Timeout = new TimeSpan(0, 0, 0, Settings.Timeout);
+            Client.Timeout = TimeSpan.FromMilliseconds(Settings.Timeout);
         }
 
         public HttpClientRequester(Uri baseUrl, FhirClientSettings settings, HttpClient client)
@@ -60,7 +60,7 @@ namespace Hl7.Fhir.Rest
             }
 
             byte[] outgoingBody = null;
-            if (requestMessage.Method == HttpMethod.Post || requestMessage.Method == HttpMethod.Put)
+            if (requestMessage.Content is not null && (requestMessage.Method == HttpMethod.Post || requestMessage.Method == HttpMethod.Put))
             {
                 outgoingBody = await requestMessage.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
             }

@@ -8,28 +8,29 @@
 
 using Hl7.Fhir.Model;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
+
+#nullable enable
 
 namespace Hl7.Fhir.Validation
 {
+    /// <summary>
+    /// Validates a datetime value against the FHIR rules for datetime.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
     public class DateTimePatternAttribute : ValidationAttribute
     {
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
-        {
-            if (value == null) return ValidationResult.Success;
-
-            if (value.GetType() != typeof(string))
-                throw new ArgumentException("DateTimePatternAttribute can only be applied to string properties");
-
-            if (FhirDateTime.IsValidValue(value as string))
-                return ValidationResult.Success;
-            else
-                return DotNetAttributeValidation.BuildResult(validationContext, "{0} is not a correctly formatted DateTime", value as string);
-        }
+        /// <inheritdoc/>
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext) =>
+            value switch
+            {
+                null => ValidationResult.Success,
+                string s when FhirDateTime.IsValidValue(s) => ValidationResult.Success,
+                string s => COVE.DATETIME_LITERAL_INVALID.AsResult(validationContext, s),
+                _ => throw new ArgumentException($"{nameof(DateTimePatternAttribute)} attributes can only be applied to string properties.")
+            };
     }
 }
+
+#nullable restore

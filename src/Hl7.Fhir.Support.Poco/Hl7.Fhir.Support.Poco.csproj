@@ -1,11 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<TargetFrameworks>net5.0;net452;netstandard1.6;netstandard2.0</TargetFrameworks>
-	</PropertyGroup>
-
 	<Import Project="..\firely-net-common.props" />
-	<Import Project="..\firely-net-common.targets" />
 
 	<PropertyGroup>
 		<PackageId>Hl7.Fhir.Support.Poco</PackageId>
@@ -22,18 +17,23 @@
 
 	<ItemGroup Condition=" '$(TargetFramework)' == 'net452'">
 		<Reference Include="System.ComponentModel.DataAnnotations" />
-    <Reference Include="System.Net.Http"/>
-  </ItemGroup>
+        <Reference Include="System.Net.Http" />
+    </ItemGroup>
 
-	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.6'">
-		<PackageReference Include="System.Net.Requests" Version="4.3.0" />
+	<ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0'">
+		<PackageReference Include="System.Buffers" Version="4.5.1" />
+		<PackageReference Include="System.Text.Json" Version="6.0.5" />
 	</ItemGroup>
-	
+
+	<ItemGroup>
+	  <PackageReference Include="Firely.Fhir.Packages" Version="3.0.0" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<ProjectReference Include="..\Hl7.Fhir.ElementModel\Hl7.Fhir.ElementModel.csproj" />
 		<ProjectReference Include="..\Hl7.Fhir.Support\Hl7.Fhir.Support.csproj" />
 		<ProjectReference Include="..\Hl7.Fhir.Serialization\Hl7.Fhir.Serialization.csproj" />
 		<ProjectReference Include="..\Hl7.FhirPath\Hl7.FhirPath.csproj" />
 	</ItemGroup>
-	
+
 </Project>

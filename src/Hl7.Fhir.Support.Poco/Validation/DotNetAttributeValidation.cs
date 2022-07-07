@@ -7,61 +7,89 @@
  */
 
 using Hl7.Fhir.Model;
-using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
+
+#nullable enable
 
 namespace Hl7.Fhir.Validation
 {
+    /// <summary>
+    /// Utility methods for invoking .NET's <see cref="ValidationAttribute"/>-based validation mechanism.
+    /// </summary>
     public static class DotNetAttributeValidation
     {
-        public static ValidationContext BuildContext(object value=null)
+        /// <summary>
+        /// Validate and object and its members against any <see cref="ValidationAttribute" />s present. 
+        /// Will throw when a validation error is encountered.
+        /// </summary>
+        /// <param name="value">The object to validate</param>
+        /// <param name="recurse">Whether to validate the object recursively, by also validating the contents of each property of the object.</param>
+        /// <param name="narrativeValidation">The kind of narrative validation to perform when validating <see cref="XHtml"/>.</param>
+        public static void Validate(
+            this Base value,
+            bool recurse = false,
+            NarrativeValidationKind narrativeValidation = NarrativeValidationKind.FhirXhtml) =>
+                Validate((object)value, recurse, narrativeValidation);
+
+        /// <inheritdoc cref="Validate(Base, bool, NarrativeValidationKind)"/>
+        internal static void Validate(object value, bool recurse = false, NarrativeValidationKind narrativeValidation = NarrativeValidationKind.FhirXhtml)
         {
-#if NET40
-            return new ValidationContext(value, null, null);
-#else
-            return new ValidationContext(value);
-#endif
-        }
-
-        public static void Validate(object value, bool recurse = false, Func<string, Resource> resolver = null)
-        {
-            if (value == null) throw new ArgumentNullException("value");
-            //    assertSupportedInstanceType(value);
-
-            var validationContext = BuildContext(value);
-            validationContext.SetValidateRecursively(recurse);
-            validationContext.SetResolver(resolver);
-
+            var validationContext = buildContext(recurse, narrativeValidation, value);
             Validator.ValidateObject(value, validationContext, true);
         }
 
-        public static bool TryValidate(object value, ICollection<ValidationResult> validationResults = null, bool recurse = false, Func<string,Resource> resolver=null)
-        {
-            if (value == null) throw new ArgumentNullException("value");
-          // assertSupportedInstanceType(value);
+        /// <summary>
+        /// Validate an object and its members against any <see cref="ValidationAttribute" />s present. 
+        /// </summary>
+        /// <remarks>If <paramref name="validationResults"/> is <c>null</c>, no errors will be returned.</remarks>
+        public static bool TryValidate(this Base value, ICollection<ValidationResult>? validationResults = null, bool recurse = false, NarrativeValidationKind narrativeValidation = NarrativeValidationKind.FhirXhtml)
+            => TryValidate((object)value, validationResults, recurse, narrativeValidation);
 
+        /// <inheritdoc cref="TryValidate(Base, ICollection{ValidationResult}?, bool, NarrativeValidationKind)"/>
+        internal static bool TryValidate(object value, ICollection<ValidationResult>? validationResults = null, bool recurse = false, NarrativeValidationKind narrativeValidation = NarrativeValidationKind.FhirXhtml)
+        {
+            var validationContext = buildContext(recurse, narrativeValidation, value);
+
+            // Validate the object, also calling the validators on each child property.
             var results = validationResults ?? new List<ValidationResult>();
-            var validationContext = BuildContext(value);
-            validationContext.SetValidateRecursively(recurse);
-            validationContext.SetResolver(resolver);
-            return Validator.TryValidateObject(value, validationContext, results, true);
-
-            // Note, if you pass a null validationResults, you will *not* get results (it's not an out param!)
+            return Validator.TryValidateObject((object)value, validationContext, results, validateAllProperties: true);
         }
-     
 
-        public static ValidationResult BuildResult(ValidationContext context, string message, params object[] messageArgs)
+        /// <inheritdoc cref="TryValidate(Base, ICollection{ValidationResult}?, bool, NarrativeValidationKind)"/>
+        internal static bool TryValidate(object value, ValidationContext context, ICollection<ValidationResult>? validationResults)
         {
-            var resultMessage = String.Format(message, messageArgs);
-
-            if(context != null && context.MemberName != null)
-                return new ValidationResult(resultMessage, new string[] { context.MemberName });
-            else
-                return new ValidationResult(resultMessage);
+            // Validate the object, also calling the validators on each child property.
+            var results = validationResults ?? new List<ValidationResult>();
+            return Validator.TryValidateObject(value, context, results, validateAllProperties: true);
         }
+
+        internal static ValidationContext IntoPath(this ValidationContext ctx, object instance, string nestedElementName)
+        {
+            var location = ctx.GetLocation();
+
+            var newContext = new ValidationContext(instance, ctx.Items);
+
+            if (location is not null)
+                newContext.SetLocation($"{location}.{nestedElementName}");
+            else
+                newContext.SetLocation(nestedElementName);
+
+            return newContext;
+        }
+
+        private static ValidationContext buildContext(bool recurse, NarrativeValidationKind kind, object instance)
+        {
+            ValidationContext newContext = new(instance);
+
+            newContext.SetValidateRecursively(recurse);
+            newContext.SetNarrativeValidationKind(kind);
+            newContext.SetLocation(instance.GetType().Name);
+            return newContext;
+        }
+
     }
 
 }
+
+#nullable restore

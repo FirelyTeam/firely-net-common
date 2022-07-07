@@ -31,7 +31,20 @@ namespace Hl7.Fhir.Introspection
     {
         private static readonly ConcurrentDictionary<string, ModelInspector> _inspectedAssemblies = new();
 
+        /// <summary>
+        /// Removes all known mappings from the inspector.
+        /// </summary>
         public static void Clear() => _inspectedAssemblies.Clear();
+
+        /// <summary>
+        /// Finds or creates the <see cref="ClassMapping"/> for a given type.
+        /// Calling this function repeatedly for the same type will return the same ClassMapping.
+        /// </summary>
+        /// <remarks>If the type given is FHIR Release specific, the returned mapping will contain
+        /// metadata for that release only. If the type is from the common assembly, it will contain
+        /// metadata for that type from the most recent release of the common assembly.</remarks>
+        public static ClassMapping? GetClassMappingForType(Type t) =>
+            ForAssembly(t.GetTypeInfo().Assembly).FindOrImportClassMapping(t);
 
         /// <summary>
         /// Returns a fully configured <see cref="ModelInspector"/> with the
@@ -99,11 +112,7 @@ namespace Hl7.Fhir.Introspection
         {
             if (assembly == null) throw Error.ArgumentNull(nameof(assembly));
 
-#if NET40
-            IEnumerable<Type> exportedTypes = assembly.GetExportedTypes();
-#else
             IEnumerable<Type> exportedTypes = assembly.ExportedTypes;
-#endif
 
             return exportedTypes.Select(t => ImportType(t))
                 .Where(cm => cm is not null)
@@ -132,6 +141,14 @@ namespace Hl7.Fhir.Introspection
             if (mapping.Canonical is not null)
                 _classMappingsByCanonical[mapping.Canonical] = mapping;
         }
+
+        /// <summary>
+        /// Tries to retrieve an already imported <see cref="ClassMapping"/> and will import
+        /// it when not found.
+        /// </summary>
+        /// <returns>May return <c>null</c> if the type cannot be imported.</returns>
+        public ClassMapping? FindOrImportClassMapping(Type nativeType) =>
+            FindClassMapping(nativeType) ?? ImportType(nativeType);
 
         /// <summary>
         /// Retrieves an already imported <see cref="ClassMapping" /> given a FHIR type name.

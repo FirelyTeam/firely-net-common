@@ -14,195 +14,6 @@ using System.Reflection;
 
 namespace Hl7.Fhir.Utility
 {
-#if NET40
-    public class TypeInfoPolyfill
-    {
-        public Type Type;
-
-        public TypeInfoPolyfill(Type type)
-        {
-            Type = type;
-        }
-
-        public bool IsValueType
-        {
-            get
-            {
-                return Type.IsValueType;
-            }
-        }
-
-        public bool IsGenericType
-        {
-            get
-            {
-                return Type.IsGenericType;
-            }
-        }
-
-        public bool IsGenericTypeDefinition
-        {
-            get
-            {
-                return Type.IsGenericTypeDefinition;
-            }
-        }
-
-        public bool ContainsGenericParameters
-        {
-            get
-            {
-                return Type.ContainsGenericParameters;
-            }
-        }
-
-        public bool IsInterface
-        {
-            get
-            {
-                return Type.IsInterface;
-            }
-        }
-
-        public Type[] ImplementedInterfaces
-        {
-            get
-            {
-                return Type.GetInterfaces();
-            }
-        }
-
-        public FieldInfo[] DeclaredFields
-        {
-            get
-            {
-                return Type.GetFields(BindingFlags.Public | BindingFlags.Static);
-            }
-        }
-
-        public Type[] GenericTypeParameters
-        {
-            get
-            {
-                return Type.GetGenericArguments();
-            }
-        }
-
-        public Type[] GenericTypeArguments
-        {
-            get
-            {
-                return Type.GetGenericArguments();
-            }
-        }
-
-        public FieldInfo GetDeclaredField(string fieldName)
-        {
-            return DeclaredFields.SingleOrDefault(f => f.Name == fieldName);
-        }
-
-        public bool IsEnum
-        {
-            get
-            {
-                return Type.IsEnum;
-            }
-        }
-
-        public bool IsAbstract
-        {
-            get
-            {
-                return Type.IsAbstract;
-            }
-        }
-
-        public Type BaseType
-        {
-            get
-            {
-                return Type.BaseType;
-            }
-        }
-
-        public Assembly Assembly
-        {
-            get
-            {
-                return Type.Assembly;
-            }
-        }
-
-        public bool IsAssignableFrom(TypeInfoPolyfill otherType)
-        {
-            return Type.IsAssignableFrom(otherType.Type);
-        }
-
-        public T GetCustomAttribute<T>() where T : Attribute
-        {
-            return (T)Type.GetCustomAttributes(typeof(T), true).FirstOrDefault();
-        }
-
-        public IEnumerable<T> GetCustomAttributes<T>() where T : Attribute
-        {
-            return Type.GetCustomAttributes(typeof(T), true).Cast<T>();
-        }
-
-        public bool IsDefined(Type type, bool inherit)
-        {
-            return Type.IsDefined(type, inherit);
-        }
-
-        public bool IsClass
-        {
-            get
-            {
-                return Type.IsClass;
-            }
-        }
-    }
-
-    public static class Net40TypeExtensions
-    {
-        public static TypeInfoPolyfill GetTypeInfo(this Type type)
-        {
-            return new TypeInfoPolyfill(type);
-        }
-
-        public static PropertyInfo GetRuntimeProperty(this Type type, string propertyName)
-        {
-            return type.GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
-        }
-
-        public static T GetCustomAttribute<T>(this MemberInfo memberInfo) where T : Attribute
-        {
-            return (T)memberInfo.GetCustomAttributes(typeof(T), true).FirstOrDefault();
-        }
-
-        public static T GetCustomAttribute<T>(this Assembly assembly) where T : Attribute
-        {
-            return (T)assembly.GetCustomAttributes(typeof(T), true).FirstOrDefault();
-        }
-
-        public static Type[] GetExportedTypes(this Assembly assembly)
-        {
-            return assembly.GetTypes().Where(t => t.IsVisible).ToArray();
-        }
-
-        public static IEnumerable<T> GetCustomAttributes<T>(this MemberInfo memberInfo) where T : Attribute
-        {
-            return memberInfo.GetCustomAttributes(typeof(T), true).Cast<T>();
-        }
-    }
-#endif
-
-#if NETSTANDARD1_6
-    public static class NetStd16TypeExtensions
-    {
-        public static bool IsAssignableFrom(this Type a, Type b) =>
-            a.GetTypeInfo().IsAssignableFrom(b.GetTypeInfo());
-    }
-#endif
 
     public static class ReflectionHelper
     {
@@ -249,22 +60,7 @@ namespace Hl7.Fhir.Utility
         {
             if (t == null) throw Error.ArgumentNull("t");
 
-#if NETSTANDARD1_6
-            // Unfortunately, netstandard1.6 has no method to filter on bindingflags :-(
-            // Have to do it ourselves
-            return t.GetRuntimeProperties().Where(p => hasPublicInstanceReadAccessor(p));
-            //return t.GetRuntimeProperties(); //(BindingFlags.Instance | BindingFlags.Public);
-            // return t.GetTypeInfo().DeclaredProperties.Union(t.GetTypeInfo().BaseType.GetTypeInfo().DeclaredProperties); //(BindingFlags.Instance | BindingFlags.Public);
-
-            static bool hasPublicInstanceReadAccessor(PropertyInfo p)
-            {
-                if (!p.CanRead) return false;
-                var getMethod = p.GetMethod;
-                return getMethod.IsPublic && !getMethod.IsStatic;
-            }
-#else
             return t.GetProperties(BindingFlags.Instance | BindingFlags.Public);
-#endif
         }
 
         /// <summary>
@@ -392,11 +188,6 @@ namespace Hl7.Fhir.Utility
 
         public static bool IsEnum(this Type t) => t.GetTypeInfo().IsEnum;
 
-#if NET40
-        public static T GetAttribute<T>(TypeInfoPolyfill typeInfo) where T : Attribute => typeInfo.GetCustomAttribute<T>();
-        public static IEnumerable<T> GetAttributes<T>(TypeInfoPolyfill typeInfo) where T : Attribute => typeInfo.GetCustomAttributes<T>();
-#endif
-
         public static T GetAttribute<T>(MemberInfo member) where T : Attribute => member.GetCustomAttribute<T>();
 
         public static IEnumerable<Attribute> GetAttributes(MemberInfo member) => member.GetCustomAttributes();
@@ -408,6 +199,14 @@ namespace Hl7.Fhir.Utility
 
 
         internal static IEnumerable<FieldInfo> FindEnumFields(Type t) => t.GetTypeInfo().DeclaredFields.Where(a => a.IsPublic && a.IsStatic);
+
+        public static bool IsRepeatingElement(object value) => IsRepeatingElement(value, out _);
+
+        public static bool IsRepeatingElement(object value, out ICollection element)
+        {
+            element = value as ICollection;
+            return element is not null && !element.GetType().IsArray;
+        }
 
         public static bool IsArray(object value) => value.GetType().IsArray;
 

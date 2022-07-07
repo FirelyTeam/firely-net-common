@@ -29,19 +29,38 @@
 
 using System;
 
+#nullable enable
+
 namespace Hl7.Fhir.Model
 {
     public partial class Canonical
     {
-        public Canonical(Uri uri) : this(uri?.OriginalString) { }
+        /// <summary>
+        /// Constructs a Canonical based on a given <see cref="Uri"/>.
+        /// </summary>
+        /// <param name="uri"></param>
+        public Canonical(Uri uri) : this(uri?.OriginalString)
+        {
+            // nothing
+        }
 
-        public static implicit operator Canonical(string value)
-        {
-            return new Canonical(value);
-        }
-        public static implicit operator string(Canonical value)
-        {
-            return value?.Value;
-        }
+        /// <summary>
+        /// Converts a string to a canonical.
+        /// </summary>
+        /// <param name="value"></param>
+        public static implicit operator Canonical(string value) => new(value);
+
+        /// <summary>
+        /// Converts a canonical to a string.
+        /// </summary>
+        /// <param name="value"></param>
+        public static implicit operator string?(Canonical value) => value?.Value;
+
+        /// <summary>
+        /// Checks whether the given literal is correctly formatted.
+        /// </summary>
+        public static bool IsValidValue(string value) => FhirUri.IsValidValue(value);
     }
 }
+
+#nullable restore

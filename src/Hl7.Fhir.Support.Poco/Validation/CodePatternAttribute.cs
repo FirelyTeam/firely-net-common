@@ -8,28 +8,29 @@
 
 using Hl7.Fhir.Model;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
+using COVE = Hl7.Fhir.Validation.CodedValidationException;
+
+#nullable enable
 
 namespace Hl7.Fhir.Validation
 {
+    /// <summary>
+    /// Validates a code value against the FHIR rules for code.
+    /// </summary>
     [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
     public class CodePatternAttribute : ValidationAttribute
     {
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
-        {
-            if (value == null) return ValidationResult.Success;
-
-            if (value.GetType() != typeof(string))
-                throw new ArgumentException("CodePatternAttribute can only be applied to string properties");
-
-            if (Code.IsValidValue(value as string))
-                return ValidationResult.Success;
-            else
-				return DotNetAttributeValidation.BuildResult(validationContext, "{0} is not a correctly formatted Code", value as string);
-        }
+        /// <inheritdoc/>
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext) =>
+            value switch
+            {
+                null => ValidationResult.Success,
+                string s when Code.IsValidValue(s) => ValidationResult.Success,
+                string s => COVE.CODE_LITERAL_INVALID.AsResult(validationContext, s),
+                _ => throw new ArgumentException($"{nameof(CodePatternAttribute)} attributes can only be applied to string properties.")
+            };
     }
 }
+
+#nullable restore
