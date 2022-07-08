@@ -342,6 +342,27 @@ namespace Hl7.Fhir.Support.Poco.Tests
             }
         }
 
+        [TestMethod]
+        public void TestComplicatedXml()
+        {
+            var xmlFileName = Path.Combine("TestData", "fp-test-patient.xml");
+            var xml = File.ReadAllText(xmlFileName);
+            var reader = constructReader(xml);
+            reader.Read();
+
+            var serializer = getTestDeserializer(new());
+            var state = new FhirXmlPocoDeserializerState();
+
+            var result = serializer.DeserializeResourceInternal(reader, state);
+
+            state.Errors.HasExceptions.Should().BeTrue();
+
+            result.Should().BeOfType<TestPatient>();
+            result.As<TestPatient>().Contained.Should().HaveCount(2);
+            result.As<TestPatient>().Contained[0].As<TestPatient>().Name[0].ElementId.Should().Be("firstname");
+            result.As<TestPatient>().Contained[1].As<TestQuestionnaire>().Text.Div.Should().NotBeNull();
+        }
+
         private static XmlReader constructReader(string xml)
         {
             var stringReader = new StringReader(xml);

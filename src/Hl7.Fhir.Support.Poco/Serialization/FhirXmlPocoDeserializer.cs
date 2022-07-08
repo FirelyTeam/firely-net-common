@@ -54,9 +54,6 @@ namespace Hl7.Fhir.Serialization
         /// <returns>A fully initialized POCO with the data from the reader.</returns>
         public Resource DeserializeResource(XmlReader reader)
         {
-            // If the stream has just been opened, move to the first token. (skip processing instructions, comments, whitespaces etc.)
-            reader.MoveToContent();
-
             FhirXmlPocoDeserializerState state = new();
 
             var result = DeserializeResourceInternal(reader, state);
@@ -64,15 +61,11 @@ namespace Hl7.Fhir.Serialization
             return !state.Errors.HasExceptions
                 ? result!
                 : throw new DeserializationFailedException(result, state.Errors);
-
         }
 
 
         public Base DeserializeDatatype(Type targetType, XmlReader reader)
         {
-            // If the stream has just been opened, move to the first token. (skip processing instructions, comments, whitespaces etc.)
-            reader.MoveToContent();
-
             FhirXmlPocoDeserializerState state = new();
 
             var result = DeserializeDatatypeInternal(targetType, reader, state);
@@ -84,6 +77,9 @@ namespace Hl7.Fhir.Serialization
 
         internal Resource? DeserializeResourceInternal(XmlReader reader, FhirXmlPocoDeserializerState state)
         {
+            // If the stream has just been opened, move to the first token. (skip processing instructions, comments, whitespaces etc.)
+            reader.MoveToContent();
+
             (ClassMapping? resourceMapping, FhirXmlException? error) = DetermineClassMappingFromInstance(reader, _inspector);
 
             state.Errors.Add(error);
@@ -155,8 +151,9 @@ namespace Hl7.Fhir.Serialization
             //Empty elements have no children e.g. <foo value="bar/>)
             if (!reader.IsEmptyElement)
             {
-                //read the next object
-                reader.Read();
+                //read the next object that has content
+                reader.ReadToContent();
+
                 int highestOrder = 0;
 
                 while (reader.NodeType != XmlNodeType.EndElement)
@@ -188,6 +185,10 @@ namespace Hl7.Fhir.Serialization
                             reader.Skip();
                         }
                     }
+                    else
+                    {
+                        reader.Skip();
+                    }
                 }
             }
             if (Settings.Validator is not null && oldErrors == state.Errors.Count)
@@ -200,7 +201,7 @@ namespace Hl7.Fhir.Serialization
                 PocoDeserializationHelper.RunInstanceValidation(target, Settings.Validator, context, state.Errors);
             }
 
-            reader.Read();
+            reader.ReadToContent();
 
         }
 
@@ -319,7 +320,9 @@ namespace Hl7.Fhir.Serialization
             while (reader.Name == name && reader.NodeType != XmlNodeType.EndElement)
             {
                 var containedList = new List<Resource?>() { };
-                reader.Read(); // move to first child; e.g. from <contained> to the actual resource;       
+
+                reader.ReadToContent();
+
                 if (reader.NodeType != XmlNodeType.EndElement)
                 {
                     //read all resources in the resource container, even if there are multiple (which is not allowed)
@@ -339,7 +342,7 @@ namespace Hl7.Fhir.Serialization
                 containedList.ForEach(r => list.Add(r));
 
                 //move from endTag of resource container to next element, which can be another resource container ofcourse.
-                reader.Read();
+                reader.ReadToContent();
             }
 
             return list;

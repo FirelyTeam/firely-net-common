@@ -21,5 +21,15 @@ namespace Hl7.Fhir.Serialization
             return (xmlInfo.LineNumber, xmlInfo.LinePosition);
         }
 
+        internal static bool ReadToContent(this XmlReader reader)
+        {
+            if (reader.Read())
+            {
+                reader.MoveToContent();
+                return true;
+            }
+            return false;
+        }
+
     }
 }
