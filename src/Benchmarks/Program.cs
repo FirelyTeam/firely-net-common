@@ -6,7 +6,7 @@ namespace Firely.Sdk.Benchmarks.Common
     {
         public static void Main(string[] args)
         {
-            _ = BenchmarkRunner.Run<SerializationBenchmarks>();
+            _ = BenchmarkRunner.Run<DeserializationBenchmarks>();
         }
     }
 }
