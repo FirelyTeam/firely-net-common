@@ -17,13 +17,13 @@ namespace Hl7.Fhir.Utility
         public static T Await<T>(Func<Task<T>> asyncFunc)
         {
             // Call GetAwaiter() rather then .Result to unwrap the AggregateException
-            return Task.Run(asyncFunc).GetAwaiter().GetResult();
+            return Task.Run(asyncFunc).ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
         public static void Await(Func<Task> asyncFunc)
         {
             // Call GetAwaiter() rather then .Result to unwrap the AggregateException
-            Task.Run(asyncFunc).GetAwaiter().GetResult();
+            Task.Run(asyncFunc).ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
         public static async Task<bool> AnyAsync<TSource>(this IEnumerable<TSource> source, Func<TSource, Task<bool>> predicate)
