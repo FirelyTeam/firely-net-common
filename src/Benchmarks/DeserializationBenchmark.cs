@@ -16,7 +16,7 @@ namespace Firely.Sdk.Benchmarks.Common
         internal FhirXmlPocoDeserializer XmlDeserializer;
         internal FhirJsonPocoDeserializer JsonDeserializer;
         internal XmlReader xmlreader;
-        byte[] JsonBytes;
+        internal JsonSerializerOptions options;
 
         [GlobalSetup]
         public void BenchmarkSetup()
@@ -27,38 +27,37 @@ namespace Firely.Sdk.Benchmarks.Common
             var xmlFileName = Path.Combine("TestData", "fp-test-patient.xml");
             XmlData = File.ReadAllText(xmlFileName);
 
-            xmlreader = XmlReader.Create(new StringReader(XmlData));
             XmlDeserializer = new FhirXmlPocoDeserializer(typeof(TestPatient).Assembly);
-
             JsonDeserializer = new FhirJsonPocoDeserializer(typeof(TestPatient).Assembly);
-            JsonBytes = JsonSerializer.SerializeToUtf8Bytes<string>(JsonData);
+
+            options = new JsonSerializerOptions().ForFhir(typeof(TestPatient).Assembly);
         }
 
         [Benchmark]
         public Resource JsonDictionaryDeserializer()
         {
-            var reader = new Utf8JsonReader(JsonBytes);
             try
             {
-                return JsonDeserializer.DeserializeResource(ref reader);
+                return JsonSerializer.Deserialize<TestPatient>(JsonData, options);
             }
-            catch (DeserializationFailedException ex)
+            catch (DeserializationFailedException e)
             {
-                return (Resource)ex.PartialResult;
+                return (Resource)e.PartialResult;
             }
-            // return new FhirJsonPocoDeserializer(typeof(TestPatient).Assembly).DeserializeResource(ref reader);
+
         }
 
         [Benchmark]
         public Resource XmlDictionaryDeserializer()
         {
+            xmlreader = XmlReader.Create(new StringReader(XmlData));
             try
             {
                 return XmlDeserializer.DeserializeResource(xmlreader);
             }
-            catch (DeserializationFailedException ex)
+            catch (DeserializationFailedException e)
             {
-                return (Resource)ex.PartialResult;
+                return (Resource)e.PartialResult;
             }
         }
 
