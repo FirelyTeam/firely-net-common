@@ -56,10 +56,10 @@ namespace Hl7.Fhir.Specification.Terminology
         Task<Parameters> Lookup(Parameters parameters, bool useGet = false);
 
         /// <summary>
-        /// The transform operation takes input content, applies a structure map transform, and then returns the output.
+        /// Translates a code from one value set to another, based on the existing value set and concept maps resources, and/or other additional knowledge of the processor.
         /// </summary>
         /// <param name="parameters">Input parameters for the operation</param>
-        /// <param name="id">Id of the StructureMap used for the tranformation</param>
+        /// <param name="id">Id of the ConceptMap used for the translation</param>
         /// <param name="useGet">Use the GET instead of POST Http method</param>
         /// <returns>Output parameter containing the result of the translation</returns>
         /// <exception cref="FhirOperationException">Thrown when the terminology service encounters an error</exception>
