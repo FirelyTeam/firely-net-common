@@ -24,7 +24,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             reader.Read();
 
             var deserializer = getTestDeserializer(new());
-            var datatype = deserializer.DeserializeDatatype(expectedFhirType, reader);
+            var datatype = deserializer.DeserializeElement(expectedFhirType, reader);
 
             datatype.Should().BeOfType(expectedFhirType);
             datatype.As<PrimitiveType>().ObjectValue.Should().Be(expectedValue);
@@ -238,7 +238,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             reader.Read();
 
             var deserializer = getTestDeserializer(new());
-            var datatype = deserializer.DeserializeDatatype(typeof(TestHumanName), reader);
+            var datatype = deserializer.DeserializeElement(typeof(TestHumanName), reader);
 
             datatype.Should().BeOfType<TestHumanName>();
             datatype.As<TestHumanName>().Given.Should().HaveCount(2);
@@ -260,7 +260,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             var state = new FhirXmlPocoDeserializerState();
 
             var deserializer = getTestDeserializer(new());
-            var datatype = deserializer.DeserializeDatatypeInternal(typeof(TestHumanName), reader, state);
+            var datatype = deserializer.DeserializeElementInternal(typeof(TestHumanName), reader, state);
 
             datatype.Should().BeOfType<TestHumanName>();
             datatype.As<TestHumanName>().Given.Should().HaveCount(3);
@@ -281,7 +281,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
             var state = new FhirXmlPocoDeserializerState();
             var deserializer = getTestDeserializer(new());
-            var datatype = deserializer.DeserializeDatatypeInternal(typeof(TestHumanName), reader, state);
+            var datatype = deserializer.DeserializeElementInternal(typeof(TestHumanName), reader, state);
 
             datatype.Should().BeOfType<TestHumanName>();
             datatype.As<TestHumanName>().GivenElement[0].Value.Should().Be("foo");

@@ -64,11 +64,11 @@ namespace Hl7.Fhir.Serialization
         }
 
 
-        public Base DeserializeDatatype(Type targetType, XmlReader reader)
+        public Base DeserializeElement(Type targetType, XmlReader reader)
         {
             FhirXmlPocoDeserializerState state = new();
 
-            var result = DeserializeDatatypeInternal(targetType, reader, state);
+            var result = DeserializeElementInternal(targetType, reader, state);
 
             return !state.Errors.HasExceptions
                 ? result!
@@ -92,7 +92,7 @@ namespace Hl7.Fhir.Serialization
                 try
                 {
                     state.Path.EnterResource(resourceMapping.Name);
-                    deserializeDatatypeInto(newResource, resourceMapping, reader, state);
+                    deserializeElementInto(newResource, resourceMapping, reader, state);
 
                     if (!resourceMapping.IsResource)
                     {
@@ -113,7 +113,7 @@ namespace Hl7.Fhir.Serialization
             }
         }
 
-        internal Base? DeserializeDatatypeInternal(Type targetType, XmlReader reader, FhirXmlPocoDeserializerState state)
+        internal Base? DeserializeElementInternal(Type targetType, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
             var mapping = _inspector.FindOrImportClassMapping(targetType) ??
               throw new ArgumentException($"Type '{targetType}' could not be located in model assembly '{Assembly}' and can " +
@@ -124,14 +124,14 @@ namespace Hl7.Fhir.Serialization
             {
                 // If we have at least a mapping, let's try to continue               
                 var newDatatype = (Base)mapping.Factory();
-                deserializeDatatypeInto(newDatatype, mapping, reader, state);
+                deserializeElementInto(newDatatype, mapping, reader, state);
                 return newDatatype;
             }
             return null;
         }
 
         // We expect to start at the open tag op the element. When done, the reader will be at the next token after this element or end of the file.
-        private void deserializeDatatypeInto(Base target, ClassMapping mapping, XmlReader reader, FhirXmlPocoDeserializerState state)
+        private void deserializeElementInto(Base target, ClassMapping mapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
             var oldErrors = state.Errors.Count;
             var (lineNumber, position) = reader.GenerateLineInfo();
@@ -139,7 +139,6 @@ namespace Hl7.Fhir.Serialization
             //check if on opening tag
             if (reader.NodeType != XmlNodeType.Element)
             {
-                //TODO: throw exception, we have made a mistake
                 throw new InvalidOperationException($"Xml node {reader.Name} is not an element, but a {reader.NodeType}");
             }
 
@@ -155,6 +154,8 @@ namespace Hl7.Fhir.Serialization
                 reader.ReadToContent();
 
                 int highestOrder = 0;
+
+                //TODO: handle contained resources here somewhere?
 
                 while (reader.NodeType != XmlNodeType.EndElement)
                 {
@@ -228,7 +229,7 @@ namespace Hl7.Fhir.Serialization
 
             object? result = propMapping switch
             {
-                { SerializationHint: Specification.XmlRepresentation.XHtml } => FhirXmlPocoDeserializer.readXhtml(propValueMapping, reader, state),
+                { SerializationHint: Specification.XmlRepresentation.XHtml } => readXhtml(reader, state),
                 { IsCollection: true } => createOrExpandList(target, incorrectOrder, propValueMapping!, propMapping, reader, state),
                 _ => readSingleValue(propValueMapping!, reader, state)
             };
@@ -246,7 +247,7 @@ namespace Hl7.Fhir.Serialization
             propMapping.SetValue(target, result);
         }
 
-        private static string readXhtml(ClassMapping? propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
+        private static string readXhtml(XmlReader reader, FhirXmlPocoDeserializerState state)
         {
             if (reader.NamespaceURI != "http://www.w3.org/1999/xhtml")
             {
@@ -279,18 +280,16 @@ namespace Hl7.Fhir.Serialization
         {
             var newEntries = readList(propValueMapping!, reader, state);
 
-            if (newEntries != null)
+            foreach (var entry in newEntries)
             {
-                foreach (var entry in newEntries)
-                {
-                    currentEntries.Add(entry);
-                }
+                currentEntries.Add(entry);
             }
+
             return currentEntries;
         }
 
         //When done, the reader will be at the next token after the last element of the list or end of the file.
-        private IList? readList(ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
+        private IList readList(ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
             var list = propValueMapping.ListFactory();
 
@@ -306,7 +305,7 @@ namespace Hl7.Fhir.Serialization
             while (reader.Name == name && reader.NodeType != XmlNodeType.EndElement)
             {
                 var newEntry = (Base)propValueMapping.Factory();
-                deserializeDatatypeInto(newEntry, propValueMapping, reader, state);
+                deserializeElementInto(newEntry, propValueMapping, reader, state);
                 list.Add(newEntry);
             }
             return list;
@@ -357,7 +356,7 @@ namespace Hl7.Fhir.Serialization
             else
             {
                 var newDatatype = (Base)propValueMapping.Factory();
-                deserializeDatatypeInto(newDatatype, propValueMapping, reader, state);
+                deserializeElementInto(newDatatype, propValueMapping, reader, state);
                 return newDatatype;
             }
         }
