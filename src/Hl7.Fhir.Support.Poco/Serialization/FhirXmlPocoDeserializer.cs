@@ -62,7 +62,12 @@ namespace Hl7.Fhir.Serialization
                 : throw new DeserializationFailedException(result, state.Errors);
         }
 
-
+        /// <summary>
+        /// Reads a (subtree) of serialzed FHIR Json data into a POCO object.
+        /// </summary>
+        /// <param name="targetType">The type of POCO to construct and deserialize</param>
+        /// <param name="reader">An xml reader positioned on the first element of the object, or the beginning of the stream.</param>
+        /// <returns>A fully initialized POCO with the data from the reader.</returns>
         public Base DeserializeElement(Type targetType, XmlReader reader)
         {
             FhirXmlPocoDeserializerState state = new();
