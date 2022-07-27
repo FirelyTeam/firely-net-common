@@ -22,16 +22,8 @@ namespace Hl7.Fhir.Serialization
         public const string NO_ATTRIBUTES_ALLOWED_ON_RESOURCE_CONTAINER_CODE = "XML111";
         public const string INCORRECT_ELEMENT_NAMESPACE_CODE = "XML112";
 
-        public const string STRING_ISNOTAN_INSTANT_CODE = "XML201";
         public const string INCORRECT_BASE64_DATA_CODE = "XML202";
-        public const string STRING_ISNOTAN_INT_CODE = "XML203";
-        public const string STRING_ISNOTA_LONG_CODE = "XML204";
-        public const string STRING_ISNOTAN_UINT_CODE = "XML205";
-        public const string STRING_ISNOTA_DECIMAL_CODE = "XML206";
-        public const string STRING_ISNOTA_DOUBLE_CODE = "XML207";
-        public const string STRING_ISNOTA_FLOAT_CODE = "XML208";
-        public const string STRING_ISNOTAN_ULONG_CODE = "XML209";
-        public const string STRING_ISNOTA_BOOLEAN_CODE = "XML210";
+        public const string VALUE_IS_NOT_OF_EXPECTED_TYPE_CODE = "XML203";
 
 
         internal static readonly FhirXmlException INCORRECT_ROOT_NAMESPACE = new(INCORRECT_ROOT_NAMESPACE_CODE, "Element has incorrect namespace {0}. Namespace should be \"http://hl7.org/fhir\".");
@@ -41,16 +33,8 @@ namespace Hl7.Fhir.Serialization
         internal static readonly FhirXmlException UNKNOWN_ELEMENT = new(UNKNOWN_ELEMENT_CODE, "Encountered unrecognized element '{0}'.");
         internal static readonly FhirXmlException CHOICE_ELEMENT_HAS_NO_TYPE = new(CHOICE_ELEMENT_HAS_NO_TYPE_CODE, "Choice element '{0}' is not suffixed with a type.");
         internal static readonly FhirXmlException CHOICE_ELEMENT_HAS_UNKOWN_TYPE = new(CHOICE_ELEMENT_HAS_UNKNOWN_TYPE_CODE, "Choice element '{0}' is suffixed with an unrecognized type '{1}'.");
-        internal static readonly FhirXmlException STRING_ISNOTAN_INSTANT = new(STRING_ISNOTAN_INSTANT_CODE, "Literal string '{0}' cannot be parsed as an instant.");
         internal static readonly FhirXmlException INCORRECT_BASE64_DATA = new(INCORRECT_BASE64_DATA_CODE, "Encountered incorrectly encoded base64 data.");
-        internal static readonly FhirXmlException STRING_ISNOTAN_INT = new(STRING_ISNOTAN_INT_CODE, "Literal string '{0}' cannot be parsed as an integer.");
-        internal static readonly FhirXmlException STRING_ISNOTA_LONG = new(STRING_ISNOTA_LONG_CODE, "Literal string '{0}' cannot be parsed as a long integer.");
-        internal static readonly FhirXmlException STRING_ISNOTAN_UINT = new(STRING_ISNOTAN_UINT_CODE, "Literal string '{0}' cannot be parsed as an unsigned integer.");
-        internal static readonly FhirXmlException STRING_ISNOTA_DECIMAL = new(STRING_ISNOTA_DECIMAL_CODE, "Literal string '{0}' cannot be parsed as a decimal.");
-        internal static readonly FhirXmlException STRING_ISNOTA_DOUBLE = new(STRING_ISNOTA_DOUBLE_CODE, "Literal string '{0}' cannot be parsed as a double.");
-        internal static readonly FhirXmlException STRING_ISNOTA_FLOAT = new(STRING_ISNOTA_FLOAT_CODE, "Literal string '{0}' cannot be parsed as a float.");
-        internal static readonly FhirXmlException STRING_ISNOTAN_ULONG = new(STRING_ISNOTAN_ULONG_CODE, "Literal string '{0}' cannot be parsed as an unsigned long.");
-        internal static readonly FhirXmlException STRING_ISNOTA_BOOLEAN = new(STRING_ISNOTA_BOOLEAN_CODE, "Literal string '{0}' cannot be parsed as a boolean.");
+        internal static readonly FhirXmlException VALUE_IS_NOT_OF_EXPECTED_TYPE = new(VALUE_IS_NOT_OF_EXPECTED_TYPE_CODE, "Literal string '{0}' cannot be parsed as a '{1}'.");
         internal static readonly FhirXmlException INCORRECT_XHTML_NAMESPACE = new(INCORRECT_XHTML_NAMESPACE_CODE, "Narrative has missing or incorrect namespace. Namespace should be \"http://www.w3.org/1999/xhtml\"");
         internal static readonly FhirXmlException UNKNOWN_ATTRIBUTE = new(UNKNOWN_ATTRIBUTE_CODE, "Encountered unrecognized attribute '{0}'.");
         internal static readonly FhirXmlException UNEXPECTED_ELEMENT = new(UNEXPECTED_ELEMENT_CODE, "Encountered unexpected element '{0}', please check the order of the xml.");

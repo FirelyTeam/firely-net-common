@@ -5,7 +5,6 @@ using Hl7.Fhir.Model;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections;
-using System.Globalization;
 using System.Reflection;
 using System.Xml;
 using ERR = Hl7.Fhir.Serialization.FhirXmlException;
@@ -439,15 +438,15 @@ namespace Hl7.Fhir.Serialization
                 return (reader.Value, null);
             else if (implementingType == typeof(bool))
             {
-                return bool.TryParse(reader.Value, out var parsed)
-                    ? (parsed, null)
-                    : (reader.Value, ERR.STRING_ISNOTA_BOOLEAN.With(reader, reader.Value));
+                return ElementModel.Types.Boolean.TryParse(reader.Value, out var parsed)
+                    ? (parsed?.Value, null)
+                    : (reader.Value, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, reader.Value, implementingType.Name));
             }
             else if (implementingType == typeof(DateTimeOffset))
             {
                 return ElementModel.Types.DateTime.TryParse(reader.Value, out var parsed)
                     ? (parsed.ToDateTimeOffset(TimeSpan.Zero), null)
-                    : (reader.Value, ERR.STRING_ISNOTAN_INSTANT.With(reader, reader.Value));
+                    : (reader.Value, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, reader.Value, implementingType.Name));
             }
             else if (implementingType == typeof(byte[]))
             {
@@ -455,31 +454,31 @@ namespace Hl7.Fhir.Serialization
             }
             else if (implementingType == typeof(int))
             {
-                return int.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTAN_INT.With(reader, reader.Value));
+                return ElementModel.Types.Integer.TryParse(reader.Value, out var parsed) ? (parsed?.Value, null) : (reader.Value, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, reader.Value, implementingType.Name));
             }
             else if (implementingType == typeof(uint))
             {
-                return uint.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTAN_UINT.With(reader, reader.Value));
+                return uint.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, reader.Value, implementingType.Name));
             }
             else if (implementingType == typeof(long))
             {
-                return long.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTA_LONG.With(reader, reader.Value));
+                return ElementModel.Types.Long.TryParse(reader.Value, out var parsed) ? (parsed?.Value, null) : (reader.Value, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, reader.Value, implementingType.Name));
             }
             else if (implementingType == typeof(decimal))
             {
-                return decimal.TryParse(reader.Value, NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTA_DECIMAL.With(reader, reader.Value));
+                return ElementModel.Types.Decimal.TryParse(reader.Value, out var parsed) ? (parsed?.Value, null) : (reader.Value, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, reader.Value, implementingType.Name));
             }
             else if (implementingType == typeof(double))
             {
-                return double.TryParse(reader.Value, NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTA_DOUBLE.With(reader, reader.Value));
+                return ElementModel.Types.Decimal.TryParse(reader.Value, out var parsed) ? (parsed?.Value, null) : (reader.Value, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, reader.Value, implementingType.Name));
             }
             else if (implementingType == typeof(float))
             {
-                return float.TryParse(reader.Value, NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTA_FLOAT.With(reader, reader.Value));
+                return ElementModel.Types.Decimal.TryParse(reader.Value, out var parsed) ? (parsed?.Value, null) : (reader.Value, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, reader.Value, implementingType.Name));
             }
             else if (implementingType == typeof(ulong))
             {
-                return ulong.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.STRING_ISNOTAN_ULONG.With(reader, reader.Value));
+                return ulong.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, reader.Value, implementingType.Name));
             }
             else if (implementingType.IsEnum)
             {
@@ -489,7 +488,6 @@ namespace Hl7.Fhir.Serialization
             {
                 return new(reader.Value, null); //When does this happen? Should we throw an error?
             }
-
 
             static (object, ERR?) getByteArrayValue(XmlReader reader)
             {
