@@ -20,6 +20,7 @@ namespace Hl7.Fhir.Serialization
         public const string UNEXPECTED_ELEMENT_CODE = "XML109";
         public const string UNALLOWED_ElEMENT_IN_RESOURCE_CONTAINER_CODE = "XML110";
         public const string NO_ATTRIBUTES_ALLOWED_ON_RESOURCE_CONTAINER_CODE = "XML111";
+        public const string INCORRECT_ELEMENT_NAMESPACE_CODE = "XML112";
 
         public const string STRING_ISNOTAN_INSTANT_CODE = "XML201";
         public const string INCORRECT_BASE64_DATA_CODE = "XML202";
@@ -33,7 +34,8 @@ namespace Hl7.Fhir.Serialization
         public const string STRING_ISNOTA_BOOLEAN_CODE = "XML210";
 
 
-        internal static readonly FhirXmlException INCORRECT_ROOT_NAMESPACE = new(INCORRECT_ROOT_NAMESPACE_CODE, "Root has missing or incorrect namespace. Namespace should be \"http://hl7.org/fhir\".");
+        internal static readonly FhirXmlException INCORRECT_ROOT_NAMESPACE = new(INCORRECT_ROOT_NAMESPACE_CODE, "Element has incorrect namespace {0}. Namespace should be \"http://hl7.org/fhir\".");
+        internal static readonly FhirXmlException INCORRECT_ELEMENT_NAMESPACE = new(INCORRECT_ELEMENT_NAMESPACE_CODE, "Root has missing or incorrect namespace. Namespace should be \"http://hl7.org/fhir\".");
         internal static readonly FhirXmlException UNKNOWN_RESOURCE_TYPE = new(UNKNOWN_RESOURCE_TYPE_CODE, "Unknown type '{0}' found in root property.");
         internal static readonly FhirXmlException RESOURCE_TYPE_NOT_A_RESOURCE = new(RESOURCE_TYPE_NOT_A_RESOURCE_CODE, "Data type '{0}' in property 'resourceType' is not a type of resource.");
         internal static readonly FhirXmlException UNKNOWN_ELEMENT = new(UNKNOWN_ELEMENT_CODE, "Encountered unrecognized element '{0}'.");

@@ -2,6 +2,7 @@
 
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
+using Hl7.Fhir.Utility;
 using System;
 using System.Collections;
 using System.Globalization;
@@ -49,7 +50,7 @@ namespace Hl7.Fhir.Serialization
         /// <summary>
         /// Deserialize the FHIR xml from the reader and create a new POCO object containing the data from the reader.
         /// </summary>
-        /// <param name="reader">An xml reader positioned on the first element of the object, or the beginning of the stream.</param>
+        /// <param name="reader">An xml reader positioned on the first element, or the beginning of the stream.</param>
         /// <returns>A fully initialized POCO with the data from the reader.</returns>
         public Resource DeserializeResource(XmlReader reader)
         {
@@ -66,7 +67,7 @@ namespace Hl7.Fhir.Serialization
         /// Reads a (subtree) of serialzed FHIR Json data into a POCO object.
         /// </summary>
         /// <param name="targetType">The type of POCO to construct and deserialize</param>
-        /// <param name="reader">An xml reader positioned on the first element of the object, or the beginning of the stream.</param>
+        /// <param name="reader">An xml reader positioned on the first element, or the beginning of the stream.</param>
         /// <returns>A fully initialized POCO with the data from the reader.</returns>
         public Base DeserializeElement(Type targetType, XmlReader reader)
         {
@@ -251,7 +252,7 @@ namespace Hl7.Fhir.Serialization
 
         private static string readXhtml(XmlReader reader, FhirXmlPocoDeserializerState state)
         {
-            if (reader.NamespaceURI != "http://www.w3.org/1999/xhtml")
+            if (reader.NamespaceURI != XmlNs.XHTML)
             {
                 state.Errors.Add(ERR.INCORRECT_XHTML_NAMESPACE.With(reader));
             }
@@ -358,26 +359,34 @@ namespace Hl7.Fhir.Serialization
                 {
                     do
                     {
-                        var propMapping = propValueMapping.FindMappedElementByName(reader.Name);
-                        if (propMapping is not null)
+                        if (reader.Name == "xmlns")
                         {
-                            state.Path.EnterElement(propMapping.Name);
-                            try
+                            if (reader.Value != XmlNs.FHIR)
                             {
-                                readAttribute(target, propMapping!, reader, state);
-                            }
-                            finally
-                            {
-                                state.Path.ExitElement();
+                                state.Errors.Add(ERR.INCORRECT_ELEMENT_NAMESPACE.With(reader, reader.Value));
                             }
                         }
                         else
                         {
-                            if (reader.Name != "xmlns") // attribute is not a FHIR attribute, and not a namespace;
+                            var propMapping = propValueMapping.FindMappedElementByName(reader.Name);
+                            if (propMapping is not null)
+                            {
+                                state.Path.EnterElement(propMapping.Name);
+                                try
+                                {
+                                    readAttribute(target, propMapping!, reader, state);
+                                }
+                                finally
+                                {
+                                    state.Path.ExitElement();
+                                }
+                            }
+                            else
                             {
                                 state.Errors.Add(ERR.UNKNOWN_ATTRIBUTE.With(reader, reader.Name));
                             }
                         }
+
 
                     } while (reader.MoveToNextAttribute());
                 }
@@ -529,7 +538,7 @@ namespace Hl7.Fhir.Serialization
 
         private static (string, FhirXmlException?) determineResourceType(XmlReader reader)
         {
-            return (reader.Name, (reader.NamespaceURI == "http://hl7.org/fhir") ? null : ERR.INCORRECT_ROOT_NAMESPACE);
+            return (reader.Name, (reader.NamespaceURI == XmlNs.FHIR) ? null : ERR.INCORRECT_ROOT_NAMESPACE);
         }
 
         /// <summary>
