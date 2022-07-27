@@ -141,7 +141,20 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [TestMethod]
         public void TryDeserializeContainedResource()
         {
-            var content = "<Patient xmlns=\"http://hl7.org/fhir\"><contained><Patient><multipleBirthBoolean value = \"true\"/></Patient></contained><contained><Patient><active value = \"true\"/></Patient></contained><active value=\"true\"/><gender value=\"female\"/></Patient>";
+            var content = "<Patient xmlns=\"http://hl7.org/fhir\">" +
+                            "<contained>" +
+                                "<Patient>" +
+                                   "<multipleBirthBoolean value = \"true\"/>" +
+                                "</Patient>" +
+                            "</contained>" +
+                            "<contained>" +
+                                "<Patient>" +
+                                    "<active value = \"true\"/>" +
+                                "</Patient>" +
+                            "</contained>" +
+                            "<active value=\"true\"/>" +
+                            "<gender value=\"female\"/>" +
+                          "</Patient>";
 
             var reader = constructReader(content);
             reader.Read();
@@ -185,15 +198,14 @@ namespace Hl7.Fhir.Support.Poco.Tests
             var state = new FhirXmlPocoDeserializerState();
             var resource = deserializer.DeserializeResourceInternal(reader, state);
 
-            state.Errors.Should().OnlyContain(ce => ce.ErrorCode == ERR.MULTIPLE_RESOURCES_IN_RESOURCE_CONTAINER_CODE);
+            state.Errors.Should().OnlyContain(ce => ce.ErrorCode == ERR.UNALLOWED_ElEMENT_IN_RESOURCE_CONTAINER_CODE);
 
             resource.Should().BeOfType<TestPatient>();
             resource.As<TestPatient>().Active.Value.Should().Be(true);
             resource.As<TestPatient>().Gender.Value.Should().Be(TestAdministrativeGender.Female);
-            resource.As<TestPatient>().Contained.Should().HaveCount(3);
+            resource.As<TestPatient>().Contained.Should().HaveCount(2);
             resource.As<TestPatient>().Contained[0].As<TestPatient>().MultipleBirth.As<FhirBoolean>().Value.Should().Be(true);
-            resource.As<TestPatient>().Contained[1].As<TestPatient>().BirthDate.Should().Be("2020-01-01");
-            resource.As<TestPatient>().Contained[2].As<TestPatient>().Active.Value.Should().Be(true);
+            resource.As<TestPatient>().Contained[1].As<TestPatient>().Active.Value.Should().Be(true);
         }
 
 

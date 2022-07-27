@@ -4,7 +4,6 @@ using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using System.Xml;
@@ -50,7 +49,7 @@ namespace Hl7.Fhir.Serialization
         /// <summary>
         /// Deserialize the FHIR xml from the reader and create a new POCO object containing the data from the reader.
         /// </summary>
-        /// <param name="reader">A xml reader positioned on the element of the object, or the beginning of the stream.</param>
+        /// <param name="reader">An xml reader positioned on the first element of the object, or the beginning of the stream.</param>
         /// <returns>A fully initialized POCO with the data from the reader.</returns>
         public Resource DeserializeResource(XmlReader reader)
         {
@@ -168,7 +167,7 @@ namespace Hl7.Fhir.Serialization
                         if (propMapping is not null)
                         {
                             state.Path.EnterElement(propMapping.Name);
-                            (var order, var incorrectOrder) = checkOrder(reader, state, highestOrder, propMapping);
+                            (var order, var incorrectOrder) = FhirXmlPocoDeserializer.checkOrder(reader, state, highestOrder, propMapping);
                             highestOrder = order;
 
                             try
@@ -203,10 +202,9 @@ namespace Hl7.Fhir.Serialization
             }
 
             reader.ReadToContent();
-
         }
 
-        private (int highestOrder, bool incorrectOrder) checkOrder(XmlReader reader, FhirXmlPocoDeserializerState state, int highestOrder, PropertyMapping propMapping)
+        private static (int highestOrder, bool incorrectOrder) checkOrder(XmlReader reader, FhirXmlPocoDeserializerState state, int highestOrder, PropertyMapping propMapping)
         {
             var incorrectOrder = false;
             //check if element is in the correct order.
@@ -227,12 +225,10 @@ namespace Hl7.Fhir.Serialization
             var (lineNumber, position) = reader.GenerateLineInfo();
             var name = reader.Name;
 
-            object? result = propMapping switch
-            {
-                { SerializationHint: Specification.XmlRepresentation.XHtml } => readXhtml(reader, state),
-                { IsCollection: true } => createOrExpandList(target, incorrectOrder, propValueMapping!, propMapping, reader, state),
-                _ => readSingleValue(propValueMapping!, reader, state)
-            };
+            object? result = propMapping.IsCollection
+                ? createOrExpandList(target, incorrectOrder, propValueMapping!, propMapping, reader, state)
+                : readSingleValue(propValueMapping!, propMapping, reader, state);
+
 
             if (Settings.Validator is not null && oldErrors == state.Errors.Count)
             {
@@ -246,6 +242,7 @@ namespace Hl7.Fhir.Serialization
             }
             propMapping.SetValue(target, result);
         }
+
 
         private static string readXhtml(XmlReader reader, FhirXmlPocoDeserializerState state)
         {
@@ -267,18 +264,18 @@ namespace Hl7.Fhir.Serialization
                 //Was there already a list created previously? -> User error!
                 //But let's fix it, and expand the list with the newly encountered element(s).
                 //Error is already thrown using an "Unexpected element" error in "deserializeDatatypeInto"
-                return (currentList!.Count != 0) ? expandCurrentList(currentList, propValueMapping, reader, state) : readList(propValueMapping!, reader, state);
+                return (currentList!.Count != 0) ? expandCurrentList(currentList, propValueMapping, propMapping, reader, state) : readList(propValueMapping!, propMapping, reader, state);
             }
             else
             {
-                return readList(propValueMapping!, reader, state);
+                return readList(propValueMapping!, propMapping, reader, state);
             }
         }
 
         //Retrieves previously created list, and add newly encountered values.
-        private IList expandCurrentList(IList currentEntries, ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
+        private IList expandCurrentList(IList currentEntries, ClassMapping propValueMapping, PropertyMapping propMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
-            var newEntries = readList(propValueMapping!, reader, state);
+            var newEntries = readList(propValueMapping!, propMapping, reader, state);
 
             foreach (var entry in newEntries)
             {
@@ -289,69 +286,28 @@ namespace Hl7.Fhir.Serialization
         }
 
         //When done, the reader will be at the next token after the last element of the list or end of the file.
-        private IList readList(ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
+        private IList readList(ClassMapping propValueMapping, PropertyMapping propMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
             var list = propValueMapping.ListFactory();
-
-            return propValueMapping.IsResource
-                ? readResourceList(reader, state, list)
-                : readDatatypeList(propValueMapping, reader, state, list);
-        }
-
-        private IList readDatatypeList(ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state, IList list)
-        {
             var name = reader.Name;
 
             while (reader.Name == name && reader.NodeType != XmlNodeType.EndElement)
             {
-                var newEntry = (Base)propValueMapping.Factory();
-                deserializeElementInto(newEntry, propValueMapping, reader, state);
+                var newEntry = readSingleValue(propValueMapping, propMapping, reader, state);
                 list.Add(newEntry);
             }
             return list;
         }
 
-        private IList readResourceList(XmlReader reader, FhirXmlPocoDeserializerState state, IList list)
+        private object? readSingleValue(ClassMapping propValueMapping, PropertyMapping propMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
-            var name = reader.Name;
-            var depth = reader.Depth;
-
-            while (reader.Name == name && reader.NodeType != XmlNodeType.EndElement)
+            if (propMapping.Choice == ChoiceType.ResourceChoice)
             {
-                var containedList = new List<Resource?>() { };
-
-                reader.ReadToContent();
-
-                if (reader.NodeType != XmlNodeType.EndElement)
-                {
-                    //read all resources in the resource container, even if there are multiple (which is not allowed)
-                    while (reader.Depth != depth && reader.NodeType != XmlNodeType.EndElement)
-                    {
-                        var resource = DeserializeResourceInternal(reader, state);
-                        if (resource != null)
-                        {
-                            containedList.Add(resource);
-                        }
-                    }
-                }
-                if (containedList.Count > 1)
-                {
-                    state.Errors.Add(ERR.MULTIPLE_RESOURCES_IN_RESOURCE_CONTAINER.With(reader));
-                }
-                containedList.ForEach(r => list.Add(r));
-
-                //move from endTag of resource container to next element, which can be another resource container ofcourse.
-                reader.ReadToContent();
+                return deserializeResourceContainer(reader, state);
             }
-
-            return list;
-        }
-
-        private Base? readSingleValue(ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
-        {
-            if (propValueMapping.IsResource)
+            else if (propMapping.SerializationHint == Specification.XmlRepresentation.XHtml)
             {
-                return DeserializeResourceInternal(reader, state);
+                return readXhtml(reader, state);
             }
             else
             {
@@ -359,6 +315,33 @@ namespace Hl7.Fhir.Serialization
                 deserializeElementInto(newDatatype, propValueMapping, reader, state);
                 return newDatatype;
             }
+        }
+
+        private object? deserializeResourceContainer(XmlReader reader, FhirXmlPocoDeserializerState state)
+        {
+            var depth = reader.Depth;
+            // we are currently at the resource container (e.g. <contained>)
+            if (reader.HasAttributes)
+            {
+                state.Errors.Add(ERR.NO_ATTRIBUTES_ALLOWED_ON_RESOURCE_CONTAINER.With(reader, reader.Name));
+            }
+            // let's move to the actual resource
+            reader.ReadToContent();
+            var result = DeserializeResourceInternal(reader, state);
+            // now we should be at the closing element of the resource container (e.g. </contained>). We should check that and maybe fix that.)
+            if (reader.Depth != depth && reader.NodeType != XmlNodeType.EndElement)
+            {
+                state.Errors.Add(ERR.UNALLOWED_ElEMENT_IN_RESOURCE_CONTAINER.With(reader, reader.Name));
+
+                while (!(reader.Depth == depth && reader.NodeType == XmlNodeType.EndElement))
+                {
+                    reader.Read();
+                }
+            }
+
+            //we move out of the container to the next element.
+            reader.ReadToContent();
+            return result;
         }
 
         private void readAttributes(Base target, ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)

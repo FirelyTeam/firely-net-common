@@ -18,7 +18,8 @@ namespace Hl7.Fhir.Serialization
         public const string INCORRECT_XHTML_NAMESPACE_CODE = "XML107";
         public const string UNKNOWN_ATTRIBUTE_CODE = "XML108";
         public const string UNEXPECTED_ELEMENT_CODE = "XML109";
-        public const string MULTIPLE_RESOURCES_IN_RESOURCE_CONTAINER_CODE = "XML110";
+        public const string UNALLOWED_ElEMENT_IN_RESOURCE_CONTAINER_CODE = "XML110";
+        public const string NO_ATTRIBUTES_ALLOWED_ON_RESOURCE_CONTAINER_CODE = "XML111";
 
         public const string STRING_ISNOTAN_INSTANT_CODE = "XML201";
         public const string INCORRECT_BASE64_DATA_CODE = "XML202";
@@ -51,7 +52,8 @@ namespace Hl7.Fhir.Serialization
         internal static readonly FhirXmlException INCORRECT_XHTML_NAMESPACE = new(INCORRECT_XHTML_NAMESPACE_CODE, "Narrative has missing or incorrect namespace. Namespace should be \"http://www.w3.org/1999/xhtml\"");
         internal static readonly FhirXmlException UNKNOWN_ATTRIBUTE = new(UNKNOWN_ATTRIBUTE_CODE, "Encountered unrecognized attribute '{0}'.");
         internal static readonly FhirXmlException UNEXPECTED_ELEMENT = new(UNEXPECTED_ELEMENT_CODE, "Encountered unexpected element '{0}', please check the order of the xml.");
-        internal static readonly FhirXmlException MULTIPLE_RESOURCES_IN_RESOURCE_CONTAINER = new(MULTIPLE_RESOURCES_IN_RESOURCE_CONTAINER_CODE, "Encountered multiple resources in a resource container while only one is allowed.");
+        internal static readonly FhirXmlException UNALLOWED_ElEMENT_IN_RESOURCE_CONTAINER = new(UNALLOWED_ElEMENT_IN_RESOURCE_CONTAINER_CODE, "Encountered unallowed content '{0}' in the resource container. Only a single resource is allowed.");
+        internal static readonly FhirXmlException NO_ATTRIBUTES_ALLOWED_ON_RESOURCE_CONTAINER = new(NO_ATTRIBUTES_ALLOWED_ON_RESOURCE_CONTAINER_CODE, "Encountered xml attributes on resource container {0}. No attributes are allowed.");
 
         public FhirXmlException(string errorCode, string message) : base(errorCode, message)
         {
