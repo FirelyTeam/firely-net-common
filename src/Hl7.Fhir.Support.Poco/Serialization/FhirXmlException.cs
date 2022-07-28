@@ -21,6 +21,7 @@ namespace Hl7.Fhir.Serialization
         public const string UNALLOWED_ElEMENT_IN_RESOURCE_CONTAINER_CODE = "XML110";
         public const string NO_ATTRIBUTES_ALLOWED_ON_RESOURCE_CONTAINER_CODE = "XML111";
         public const string INCORRECT_ELEMENT_NAMESPACE_CODE = "XML112";
+        public const string UNALLOWED_NODE_TYPE_CODE = "XML113";
 
         public const string INCORRECT_BASE64_DATA_CODE = "XML202";
         public const string VALUE_IS_NOT_OF_EXPECTED_TYPE_CODE = "XML203";
@@ -40,6 +41,7 @@ namespace Hl7.Fhir.Serialization
         internal static readonly FhirXmlException UNEXPECTED_ELEMENT = new(UNEXPECTED_ELEMENT_CODE, "Encountered unexpected element '{0}', please check the order of the xml.");
         internal static readonly FhirXmlException UNALLOWED_ElEMENT_IN_RESOURCE_CONTAINER = new(UNALLOWED_ElEMENT_IN_RESOURCE_CONTAINER_CODE, "Encountered unallowed content '{0}' in the resource container. Only a single resource is allowed.");
         internal static readonly FhirXmlException NO_ATTRIBUTES_ALLOWED_ON_RESOURCE_CONTAINER = new(NO_ATTRIBUTES_ALLOWED_ON_RESOURCE_CONTAINER_CODE, "Encountered xml attributes on resource container {0}. No attributes are allowed.");
+        internal static readonly FhirXmlException UNALLOWED_NODE_TYPE = new(UNALLOWED_NODE_TYPE_CODE, "Encountered unallowed XML node type {0}");
 
         public FhirXmlException(string errorCode, string message) : base(errorCode, message)
         {

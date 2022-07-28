@@ -1,4 +1,6 @@
-﻿using System.Xml;
+﻿using Hl7.Fhir.Utility;
+using System.Xml;
+using ERR = Hl7.Fhir.Serialization.FhirXmlException;
 
 namespace Hl7.Fhir.Serialization
 {
@@ -21,15 +23,35 @@ namespace Hl7.Fhir.Serialization
             return (xmlInfo.LineNumber, xmlInfo.LinePosition);
         }
 
-        internal static bool ReadToContent(this XmlReader reader)
+        internal static bool ReadToContent(this XmlReader reader, FhirXmlPocoDeserializerState state)
         {
             if (reader.Read())
             {
-                reader.MoveToContent();
+                while (reader.ShouldSkipNodeType(state))
+                {
+                    reader.Skip();
+                }
                 return true;
             }
             return false;
         }
+        internal static bool ShouldSkipNodeType(this XmlReader reader, FhirXmlPocoDeserializerState state)
+        {
+            var nodeType = reader.NodeType;
+
+            if (nodeType == XmlNodeType.Comment || nodeType == XmlNodeType.Whitespace || nodeType == XmlNodeType.XmlDeclaration || nodeType == XmlNodeType.SignificantWhitespace)
+                return true;
+            else if (nodeType == XmlNodeType.CDATA || nodeType == XmlNodeType.ProcessingInstruction || nodeType == XmlNodeType.DocumentType || nodeType == XmlNodeType.EntityReference)
+            {
+                state.Errors.Add(ERR.UNALLOWED_NODE_TYPE.With(reader, nodeType.GetLiteral()));
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
 
     }
 }

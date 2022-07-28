@@ -155,7 +155,7 @@ namespace Hl7.Fhir.Serialization
             if (!reader.IsEmptyElement)
             {
                 //read the next object that has content
-                reader.ReadToContent();
+                reader.ReadToContent(state);
 
                 int highestOrder = 0;
 
@@ -163,7 +163,7 @@ namespace Hl7.Fhir.Serialization
 
                 while (reader.NodeType != XmlNodeType.EndElement)
                 {
-                    if (!FhirXmlPocoDeserializer.shouldSkipNodeType(reader.NodeType))
+                    if (!reader.ShouldSkipNodeType(state))
                     {
                         // check if we are currently on an element.
                         var (propMapping, propValueMapping, error) = tryGetMappedElementMetadata(_inspector, mapping, reader, reader.Name);
@@ -172,7 +172,7 @@ namespace Hl7.Fhir.Serialization
                         if (propMapping is not null)
                         {
                             state.Path.EnterElement(propMapping.Name);
-                            (var order, var incorrectOrder) = FhirXmlPocoDeserializer.checkOrder(reader, state, highestOrder, propMapping);
+                            (var order, var incorrectOrder) = checkOrder(reader, state, highestOrder, propMapping);
                             highestOrder = order;
 
                             try
@@ -206,7 +206,7 @@ namespace Hl7.Fhir.Serialization
                 PocoDeserializationHelper.RunInstanceValidation(target, Settings.Validator, context, state.Errors);
             }
 
-            reader.ReadToContent();
+            reader.ReadToContent(state);
         }
 
         private static (int highestOrder, bool incorrectOrder) checkOrder(XmlReader reader, FhirXmlPocoDeserializerState state, int highestOrder, PropertyMapping propMapping)
@@ -331,7 +331,7 @@ namespace Hl7.Fhir.Serialization
                 state.Errors.Add(ERR.NO_ATTRIBUTES_ALLOWED_ON_RESOURCE_CONTAINER.With(reader, reader.Name));
             }
             // let's move to the actual resource
-            reader.ReadToContent();
+            reader.ReadToContent(state);
             var result = DeserializeResourceInternal(reader, state);
             // now we should be at the closing element of the resource container (e.g. </contained>). We should check that and maybe fix that.)
             if (reader.Depth != depth && reader.NodeType != XmlNodeType.EndElement)
@@ -345,7 +345,7 @@ namespace Hl7.Fhir.Serialization
             }
 
             //we move out of the container to the next element.
-            reader.ReadToContent();
+            reader.ReadToContent(state);
             return result;
         }
 
@@ -502,16 +502,7 @@ namespace Hl7.Fhir.Serialization
             }
         }
 
-        private static bool shouldSkipNodeType(XmlNodeType nodeType)
-        {
-            return nodeType == XmlNodeType.Comment
-                || nodeType == XmlNodeType.XmlDeclaration
-                || nodeType == XmlNodeType.Whitespace
-                || nodeType == XmlNodeType.SignificantWhitespace
-                || nodeType == XmlNodeType.CDATA
-                || nodeType == XmlNodeType.Notation
-                || nodeType == XmlNodeType.ProcessingInstruction;
-        }
+
 
 
         /// <summary>
