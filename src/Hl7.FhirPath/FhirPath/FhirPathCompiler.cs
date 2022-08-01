@@ -39,7 +39,9 @@ namespace Hl7.FhirPath
         {
         }
 
-        public static Expression Parse(string expression)
+#pragma warning disable CA1822 // Mark members as static
+        public Expression Parse(string expression)
+#pragma warning restore CA1822 // This might access instane data in the future.
         {
             var parse = Grammar.Expression.End().TryParse(expression);
 
@@ -59,7 +61,7 @@ namespace Hl7.FhirPath
 
         public CompiledExpression Compile(string expression)
         {
-            return Compile(FhirPathCompiler.Parse(expression));
+            return Compile(Parse(expression));
         }
     }
 }
