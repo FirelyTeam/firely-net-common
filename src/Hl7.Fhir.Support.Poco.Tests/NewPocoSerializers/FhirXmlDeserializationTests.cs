@@ -86,6 +86,65 @@ namespace Hl7.Fhir.Support.Poco.Tests
             resource.As<TestPatient>().Active.Value.Should().Be(true);
         }
 
+        [TestMethod]
+        public void TryDeserializeResourceWithoutEmptyAttribute()
+        {
+            var content = "<Patient xmlns=\"http://hl7.org/fhir\"><active value=\"\"/></Patient>";
+
+            var reader = constructReader(content);
+            reader.Read();
+
+            var deserializer = getTestDeserializer(new());
+            var state = new FhirXmlPocoDeserializerState();
+            var resource = deserializer.DeserializeResourceInternal(reader, state);
+
+            state.Errors.Should().OnlyContain(ce => ce.ErrorCode == ERR.ATTRIBUTE_HAS_EMPTY_VALUE_CODE);
+
+            resource.Should().BeOfType<TestPatient>();
+        }
+
+
+
+        [TestMethod]
+        public void TryDeserializeResourceWithoutNamespace()
+        {
+            var content = "<Patient><active value=\"true\"/></Patient>";
+
+            var reader = constructReader(content);
+            reader.Read();
+
+            var deserializer = getTestDeserializer(new());
+            var state = new FhirXmlPocoDeserializerState();
+            var resource = deserializer.DeserializeResourceInternal(reader, state);
+
+            state.Errors.Should().OnlyContain(ce => ce.ErrorCode == ERR.INCORRECT_ROOT_NAMESPACE_CODE);
+
+            resource.Should().BeOfType<TestPatient>();
+            resource.As<TestPatient>().Active.Value.Should().Be(true);
+        }
+
+
+        [TestMethod]
+        public void TryDeserializeResourceWithSchemaAttribute()
+        {
+            var content = "<Patient xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
+                "xsi:schemaLocation = \"http://hl7.org/fhir ../OneDrive%20-%20Firely/FHIR/Schemas/R4/capabilitystatement.xsd\" " +
+                "xmlns = \"http://hl7.org/fhir\" >" +
+                    "<active value=\"true\"/>" +
+                "</Patient>";
+
+            var reader = constructReader(content);
+            reader.Read();
+
+            var deserializer = getTestDeserializer(new());
+            var state = new FhirXmlPocoDeserializerState();
+            var resource = deserializer.DeserializeResourceInternal(reader, state);
+
+            state.Errors.Should().Contain(ce => ce.ErrorCode == ERR.SCHEMALOCATION_DISALLOWED_CODE);
+
+            resource.Should().BeOfType<TestPatient>();
+            resource.As<TestPatient>().Active.Value.Should().Be(true);
+        }
 
         [TestMethod]
         public void TryDeserializeNarrative()
@@ -198,7 +257,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             var state = new FhirXmlPocoDeserializerState();
             var resource = deserializer.DeserializeResourceInternal(reader, state);
 
-            state.Errors.Should().OnlyContain(ce => ce.ErrorCode == ERR.UNALLOWED_ElEMENT_IN_RESOURCE_CONTAINER_CODE);
+            state.Errors.Should().OnlyContain(ce => ce.ErrorCode == ERR.UNALLOWED_ELEMENT_IN_RESOURCE_CONTAINER_CODE);
 
             resource.Should().BeOfType<TestPatient>();
             resource.As<TestPatient>().Active.Value.Should().Be(true);
@@ -278,8 +337,9 @@ namespace Hl7.Fhir.Support.Poco.Tests
             datatype.As<TestHumanName>().Given.Should().HaveCount(3);
             datatype.As<TestHumanName>().Family.Should().Be("oof");
 
-            state.Errors.Should().OnlyContain(ce => ce.ErrorCode == ERR.UNEXPECTED_ELEMENT_CODE);
-
+            state.Errors.Should().HaveCount(2);
+            state.Errors.Should().Contain(ce => ce.ErrorCode == ERR.UNEXPECTED_ELEMENT_CODE);
+            state.Errors.Should().Contain(ce => ce.ErrorCode == ERR.ELEMENT_NOT_IN_SEQUENCE_CODE);
         }
 
 

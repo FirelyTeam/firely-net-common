@@ -90,6 +90,9 @@ namespace Hl7.Fhir.Serialization
 
             if (resourceMapping is not null)
             {
+
+                validateRoot(reader, state);
+
                 // If we have at least a mapping, let's try to continue               
                 var newResource = (Base)resourceMapping.Factory();
 
@@ -114,6 +117,14 @@ namespace Hl7.Fhir.Serialization
             else
             {
                 return null;
+            }
+        }
+
+        private void validateRoot(XmlReader reader, FhirXmlPocoDeserializerState state)
+        {
+            if (reader.NamespaceURI != XmlNs.FHIR)
+            {
+                state.Errors.Add(ERR.INCORRECT_ROOT_NAMESPACE.With(reader));
             }
         }
 
@@ -143,7 +154,7 @@ namespace Hl7.Fhir.Serialization
             //check if on opening tag
             if (reader.NodeType != XmlNodeType.Element)
             {
-                throw new InvalidOperationException($"Xml node {reader.Name} is not an element, but a {reader.NodeType}");
+                throw new InvalidOperationException($"Xml node of type '{reader.NodeType}' is unexpected at this point");
             }
 
             if (reader.HasAttributes)
@@ -267,8 +278,9 @@ namespace Hl7.Fhir.Serialization
             {
                 var currentList = (IList?)propMapping.GetValue(target);
                 //Was there already a list created previously? -> User error!
+                state.Errors.Add(ERR.ELEMENT_NOT_IN_SEQUENCE.With(reader, reader.Name));
+
                 //But let's fix it, and expand the list with the newly encountered element(s).
-                //Error is already thrown using an "Unexpected element" error in "deserializeDatatypeInto"
                 return (currentList!.Count != 0) ? expandCurrentList(currentList, propValueMapping, propMapping, reader, state) : readList(propValueMapping!, propMapping, reader, state);
             }
             else
@@ -336,7 +348,7 @@ namespace Hl7.Fhir.Serialization
             // now we should be at the closing element of the resource container (e.g. </contained>). We should check that and maybe fix that.)
             if (reader.Depth != depth && reader.NodeType != XmlNodeType.EndElement)
             {
-                state.Errors.Add(ERR.UNALLOWED_ElEMENT_IN_RESOURCE_CONTAINER.With(reader, reader.Name));
+                state.Errors.Add(ERR.UNALLOWED_ELEMENT_IN_RESOURCE_CONTAINER.With(reader, reader.Name));
 
                 while (!(reader.Depth == depth && reader.NodeType == XmlNodeType.EndElement))
                 {
@@ -351,6 +363,7 @@ namespace Hl7.Fhir.Serialization
 
         private void readAttributes(Base target, ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
+            var elementName = reader.Name;
             //move into first attribute
             if (reader.MoveToFirstAttribute())
             {
@@ -362,8 +375,12 @@ namespace Hl7.Fhir.Serialization
                         {
                             if (reader.Value != XmlNs.FHIR)
                             {
-                                state.Errors.Add(ERR.INCORRECT_ELEMENT_NAMESPACE.With(reader, reader.Value));
+                                state.Errors.Add(ERR.INCORRECT_ELEMENT_NAMESPACE.With(reader, elementName, reader.Value));
                             }
+                        }
+                        else if (reader.Name == "xsi:schemaLocation")
+                        {
+                            state.Errors.Add(ERR.SCHEMALOCATION_DISALLOWED.With(reader));
                         }
                         else
                         {
@@ -373,7 +390,7 @@ namespace Hl7.Fhir.Serialization
                                 state.Path.EnterElement(propMapping.Name);
                                 try
                                 {
-                                    readAttribute(target, propMapping!, reader, state);
+                                    readAttribute(target, propMapping!, elementName, reader, state);
                                 }
                                 finally
                                 {
@@ -398,38 +415,52 @@ namespace Hl7.Fhir.Serialization
         }
 
         ///Parse current attribute value to set the value property of the target.
-        private void readAttribute(Base target, PropertyMapping propMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
+        private void readAttribute(Base target, PropertyMapping propMapping, string elementName, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
+            if (!string.IsNullOrEmpty(reader.NamespaceURI) && reader.NamespaceURI != XmlNs.FHIR)
+            {
+                state.Errors.Add(ERR.INCORRECT_ATTRIBUTE_NAMESPACE.With(reader, reader.Name, elementName, reader.NamespaceURI));
+            }
+
             int oldErrors = state.Errors.Count;
             //parse current attribute to expected type
 
-            var (parsedValue, error) = ParsePrimitiveValue(reader, propMapping.ImplementingType);
-
-            state.Errors.Add(error);
-
-            if (parsedValue != null)
+            if (!string.IsNullOrEmpty(reader.Value))
             {
-                if (Settings.Validator is not null && oldErrors == state.Errors.Count)
+                var (parsedValue, error) = ParsePrimitiveValue(reader, propMapping.ImplementingType);
+
+                state.Errors.Add(error);
+
+                if (parsedValue != null)
                 {
-                    var (lineNumber, position) = reader.GenerateLineInfo();
-                    var name = reader.Name;
+                    if (Settings.Validator is not null && oldErrors == state.Errors.Count)
+                    {
+                        var (lineNumber, position) = reader.GenerateLineInfo();
+                        var name = reader.Name;
 
-                    var context = new PropertyDeserializationContext(
-                        state.Path.GetPath(),
-                        name,
-                        lineNumber, position,
-                        propMapping);
+                        var context = new PropertyDeserializationContext(
+                            state.Path.GetPath(),
+                            name,
+                            lineNumber, position,
+                            propMapping);
 
-                    PocoDeserializationHelper.RunPropertyValidation(ref parsedValue, Settings.Validator, context, state.Errors);
-                }
+                        PocoDeserializationHelper.RunPropertyValidation(ref parsedValue, Settings.Validator, context, state.Errors);
+                    }
 
-                if (target is PrimitiveType primitive)
-                    primitive.ObjectValue = parsedValue;
-                else
-                {
-                    propMapping.SetValue(target, parsedValue);
+                    if (target is PrimitiveType primitive)
+                        primitive.ObjectValue = parsedValue;
+                    else
+                    {
+                        propMapping.SetValue(target, parsedValue);
+                    }
                 }
             }
+            else
+            {
+                state.Errors.Add(ERR.ATTRIBUTE_HAS_EMPTY_VALUE.With(reader, reader.Name, elementName));
+            }
+
+
         }
 
         internal (object?, FhirXmlException?) ParsePrimitiveValue(XmlReader reader, Type implementingType)
@@ -511,23 +542,11 @@ namespace Hl7.Fhir.Serialization
         /// <remarks>Assumes the reader is on the start of an object.</remarks>
         internal static (ClassMapping?, FhirXmlException?) DetermineClassMappingFromInstance(XmlReader reader, ModelInspector inspector)
         {
-            var (resourceType, error) = determineResourceType(reader);
+            var resourceMapping = inspector.FindClassMapping(reader.Name);
 
-            if (resourceType is not null)
-            {
-                var resourceMapping = inspector.FindClassMapping(resourceType);
-
-                return resourceMapping is not null ?
-                    (new(resourceMapping, error)) :
-                    (new(null, ERR.UNKNOWN_RESOURCE_TYPE.With(reader, resourceType)));
-            }
-            else
-                return new(null, error);
-        }
-
-        private static (string, FhirXmlException?) determineResourceType(XmlReader reader)
-        {
-            return (reader.Name, (reader.NamespaceURI == XmlNs.FHIR) ? null : ERR.INCORRECT_ROOT_NAMESPACE);
+            return resourceMapping is not null ?
+                (new(resourceMapping, null)) :
+                (new(null, ERR.UNKNOWN_RESOURCE_TYPE.With(reader, reader.Name)));
         }
 
         /// <summary>
