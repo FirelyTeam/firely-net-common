@@ -465,70 +465,73 @@ namespace Hl7.Fhir.Serialization
 
         internal (object?, FhirXmlException?) ParsePrimitiveValue(XmlReader reader, Type implementingType)
         {
+            string trimmedValue = reader.Value.TrimEnd().TrimStart();
+
             if (implementingType == typeof(string))
-                return (reader.Value, null);
+                return (trimmedValue, null);
             else if (implementingType == typeof(bool))
             {
-                return ElementModel.Types.Boolean.TryParse(reader.Value, out var parsed)
+                return ElementModel.Types.Boolean.TryParse(trimmedValue, out var parsed)
                     ? (parsed?.Value, null)
-                    : (reader.Value, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, reader.Value, implementingType.Name));
+                    : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
             }
             else if (implementingType == typeof(DateTimeOffset))
             {
-                return ElementModel.Types.DateTime.TryParse(reader.Value, out var parsed)
+                return ElementModel.Types.DateTime.TryParse(trimmedValue, out var parsed)
                     ? (parsed.ToDateTimeOffset(TimeSpan.Zero), null)
-                    : (reader.Value, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, reader.Value, implementingType.Name));
+                    : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
             }
             else if (implementingType == typeof(byte[]))
             {
-                return !Settings.DisableBase64Decoding ? getByteArrayValue(reader) : ((object?, ERR?))(reader.Value, null);
+                return !Settings.DisableBase64Decoding ? getByteArrayValue(reader, trimmedValue) : ((object?, ERR?))(trimmedValue, null);
             }
             else if (implementingType == typeof(int))
             {
-                return ElementModel.Types.Integer.TryParse(reader.Value, out var parsed) ? (parsed?.Value, null) : (reader.Value, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, reader.Value, implementingType.Name));
+                return ElementModel.Types.Integer.TryParse(trimmedValue, out var parsed) ? (parsed?.Value, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
             }
             else if (implementingType == typeof(uint))
             {
-                return uint.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, reader.Value, implementingType.Name));
+                return uint.TryParse(trimmedValue, out var parsed) ? (parsed, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
             }
             else if (implementingType == typeof(long))
             {
-                return ElementModel.Types.Long.TryParse(reader.Value, out var parsed) ? (parsed?.Value, null) : (reader.Value, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, reader.Value, implementingType.Name));
+                return ElementModel.Types.Long.TryParse(trimmedValue, out var parsed) ? (parsed?.Value, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
             }
             else if (implementingType == typeof(decimal))
             {
-                return ElementModel.Types.Decimal.TryParse(reader.Value, out var parsed) ? (parsed?.Value, null) : (reader.Value, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, reader.Value, implementingType.Name));
+                return ElementModel.Types.Decimal.TryParse(trimmedValue, out var parsed) ? (parsed?.Value, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
             }
             else if (implementingType == typeof(double))
             {
-                return ElementModel.Types.Decimal.TryParse(reader.Value, out var parsed) ? (parsed?.Value, null) : (reader.Value, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, reader.Value, implementingType.Name));
+                return ElementModel.Types.Decimal.TryParse(trimmedValue, out var parsed) ? (parsed?.Value, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
             }
             else if (implementingType == typeof(float))
             {
-                return ElementModel.Types.Decimal.TryParse(reader.Value, out var parsed) ? (parsed?.Value, null) : (reader.Value, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, reader.Value, implementingType.Name));
+                return ElementModel.Types.Decimal.TryParse(trimmedValue, out var parsed) ? (parsed?.Value, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
             }
             else if (implementingType == typeof(ulong))
             {
-                return ulong.TryParse(reader.Value, out var parsed) ? (parsed, null) : (reader.Value, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, reader.Value, implementingType.Name));
+                return ulong.TryParse(trimmedValue, out var parsed) ? (parsed, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
             }
             else if (implementingType.IsEnum)
             {
-                return new(reader.Value, null);
+                return new(trimmedValue, null);
             }
             else
             {
-                return new(reader.Value, null); //When does this happen? Should we throw an error?
+                return new(trimmedValue, null); //When does this happen? Should we throw an error?
             }
 
-            static (object, ERR?) getByteArrayValue(XmlReader reader)
+            static (object, ERR?) getByteArrayValue(XmlReader reader, string trimmedValue)
             {
+
                 try
                 {
-                    return (Convert.FromBase64String(reader.Value), null);
+                    return (Convert.FromBase64String(trimmedValue), null);
                 }
                 catch (FormatException)
                 {
-                    return (reader.Value, ERR.INCORRECT_BASE64_DATA.With(reader));
+                    return (trimmedValue, ERR.INCORRECT_BASE64_DATA.With(reader));
                 }
             }
         }

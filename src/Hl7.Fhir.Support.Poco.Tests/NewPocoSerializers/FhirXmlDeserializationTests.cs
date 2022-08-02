@@ -17,6 +17,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [DataRow("<active value =\"true\"/>", typeof(FhirBoolean), true, null)]
         [DataRow("<multipleBirthInteger value =\"1\"/>", typeof(Integer), 1, null)]
         [DataRow("<Birthdate value =\"2000-01-01\"/>", typeof(FhirDateTime), "2000-01-01", null)]
+        [DataRow("<given value =\" foo \"/>", typeof(FhirString), "foo", null)]
         [TestMethod]
         public void TryDeserializePrimitives(string xmlPrimitive, Type expectedFhirType, object expectedValue, string error)
         {
