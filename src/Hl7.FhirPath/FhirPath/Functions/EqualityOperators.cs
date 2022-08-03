@@ -239,8 +239,9 @@ namespace Hl7.FhirPath.Functions
             }
         }
 
+        public static readonly IEqualityComparer<ITypedElement> TypedElementEqualityComparer = new ValueProviderEqualityComparer();
 
-        internal class ValueProviderEqualityComparer : IEqualityComparer<ITypedElement>
+        private class ValueProviderEqualityComparer : IEqualityComparer<ITypedElement>
         {
             public bool Equals(ITypedElement? x, ITypedElement? y)
             {

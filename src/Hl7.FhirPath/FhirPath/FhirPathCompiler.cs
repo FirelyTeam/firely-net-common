@@ -41,7 +41,7 @@ namespace Hl7.FhirPath
 
 #pragma warning disable CA1822 // Mark members as static
         public Expression Parse(string expression)
-#pragma warning restore CA1822 // This might access instane data in the future.
+#pragma warning restore CA1822 // This might access instance data in the future.
         {
             var parse = Grammar.Expression.End().TryParse(expression);
 
