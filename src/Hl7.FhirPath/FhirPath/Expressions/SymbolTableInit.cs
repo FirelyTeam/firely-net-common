@@ -7,7 +7,6 @@
  */
 
 using Hl7.Fhir.ElementModel;
-using P=Hl7.Fhir.ElementModel.Types;
 using Hl7.Fhir.Utility;
 using Hl7.FhirPath.FhirPath.Functions;
 using Hl7.FhirPath.Functions;
@@ -15,12 +14,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Reflection;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.FhirPath.Expressions
 {
     public static class SymbolTableInit
     {
+        /// <summary>
+        /// Add the function library for the standard FhirPath Normative dialect to the <see cref="SymbolTable"/>.
+        /// </summary>
         public static SymbolTable AddStandardFP(this SymbolTable t)
         {
             // Functions that operate on the focus, without null propagation
@@ -134,7 +136,7 @@ namespace Hl7.FhirPath.Expressions
             t.Add("toDate", (P.Any f) => f.ToDate(), doNullProp: true);
             t.Add("convertsToDate", (P.Any f) => f.ConvertsToDate(), doNullProp: true);
             t.Add("toDateTime", (P.Any f) => f.ToDateTime(), doNullProp: true);
-            t.Add("convertsToDateTime", (P.Any f) => f.ConvertsToDateTime(), doNullProp: true);            
+            t.Add("convertsToDateTime", (P.Any f) => f.ConvertsToDateTime(), doNullProp: true);
             t.Add("toTime", (P.Any f) => f.ToTime(), doNullProp: true);
             t.Add("convertsToTime", (P.Any f) => f.ConvertsToTime(), doNullProp: true);
 
@@ -257,7 +259,7 @@ namespace Hl7.FhirPath.Expressions
             var focus = arguments.First()(ctx, InvokeeFactory.EmptyArgs);
             string name = arguments.Skip(1).First()(ctx, InvokeeFactory.EmptyArgs).FirstOrDefault()?.Value as string;
 
-            List<Invokee> selectArgs = new List<Invokee> { arguments.First() };
+            List<Invokee> selectArgs = new() { arguments.First() };
             selectArgs.AddRange(arguments.Skip(2));
             var selectResults = runSelect(ctx, selectArgs);
             ctx?.EvaluationContext?.Tracer?.Invoke(name, selectResults);
@@ -328,7 +330,7 @@ namespace Hl7.FhirPath.Expressions
             var lambda = arguments.Skip(1).First();
 
             var fullResult = new List<ITypedElement>();
-            List<ITypedElement> newNodes = new List<ITypedElement>(focus);
+            List<ITypedElement> newNodes = new(focus);
 
             while (newNodes.Any())
             {

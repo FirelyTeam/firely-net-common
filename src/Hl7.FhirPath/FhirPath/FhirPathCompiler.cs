@@ -6,31 +6,25 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
-using Hl7.FhirPath.Parser;
-using Hl7.FhirPath;
+using Hl7.Fhir.ElementModel;
 using Hl7.FhirPath.Expressions;
+using Hl7.FhirPath.Parser;
 using Hl7.FhirPath.Sprache;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Hl7.Fhir.ElementModel;
-using Hl7.FhirPath.Functions;
 
 namespace Hl7.FhirPath
 {
     public class FhirPathCompiler
     {
-        private static Lazy<SymbolTable> _defaultSymbolTable = new Lazy<SymbolTable>(() => new SymbolTable().AddStandardFP());
-        
+        private static Lazy<SymbolTable> _defaultSymbolTable = new(() => new SymbolTable().AddStandardFP());
+
         public static void SetDefaultSymbolTable(Lazy<SymbolTable> st)
         {
             _defaultSymbolTable = st;
         }
 
         public static SymbolTable DefaultSymbolTable
-        { 
+        {
             get { return _defaultSymbolTable.Value; }
         }
 
@@ -45,18 +39,13 @@ namespace Hl7.FhirPath
         {
         }
 
+#pragma warning disable CA1822 // Mark members as static
         public Expression Parse(string expression)
-        {         
+#pragma warning restore CA1822 // This might access instane data in the future.
+        {
             var parse = Grammar.Expression.End().TryParse(expression);
 
-            if (parse.WasSuccessful)
-            {
-                return parse.Value;
-            }
-            else
-            {
-               throw new FormatException("Compilation failed: " + parse.ToString());
-            }
+            return parse.WasSuccessful ? parse.Value : throw new FormatException("Compilation failed: " + parse.ToString());
         }
 
         public CompiledExpression Compile(Expression expression)
