@@ -347,7 +347,7 @@ namespace Hl7.FhirPath.Expressions
                     index++;
 
                     var candidates = lambda(newContext, InvokeeFactory.EmptyArgs);
-                    var uniqeNewNodes = candidates.Where(c => !fullResult.Contains(c, EqualityOperators.TypedElementEqualityComparer));
+                    var uniqeNewNodes = candidates.Except(fullResult, EqualityOperators.TypedElementEqualityComparer);
 
                     newNodes.AddRange(uniqeNewNodes);
                 }
