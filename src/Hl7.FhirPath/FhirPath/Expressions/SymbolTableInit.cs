@@ -346,7 +346,10 @@ namespace Hl7.FhirPath.Expressions
                     newContext.SetIndex(ElementNode.CreateList(index));
                     index++;
 
-                    newNodes.AddRange(lambda(newContext, InvokeeFactory.EmptyArgs));
+                    var candidates = lambda(newContext, InvokeeFactory.EmptyArgs);
+                    var uniqeNewNodes = candidates.Except(fullResult, EqualityOperators.TypedElementEqualityComparer);
+
+                    newNodes.AddRange(uniqeNewNodes);
                 }
 
                 fullResult.AddRange(newNodes);
