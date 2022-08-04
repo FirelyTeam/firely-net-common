@@ -127,6 +127,7 @@ namespace Hl7.Fhir.Support
         public static readonly Issue UNAVAILABLE_REFERENCED_RESOURCE = Create(4005, OperationOutcome.IssueSeverity.Warning, OperationOutcome.IssueType.Incomplete);
         public static readonly Issue UNAVAILABLE_TERMINOLOGY_SERVER = Create(4007, OperationOutcome.IssueSeverity.Error, OperationOutcome.IssueType.Incomplete);
         public static readonly Issue UNAVAILABLE_VALIDATE_CODE_FAILED = Create(4008, OperationOutcome.IssueSeverity.Error, OperationOutcome.IssueType.Incomplete);
+        public static readonly Issue UNAVAILABLE_REFERENCED_PROFILE_WARNING = Create(4009, OperationOutcome.IssueSeverity.Warning, OperationOutcome.IssueType.Incomplete);
 
         // Processing information
         public static readonly Issue PROCESSING_PROGRESS = Create(5000, OperationOutcome.IssueSeverity.Information, OperationOutcome.IssueType.Informational);
