@@ -47,12 +47,17 @@ namespace Hl7.Fhir.Serialization
         private readonly ModelInspector _inspector;
 
         /// <summary>
-        /// Deserialize the FHIR xml from the reader and create a new POCO object containing the data from the reader.
+        /// Deserialize the FHIR xml from the reader and create a new POCO resource containing the data from the reader.
         /// </summary>
         /// <param name="reader">An xml reader positioned on the first element, or the beginning of the stream.</param>
         /// <returns>A fully initialized POCO with the data from the reader.</returns>
         public Resource DeserializeResource(XmlReader reader)
         {
+            // TODO: Maybe we should allow processing instructions specifically here (so do MoveToContent here),
+            // and do ReadToContent everywhere else
+            // TODO: we should refuse reading from a reader that has reader
+            // reader.Settings.DtdProcessing = DtdProcessing.Parse
+            // "There SHALL be no DTD references in FHIR resources (because of the XXE security exploit )"
             FhirXmlPocoDeserializerState state = new();
 
             var result = DeserializeResourceInternal(reader, state);
@@ -70,19 +75,27 @@ namespace Hl7.Fhir.Serialization
         /// <returns>A fully initialized POCO with the data from the reader.</returns>
         public Base DeserializeElement(Type targetType, XmlReader reader)
         {
+            // TODO: we should refuse reading from a reader that has reader
+            // reader.Settings.DtdProcessing = DtdProcessing.Parse
+            // "There SHALL be no DTD references in FHIR resources (because of the XXE security exploit )"
             FhirXmlPocoDeserializerState state = new();
 
             var result = DeserializeElementInternal(targetType, reader, state);
 
             return !state.Errors.HasExceptions
-                ? result!
+                ? result
                 : throw new DeserializationFailedException(result, state.Errors);
         }
 
         internal Resource? DeserializeResourceInternal(XmlReader reader, FhirXmlPocoDeserializerState state)
         {
             // If the stream has just been opened, move to the first token. (skip processing instructions, comments, whitespaces etc.)
+            // TODO: I am not sure - why is this not ReadToContent()?
             reader.MoveToContent();
+
+            //TODO: You need to check that you are on an opening element here - the Json deserializer does so too.
+            //The next code assumes this is the case - you need to verify and add a user-error. If this is not the
+            //case, you probably want to skip to the next closing token - though it's doubtful you will recover.
 
             (ClassMapping? resourceMapping, FhirXmlException? error) = DetermineClassMappingFromInstance(reader, _inspector);
 
@@ -90,7 +103,7 @@ namespace Hl7.Fhir.Serialization
 
             if (resourceMapping is not null)
             {
-
+                // TODO: We should this on all elements (see my comments below)
                 validateRoot(reader, state);
 
                 // If we have at least a mapping, let's try to continue               
@@ -120,7 +133,7 @@ namespace Hl7.Fhir.Serialization
             }
         }
 
-        private void validateRoot(XmlReader reader, FhirXmlPocoDeserializerState state)
+        private static void validateRoot(XmlReader reader, FhirXmlPocoDeserializerState state)
         {
             if (reader.NamespaceURI != XmlNs.FHIR)
             {
@@ -128,21 +141,20 @@ namespace Hl7.Fhir.Serialization
             }
         }
 
-        internal Base? DeserializeElementInternal(Type targetType, XmlReader reader, FhirXmlPocoDeserializerState state)
+        internal Base DeserializeElementInternal(Type targetType, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
             var mapping = _inspector.FindOrImportClassMapping(targetType) ??
               throw new ArgumentException($"Type '{targetType}' could not be located in model assembly '{Assembly}' and can " +
                   $"therefore not be used for deserialization. " + reader.GenerateLocationMessage(), nameof(targetType));
 
+            //TODO: You need to check that you are on an opening element here - the Json deserializer does so too.
+            //The next code assumes this is the case - you need to verify and add a user-error. If this is not the
+            //case, you probably want to skip to the next closing token - though it's doubtful you will recover.
 
-            if (mapping is not null)
-            {
-                // If we have at least a mapping, let's try to continue               
-                var newDatatype = (Base)mapping.Factory();
-                deserializeElementInto(newDatatype, mapping, reader, state);
-                return newDatatype;
-            }
-            return null;
+            // If we have at least a mapping, let's try to continue               
+            var newDatatype = (Base)mapping.Factory();
+            deserializeElementInto(newDatatype, mapping, reader, state);
+            return newDatatype;
         }
 
         // We expect to start at the open tag op the element. When done, the reader will be at the next token after this element or end of the file.
@@ -157,6 +169,9 @@ namespace Hl7.Fhir.Serialization
                 throw new InvalidOperationException($"Xml node of type '{reader.NodeType}' is unexpected at this point");
             }
 
+            // TODO: this (and the next if) will still allow elements without attribute or child elements. that is forbidden
+            // in the xml serialization.
+            // $"Element '{parent.Name().LocalName}' must have child elements and/or a value attribute"
             if (reader.HasAttributes)
             {
                 readAttributes(target, mapping, reader, state);
@@ -170,13 +185,16 @@ namespace Hl7.Fhir.Serialization
 
                 int highestOrder = 0;
 
-                //TODO: handle contained resources here somewhere?
-
                 while (reader.NodeType != XmlNodeType.EndElement)
                 {
                     if (!reader.ShouldSkipNodeType(state))
                     {
                         // check if we are currently on an element.
+                        // TODO: use reader.LocalName - you want to find the name irrespective of namespace prefixes
+                        // TODO: we should make sure reader.NamespaceUri is the FHIR uri here.
+                        // Relevant errors: 
+                        // $"The element '{xe.Name.LocalName}' has no namespace, expected the HL7 FHIR namespace (http://hl7.org/fhir)"
+                        // $"The element '{xe.Name.LocalName}' uses the namespace '{xe.Name.NamespaceName}', which is not allowed."
                         var (propMapping, propValueMapping, error) = tryGetMappedElementMetadata(_inspector, mapping, reader, reader.Name);
                         state.Errors.Add(error);
 
@@ -207,6 +225,7 @@ namespace Hl7.Fhir.Serialization
                     }
                 }
             }
+
             if (Settings.Validator is not null && oldErrors == state.Errors.Count)
             {
                 var context = new InstanceDeserializationContext(
@@ -217,6 +236,9 @@ namespace Hl7.Fhir.Serialization
                 PocoDeserializationHelper.RunInstanceValidation(target, Settings.Validator, context, state.Errors);
             }
 
+            // TODO: how do we know we're not skipping forbidden tokens here? - Or is this a no-op because the while loop (in the caller of
+            // this function will use ShouldSkipNode? Or maybe the code "if (!reader.ShouldSkipNodeType(state))" in the while loop is actually
+            // never doing something useful because this has already read everything away?
             reader.ReadToContent(state);
         }
 
@@ -230,6 +252,8 @@ namespace Hl7.Fhir.Serialization
             }
             else
             {
+                //TODO: there are a lot of things unexpected, in this case, it is out of order.
+                //maybe the name of the error should reflect that it is out of order.
                 state.Errors.Add(ERR.UNEXPECTED_ELEMENT.With(reader, reader.Name));
                 incorrectOrder = true;
             }
@@ -256,6 +280,7 @@ namespace Hl7.Fhir.Serialization
 
                 PocoDeserializationHelper.RunPropertyValidation(ref result, Settings.Validator, context, state.Errors);
             }
+
             propMapping.SetValue(target, result);
         }
 
@@ -278,10 +303,14 @@ namespace Hl7.Fhir.Serialization
             {
                 var currentList = (IList?)propMapping.GetValue(target);
                 //Was there already a list created previously? -> User error!
+                //TODO: Shouldn't there be an `if(currentList is not null)` here?  Otherwise, why is currentList of type `IList?` ?
                 state.Errors.Add(ERR.ELEMENT_NOT_IN_SEQUENCE.With(reader, reader.Name));
 
                 //But let's fix it, and expand the list with the newly encountered element(s).
-                return (currentList!.Count != 0) ? expandCurrentList(currentList, propValueMapping, propMapping, reader, state) : readList(propValueMapping!, propMapping, reader, state);
+                //TODO: CcurrentList *can* be null, currentList! is not correct here - do you mean currentList?.Count?
+                return (currentList!.Count != 0) ?
+                    expandCurrentList(currentList, propValueMapping, propMapping, reader, state)
+                    : readList(propValueMapping!, propMapping, reader, state);
             }
             else
             {
@@ -306,8 +335,11 @@ namespace Hl7.Fhir.Serialization
         private IList readList(ClassMapping propValueMapping, PropertyMapping propMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
             var list = propValueMapping.ListFactory();
+
+            //TODO: again, this should be LocalName
             var name = reader.Name;
 
+            // TODO: and this. You should probably search for all "reader.Name" accessess
             while (reader.Name == name && reader.NodeType != XmlNodeType.EndElement)
             {
                 var newEntry = readSingleValue(propValueMapping, propMapping, reader, state);
@@ -350,6 +382,7 @@ namespace Hl7.Fhir.Serialization
             {
                 state.Errors.Add(ERR.UNALLOWED_ELEMENT_IN_RESOURCE_CONTAINER.With(reader, reader.Name));
 
+                // skip until we're back at the closing of the </contained>
                 while (!(reader.Depth == depth && reader.NodeType == XmlNodeType.EndElement))
                 {
                     reader.Read();
@@ -373,6 +406,9 @@ namespace Hl7.Fhir.Serialization
                     {
                         if (reader.Name == "xmlns")
                         {
+                            // TODO: You do not have to do this every time, the xmlns will introduce a new namespace prefix (or namespace),
+                            // as soon as this is used, the elements that you are reading will be in the incorrect namespace
+                            // (visible via reader.NamespaceUri) - it's probably more safe to do it that way.
                             if (reader.Value != XmlNs.FHIR)
                             {
                                 state.Errors.Add(ERR.INCORRECT_ELEMENT_NAMESPACE.With(reader, elementName, reader.Value));
@@ -380,10 +416,13 @@ namespace Hl7.Fhir.Serialization
                         }
                         else if (reader.Name == "xsi:schemaLocation")
                         {
+                            // TODO: I think you should use reader.LocalName and erader.NamespaceUri instead of checking against
+                            // "xsi" - people can (and will) use something else when they can.
                             state.Errors.Add(ERR.SCHEMALOCATION_DISALLOWED.With(reader));
                         }
                         else
                         {
+                            // TODO: use reader.LocalName - you want to find the name irrespective of namespace prefixes
                             var propMapping = propValueMapping.FindMappedElementByName(reader.Name);
                             if (propMapping is not null)
                             {
@@ -425,6 +464,8 @@ namespace Hl7.Fhir.Serialization
             int oldErrors = state.Errors.Count;
             //parse current attribute to expected type
 
+            // TODO: you need to do this check *after trimming*:
+            // "Attributes cannot be empty. Either they are absent, or they are present with at least one character of non-whitespace content"
             if (!string.IsNullOrEmpty(reader.Value))
             {
                 var (parsedValue, error) = ParsePrimitiveValue(reader, propMapping.ImplementingType);
@@ -459,12 +500,12 @@ namespace Hl7.Fhir.Serialization
             {
                 state.Errors.Add(ERR.ATTRIBUTE_HAS_EMPTY_VALUE.With(reader, reader.Name, elementName));
             }
-
-
         }
 
         internal (object?, FhirXmlException?) ParsePrimitiveValue(XmlReader reader, Type implementingType)
         {
+            // "Implementers SHOULD trim leading and trailing whitespace before writing and SHOULD trim leading and
+            // trailing whitespace when reading attribute values (for XML schema conformance)"
             string trimmedValue = reader.Value.TrimEnd().TrimStart();
 
             if (implementingType == typeof(string))
@@ -519,12 +560,12 @@ namespace Hl7.Fhir.Serialization
             }
             else
             {
+                //TODO: the caller has passed you an incorrect implementingType -> throw an exception (argumentexception)
                 return new(trimmedValue, null); //When does this happen? Should we throw an error?
             }
 
             static (object, ERR?) getByteArrayValue(XmlReader reader, string trimmedValue)
             {
-
                 try
                 {
                     return (Convert.FromBase64String(trimmedValue), null);
@@ -545,6 +586,7 @@ namespace Hl7.Fhir.Serialization
         /// <remarks>Assumes the reader is on the start of an object.</remarks>
         internal static (ClassMapping?, FhirXmlException?) DetermineClassMappingFromInstance(XmlReader reader, ModelInspector inspector)
         {
+            // TODO: use reader.LocalName - you want to find the name irrespective of namespace prefixes
             var resourceMapping = inspector.FindClassMapping(reader.Name);
 
             return resourceMapping is not null ?
