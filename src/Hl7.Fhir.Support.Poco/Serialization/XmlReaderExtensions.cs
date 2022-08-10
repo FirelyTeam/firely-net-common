@@ -1,4 +1,6 @@
-﻿using Hl7.Fhir.Utility;
+﻿#nullable enable
+
+using Hl7.Fhir.Utility;
 using System.Xml;
 using ERR = Hl7.Fhir.Serialization.FhirXmlException;
 
@@ -14,6 +16,11 @@ namespace Hl7.Fhir.Serialization
         internal static string GenerateLocationMessage(this XmlReader reader, out long lineNumber, out long position)
         {
             (lineNumber, position) = GenerateLineInfo(reader);
+            return GenerateLocationMessage(lineNumber, position);
+        }
+
+        internal static string GenerateLocationMessage(long lineNumber, long position)
+        {
             return $"At line {lineNumber}, position {position}.";
         }
 
@@ -53,5 +60,27 @@ namespace Hl7.Fhir.Serialization
         }
 
 
+        internal static bool HasValueAttributeOrChildren(this XmlReader reader)
+        {
+            return reader.GetAttribute("value") != null
+                || reader.HasChildren();
+        }
+
+        internal static bool HasChildren(this XmlReader reader)
+        {
+            var subtree = reader.ReadSubtree();
+            if (subtree != null)
+            {
+                subtree.Read();
+                var parentDepth = subtree.Depth;
+                return subtree.Read()
+                    && (subtree.Depth != parentDepth);
+            }
+            else
+            {
+                return false;
+            }
+
+        }
     }
 }

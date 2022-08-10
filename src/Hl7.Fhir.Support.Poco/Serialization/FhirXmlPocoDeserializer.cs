@@ -53,12 +53,16 @@ namespace Hl7.Fhir.Serialization
         /// <returns>A fully initialized POCO with the data from the reader.</returns>
         public Resource DeserializeResource(XmlReader reader)
         {
-            // TODO: Maybe we should allow processing instructions specifically here (so do MoveToContent here),
-            // and do ReadToContent everywhere else
-            // TODO: we should refuse reading from a reader that has reader
-            // reader.Settings.DtdProcessing = DtdProcessing.Parse
-            // "There SHALL be no DTD references in FHIR resources (because of the XXE security exploit )"
             FhirXmlPocoDeserializerState state = new();
+
+            // If the stream has just been opened, move to the first token. (skip processing instructions, comments, whitespaces etc.)
+            reader.MoveToContent();
+
+            if (reader.Settings?.DtdProcessing == DtdProcessing.Parse)
+            {
+                state.Errors.Add(ERR.ENCOUNTERED_DTP_REFERENCES.With(reader));
+                reader.Settings.DtdProcessing = DtdProcessing.Prohibit;
+            }
 
             var result = DeserializeResourceInternal(reader, state);
 
@@ -75,10 +79,13 @@ namespace Hl7.Fhir.Serialization
         /// <returns>A fully initialized POCO with the data from the reader.</returns>
         public Base DeserializeElement(Type targetType, XmlReader reader)
         {
-            // TODO: we should refuse reading from a reader that has reader
-            // reader.Settings.DtdProcessing = DtdProcessing.Parse
-            // "There SHALL be no DTD references in FHIR resources (because of the XXE security exploit )"
             FhirXmlPocoDeserializerState state = new();
+
+            if (reader.Settings?.DtdProcessing == DtdProcessing.Parse)
+            {
+                state.Errors.Add(ERR.ENCOUNTERED_DTP_REFERENCES.With(reader));
+                reader.Settings.DtdProcessing = DtdProcessing.Prohibit;
+            }
 
             var result = DeserializeElementInternal(targetType, reader, state);
 
@@ -89,13 +96,8 @@ namespace Hl7.Fhir.Serialization
 
         internal Resource? DeserializeResourceInternal(XmlReader reader, FhirXmlPocoDeserializerState state)
         {
-            // If the stream has just been opened, move to the first token. (skip processing instructions, comments, whitespaces etc.)
-            // TODO: I am not sure - why is this not ReadToContent()?
-            reader.MoveToContent();
-
-            //TODO: You need to check that you are on an opening element here - the Json deserializer does so too.
-            //The next code assumes this is the case - you need to verify and add a user-error. If this is not the
-            //case, you probably want to skip to the next closing token - though it's doubtful you will recover.
+            //check if we are actually on an opening element. 
+            VerifyOpeningElement(reader, state);
 
             (ClassMapping? resourceMapping, FhirXmlException? error) = DetermineClassMappingFromInstance(reader, _inspector);
 
@@ -103,8 +105,7 @@ namespace Hl7.Fhir.Serialization
 
             if (resourceMapping is not null)
             {
-                // TODO: We should this on all elements (see my comments below)
-                validateRoot(reader, state);
+                validateNameSpace(reader, state, null);
 
                 // If we have at least a mapping, let's try to continue               
                 var newResource = (Base)resourceMapping.Factory();
@@ -133,11 +134,41 @@ namespace Hl7.Fhir.Serialization
             }
         }
 
-        private static void validateRoot(XmlReader reader, FhirXmlPocoDeserializerState state)
+        private static void VerifyOpeningElement(XmlReader reader, FhirXmlPocoDeserializerState state)
         {
-            if (reader.NamespaceURI != XmlNs.FHIR)
+            if (reader.NodeType != XmlNodeType.Element)
             {
-                state.Errors.Add(ERR.INCORRECT_ROOT_NAMESPACE.With(reader));
+                //If not skip all non-content and check again.
+                reader.ReadToContent(state);
+                if (reader.NodeType != XmlNodeType.Element)
+                {
+                    //if we are still not at an opening element, throw user-error.
+                    state.Errors.Add(ERR.EXPECTED_OPENING_ELEMENT.With(reader, reader.NodeType.GetLiteral()));
+                    //try to recover
+                    while (reader.NodeType != XmlNodeType.Element)
+                    {
+                        reader.ReadToContent(state);
+                    }
+                }
+            }
+        }
+
+        private static void validateNameSpace(XmlReader reader, FhirXmlPocoDeserializerState state, PropertyMapping? propMapping)
+        {
+            if (string.IsNullOrEmpty(reader.NamespaceURI))
+            {
+                state.Errors.Add(ERR.EMPTY_ELEMENT_NAMESPACE.With(reader, reader.LocalName));
+            }
+            else if (propMapping?.SerializationHint == Specification.XmlRepresentation.XHtml)
+            {
+                if (reader.NamespaceURI != XmlNs.XHTML)
+                {
+                    state.Errors.Add(ERR.INCORRECT_XHTML_NAMESPACE.With(reader));
+                }
+            }
+            else if (reader.NamespaceURI != XmlNs.FHIR)
+            {
+                state.Errors.Add(ERR.INCORRECT_ELEMENT_NAMESPACE.With(reader, reader.LocalName, reader.NamespaceURI));
             }
         }
 
@@ -147,9 +178,8 @@ namespace Hl7.Fhir.Serialization
               throw new ArgumentException($"Type '{targetType}' could not be located in model assembly '{Assembly}' and can " +
                   $"therefore not be used for deserialization. " + reader.GenerateLocationMessage(), nameof(targetType));
 
-            //TODO: You need to check that you are on an opening element here - the Json deserializer does so too.
-            //The next code assumes this is the case - you need to verify and add a user-error. If this is not the
-            //case, you probably want to skip to the next closing token - though it's doubtful you will recover.
+            //check if we are at an opening element.
+            VerifyOpeningElement(reader, state);
 
             // If we have at least a mapping, let's try to continue               
             var newDatatype = (Base)mapping.Factory();
@@ -162,6 +192,9 @@ namespace Hl7.Fhir.Serialization
         {
             var oldErrors = state.Errors.Count;
             var (lineNumber, position) = reader.GenerateLineInfo();
+            var hasValueAttribute = reader.GetAttribute("value") != null;
+            var depth = reader.Depth;
+            var name = reader.LocalName;
 
             //check if on opening tag
             if (reader.NodeType != XmlNodeType.Element)
@@ -169,9 +202,6 @@ namespace Hl7.Fhir.Serialization
                 throw new InvalidOperationException($"Xml node of type '{reader.NodeType}' is unexpected at this point");
             }
 
-            // TODO: this (and the next if) will still allow elements without attribute or child elements. that is forbidden
-            // in the xml serialization.
-            // $"Element '{parent.Name().LocalName}' must have child elements and/or a value attribute"
             if (reader.HasAttributes)
             {
                 readAttributes(target, mapping, reader, state);
@@ -183,48 +213,50 @@ namespace Hl7.Fhir.Serialization
                 //read the next object that has content
                 reader.ReadToContent(state);
 
-                int highestOrder = 0;
+                if (!(hasValueAttribute || (reader.Depth > depth)))
+                {
+                    //previous element didn't have a value and the current value is not a child of the previous element.
+                    //error is thrown with the location and the name of the previous element.
+                    var locationMessage = XmlReaderExtensions.GenerateLocationMessage(lineNumber, position);
+                    state.Errors.Add(ERR.ELEMENT_HAS_NO_VALUE_OR_CHILDREN.With(locationMessage, null, name));
+                }
 
+                int highestOrder = 0;
                 while (reader.NodeType != XmlNodeType.EndElement)
                 {
-                    if (!reader.ShouldSkipNodeType(state))
+                    var (propMapping, propValueMapping, error) = tryGetMappedElementMetadata(_inspector, mapping, reader, reader.LocalName);
+                    state.Errors.Add(error);
+
+                    validateNameSpace(reader, state, propMapping);
+
+                    if (propMapping is not null)
                     {
-                        // check if we are currently on an element.
-                        // TODO: use reader.LocalName - you want to find the name irrespective of namespace prefixes
-                        // TODO: we should make sure reader.NamespaceUri is the FHIR uri here.
-                        // Relevant errors: 
-                        // $"The element '{xe.Name.LocalName}' has no namespace, expected the HL7 FHIR namespace (http://hl7.org/fhir)"
-                        // $"The element '{xe.Name.LocalName}' uses the namespace '{xe.Name.NamespaceName}', which is not allowed."
-                        var (propMapping, propValueMapping, error) = tryGetMappedElementMetadata(_inspector, mapping, reader, reader.Name);
-                        state.Errors.Add(error);
+                        state.Path.EnterElement(propMapping.Name);
+                        (var order, var incorrectOrder) = checkOrder(reader, state, highestOrder, propMapping);
+                        highestOrder = order;
 
-                        if (propMapping is not null)
+                        try
                         {
-                            state.Path.EnterElement(propMapping.Name);
-                            (var order, var incorrectOrder) = checkOrder(reader, state, highestOrder, propMapping);
-                            highestOrder = order;
-
-                            try
-                            {
-                                deserializePropertyValue(target, reader, state, oldErrors, incorrectOrder, propMapping, propValueMapping);
-                            }
-                            finally
-                            {
-                                state.Path.ExitElement();
-                            }
+                            deserializePropertyValue(target, reader, state, oldErrors, incorrectOrder, propMapping, propValueMapping);
                         }
-                        else
+                        finally
                         {
-                            //we don't know this property: error is already thrown in "tryGetMappedElementMetadata(_inspector, mapping, reader, name)";
-                            reader.Skip();
+                            state.Path.ExitElement();
                         }
                     }
                     else
                     {
+                        //we don't know this property: error is already thrown in "tryGetMappedElementMetadata(_inspector, mapping, reader, name)";
                         reader.Skip();
                     }
                 }
             }
+            else if (!hasValueAttribute)
+            {
+                //This empty element no children and no value attribute;
+                state.Errors.Add(ERR.ELEMENT_HAS_NO_VALUE_OR_CHILDREN.With(reader, reader.LocalName));
+            }
+
 
             if (Settings.Validator is not null && oldErrors == state.Errors.Count)
             {
@@ -236,9 +268,6 @@ namespace Hl7.Fhir.Serialization
                 PocoDeserializationHelper.RunInstanceValidation(target, Settings.Validator, context, state.Errors);
             }
 
-            // TODO: how do we know we're not skipping forbidden tokens here? - Or is this a no-op because the while loop (in the caller of
-            // this function will use ShouldSkipNode? Or maybe the code "if (!reader.ShouldSkipNodeType(state))" in the while loop is actually
-            // never doing something useful because this has already read everything away?
             reader.ReadToContent(state);
         }
 
@@ -252,9 +281,7 @@ namespace Hl7.Fhir.Serialization
             }
             else
             {
-                //TODO: there are a lot of things unexpected, in this case, it is out of order.
-                //maybe the name of the error should reflect that it is out of order.
-                state.Errors.Add(ERR.UNEXPECTED_ELEMENT.With(reader, reader.Name));
+                state.Errors.Add(ERR.ELEMENT_OUT_OF_ORDER.With(reader, reader.LocalName));
                 incorrectOrder = true;
             }
             return (highestOrder, incorrectOrder);
@@ -263,7 +290,7 @@ namespace Hl7.Fhir.Serialization
         private void deserializePropertyValue(Base target, XmlReader reader, FhirXmlPocoDeserializerState state, int oldErrors, bool incorrectOrder, PropertyMapping propMapping, ClassMapping? propValueMapping)
         {
             var (lineNumber, position) = reader.GenerateLineInfo();
-            var name = reader.Name;
+            var name = reader.LocalName;
 
             object? result = propMapping.IsCollection
                 ? createOrExpandList(target, incorrectOrder, propValueMapping!, propMapping, reader, state)
@@ -287,10 +314,6 @@ namespace Hl7.Fhir.Serialization
 
         private static string readXhtml(XmlReader reader, FhirXmlPocoDeserializerState state)
         {
-            if (reader.NamespaceURI != XmlNs.XHTML)
-            {
-                state.Errors.Add(ERR.INCORRECT_XHTML_NAMESPACE.With(reader));
-            }
             var xhtml = reader.ReadInnerXml();
             return xhtml;
         }
@@ -302,14 +325,9 @@ namespace Hl7.Fhir.Serialization
             if (expandCandidate)
             {
                 var currentList = (IList?)propMapping.GetValue(target);
-                //Was there already a list created previously? -> User error!
-                //TODO: Shouldn't there be an `if(currentList is not null)` here?  Otherwise, why is currentList of type `IList?` ?
-                state.Errors.Add(ERR.ELEMENT_NOT_IN_SEQUENCE.With(reader, reader.Name));
 
-                //But let's fix it, and expand the list with the newly encountered element(s).
-                //TODO: CcurrentList *can* be null, currentList! is not correct here - do you mean currentList?.Count?
-                return (currentList!.Count != 0) ?
-                    expandCurrentList(currentList, propValueMapping, propMapping, reader, state)
+                return (!currentList.IsNullOrEmpty()) ?
+                    expandCurrentList(currentList!, propValueMapping, propMapping, reader, state)
                     : readList(propValueMapping!, propMapping, reader, state);
             }
             else
@@ -321,6 +339,10 @@ namespace Hl7.Fhir.Serialization
         //Retrieves previously created list, and add newly encountered values.
         private IList expandCurrentList(IList currentEntries, ClassMapping propValueMapping, PropertyMapping propMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
+            //There was already a list created previously -> User error!
+            state.Errors.Add(ERR.ELEMENT_NOT_IN_SEQUENCE.With(reader, reader.LocalName));
+
+            //But let's fix it, and expand the list with the newly encountered element(s).
             var newEntries = readList(propValueMapping!, propMapping, reader, state);
 
             foreach (var entry in newEntries)
@@ -336,11 +358,9 @@ namespace Hl7.Fhir.Serialization
         {
             var list = propValueMapping.ListFactory();
 
-            //TODO: again, this should be LocalName
-            var name = reader.Name;
+            var name = reader.LocalName;
 
-            // TODO: and this. You should probably search for all "reader.Name" accessess
-            while (reader.Name == name && reader.NodeType != XmlNodeType.EndElement)
+            while (reader.LocalName == name && reader.NodeType != XmlNodeType.EndElement)
             {
                 var newEntry = readSingleValue(propValueMapping, propMapping, reader, state);
                 list.Add(newEntry);
@@ -372,7 +392,7 @@ namespace Hl7.Fhir.Serialization
             // we are currently at the resource container (e.g. <contained>)
             if (reader.HasAttributes)
             {
-                state.Errors.Add(ERR.NO_ATTRIBUTES_ALLOWED_ON_RESOURCE_CONTAINER.With(reader, reader.Name));
+                state.Errors.Add(ERR.NO_ATTRIBUTES_ALLOWED_ON_RESOURCE_CONTAINER.With(reader, reader.LocalName));
             }
             // let's move to the actual resource
             reader.ReadToContent(state);
@@ -380,7 +400,7 @@ namespace Hl7.Fhir.Serialization
             // now we should be at the closing element of the resource container (e.g. </contained>). We should check that and maybe fix that.)
             if (reader.Depth != depth && reader.NodeType != XmlNodeType.EndElement)
             {
-                state.Errors.Add(ERR.UNALLOWED_ELEMENT_IN_RESOURCE_CONTAINER.With(reader, reader.Name));
+                state.Errors.Add(ERR.UNALLOWED_ELEMENT_IN_RESOURCE_CONTAINER.With(reader, reader.LocalName));
 
                 // skip until we're back at the closing of the </contained>
                 while (!(reader.Depth == depth && reader.NodeType == XmlNodeType.EndElement))
@@ -396,7 +416,7 @@ namespace Hl7.Fhir.Serialization
 
         private void readAttributes(Base target, ClassMapping propValueMapping, XmlReader reader, FhirXmlPocoDeserializerState state)
         {
-            var elementName = reader.Name;
+            var elementName = reader.LocalName;
             //move into first attribute
             if (reader.MoveToFirstAttribute())
             {
@@ -404,26 +424,17 @@ namespace Hl7.Fhir.Serialization
                 {
                     do
                     {
-                        if (reader.Name == "xmlns")
+                        if (reader.LocalName == "xmlns")
                         {
-                            // TODO: You do not have to do this every time, the xmlns will introduce a new namespace prefix (or namespace),
-                            // as soon as this is used, the elements that you are reading will be in the incorrect namespace
-                            // (visible via reader.NamespaceUri) - it's probably more safe to do it that way.
-                            if (reader.Value != XmlNs.FHIR)
-                            {
-                                state.Errors.Add(ERR.INCORRECT_ELEMENT_NAMESPACE.With(reader, elementName, reader.Value));
-                            }
+                            //Do nothing: checked before
                         }
-                        else if (reader.Name == "xsi:schemaLocation")
+                        else if (reader.LocalName == "schemaLocation" && reader.NamespaceURI == "http://www.w3.org/2001/XMLSchema-instance")
                         {
-                            // TODO: I think you should use reader.LocalName and erader.NamespaceUri instead of checking against
-                            // "xsi" - people can (and will) use something else when they can.
                             state.Errors.Add(ERR.SCHEMALOCATION_DISALLOWED.With(reader));
                         }
                         else
                         {
-                            // TODO: use reader.LocalName - you want to find the name irrespective of namespace prefixes
-                            var propMapping = propValueMapping.FindMappedElementByName(reader.Name);
+                            var propMapping = propValueMapping.FindMappedElementByName(reader.LocalName);
                             if (propMapping is not null)
                             {
                                 state.Path.EnterElement(propMapping.Name);
@@ -438,7 +449,7 @@ namespace Hl7.Fhir.Serialization
                             }
                             else
                             {
-                                state.Errors.Add(ERR.UNKNOWN_ATTRIBUTE.With(reader, reader.Name));
+                                state.Errors.Add(ERR.UNKNOWN_ATTRIBUTE.With(reader, reader.LocalName));
                             }
                         }
 
@@ -458,48 +469,42 @@ namespace Hl7.Fhir.Serialization
         {
             if (!string.IsNullOrEmpty(reader.NamespaceURI) && reader.NamespaceURI != XmlNs.FHIR)
             {
-                state.Errors.Add(ERR.INCORRECT_ATTRIBUTE_NAMESPACE.With(reader, reader.Name, elementName, reader.NamespaceURI));
+                state.Errors.Add(ERR.INCORRECT_ATTRIBUTE_NAMESPACE.With(reader, reader.LocalName, elementName, reader.NamespaceURI));
             }
 
             int oldErrors = state.Errors.Count;
             //parse current attribute to expected type
 
-            // TODO: you need to do this check *after trimming*:
-            // "Attributes cannot be empty. Either they are absent, or they are present with at least one character of non-whitespace content"
-            if (!string.IsNullOrEmpty(reader.Value))
+
+            var (parsedValue, error) = ParsePrimitiveValue(reader, propMapping.ImplementingType);
+
+            state.Errors.Add(error);
+
+            if (parsedValue != null)
             {
-                var (parsedValue, error) = ParsePrimitiveValue(reader, propMapping.ImplementingType);
-
-                state.Errors.Add(error);
-
-                if (parsedValue != null)
+                if (Settings.Validator is not null && oldErrors == state.Errors.Count)
                 {
-                    if (Settings.Validator is not null && oldErrors == state.Errors.Count)
-                    {
-                        var (lineNumber, position) = reader.GenerateLineInfo();
-                        var name = reader.Name;
+                    var (lineNumber, position) = reader.GenerateLineInfo();
+                    var name = reader.LocalName;
 
-                        var context = new PropertyDeserializationContext(
-                            state.Path.GetPath(),
-                            name,
-                            lineNumber, position,
-                            propMapping);
+                    var context = new PropertyDeserializationContext(
+                        state.Path.GetPath(),
+                        name,
+                        lineNumber, position,
+                        propMapping);
 
-                        PocoDeserializationHelper.RunPropertyValidation(ref parsedValue, Settings.Validator, context, state.Errors);
-                    }
+                    PocoDeserializationHelper.RunPropertyValidation(ref parsedValue, Settings.Validator, context, state.Errors);
+                }
 
-                    if (target is PrimitiveType primitive)
-                        primitive.ObjectValue = parsedValue;
-                    else
-                    {
-                        propMapping.SetValue(target, parsedValue);
-                    }
+                if (target is PrimitiveType primitive)
+                    primitive.ObjectValue = parsedValue;
+                else
+                {
+                    propMapping.SetValue(target, parsedValue);
                 }
             }
-            else
-            {
-                state.Errors.Add(ERR.ATTRIBUTE_HAS_EMPTY_VALUE.With(reader, reader.Name, elementName));
-            }
+
+
         }
 
         internal (object?, FhirXmlException?) ParsePrimitiveValue(XmlReader reader, Type implementingType)
@@ -508,60 +513,67 @@ namespace Hl7.Fhir.Serialization
             // trailing whitespace when reading attribute values (for XML schema conformance)"
             string trimmedValue = reader.Value.TrimEnd().TrimStart();
 
-            if (implementingType == typeof(string))
-                return (trimmedValue, null);
-            else if (implementingType == typeof(bool))
+            if (!string.IsNullOrEmpty(trimmedValue))
             {
-                return ElementModel.Types.Boolean.TryParse(trimmedValue, out var parsed)
-                    ? (parsed?.Value, null)
-                    : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
-            }
-            else if (implementingType == typeof(DateTimeOffset))
-            {
-                return ElementModel.Types.DateTime.TryParse(trimmedValue, out var parsed)
-                    ? (parsed.ToDateTimeOffset(TimeSpan.Zero), null)
-                    : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
-            }
-            else if (implementingType == typeof(byte[]))
-            {
-                return !Settings.DisableBase64Decoding ? getByteArrayValue(reader, trimmedValue) : ((object?, ERR?))(trimmedValue, null);
-            }
-            else if (implementingType == typeof(int))
-            {
-                return ElementModel.Types.Integer.TryParse(trimmedValue, out var parsed) ? (parsed?.Value, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
-            }
-            else if (implementingType == typeof(uint))
-            {
-                return uint.TryParse(trimmedValue, out var parsed) ? (parsed, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
-            }
-            else if (implementingType == typeof(long))
-            {
-                return ElementModel.Types.Long.TryParse(trimmedValue, out var parsed) ? (parsed?.Value, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
-            }
-            else if (implementingType == typeof(decimal))
-            {
-                return ElementModel.Types.Decimal.TryParse(trimmedValue, out var parsed) ? (parsed?.Value, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
-            }
-            else if (implementingType == typeof(double))
-            {
-                return ElementModel.Types.Decimal.TryParse(trimmedValue, out var parsed) ? (parsed?.Value, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
-            }
-            else if (implementingType == typeof(float))
-            {
-                return ElementModel.Types.Decimal.TryParse(trimmedValue, out var parsed) ? (parsed?.Value, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
-            }
-            else if (implementingType == typeof(ulong))
-            {
-                return ulong.TryParse(trimmedValue, out var parsed) ? (parsed, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
-            }
-            else if (implementingType.IsEnum)
-            {
-                return new(trimmedValue, null);
+
+                if (implementingType == typeof(string))
+                    return (trimmedValue, null);
+                else if (implementingType == typeof(bool))
+                {
+                    return ElementModel.Types.Boolean.TryParse(trimmedValue, out var parsed)
+                        ? (parsed?.Value, null)
+                        : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
+                }
+                else if (implementingType == typeof(DateTimeOffset))
+                {
+                    return ElementModel.Types.DateTime.TryParse(trimmedValue, out var parsed)
+                        ? (parsed.ToDateTimeOffset(TimeSpan.Zero), null)
+                        : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
+                }
+                else if (implementingType == typeof(byte[]))
+                {
+                    return !Settings.DisableBase64Decoding ? getByteArrayValue(reader, trimmedValue) : ((object?, ERR?))(trimmedValue, null);
+                }
+                else if (implementingType == typeof(int))
+                {
+                    return ElementModel.Types.Integer.TryParse(trimmedValue, out var parsed) ? (parsed?.Value, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
+                }
+                else if (implementingType == typeof(uint))
+                {
+                    return uint.TryParse(trimmedValue, out var parsed) ? (parsed, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
+                }
+                else if (implementingType == typeof(long))
+                {
+                    return ElementModel.Types.Long.TryParse(trimmedValue, out var parsed) ? (parsed?.Value, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
+                }
+                else if (implementingType == typeof(decimal))
+                {
+                    return ElementModel.Types.Decimal.TryParse(trimmedValue, out var parsed) ? (parsed?.Value, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
+                }
+                else if (implementingType == typeof(double))
+                {
+                    return ElementModel.Types.Decimal.TryParse(trimmedValue, out var parsed) ? (parsed?.Value, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
+                }
+                else if (implementingType == typeof(float))
+                {
+                    return ElementModel.Types.Decimal.TryParse(trimmedValue, out var parsed) ? (parsed?.Value, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
+                }
+                else if (implementingType == typeof(ulong))
+                {
+                    return ulong.TryParse(trimmedValue, out var parsed) ? (parsed, null) : (trimmedValue, ERR.VALUE_IS_NOT_OF_EXPECTED_TYPE.With(reader, trimmedValue, implementingType.Name));
+                }
+                else if (implementingType.IsEnum)
+                {
+                    return new(trimmedValue, null);
+                }
+                else
+                {
+                    throw new ArgumentException($"Implementing type '{implementingType.Name}' is incorrect for value '{trimmedValue}'");
+                }
             }
             else
             {
-                //TODO: the caller has passed you an incorrect implementingType -> throw an exception (argumentexception)
-                return new(trimmedValue, null); //When does this happen? Should we throw an error?
+                return (trimmedValue, ERR.ATTRIBUTE_HAS_EMPTY_VALUE.With(reader));
             }
 
             static (object, ERR?) getByteArrayValue(XmlReader reader, string trimmedValue)
@@ -586,12 +598,11 @@ namespace Hl7.Fhir.Serialization
         /// <remarks>Assumes the reader is on the start of an object.</remarks>
         internal static (ClassMapping?, FhirXmlException?) DetermineClassMappingFromInstance(XmlReader reader, ModelInspector inspector)
         {
-            // TODO: use reader.LocalName - you want to find the name irrespective of namespace prefixes
-            var resourceMapping = inspector.FindClassMapping(reader.Name);
+            var resourceMapping = inspector.FindClassMapping(reader.LocalName);
 
             return resourceMapping is not null ?
                 (new(resourceMapping, null)) :
-                (new(null, ERR.UNKNOWN_RESOURCE_TYPE.With(reader, reader.Name)));
+                (new(null, ERR.UNKNOWN_RESOURCE_TYPE.With(reader, reader.LocalName)));
         }
 
         /// <summary>

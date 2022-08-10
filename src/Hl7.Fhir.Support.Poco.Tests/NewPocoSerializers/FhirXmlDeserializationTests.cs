@@ -88,7 +88,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         }
 
         [TestMethod]
-        public void TryDeserializeResourceWithoutEmptyAttribute()
+        public void TryDeserializeResourceWithEmptyAttribute()
         {
             var content = "<Patient xmlns=\"http://hl7.org/fhir\"><active value=\"\"/></Patient>";
 
@@ -104,6 +104,41 @@ namespace Hl7.Fhir.Support.Poco.Tests
             resource.Should().BeOfType<TestPatient>();
         }
 
+        [TestMethod]
+        public void TryDeserializeResourceWithAttributeWithoutAValue()
+        {
+            var content = "<Patient xmlns=\"http://hl7.org/fhir\"><active/></Patient>";
+
+            var reader = constructReader(content);
+            reader.Read();
+
+            var deserializer = getTestDeserializer(new());
+            var state = new FhirXmlPocoDeserializerState();
+            var resource = deserializer.DeserializeResourceInternal(reader, state);
+
+            state.Errors.Should().OnlyContain(ce => ce.ErrorCode == ERR.ELEMENT_HAS_NO_VALUE_OR_CHILDREN_CODE);
+
+            resource.Should().BeOfType<TestPatient>();
+        }
+
+        [TestMethod]
+        public void TryDeserializeResourceWithouthAValue()
+        {
+            var content = "<Patient xmlns=\"http://hl7.org/fhir\"></Patient>";
+
+            var reader = constructReader(content);
+            reader.Read();
+
+            var deserializer = getTestDeserializer(new());
+            var state = new FhirXmlPocoDeserializerState();
+            var resource = deserializer.DeserializeResourceInternal(reader, state);
+
+            state.Errors.Should().OnlyContain(ce => ce.ErrorCode == ERR.ELEMENT_HAS_NO_VALUE_OR_CHILDREN_CODE);
+
+            resource.Should().BeOfType<TestPatient>();
+        }
+
+
 
 
         [TestMethod]
@@ -118,7 +153,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             var state = new FhirXmlPocoDeserializerState();
             var resource = deserializer.DeserializeResourceInternal(reader, state);
 
-            state.Errors.Should().OnlyContain(ce => ce.ErrorCode == ERR.INCORRECT_ROOT_NAMESPACE_CODE);
+            state.Errors.Should().OnlyContain(ce => ce.ErrorCode == ERR.EMPTY_ELEMENT_NAMESPACE_CODE);
 
             resource.Should().BeOfType<TestPatient>();
             resource.As<TestPatient>().Active.Value.Should().Be(true);
@@ -129,7 +164,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         public void TryDeserializeResourceWithSchemaAttribute()
         {
             var content = "<Patient xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
-                "xsi:schemaLocation = \"http://hl7.org/fhir ../OneDrive%20-%20Firely/FHIR/Schemas/R4/capabilitystatement.xsd\" " +
+                "xsi:schemaLocation = \"http://hl7.org/fhir ../patient.xsd\" " +
                 "xmlns = \"http://hl7.org/fhir\" >" +
                     "<active value=\"true\"/>" +
                 "</Patient>";
@@ -304,7 +339,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [TestMethod]
         public void TryDeserializeListValue()
         {
-            var content = "<name><given value=\"foo\"/><given value=\"bar\"/></name>";
+            var content = "<name xmlns=\"http://hl7.org/fhir\"><given value=\"foo\"/><given value=\"bar\"/></name>";
 
             var reader = constructReader(content);
             reader.Read();
@@ -319,7 +354,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [TestMethod]
         public void TryDeserializeWrongListValue()
         {
-            var content = "<name>" +
+            var content = "<name xmlns=\"http://hl7.org/fhir\" >" +
                                 "<family value=\"oof\"/>" +
                                 "<given value=\"foo\"/>" +
                                 "<given value=\"rab\"/>" +
@@ -339,7 +374,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             datatype.As<TestHumanName>().Family.Should().Be("oof");
 
             state.Errors.Should().HaveCount(2);
-            state.Errors.Should().Contain(ce => ce.ErrorCode == ERR.UNEXPECTED_ELEMENT_CODE);
+            state.Errors.Should().Contain(ce => ce.ErrorCode == ERR.ELEMENT_OUT_OF_ORDER_CODE);
             state.Errors.Should().Contain(ce => ce.ErrorCode == ERR.ELEMENT_NOT_IN_SEQUENCE_CODE);
         }
 
@@ -347,7 +382,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
         [TestMethod]
         public void TryDeserializeUnknownElement()
         {
-            var content = "<name><family value =\"oof\"/><foo value = \"bar\"/><given value=\"foo\"/></name>";
+            var content = "<name xmlns=\"http://hl7.org/fhir\"><family value =\"oof\"/><foo value = \"bar\"/><given value=\"foo\"/></name>";
 
             var reader = constructReader(content);
             reader.Read();
