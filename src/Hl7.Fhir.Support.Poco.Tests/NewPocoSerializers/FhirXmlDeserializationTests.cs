@@ -159,6 +159,24 @@ namespace Hl7.Fhir.Support.Poco.Tests
             resource.As<TestPatient>().Active.Value.Should().Be(true);
         }
 
+        [TestMethod]
+        public void TryDeserializeResourceWithExplicitNamespaces()
+        {
+            var content = "<hl7:Patient xmlns:hl7='http://hl7.org/fhir'><hl7:active value=\"true\"></hl7:active></hl7:Patient>";
+
+            var reader = constructReader(content);
+            reader.Read();
+
+            var deserializer = getTestDeserializer(new());
+            var state = new FhirXmlPocoDeserializerState();
+            var resource = deserializer.DeserializeResourceInternal(reader, state);
+
+            state.Errors.Should().BeEmpty();
+
+            resource.Should().BeOfType<TestPatient>();
+            resource.As<TestPatient>().Active.Value.Should().Be(true);
+        }
+
 
         [TestMethod]
         public void TryDeserializeResourceWithSchemaAttribute()

@@ -424,7 +424,7 @@ namespace Hl7.Fhir.Serialization
                 {
                     do
                     {
-                        if (reader.LocalName == "xmlns")
+                        if (reader.LocalName == "xmlns" || reader.Prefix == "xmlns")
                         {
                             //Do nothing: checked before
                         }
