@@ -53,7 +53,7 @@ namespace Hl7.Fhir.Serialization
         internal static readonly FhirXmlException ATTRIBUTE_HAS_EMPTY_VALUE = new(ATTRIBUTE_HAS_EMPTY_VALUE_CODE, "Attributes cannot be empty. Either they are absent, or they are present with at least one character of non - whitespace content");
         internal static readonly FhirXmlException SCHEMALOCATION_DISALLOWED = new(SCHEMALOCATION_DISALLOWED_CODE, "The 'schemaLocation' attribute is disallowed.");
         internal static readonly FhirXmlException EXPECTED_OPENING_ELEMENT = new(EXPECTED_OPENING_ELEMENT_CODE, "Expected opening element, but found {0}.");
-        internal static readonly FhirXmlException ENCOUNTERED_DTP_REFERENCES = new(ENCOUNTERED_DTP_REFERENCES_CODE, "There SHALL be no DTD references in FHIR resources (because of the XXE security exploit)");
+        internal static readonly FhirXmlException ENCOUNTERED_DTD_REFERENCES = new(ENCOUNTERED_DTP_REFERENCES_CODE, "There SHALL be no DTD references in FHIR resources (because of the XXE security exploit)");
         internal static readonly FhirXmlException ELEMENT_HAS_NO_VALUE_OR_CHILDREN = new(ELEMENT_HAS_NO_VALUE_OR_CHILDREN_CODE, "Element '{0}' must have child elements and / or a value attribute");
 
         public FhirXmlException(string errorCode, string message) : base(errorCode, message)

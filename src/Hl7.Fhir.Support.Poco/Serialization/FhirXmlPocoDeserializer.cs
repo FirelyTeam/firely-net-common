@@ -60,7 +60,7 @@ namespace Hl7.Fhir.Serialization
 
             if (reader.Settings?.DtdProcessing == DtdProcessing.Parse)
             {
-                state.Errors.Add(ERR.ENCOUNTERED_DTP_REFERENCES.With(reader));
+                state.Errors.Add(ERR.ENCOUNTERED_DTD_REFERENCES.With(reader));
                 reader.Settings.DtdProcessing = DtdProcessing.Prohibit;
             }
 
@@ -83,7 +83,7 @@ namespace Hl7.Fhir.Serialization
 
             if (reader.Settings?.DtdProcessing == DtdProcessing.Parse)
             {
-                state.Errors.Add(ERR.ENCOUNTERED_DTP_REFERENCES.With(reader));
+                state.Errors.Add(ERR.ENCOUNTERED_DTD_REFERENCES.With(reader));
                 reader.Settings.DtdProcessing = DtdProcessing.Prohibit;
             }
 
@@ -136,19 +136,16 @@ namespace Hl7.Fhir.Serialization
 
         private static void VerifyOpeningElement(XmlReader reader, FhirXmlPocoDeserializerState state)
         {
+            //If not skip all non-content and check again.
+            reader.MoveToContent();
             if (reader.NodeType != XmlNodeType.Element)
             {
-                //If not skip all non-content and check again.
-                reader.ReadToContent(state);
-                if (reader.NodeType != XmlNodeType.Element)
+                //if we are still not at an opening element, throw user-error.
+                state.Errors.Add(ERR.EXPECTED_OPENING_ELEMENT.With(reader, reader.NodeType.GetLiteral()));
+                //try to recover
+                while (reader.NodeType != XmlNodeType.Element || !reader.EOF)
                 {
-                    //if we are still not at an opening element, throw user-error.
-                    state.Errors.Add(ERR.EXPECTED_OPENING_ELEMENT.With(reader, reader.NodeType.GetLiteral()));
-                    //try to recover
-                    while (reader.NodeType != XmlNodeType.Element)
-                    {
-                        reader.ReadToContent(state);
-                    }
+                    reader.ReadToContent(state);
                 }
             }
         }

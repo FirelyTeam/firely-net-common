@@ -84,3 +84,4 @@ namespace Hl7.Fhir.Serialization
         }
     }
 }
+#nullable restore
