@@ -25,24 +25,28 @@ namespace Hl7.Fhir.ElementModel
             public string? Id;
             public IEnumerable<ScopedNode>? ContainedResources;
             public IEnumerable<BundledResource>? BundledResources;
+
+            public string? InstanceUri;
         }
 
         private readonly Cache _cache = new();
 
         public readonly ITypedElement Current;
 
-        public ScopedNode(ITypedElement wrapped)
+        public ScopedNode(ITypedElement wrapped, string? instanceUri = null)
         {
             Current = wrapped;
+            InstanceUri = instanceUri;
+
             if (Current is IExceptionSource ies && ies.ExceptionHandler == null)
                 ies.ExceptionHandler = (o, a) => ExceptionHandler.NotifyOrThrow(o, a);
         }
 
-        private ScopedNode(ScopedNode parent, ScopedNode? parentResource, ITypedElement wrapped, string? fullUrl)
+        private ScopedNode(ScopedNode parentNode, ScopedNode? parentResource, ITypedElement wrapped, string? fullUrl)
         {
             Current = wrapped;
-            ExceptionHandler = parent.ExceptionHandler;
-            ParentResource = parent.AtResource ? parent : parentResource;
+            ExceptionHandler = parentNode.ExceptionHandler;
+            ParentResource = parentNode.AtResource ? parentNode : parentResource;
 
             _fullUrl = fullUrl;
 
@@ -54,27 +58,45 @@ namespace Hl7.Fhir.ElementModel
         public ExceptionNotificationHandler? ExceptionHandler { get; set; }
 
         /// <summary>
-        /// Represents the most direct resource parent in which the current node 
-        /// is located.
+        /// Represents the most direct resource parent in which the current node is located.
         /// </summary>
         /// <remarks>
-        /// When the node is the inital root, there is no parent.
+        /// When the node is the inital root, there is no parent and this property returns null.
+        /// When the node is a (contained/bundled) resource itself, this property still returns
+        /// that resource's most direct parent.
         /// </remarks>
         public readonly ScopedNode? ParentResource;
 
+        /// <summary>
+        /// Returns the location of the current element within its most direct parent resource or datatype.
+        /// </summary>
+        /// <remarks>
+        /// For deeper paths, this would return the direct path within the encompassing type, e.g. 
+        /// for an element at Patient.identifier.use this property would return Identifier.use.
+        /// </remarks>
         public string LocalLocation => ParentResource == null ? Location :
                         $"{ParentResource.InstanceType}.{Location.Substring(ParentResource.Location.Length + 1)}";
 
+        /// <inheritdoc/>
         public string Name => Current.Name;
 
+        /// <inheritdoc/>
         public string InstanceType => Current.InstanceType;
 
+        /// <inheritdoc/>
         public object Value => Current.Value;
 
+        /// <inheritdoc/>
         public string Location => Current.Location;
 
+        /// <summary>
+        /// Whether this node is a root element of a Resource.
+        /// </summary>
         public bool AtResource => Current.Definition?.IsResource ?? Current is IResourceTypeSupplier rt && rt.ResourceType is not null;
 
+        /// <summary>
+        /// The instance type of the resource this element is part of.
+        /// </summary>
         public string NearestResourceType => ParentResource == null ? Location : ParentResource.InstanceType;
 
         /// <summary>
@@ -100,6 +122,7 @@ namespace Hl7.Fhir.ElementModel
             }
         }
 
+        /// <inheritdoc />
         public IElementDefinitionSummary Definition => Current.Definition;
 
         /// <summary>
@@ -108,7 +131,7 @@ namespace Hl7.Fhir.ElementModel
         /// <returns></returns>
         public IEnumerable<ScopedNode> ParentResources()
         {
-            var scan = this.ParentResource;
+            var scan = ParentResource;
 
             while (scan != null)
             {
@@ -119,7 +142,7 @@ namespace Hl7.Fhir.ElementModel
         }
 
         /// <summary>
-        /// Returns the Id of the resource, if the current node is a resource
+        /// Returns the Id of the resource, if the current node is a resource.
         /// </summary>
         /// <returns></returns>
         public string? Id()
@@ -132,23 +155,32 @@ namespace Hl7.Fhir.ElementModel
             return _cache.Id;
         }
 
+        /// <summary>
+        /// When this node is the node of a resource, it will return its contained resources, if any.
+        /// </summary>
         public IEnumerable<ScopedNode> ContainedResources()
         {
             if (_cache.ContainedResources == null)
             {
-                _cache.ContainedResources = AtResource ? 
-                    this.Children("contained").Cast<ScopedNode>():
+                _cache.ContainedResources = AtResource ?
+                    this.Children("contained").Cast<ScopedNode>() :
                     Enumerable.Empty<ScopedNode>();
             }
             return _cache.ContainedResources;
         }
 
+        /// <summary>
+        /// A tuple of a bundled resource plus its Bundle.entry.fullUrl property.
+        /// </summary>
         public class BundledResource
         {
             public string? FullUrl;
             public ScopedNode? Resource;
         }
 
+        /// <summary>
+        /// When this node is the root of a Bundle, retrieves the bundled resources in its Bundle.entry.
+        /// </summary>
         public IEnumerable<BundledResource> BundledResources()
         {
             if (_cache.BundledResources == null)
@@ -168,16 +200,39 @@ namespace Hl7.Fhir.ElementModel
 
         private readonly string? _fullUrl = null;
 
+        /// <summary>
+        /// The full url of the resource this element is part of (if in a Bundle)
+        /// </summary>
+        /// <returns></returns>
         public string? FullUrl() => _fullUrl;
 
-        public IEnumerable<object> Annotations(Type type)
+        /// <summary>
+        /// The full uri from where the instance this node is part of was retrieved.
+        /// </summary>
+        /// <remarks>The initial (parent) ScopedNode must have been created supplying the instanceUri parameter
+        /// of the constructor.</remarks>
+        public string? InstanceUri
         {
-            if (type == typeof(ScopedNode))
-                return new[] { this };
-            else
-                return Current.Annotations(type);
+            get
+            {
+                // Scan up until the first parent that knowns the instance uri (at the last the
+                // root, if it has been supplied).
+                if (_cache.InstanceUri is null)
+                    _cache.InstanceUri = ParentResources().SkipWhile(p => p.InstanceUri is null).FirstOrDefault()?.InstanceUri;
+
+                return _cache.InstanceUri;
+            }
+
+            private set
+            {
+                _cache.InstanceUri = value;
+            }
         }
 
+        /// <inheritdoc />
+        public IEnumerable<object> Annotations(Type type) => type == typeof(ScopedNode) ? (new[] { this }) : Current.Annotations(type);
+
+        /// <inheritdoc />
         public IEnumerable<ITypedElement> Children(string? name = null) =>
             Current.Children(name).Select(c => new ScopedNode(this, ParentResource, c, _fullUrl));
     }

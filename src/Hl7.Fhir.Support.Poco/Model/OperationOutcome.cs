@@ -55,8 +55,8 @@ namespace Hl7.Fhir.Model
                 foreach (var issue in Issue)
                 {
                     textBuilder.Append(' ', issue.HierarchyLevel * 2);
-                    textBuilder.AppendLine();
                     issue.ToStringBuilder(textBuilder);
+                    textBuilder.AppendLine();
                 }
             }
 

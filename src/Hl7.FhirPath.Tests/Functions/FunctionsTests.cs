@@ -2,12 +2,11 @@
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Model;
 using Hl7.FhirPath;
+using Hl7.FhirPath.Expressions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
-using Hl7.FhirPath.Expressions;
 
 namespace HL7.FhirPath.Tests
 {
@@ -528,7 +527,7 @@ namespace HL7.FhirPath.Tests
             }
         }
 
-        
+
         /// <summary>
         /// Check that scalar expressions are evaluated only once.
         /// </summary>
@@ -550,7 +549,7 @@ namespace HL7.FhirPath.Tests
 
             Assert.AreEqual(result, 1);
         }
-      
+
         /// <summary>
         /// Tests issue 1652 https://github.com/FirelyTeam/firely-net-sdk/issues/1652
         /// </summary>
@@ -566,5 +565,16 @@ namespace HL7.FhirPath.Tests
             Assert.IsTrue(te.IsBoolean($"system.endsWith('banana')", false));
         }
 
+        /// <summary>
+        /// Tests issue https://github.com/FirelyTeam/firely-net-sdk/issues/2018
+        /// </summary>
+        [TestMethod]
+        public void TestFhirPathRepeatsStringLiteral()
+        {
+            var nav = ElementNode.ForPrimitive("a");
+
+            var result = nav.Select("repeat('teststring')");
+            result.Should().ContainSingle(ite => ((string)ite.Value) == "teststring");
+        }
     }
 }

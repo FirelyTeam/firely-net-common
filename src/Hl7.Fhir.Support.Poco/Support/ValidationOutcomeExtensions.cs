@@ -47,14 +47,14 @@ namespace Hl7.Fhir.Support
 
         public static Stopwatch OUTCOME_INCLUDE_TIMER = new Stopwatch();
 
-        public static void Include(this OperationOutcome outcome, OperationOutcome other)
+        public static void Include(this OperationOutcome outcome, OperationOutcome other, OperationOutcome.IssueComponent parent = null)
         {
             foreach (var issue in other.Issue)
             {
                 // var myIssue = (OperationOutcome.IssueComponent)issue.DeepCopy();
-                var myIssue = issue;
-                myIssue.SetHierarchyLevel(myIssue.GetHierarchyLevel() + 1);
-                outcome.AddIssue(myIssue);
+                if (parent is not null)
+                    issue.SetHierarchyLevel(parent.GetHierarchyLevel() + 1);
+                outcome.AddIssue(issue);
             }
         }
 

@@ -1,7 +1,7 @@
-﻿/* 
+﻿/*
  * Copyright (c) 2021, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
- * 
+ *
  * This file is licensed under the BSD 3-Clause license
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
@@ -128,7 +128,7 @@ namespace Hl7.Fhir.Serialization
             if (reader.TokenType != JsonTokenType.StartObject)
             {
                 state.Errors.Add(ERR.EXPECTED_START_OF_OBJECT.With(ref reader, reader.TokenType));
-                reader.Recover();  // skip to the end of the construct encountered (value or array)                
+                reader.Recover();  // skip to the end of the construct encountered (value or array)
                 return null;
             }
 
@@ -136,7 +136,7 @@ namespace Hl7.Fhir.Serialization
 
             if (resourceMapping is not null)
             {
-                // If we have at least a mapping, let's try to continue               
+                // If we have at least a mapping, let's try to continue
                 var newResource = (Base)resourceMapping.Factory();
 
                 try
@@ -296,7 +296,7 @@ namespace Hl7.Fhir.Serialization
         }
 
         /// <summary>
-        /// Reads the value of a json property. 
+        /// Reads the value of a json property.
         /// </summary>
         /// <param name="target">The target POCO which property will be set/updated during deserialization. If null, it will be
         /// be created based on the <paramref name="propertyMapping"/>, otherwise it will be updated.</param>
@@ -304,10 +304,10 @@ namespace Hl7.Fhir.Serialization
         /// <param name="propertyMapping">The cached metadata for the property we are setting.</param>
         /// <param name="propertyValueMapping">The cached metadata for the type of value we are setting the property to.</param>
         /// <param name="reader">The reader to deserialize from.</param>
-        /// <param name="delayedValidations">Validations to be delayed until the target has been fully deserialized. 
+        /// <param name="delayedValidations">Validations to be delayed until the target has been fully deserialized.
         /// This function will add to this list if necessary.</param>
         /// <param name="state">Object used to track all parsing state.</param>
-        /// 
+        ///
         /// <remarks>Expects the reader to be positioned on the property value.
         /// Reader will be on the first token after the property value upon return.</remarks>
         private void deserializePropertyValueInto(
@@ -331,7 +331,7 @@ namespace Hl7.Fhir.Serialization
                 var existingValue = propertyMapping.GetValue(target);
 
                 // Note that the POCO model will always allocate a new list if the property had not been set before,
-                // so there is always an existingValue for IList                
+                // so there is always an existingValue for IList
                 result = propertyMapping.IsCollection ?
                     deserializeFhirPrimitiveList((IList)existingValue!, propertyName, propertyValueMapping, ref reader, delayedValidations, state) :
                     DeserializeFhirPrimitive(existingValue as PrimitiveType, propertyName, propertyValueMapping, ref reader, delayedValidations, state);
@@ -633,7 +633,7 @@ namespace Hl7.Fhir.Serialization
 
         /// <summary>
         /// Does a best-effort parse of the data available at the reader, given the required type of the property the
-        /// data needs to be read into. 
+        /// data needs to be read into.
         /// </summary>
         /// <returns>A value without an error if the data could be parsed to the required type, and a value with an error if the
         /// value could not be parsed - in which case the value returned is the raw value coming in from the reader.</returns>
@@ -780,7 +780,7 @@ namespace Hl7.Fhir.Serialization
 
         private static (string?, FhirJsonException?) determineResourceType(ref Utf8JsonReader reader)
         {
-            //TODO: determineResourceType probably won't work with streaming inputs to Utf8JsonReader                       
+            //TODO: determineResourceType probably won't work with streaming inputs to Utf8JsonReader
 
             var originalReader = reader;    // copy the struct so we can "rewind"
             var atDepth = reader.CurrentDepth + 1;
@@ -829,7 +829,7 @@ namespace Hl7.Fhir.Serialization
             var elementName = startsWithUnderscore ? propertyName.Substring(1) : propertyName;
 
             var propertyMapping = parentMapping.FindMappedElementByName(elementName)
-                ?? parentMapping.FindMappedElementByChoiceName(propertyName);
+                ?? parentMapping.FindMappedElementByChoiceName(elementName);
 
             if (propertyMapping is null)
                 return (null, null, ERR.UNKNOWN_PROPERTY_FOUND.With(ref reader, propertyName));
@@ -848,7 +848,7 @@ namespace Hl7.Fhir.Serialization
 
             (ClassMapping?, FhirJsonException?) getChoiceClassMapping(ref Utf8JsonReader r)
             {
-                string typeSuffix = propertyName.Substring(propertyMapping.Name.Length);
+                string typeSuffix = elementName.Substring(propertyMapping.Name.Length);
 
                 return string.IsNullOrEmpty(typeSuffix)
                     ? (null, ERR.CHOICE_ELEMENT_HAS_NO_TYPE.With(ref r, propertyMapping.Name))

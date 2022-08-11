@@ -36,7 +36,7 @@ namespace Hl7.FhirPath.Functions
             : !focus.BooleanEval().Value;
 
         public static IEnumerable<ITypedElement> DistinctUnion(this IEnumerable<ITypedElement> a, IEnumerable<ITypedElement> b)
-            => a.Union(b, new EqualityOperators.ValueProviderEqualityComparer());
+            => a.Union(b, EqualityOperators.TypedElementEqualityComparer);
 
         public static IEnumerable<ITypedElement> Item(this IEnumerable<ITypedElement> focus, int index)
             => focus.Skip(index).Take(1);
@@ -48,19 +48,19 @@ namespace Hl7.FhirPath.Functions
             => focus.Skip(1);
 
         public static bool Contains(this IEnumerable<ITypedElement> focus, ITypedElement value)
-            => focus.Contains(value, new EqualityOperators.ValueProviderEqualityComparer());
+            => focus.Contains(value, EqualityOperators.TypedElementEqualityComparer);
 
         public static IEnumerable<ITypedElement> Distinct(this IEnumerable<ITypedElement> focus)
-            => focus.Distinct(new EqualityOperators.ValueProviderEqualityComparer());
+            => focus.Distinct(EqualityOperators.TypedElementEqualityComparer);
 
         public static bool IsDistinct(this IEnumerable<ITypedElement> focus)
-            => focus.Distinct(new EqualityOperators.ValueProviderEqualityComparer()).Count() == focus.Count();
+            => focus.Distinct(EqualityOperators.TypedElementEqualityComparer).Count() == focus.Count();
 
         public static bool SubsetOf(this IEnumerable<ITypedElement> focus, IEnumerable<ITypedElement> other)
             => focus.All(fitem => other.Contains(fitem));
 
         public static IEnumerable<ITypedElement> Intersect(this IEnumerable<ITypedElement> focus, IEnumerable<ITypedElement> other)
-            => focus.Intersect(other, new EqualityOperators.ValueProviderEqualityComparer());
+            => focus.Intersect(other, EqualityOperators.TypedElementEqualityComparer);
 
         public static IEnumerable<ITypedElement> Exclude(this IEnumerable<ITypedElement> focus, IEnumerable<ITypedElement> other)
             => focus.Where(f => !other.Contains(f));

@@ -60,7 +60,7 @@ namespace Hl7.Fhir.Rest
             }
 
             byte[] outgoingBody = null;
-            if (requestMessage.Method == HttpMethod.Post || requestMessage.Method == HttpMethod.Put)
+            if (requestMessage.Content is not null && (requestMessage.Method == HttpMethod.Post || requestMessage.Method == HttpMethod.Put))
             {
                 outgoingBody = await requestMessage.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
             }
