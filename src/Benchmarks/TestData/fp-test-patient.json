@@ -192,7 +192,7 @@
     },
     {
       "use": "official",
-      "system": "urn:oid:9.0.1.2.3.4.5.6.7",
+      "system": "urn:oid:0.1.2.3.4.5.6.7",
       "value": "7654321"
     },
     {

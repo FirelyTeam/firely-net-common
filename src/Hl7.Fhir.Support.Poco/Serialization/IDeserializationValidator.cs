@@ -26,7 +26,7 @@ namespace Hl7.Fhir.Serialization
         /// <param name="context">The current context of deserialization, like the path and the type under deserialization.</param>
         /// <param name="reportedErrors">null, zero or more validation errors which will be aggregated in the final result of deserialization.</param>
         void ValidateProperty(
-            object? instance,
+            ref object? instance,
             in PropertyDeserializationContext context,
             out CodedValidationException[]? reportedErrors);
 

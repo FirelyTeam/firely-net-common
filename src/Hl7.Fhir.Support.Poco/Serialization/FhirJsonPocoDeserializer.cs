@@ -10,13 +10,9 @@
 #if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
-using Hl7.Fhir.Utility;
-using Hl7.Fhir.Validation;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using ERR = Hl7.Fhir.Serialization.FhirJsonException;
@@ -293,7 +289,7 @@ namespace Hl7.Fhir.Serialization
             if (Settings.Validator is not null && kind != DeserializedObjectKind.FhirPrimitive && state.Errors.Count == oldErrorCount)
             {
                 var context = new InstanceDeserializationContext(state.Path.GetPath(), line, pos, mapping);
-                runInstanceValidation(target, context, state.Errors);
+                PocoDeserializationHelper.RunInstanceValidation(target, Settings.Validator, context, state.Errors);
             }
 
             return;
@@ -368,28 +364,14 @@ namespace Hl7.Fhir.Serialization
                 {
                     delayedValidations.Schedule(
                         propertyMapping.Name + PROPERTY_VALIDATION_KEY_SUFFIX,
-                        () => runPropertyValidation(result, deserializationContext, state.Errors));
+                        () => PocoDeserializationHelper.RunPropertyValidation(ref result, Settings.Validator!, deserializationContext, state.Errors));
                 }
                 else
-                    runPropertyValidation(result, deserializationContext, state.Errors);
+                    PocoDeserializationHelper.RunPropertyValidation(ref result, Settings.Validator!, deserializationContext, state.Errors);
             }
 
             propertyMapping.SetValue(target, result);
 
-            return;
-        }
-
-        private void runPropertyValidation(object? instance, PropertyDeserializationContext context, ExceptionAggregator aggregator)
-        {
-            Settings.Validator!.ValidateProperty(instance, context, out var errors);
-            aggregator.Add(errors);
-            return;
-        }
-
-        private void runInstanceValidation(object? instance, InstanceDeserializationContext context, ExceptionAggregator aggregator)
-        {
-            Settings.Validator!.ValidateInstance(instance, context, out var errors);
-            aggregator.Add(errors);
             return;
         }
 
@@ -556,24 +538,33 @@ namespace Hl7.Fhir.Serialization
                     throw new InvalidOperationException($"All subclasses of {nameof(PrimitiveType)} should have a property representing the value element, " +
                         $"but {propertyValueMapping.Name} has not. " + reader.GenerateLocationMessage());
 
-                var (result, error) = DeserializePrimitiveValue(ref reader, primitiveValueProperty.ImplementingType);
-
-                // Only do validation when no parse errors were encountered, otherwise we'll just
-                // produce spurious messages.
-                if (error is not null)
-                    state.Errors.Add(error);
-                else if (Settings.Validator is not null)
+                state.Path.EnterElement("value");
+                try
                 {
-                    var propertyValueContext = new PropertyDeserializationContext(
-                        state.Path.GetPath(),
-                        "value",
-                        line, pos,
-                        primitiveValueProperty);
 
-                    runPropertyValidation(result, propertyValueContext, state.Errors);
+                    var (result, error) = DeserializePrimitiveValue(ref reader, primitiveValueProperty.ImplementingType);
+
+                    // Only do validation when no parse errors were encountered, otherwise we'll just
+                    // produce spurious messages.
+                    if (error is not null)
+                        state.Errors.Add(error);
+                    else if (Settings.Validator is not null)
+                    {
+
+                        var propertyValueContext = new PropertyDeserializationContext(
+                            state.Path.GetPath(),
+                            "value",
+                            line, pos,
+                            primitiveValueProperty);
+
+                        PocoDeserializationHelper.RunPropertyValidation(ref result, Settings.Validator, propertyValueContext, state.Errors);
+                    }
+                    targetPrimitive.ObjectValue = result;
                 }
-
-                targetPrimitive.ObjectValue = result;
+                finally
+                {
+                    state.Path.ExitElement();
+                }
             }
             else
             {
@@ -588,11 +579,11 @@ namespace Hl7.Fhir.Serialization
             {
                 var context = new InstanceDeserializationContext(state.Path.GetPath(), line, pos, propertyValueMapping);
                 if (delayedValidations is null)
-                    runInstanceValidation(targetPrimitive, context, state.Errors);
+                    PocoDeserializationHelper.RunInstanceValidation(targetPrimitive, Settings.Validator, context, state.Errors);
                 else
                     delayedValidations.Schedule(
                         propertyName.TrimStart('_') + INSTANCE_VALIDATION_KEY_SUFFIX,
-                        () => runInstanceValidation(targetPrimitive, context, state.Errors));
+                        () => PocoDeserializationHelper.RunInstanceValidation(targetPrimitive, Settings.Validator, context, state.Errors));
             }
 
             return targetPrimitive;

@@ -1,8 +1,6 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
 <!-- First comment -->
-<Patient xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
- xsi:schemaLocation="http://hl7.org/fhir ../../../Hl7.Fhir.Specification/data/fhir-all.xsd"
- xmlns="http://hl7.org/fhir">
+<Patient xmlns="http://hl7.org/fhir">
   <!-- Comments here -->
   <id value="pat1"/>
   <!-- where's this comment? -->
@@ -199,7 +197,7 @@
   </identifier>
   <identifier>
     <use value="official"/>
-    <system value="urn:oid:9.0.1.2.3.4.5.6.7"/>
+    <system value="urn:oid:0.1.2.3.4.5.6.7"/>
     <value value="7654321"/>
   </identifier>
   <identifier>

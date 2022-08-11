@@ -32,7 +32,7 @@ namespace Hl7.Fhir.Serialization
         public bool AppendNewLine { get; set; } // = false;
 
         /// <summary>Default constructor. Creates a new <see cref="FhirJsonSerializationSettings"/> instance with default property values.</summary>
-        public FhirJsonSerializationSettings() {  }
+        public FhirJsonSerializationSettings() { }
 
         /// <summary>Clone constructor. Generates a new <see cref="FhirJsonSerializationSettings"/> instance initialized from the state of the specified instance.</summary>
         /// <exception cref="ArgumentNullException">The specified argument is <c>null</c>.</exception>
@@ -55,9 +55,9 @@ namespace Hl7.Fhir.Serialization
         }
 
         /// <summary>Creates a new <see cref="FhirJsonSerializationSettings"/> object that is a copy of the current instance.</summary>
-        public FhirJsonSerializationSettings Clone() => new FhirJsonSerializationSettings(this);
+        public FhirJsonSerializationSettings Clone() => new(this);
 
         /// <summary>Creates a new <see cref="FhirJsonSerializationSettings"/> instance with default property values.</summary>
-        public static FhirJsonSerializationSettings CreateDefault() => new FhirJsonSerializationSettings();
+        public static FhirJsonSerializationSettings CreateDefault() => new();
     }
 }
