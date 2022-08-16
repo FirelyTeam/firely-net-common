@@ -30,7 +30,7 @@ namespace Hl7.FhirPath.Expressions
 
         public int Count()
         {
-            var cnt = _entries.Count();
+            var cnt = _entries.Count;
             if (Parent != null) cnt += Parent.Count();
 
             return cnt;
@@ -38,15 +38,7 @@ namespace Hl7.FhirPath.Expressions
 
         internal Invokee First()
         {
-            if (_entries.Any())
-                return _entries.First().Body;
-            else
-            {
-                if (Parent != null)
-                    return Parent.First();
-                else
-                    return null;
-            }
+            return _entries.Any() ? _entries.First().Body : (Parent?.First());
         }
 
         public SymbolTable Parent { get; private set; }
@@ -58,9 +50,9 @@ namespace Hl7.FhirPath.Expressions
             {
                 if (Signature != null)
                 {
-                    StringBuilder sb = new StringBuilder();
+                    var sb = new StringBuilder();
                     sb.Append(Signature.ReturnType.Name);
-                    sb.Append(" ");
+                    sb.Append(' ');
                     sb.Append(Signature.Name);
                     sb.Append(" (");
                     bool b = false;
@@ -71,7 +63,7 @@ namespace Hl7.FhirPath.Expressions
                         sb.Append(item.Name);
                         b = true;
                     }
-                    sb.Append(")");
+                    sb.Append(')');
                     return sb.ToString();
                 }
                 return null;
@@ -96,8 +88,10 @@ namespace Hl7.FhirPath.Expressions
 
         public SymbolTable Filter(string name, int argCount)
         {
-            var result = new SymbolTable();
-            result._entries = new(_entries.Where(e => e.Signature.Matches(name, argCount)));
+            var result = new SymbolTable
+            {
+                _entries = new(_entries.Where(e => e.Signature.Matches(name, argCount)))
+            };
 
             if (Parent != null)
                 result.Parent = Parent.Filter(name, argCount);
@@ -112,7 +106,7 @@ namespace Hl7.FhirPath.Expressions
 
             if (entry == null && Parent != null) return Parent.DynamicGet(name, args);
 
-            return entry != null ? entry.Body : null;
+            return entry?.Body;
         }
     }
 

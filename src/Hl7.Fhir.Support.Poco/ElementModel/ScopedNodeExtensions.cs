@@ -11,19 +11,21 @@ using Hl7.Fhir.Support.Poco;
 using System;
 using System.Linq;
 
+#nullable enable
+
 namespace Hl7.Fhir.ElementModel
 {
+    /// <summary>
+    /// A set of functions on <see cref="ScopedNode"/> (and <see cref="ITypedElement"/>) that
+    /// help resolving references from one resource to another. This includes both resolving
+    /// the reference within the resource (in en Bundle or contained resource) or reaching out
+    /// to an external resolver.
+    /// </summary>
     public static class ScopedNodeExtensions
     {
-        public static string MakeAbsolute(this ScopedNode node, string reference) =>
-                     node.MakeAbsolute(new ResourceIdentity(reference)).ToString();
-
         /// <summary>
         /// Turn a relative reference into an absolute url, based on the fullUrl of the parent resource
         /// </summary>
-        /// <param name="node"></param>
-        /// <param name="identity"></param>
-        /// <returns></returns>
         /// <remarks>See https://www.hl7.org/fhir/bundle.html#references for more information</remarks>
         public static ResourceIdentity MakeAbsolute(this ScopedNode node, ResourceIdentity identity)
         {
@@ -48,25 +50,59 @@ namespace Hl7.Fhir.ElementModel
             return identity;
         }
 
-        public static T Resolve<T>(this T element, string reference, Func<string, T> externalResolver = null) where T : class, ITypedElement
+        /// <inheritdoc cref="MakeAbsolute(ScopedNode, ResourceIdentity)"/>
+        public static string MakeAbsolute(this ScopedNode node, string reference) =>
+             node.MakeAbsolute(new ResourceIdentity(reference)).ToString();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="element"></param>
+        /// <param name="reference"></param>
+        /// <param name="externalResolver"></param>
+        /// <returns></returns>
+        public static T? Resolve<T>(this T element, string reference, Func<string, T?>? externalResolver = null) where T : class, ITypedElement
         {
             // Then, resolve the url within the instance data first - this is only
-            // possibly if we have a ScopedNode at hand
+            // possible if we have a ScopedNode at hand
             if (element is ScopedNode scopedNode)
             {
-                var identity = scopedNode.MakeAbsolute(new ResourceIdentity(reference));
-
-                var result = locateResource(identity);
-                if (result != null) return (T)(object)result;
+                // a special case for a reference to the container (in this parent) resource.
+                // It should make sure that we're only resolving to the first parent that actually contains resources
+                // of which the current element is a child.
+                if (reference == "#")
+                {
+                    return (T?)(object?)locateContainer(scopedNode);
+                }
+                else
+                {
+                    var identity = scopedNode.MakeAbsolute(new ResourceIdentity(reference));
+                    var result = locateLocalResource(identity);
+                    if (result != null) return (T)(object)result;
+                }
             }
 
             // Nothing found internally, now try the external resolver
-            if (externalResolver != null)
-                return externalResolver(reference);
-            else
-                return null;
+            return externalResolver != null ? externalResolver(reference) : null;
 
-            ScopedNode locateResource(ResourceIdentity identity)
+            ScopedNode? locateContainer(ScopedNode containee)
+            {
+                var scan = containee;
+                while (scan is not null)
+                {
+                    if (scan.ParentResource is ScopedNode parent)
+                    {
+                        if (parent.ContainedResources().Any(cr => cr.Location == scan.Location)) return parent;
+                    }
+
+                    scan = scan.ParentResource;
+                }
+
+                return null;
+            }
+
+            ScopedNode? locateLocalResource(ResourceIdentity identity)
             {
                 var url = identity.ToString();
 
@@ -90,26 +126,21 @@ namespace Hl7.Fhir.ElementModel
         }
 
         /// <summary>
-        /// Where this item is a reference, resolve it to an actual resource, and return that
+        /// Where this element is a Reference datatype, get the reference from it and resolve it.
         /// </summary>
-        /// <param name="element"></param>
-        /// <param name="externalResolver"></param>
-        /// <returns></returns>
-        public static T Resolve<T>(this T element, Func<string, T> externalResolver = null) where T : class, ITypedElement
+        public static T? Resolve<T>(this T element, Func<string, T?>? externalResolver = null) where T : class, ITypedElement
         {
             if (element is null) return default;
 
             // First, get the url to fetch from the focus
-            string url = null;
+            string? url = element switch
+            {
+                { Value: string s } => s,
+                { InstanceType: FhirTypeConstants.REFERENCE } => element.ParseResourceReference()?.Reference,
+                _ => null
+            };
 
-            if (element.Value is string s)
-                url = s;
-            else if (element.InstanceType == FhirTypeConstants.REFERENCE)
-                url = element.ParseResourceReference()?.Reference;
-
-            if (url == null) return default;   // nothing found to resolve
-
-            return Resolve(element, url, externalResolver);
+            return url is not null ? Resolve(element, url, externalResolver) : default;
         }
     }
 }
