@@ -15,17 +15,17 @@ namespace Hl7.Fhir.Rest
     public class EntryResponse
     {
         public string Status { get; set; }
-        public Dictionary<string,string> Headers { get; set; }
+        public Dictionary<string, string> Headers { get; set; }
         public DateTimeOffset? LastModified { get; set; }
         public string ContentType { get; set; }
         public string Etag { get; set; }
         public byte[] Body { get; set; }
         public string Location { get; set; }
-        public Uri ResponseUri { get; set; } 
+        public Uri ResponseUri { get; set; }
 
         public EntryResponse()
         {
-            Headers = new Dictionary<string, string>();
+            Headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         }
     }
 
