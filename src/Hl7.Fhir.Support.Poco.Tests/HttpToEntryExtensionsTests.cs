@@ -39,5 +39,25 @@ namespace Hl7.Fhir.Support.Poco.Tests
             // assert
             entryResponse.Headers.Should().BeEquivalentTo(new Dictionary<string, string> { { "lowercase", "value" } });
         }
+
+        [TestMethod]
+        public void ResponseHeadersCaseInsensitiveTest2()
+        {
+            var responseMessage = new HttpResponseMessage
+            {
+                RequestMessage = new HttpRequestMessage()
+            };
+            responseMessage.Headers.Add("LOWERCASE", "value");
+            responseMessage.Headers.Add("ANOTHERHEADER", new[] { "value1", "value2" });
+
+            // act
+            var entryResponse = responseMessage.ToEntryResponse(Array.Empty<byte>());
+
+            // assert
+            entryResponse.Headers.Should().BeEquivalentTo(new Dictionary<string, string>
+            {   { "lowercase", "value" },
+                { "anotherheader", "value1"}  // value2 is ignored 
+            });
+        }
     }
 }
