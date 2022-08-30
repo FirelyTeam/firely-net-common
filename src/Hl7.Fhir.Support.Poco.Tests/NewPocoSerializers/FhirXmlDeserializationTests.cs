@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
+using Hl7.Fhir.Utility;
 using Hl7.Fhir.Validation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -212,7 +213,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             var resource = deserializer.DeserializeResource(reader);
 
             resource.As<TestPatient>().Text.Status.Should().Be(Narrative.NarrativeStatus.Generated);
-            resource.As<TestPatient>().Text.Div.Should().Be("this is text");
+            resource.As<TestPatient>().Text.Div.Should().Be("<div xmlns=\"http://www.w3.org/1999/xhtml\">this is text</div>");
         }
 
 
@@ -465,6 +466,27 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 result.Should().BeOfType<TestPatient>()
                     .Which.Deceased.Should().BeOfType<FhirDateTime>()
                     .Which.Value.Should().EndWith("+00:00");
+            }
+        }
+
+        [TestMethod]
+        public void TestNewXmlParserNarrativeParsing()
+        {
+            var patient = new TestPatient { Id = "example" };
+            patient.Text = new Narrative() { Status = Narrative.NarrativeStatus.Generated, Div = "<div xmlns=\"http://www.w3.org/1999/xhtml\">some test data</div>" };
+            var serializer = new FhirXmlPocoSerializer(Specification.FhirRelease.STU3);
+            var actual = SerializationUtil.WriteXmlToString(patient, (o, w) => serializer.Serialize(o, w));
+
+            //// now parse this back out with the old parser
+            //var op = new Hl7.Fhir.Serialization.FhirXmlParser().Parse<Patient>(patientXML);
+            //Assert.AreEqual(patient.Text.Div, op.Text.Div, "Old narrative should be the same");
+
+            // now parse this back out with the new parser
+            FhirXmlPocoDeserializer ds = getTestDeserializer(new());
+            using (var reader = SerializationUtil.XmlReaderFromXmlText(actual))
+            {
+                var np = ds.DeserializeResource(reader) as TestPatient;
+                Assert.AreEqual(patient.Text.Div, np.Text.Div, "New narrative should be the same");
             }
         }
 
