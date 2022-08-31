@@ -143,7 +143,7 @@ namespace Hl7.Fhir.Model
         {
             dto = default;
 
-            if (this.Value == null)
+            if (this == null || this.Value == null)
                 return false;
 
             if (tryGetTimeSpan(out var timespan))
