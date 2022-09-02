@@ -309,9 +309,9 @@ namespace Hl7.Fhir.Serialization
         }
 
 
-        private static string readXhtml(XmlReader reader, FhirXmlPocoDeserializerState state)
+        private static string readXhtml(XmlReader reader)
         {
-            var xhtml = reader.ReadInnerXml();
+            var xhtml = reader.ReadOuterXml();
             return xhtml;
         }
 
@@ -373,7 +373,7 @@ namespace Hl7.Fhir.Serialization
             }
             else if (propMapping.SerializationHint == Specification.XmlRepresentation.XHtml)
             {
-                return readXhtml(reader, state);
+                return readXhtml(reader);
             }
             else
             {
