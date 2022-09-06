@@ -289,7 +289,8 @@ namespace Hl7.Fhir.Rest
                 var history = -1;
                 for (var index = 0; index < count; index++)
                     if (components[index] == HISTORY) history = index;
-                if (history > -1 && history == count - 1) return; // illegal use, there's just a _history component, but no version id
+
+                if (history > -1 && (history == count - 1 || history < 2)) return; // illegal use, there's a _history component but one or more required components are missing. (Resource type, version, and/or history version).
 
                 int resourceTypePos = (history > -1) ? history - 2 : count - 2;
 
