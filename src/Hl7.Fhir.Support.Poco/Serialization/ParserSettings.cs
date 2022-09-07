@@ -1,7 +1,7 @@
-﻿/* 
+﻿/*
  * Copyright (c) 2016, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
- * 
+ *
  * This file is licensed under the BSD 3-Clause license
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
@@ -48,6 +48,11 @@ namespace Hl7.Fhir.Serialization
             "Should not be used in new code.")]
         public bool TruncateDateTimeToDate { get; set; } = false;
 
+        /// <summary>
+        /// A Handler to permit intercepting Exceptions during parsing
+        /// </summary>
+        public ExceptionNotificationHandler ExceptionHandler { get; set; }
+
         /// <summary>Default constructor. Creates a new <see cref="ParserSettings"/> instance with default property values.</summary>
         public ParserSettings() { }
 
@@ -73,6 +78,7 @@ namespace Hl7.Fhir.Serialization
 #pragma warning disable CS0618 // Type or member is obsolete
             other.TruncateDateTimeToDate = TruncateDateTimeToDate;
 #pragma warning restore CS0618 // Type or member is obsolete
+            other.ExceptionHandler = ExceptionHandler;
         }
 
         /// <summary>
@@ -88,6 +94,7 @@ namespace Hl7.Fhir.Serialization
 #pragma warning disable CS0618 // Type or member is obsolete
             settings.TruncateDateTimeToDate = TruncateDateTimeToDate;
 #pragma warning restore CS0618 // Type or member is obsolete
+            settings.ExceptionHandler = ExceptionHandler;
         }
 
         /// <summary>Creates a new <see cref="ParserSettings"/> object that is a copy of the current instance.</summary>

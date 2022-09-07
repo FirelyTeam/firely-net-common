@@ -1,7 +1,7 @@
-﻿/* 
+﻿/*
  * Copyright (c) 2018, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
- * 
+ *
  * This file is licensed under the BSD 3-Clause license
  * available at https://github.com/FirelyTeam/firely-net-sdk/blob/master/LICENSE
  */
@@ -36,6 +36,11 @@ namespace Hl7.Fhir.Serialization
             "Should not be used in new code.")]
         public bool TruncateDateTimeToDate { get; set; }
 
+        /// <summary>
+        /// A Handler to permit intercepting Exceptions during parsing
+        /// </summary>
+        public ExceptionNotificationHandler ExceptionHandler { get; set; }
+
         /// <summary>Default constructor. Creates a new <see cref="PocoBuilderSettings"/> instance with default property values.</summary>
         public PocoBuilderSettings() { }
 
@@ -59,6 +64,7 @@ namespace Hl7.Fhir.Serialization
 #pragma warning disable CS0618 // Type or member is obsolete
             other.TruncateDateTimeToDate = TruncateDateTimeToDate;
 #pragma warning restore CS0618 // Type or member is obsolete
+            other.ExceptionHandler = ExceptionHandler;
         }
 
         /// <summary>Creates a new <see cref="PocoBuilderSettings"/> object that is a copy of the current instance.</summary>
