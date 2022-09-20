@@ -1,7 +1,7 @@
-﻿/* 
+﻿/*
  * Copyright (c) 2018, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
- * 
+ *
  * This file is licensed under the BSD 3-Clause license
  * available at https://github.com/FirelyTeam/firely-net-sdk/blob/master/LICENSE
  */
@@ -22,6 +22,7 @@ namespace Hl7.Fhir.Serialization
         {
             _settings = settings?.Clone() ?? new PocoBuilderSettings();
             _inspector = inspector ?? throw new ArgumentNullException(nameof(inspector));
+            ExceptionHandler = _settings.ExceptionHandler;
         }
 
         private readonly PocoBuilderSettings _settings;
@@ -36,7 +37,7 @@ namespace Hl7.Fhir.Serialization
         /// <param name="source"></param>
         /// <param name="dataType">Optional. Type of POCO to build. Should be one of the generated POCO classes.</param>
         /// <returns></returns>
-        /// <remarks>If <paramref name="dataType"/> is not supplied, or is <code>Resource</code> or <code>DomainResource</code>, 
+        /// <remarks>If <paramref name="dataType"/> is not supplied, or is <code>Resource</code> or <code>DomainResource</code>,
         /// the builder will try to determine the actual type to create from the <paramref name="source"/>. </remarks>
         public Base BuildFrom(ISourceNode source, Type dataType = null)
         {
@@ -68,7 +69,7 @@ namespace Hl7.Fhir.Serialization
         /// <param name="source"></param>
         /// <param name="mapping">Optional. The <see cref="ClassMapping" /> for the POCO to build. </param>
         /// <returns></returns>
-        /// <remarks>If <paramref name="mapping"/> is not supplied, or is <code>Resource</code> or <code>DomainResource</code>, 
+        /// <remarks>If <paramref name="mapping"/> is not supplied, or is <code>Resource</code> or <code>DomainResource</code>,
         /// the builder will try to determine the actual type to create from the <paramref name="source"/>. </remarks>
         public Base BuildFrom(ISourceNode source, ClassMapping mapping = null)
         {
