@@ -10,6 +10,7 @@
 
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Specification;
+using Hl7.Fhir.Support.Poco.Model;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Concurrent;
@@ -27,7 +28,7 @@ namespace Hl7.Fhir.Introspection
     /// attributes. A <see cref="ModelInspector"/> will always capture the metadata for one such
     /// <see cref="Specification.FhirRelease" /> which is passed to it in the constructor.
     /// </remarks>
-    public class ModelInspector : IStructureDefinitionSummaryProvider
+    public class ModelInspector : IStructureDefinitionSummaryProvider, IModelInfo
     {
         private static readonly ConcurrentDictionary<string, ModelInspector> _inspectedAssemblies = new();
 
@@ -179,6 +180,72 @@ namespace Hl7.Fhir.Introspection
             canonical.Contains("/") ?
                 FindClassMappingByCanonical(canonical)
                 : FindClassMapping(canonical);
+
+        #region IModelInfo
+        public Canonical? CanonicalUriForFhirCoreType(string typeName) => ModelInfoExtensions.CanonicalUriForFhirCoreType(typeName);
+
+        public Canonical? CanonicalUriForFhirCoreType(Type type) => GetFhirTypeNameForType(type) is { } name ? CanonicalUriForFhirCoreType(name) : null;
+
+        public Type? GetTypeForFhirType(string name) => FindClassMapping(name) is { } mapping ? mapping.NativeType : null;
+
+        public bool IsBindable(string type) => FindClassMapping(type) is { } mapping ? mapping.IsBindable : false;
+
+        public bool IsConformanceResource(string name) => GetTypeForFhirType(name) is { } type ? IsConformanceResource(type) : false;
+
+        public bool IsConformanceResource(Type type) => type.CanBeTreatedAsType(typeof(IConformanceResource));
+
+        public bool IsCoreModelType(string name) => FindClassMapping(name) is not null;
+
+        public bool IsCoreModelType(Type type) => FindClassMapping(type) is not null;
+
+        public bool IsCoreModelTypeUri(Uri uri) => uri is not null
+                // [WMR 20181025] Issue #746
+                // Note: FhirCoreProfileBaseUri.IsBaseOf(new Uri("Dummy", UriKind.RelativeOrAbsolute)) = true...?!
+                && uri.IsAbsoluteUri
+                && ModelInfoExtensions.FhirCoreProfileBaseUri.IsBaseOf(uri)
+                && IsCoreModelType(ModelInfoExtensions.FhirCoreProfileBaseUri.MakeRelativeUri(uri).ToString());
+
+        public bool IsCoreSuperType(string name) => GetTypeForFhirType(name) is { } type ? IsCoreSuperType(type) : false;
+
+        public bool IsCoreSuperType(Type type) =>
+            type == typeof(Base) ||
+            type == typeof(Resource) ||
+            type == typeof(DomainResource) ||
+            type == typeof(Element) ||
+            type == typeof(BackboneElement) ||
+            type == typeof(DataType) ||
+            type == typeof(PrimitiveType) ||
+            type == typeof(BackboneType);
+
+        public bool IsDataType(string name) => FindClassMapping(name) is { } mapping && !mapping.IsFhirPrimitive && !mapping.IsResource;
+
+        public bool IsDataType(Type type) => FindClassMapping(type) is { } mapping && !mapping.IsFhirPrimitive && !mapping.IsResource;
+
+        public bool IsInstanceTypeFor(string superclass, string subclass)
+        {
+            var superType = GetTypeForFhirType(superclass);
+            var subType = GetTypeForFhirType(subclass);
+
+            return subType is not null && superType is not null && IsInstanceTypeFor(superType, subType);
+        }
+
+        public bool IsInstanceTypeFor(Type superclass, Type subclass) => superclass == subclass || superclass.IsAssignableFrom(subclass);
+
+        public bool IsKnownResource(string name) => FindClassMapping(name) is { } mapping && mapping.IsResource;
+
+        public bool IsKnownResource(Type type) => FindClassMapping(type) is { } mapping && mapping.IsResource;
+
+        public bool IsPrimitive(string name) => FindClassMapping(name)?.IsFhirPrimitive ?? false;
+
+        public bool IsPrimitive(Type type) => FindClassMapping(type)?.IsFhirPrimitive ?? false;
+
+        public bool IsReference(string name) => GetTypeForFhirType(name) is { } type && IsReference(type);
+
+        public bool IsReference(Type type) => type.CanBeTreatedAsType(typeof(ResourceReference));
+
+        public string? GetFhirTypeNameForType(Type type) => FindClassMapping(type) is { } mapping ? mapping.Name : null;
+
+        #endregion
     }
 }
 
