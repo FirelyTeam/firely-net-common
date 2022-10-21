@@ -1,5 +1,5 @@
 ﻿/*
-  Copyright (c) 2011+, HL7, Inc.
+  Copyright (c) 2011-2013, HL7, Inc.
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without modification, 
@@ -28,25 +28,24 @@
 
 */
 
+using System;
+
 #nullable enable
 
-using Hl7.Fhir.Introspection;
-using System.Text.RegularExpressions;
-
-namespace Hl7.Fhir.Model
+namespace Hl7.Fhir.Introspection
 {
-    [Bindable(true)]
-    public partial class Code
+    /// <summary>
+    /// This attribute is applied to classes that represent bindable types.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+    public sealed class BindableAttribute : VersionedAttribute
     {
-        /// <summary>
-        /// Creates a <see cref="ElementModel.Types.Code"/> from an instance of a <see cref="Code"/>.
-        /// </summary>
-        public ElementModel.Types.Code ToSystemCode() => new(system: null, code: Value, display: null, version: null);
+        public BindableAttribute(bool isBindable)
+        {
+            IsBindable = isBindable;
+        }
 
-        /// <summary>
-        /// Checks whether the given literal is correctly formatted.
-        /// </summary>
-        public static bool IsValidValue(string value) => Regex.IsMatch(value, "^" + PATTERN + "$", RegexOptions.Singleline);
+        public bool IsBindable { get; }
     }
 }
 

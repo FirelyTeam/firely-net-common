@@ -28,11 +28,13 @@
 
 */
 
+using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Utility;
 using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.Fhir.Model
 {
+    [Bindable(true)]
     public partial class Quantity
     {
         public P.Quantity ToQuantity()

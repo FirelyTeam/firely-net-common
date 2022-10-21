@@ -94,6 +94,7 @@ namespace Hl7.Fhir.Introspection
                                 ReflectionHelper.IsConstructedFromGenericTypeDefinition(type, typeof(Code<>)),
                 IsFhirPrimitive = typeof(PrimitiveType).IsAssignableFrom(type),
                 IsNestedType = typeAttribute.IsNestedType,
+                IsBindable = GetAttribute<BindableAttribute>(type.GetTypeInfo(), release)?.IsBindable ?? false,
                 Canonical = typeAttribute.Canonical,
                 ValidationAttributes = GetAttributes<ValidationAttribute>(type.GetTypeInfo(), release).ToArray()
             };
@@ -177,10 +178,16 @@ namespace Hl7.Fhir.Introspection
         public bool IsNestedType { get; private set; } = false;
 
         /// <summary>
+        /// Indicates whether this class can be used for binding.
+        /// </summary>
+        public bool IsBindable { get; private set; }
+
+        /// <summary>
         /// The canonical for the StructureDefinition defining this type
         /// </summary>
         /// <remarks>Will be null for backbone types.</remarks>
         public string? Canonical { get; private set; }
+
 
         // This list is created lazily. This not only improves initial startup time of 
         // applications but also ensures circular references between types will not cause loops.

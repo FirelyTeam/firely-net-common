@@ -28,8 +28,8 @@
 
 */
 
+using Hl7.Fhir.Introspection;
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
 using S = Hl7.Fhir.ElementModel.Types;
 
@@ -39,6 +39,7 @@ namespace Hl7.Fhir.Model
 
 
     [DebuggerDisplay(@"\{{DebuggerDisplay,nq}}")]
+    [Bindable(true)]
     public partial class Coding
     {
         public Coding()
