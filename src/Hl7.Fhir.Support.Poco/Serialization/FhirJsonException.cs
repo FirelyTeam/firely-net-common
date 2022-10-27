@@ -46,7 +46,10 @@ namespace Hl7.Fhir.Serialization
         public const string RESOURCETYPE_UNEXPECTED_CODE = "JSON119";
         public const string OBJECTS_CANNOT_BE_EMPTY_CODE = "JSON120";
         public const string ARRAYS_CANNOT_BE_EMPTY_CODE = "JSON121";
+
+        [Obsolete("According to the latest updates of the Json format, primitive arrays of different sizes are no longer considered an error.")]
         public const string PRIMITIVE_ARRAYS_INCOMPAT_SIZE_CODE = "JSON122";
+
         public const string PRIMITIVE_ARRAYS_ONLY_NULL_CODE = "JSON125";
         public const string INCOMPATIBLE_SIMPLE_VALUE_CODE = "JSON126";
 
@@ -92,7 +95,8 @@ namespace Hl7.Fhir.Serialization
         internal static readonly FhirJsonException ARRAYS_CANNOT_BE_EMPTY = new(ARRAYS_CANNOT_BE_EMPTY_CODE, "An array needs to have at least one element.");
 
         // Shortest array will be filled out with nulls
-        internal static readonly FhirJsonException PRIMITIVE_ARRAYS_INCOMPAT_SIZE = new(PRIMITIVE_ARRAYS_INCOMPAT_SIZE_CODE, "Primitive arrays split in two properties should have the same size.");
+        // [EK 20221027] The new R5 spec clarifies that this is actually correct behaviour, so this error is not used anymore.
+        //internal static readonly FhirJsonException PRIMITIVE_ARRAYS_INCOMPAT_SIZE = new(PRIMITIVE_ARRAYS_INCOMPAT_SIZE_CODE, "Primitive arrays split in two properties should have the same size.");
 
         // This leaves the incorrect nulls in place, no change in data.
         internal static readonly FhirJsonException PRIMITIVE_ARRAYS_ONLY_NULL = new(PRIMITIVE_ARRAYS_ONLY_NULL_CODE, "Arrays need to have at least one non-null element.");
