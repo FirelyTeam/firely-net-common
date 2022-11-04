@@ -24,6 +24,16 @@ namespace Hl7.Fhir.Utility
 {
     public static class SerializationUtil
     {
+        private const string XML_XSD_RESOURCENAME = "Hl7.Fhir.Serialization.xhtml.xml.xsd";
+        private const string XMLDSIGCORESCHEMA_XSD_RESOURCENAME = "Hl7.Fhir.Serialization.xhtml.xmldsig-core-schema.xsd";
+        private const string FHIRXHTML_XSD_RESOURCENAME = "Hl7.Fhir.Serialization.xhtml.fhir-xhtml.xsd";
+
+        /// <summary>
+        /// A set of Xsd schemas used by the full FHIR schemaset. These include xml.xsd, xmldsig-core-schema.xsd and fhir-xhtml.xsd.
+        /// </summary>
+        public static readonly IncludedXsdSchemaSet BASEFHIRSCHEMAS =
+            new(Assembly.GetExecutingAssembly(), XML_XSD_RESOURCENAME, XMLDSIGCORESCHEMA_XSD_RESOURCENAME, FHIRXHTML_XSD_RESOURCENAME);
+
         public static bool ProbeIsXml(string data)
         {
             Regex xml = new Regex("^<[^>]+>");
@@ -475,7 +485,7 @@ namespace Hl7.Fhir.Utility
             if (!hasContent(doc.Root))
                 return new[] { $"The narrative SHALL have some non-whitespace content." };
 
-            doc.Validate(_xhtmlSchemaSet.Value, (s, a) => result.Add(a.Message));
+            doc.Validate(BASEFHIRSCHEMAS.CompiledSchemas, (s, a) => result.Add(a.Message));
             return result.ToArray();
 
             // content consist of xml elements with non-whitespace content (text or an image)
@@ -483,44 +493,6 @@ namespace Hl7.Fhir.Utility
                 => el.DescendantsAndSelf().Any(e => !string.IsNullOrWhiteSpace(e.Value) || e.Name.LocalName == "img");
         }
 
-        private static readonly Lazy<XmlSchemaSet> _xhtmlSchemaSet = new Lazy<XmlSchemaSet>(compileXhtmlSchema, true);
-
-        private const string XML_XSD_RESOURCENAME = "Hl7.Fhir.Serialization.xhtml.xml.xsd";
-        private const string FHIRXHTML_XSD_RESOURCENAME = "Hl7.Fhir.Serialization.xhtml.fhir-xhtml.xsd";
-
-        private static readonly Lazy<string> XmlXsdData = new Lazy<string>(() => readResource(XML_XSD_RESOURCENAME));
-        private static readonly Lazy<string> FhirXhtmlXsdData = new Lazy<string>(() => readResource(FHIRXHTML_XSD_RESOURCENAME));
-
-        private static XmlSchemaSet compileXhtmlSchema()
-        {
-            XmlSchemaSet schemas = new XmlSchemaSet();
-
-            var schema = new StringReader(XmlXsdData.Value);
-            schemas.Add(null, XmlReader.Create(schema));   // null = use schema namespace as specified in schema file
-
-            schema = new StringReader(FhirXhtmlXsdData.Value);
-            schemas.Add(null, XmlReader.Create(schema));   // null = use schema namespace as specified in schema file
-
-            schemas.Compile();
-
-            return schemas;
-        }
-
-        private static string readResource(string resourceName)
-        {
-            var assembly = Assembly.GetExecutingAssembly();
-            using (var stream = assembly.GetManifestResourceStream(resourceName))
-            {
-                if (stream == null)
-                {
-                    throw new Exception($"Resource {resourceName} not found in {assembly.FullName}.  Valid resources are: {String.Join(", ", assembly.GetManifestResourceNames())}.");
-                }
-                using (var reader = new StreamReader(stream))
-                {
-                    return reader.ReadToEnd();
-                }
-            }
-        }
 
         private static readonly Regex _re = new Regex("(&[a-zA-Z0-9]+;)", RegexOptions.Compiled | RegexOptions.CultureInvariant);
         private static Dictionary<string, string> _xmlReplacements;
@@ -752,3 +724,4 @@ namespace Hl7.Fhir.Utility
         }
     }
 }
+
