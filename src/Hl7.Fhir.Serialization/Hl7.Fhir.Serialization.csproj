@@ -18,15 +18,17 @@
 		<EmbeddedResource Include="xhtml\xml.xsd">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</EmbeddedResource>
-	</ItemGroup>
-
-	<ItemGroup>
-		<None Remove="xhtml\fhir-xhtml.xsd" />
-		<None Remove="xhtml\xml.xsd" />
+		<EmbeddedResource Include="xhtml\xmldsig-core-schema.xsd">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</EmbeddedResource>
 	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+	</ItemGroup>
+
+	<ItemGroup Condition=" '$(TargetFramework)' == 'net452'">
+		<Reference Include="System.IO.Compression" />
 	</ItemGroup>
 
 	<ItemGroup>
