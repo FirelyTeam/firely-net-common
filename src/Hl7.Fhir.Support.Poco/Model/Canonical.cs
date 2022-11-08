@@ -60,6 +60,9 @@ namespace Hl7.Fhir.Model
         /// Checks whether the given literal is correctly formatted.
         /// </summary>
         public static bool IsValidValue(string value) => FhirUri.IsValidValue(value);
+
+        public static readonly Uri FHIR_CORE_PROFILE_BASE_URI = new(@"http://hl7.org/fhir/StructureDefinition/");
+        public static Canonical CanonicalUriForFhirCoreType(string typename) => new(FHIR_CORE_PROFILE_BASE_URI + typename);
     }
 }
 

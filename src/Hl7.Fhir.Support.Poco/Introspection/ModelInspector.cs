@@ -10,7 +10,6 @@
 
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Specification;
-using Hl7.Fhir.Support.Poco.Model;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Concurrent;
@@ -86,6 +85,28 @@ namespace Hl7.Fhir.Introspection
                 }
             }
         }
+
+        /// <summary>
+        /// Returns a fully configured <see cref="ModelInspector"/> with the
+        /// FHIR metadata contents of the assembly where <paramref name="type"/> resides. Calling this function 
+        /// repeatedly for the same type will return the same inspector.
+        /// </summary>
+        /// <param name="type"></param>
+        public static ModelInspector ForType(Type type) => ForAssembly(type.Assembly);
+
+        /// <summary>
+        /// Returns a fully configured <see cref="ModelInspector"/> with the
+        /// FHIR metadata contents of the assembly where <typeparamref name="T"/> resides. Calling this function 
+        /// repeatedly for the same type will return the same inspector.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        public static ModelInspector ForType<T>() where T : Resource => ForType(typeof(T));
+
+        /// <summary>
+        /// Returns a fully configured <see cref="ModelInspector"/> with the
+        /// FHIR metadata contents of the common assembly
+        /// </summary>
+        public static ModelInspector Common => ForType(typeof(ModelInspector));
 
         /// <summary>
         /// Constructs a ModelInspector that will reflect the FHIR metadata for the given FHIR release
@@ -177,20 +198,20 @@ namespace Hl7.Fhir.Introspection
 
         /// <inheritdoc cref="IStructureDefinitionSummaryProvider.Provide(string)"/>
         public IStructureDefinitionSummary? Provide(string canonical) =>
-            canonical.Contains("/") ?
+            canonical.Contains('/') ?
                 FindClassMappingByCanonical(canonical)
                 : FindClassMapping(canonical);
 
         #region IModelInfo
-        public Canonical? CanonicalUriForFhirCoreType(string typeName) => ModelInfoExtensions.CanonicalUriForFhirCoreType(typeName);
+        public Canonical? CanonicalUriForFhirCoreType(string typeName) => Canonical.CanonicalUriForFhirCoreType(typeName);
 
         public Canonical? CanonicalUriForFhirCoreType(Type type) => GetFhirTypeNameForType(type) is { } name ? CanonicalUriForFhirCoreType(name) : null;
 
         public Type? GetTypeForFhirType(string name) => FindClassMapping(name) is { } mapping ? mapping.NativeType : null;
 
-        public bool IsBindable(string type) => FindClassMapping(type) is { } mapping ? mapping.IsBindable : false;
+        public bool IsBindable(string type) => FindClassMapping(type) is { } mapping && mapping.IsBindable;
 
-        public bool IsConformanceResource(string name) => GetTypeForFhirType(name) is { } type ? IsConformanceResource(type) : false;
+        public bool IsConformanceResource(string name) => GetTypeForFhirType(name) is { } type && IsConformanceResource(type);
 
         public bool IsConformanceResource(Type type) => type.CanBeTreatedAsType(typeof(IConformanceResource));
 
@@ -202,10 +223,10 @@ namespace Hl7.Fhir.Introspection
                 // [WMR 20181025] Issue #746
                 // Note: FhirCoreProfileBaseUri.IsBaseOf(new Uri("Dummy", UriKind.RelativeOrAbsolute)) = true...?!
                 && uri.IsAbsoluteUri
-                && ModelInfoExtensions.FhirCoreProfileBaseUri.IsBaseOf(uri)
-                && IsCoreModelType(ModelInfoExtensions.FhirCoreProfileBaseUri.MakeRelativeUri(uri).ToString());
+                && Canonical.FHIR_CORE_PROFILE_BASE_URI.IsBaseOf(uri)
+                && IsCoreModelType(Canonical.FHIR_CORE_PROFILE_BASE_URI.MakeRelativeUri(uri).ToString());
 
-        public bool IsCoreSuperType(string name) => GetTypeForFhirType(name) is { } type ? IsCoreSuperType(type) : false;
+        public bool IsCoreSuperType(string name) => GetTypeForFhirType(name) is { } type && IsCoreSuperType(type);
 
         public bool IsCoreSuperType(Type type) =>
             type == typeof(Base) ||
