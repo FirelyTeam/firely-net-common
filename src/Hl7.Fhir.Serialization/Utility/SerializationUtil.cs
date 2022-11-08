@@ -12,7 +12,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -32,7 +31,7 @@ namespace Hl7.Fhir.Utility
         /// A set of Xsd schemas used by the full FHIR schemaset. These include xml.xsd, xmldsig-core-schema.xsd and fhir-xhtml.xsd.
         /// </summary>
         public static readonly IncludedXsdSchemaSet BASEFHIRSCHEMAS =
-            new(Assembly.GetExecutingAssembly(), XML_XSD_RESOURCENAME, XMLDSIGCORESCHEMA_XSD_RESOURCENAME, FHIRXHTML_XSD_RESOURCENAME);
+            new(typeof(SerializationUtil).Assembly, XML_XSD_RESOURCENAME, XMLDSIGCORESCHEMA_XSD_RESOURCENAME, FHIRXHTML_XSD_RESOURCENAME);
 
         public static bool ProbeIsXml(string data)
         {
