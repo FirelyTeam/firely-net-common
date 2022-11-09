@@ -318,7 +318,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
                 yield return new object[] { new { resourceType = nameof(Meta) },
                     JsonTokenType.EndObject, ERR.OBJECTS_CANNOT_BE_EMPTY, ERR.RESOURCE_TYPE_NOT_A_RESOURCE };
                 yield return new object[] { new { resourceType = "Patient", deceasedDateTime = "2022-05" }, JsonTokenType.EndObject };
-                yield return new object[] { new { resourceType = "Patient", deceasedDateTime = "2022-05", _deceasedDateTime = new { extension = new object[] { new { url = "test", valueString = "Smile" } }  } }, JsonTokenType.EndObject };
+                yield return new object[] { new { resourceType = "Patient", deceasedDateTime = "2022-05", _deceasedDateTime = new { extension = new object[] { new { url = "test", valueString = "Smile" } } } }, JsonTokenType.EndObject };
             }
         }
 
@@ -459,10 +459,10 @@ namespace Hl7.Fhir.Support.Poco.Tests
             yield return data<TestAddress>(new { line = new string?[] { null }, _line = new[] { new { id = "1" } } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL);
             yield return data<TestAddress>(new { line = new[] { "Ewout" }, _line = new string?[] { null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL);
             yield return data<TestAddress>(new { line = new string?[] { null }, _line = new string?[] { null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_ONLY_NULL);
-            yield return data<TestAddress>(new { line = new string?[] { null }, _line = new string?[] { null, null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
-            yield return data<TestAddress>(new { line = new string?[] { null, null }, _line = new string?[] { null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
+            yield return data<TestAddress>(new { line = new string?[] { null }, _line = new string?[] { null, null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_ONLY_NULL);
+            yield return data<TestAddress>(new { line = new string?[] { null, null }, _line = new string?[] { null } }, ERR.PRIMITIVE_ARRAYS_ONLY_NULL, ERR.PRIMITIVE_ARRAYS_ONLY_NULL);
             yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" } }, checkName);
-            yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" }, _line = new[] { new { id = "1" } } }, checkId1AndName, ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE);
+            yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" }, _line = new[] { new { id = "1" } } }, checkId1AndName);
             yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" }, _line = new[] { new { id = "1" }, null } }, checkId1AndName);
             yield return data<TestAddress>(new { line = new[] { "Ewout", "Wouter" }, _line = new[] { new { id = "1" }, new { id = "2" } } }, checkAll);
             yield return data<TestAddress>(new { line = new[] { "Ewout", null }, _line = new[] { null, new { id = "2" } } });
@@ -591,7 +591,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
                     ERR.EXPECTED_START_OF_ARRAY_CODE,
                     ERR.UNKNOWN_PROPERTY_FOUND_CODE, // mother is not a property of HumanName
                     ERR.EXPECTED_PRIMITIVE_NOT_ARRAY_CODE, // family is not an array,
-                    ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE_CODE, // given and _given not the same length
+                    //ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE_CODE, // given and _given not the same length
                     ERR.EXPECTED_PRIMITIVE_NOT_NULL_CODE, // telecom use cannot be null
                     ERR.EXPECTED_PRIMITIVE_NOT_OBJECT_CODE, // address.use is not an object
                     COVE.REPEATING_ELEMENT_CANNOT_CONTAIN_NULL_CODE, // address.line should not have a null at the same position in both arrays
