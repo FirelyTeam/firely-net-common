@@ -485,7 +485,7 @@ namespace Hl7.Fhir.Serialization
 
                 if (reader.TokenType == JsonTokenType.Null)
                 {
-                    if (onlyNulls is null) onlyNulls = true;
+                    onlyNulls ??= true;
 
                     // don't read any new data into the primitive here
                     reader.Read();
@@ -505,8 +505,10 @@ namespace Hl7.Fhir.Serialization
             if (onlyNulls == true)
                 state.Errors.Add(ERR.PRIMITIVE_ARRAYS_ONLY_NULL.With(ref reader));
 
-            if (originalSize > 0 && elementIndex != originalSize)
-                state.Errors.Add(ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE.With(ref reader));
+            //[EK 20221027] - According to the new R5 spec, these arrays need not be of the same size, and
+            //we need to fill out missing elements with null values.
+            //if (originalSize > 0 && elementIndex != originalSize)
+            //    state.Errors.Add(ERR.PRIMITIVE_ARRAYS_INCOMPAT_SIZE.With(ref reader));
 
             // read past array to next property or end of object
             if (!oneshot) reader.Read();
