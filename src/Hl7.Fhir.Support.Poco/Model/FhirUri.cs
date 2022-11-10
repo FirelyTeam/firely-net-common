@@ -29,10 +29,12 @@
 */
 
 #nullable enable
+using Hl7.Fhir.Introspection;
 using System;
 
 namespace Hl7.Fhir.Model
 {
+    [Bindable(true)]
     public partial class FhirUri
     {
         public FhirUri(Uri uri)

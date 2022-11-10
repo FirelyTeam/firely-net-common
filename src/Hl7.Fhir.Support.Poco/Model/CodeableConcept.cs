@@ -28,12 +28,14 @@
 
 */
 
+using Hl7.Fhir.Introspection;
 using System.Linq;
 using S = Hl7.Fhir.ElementModel.Types;
 
 
 namespace Hl7.Fhir.Model
 {
+    [Bindable(true)]
     public partial class CodeableConcept
     {
         public S.Concept ToSystemConcept()

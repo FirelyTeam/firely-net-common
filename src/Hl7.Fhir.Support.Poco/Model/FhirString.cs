@@ -29,8 +29,11 @@
 
 #nullable enable
 
+using Hl7.Fhir.Introspection;
+
 namespace Hl7.Fhir.Model
 {
+    [Bindable(true)]
     public partial class FhirString
     {
         /// <summary>
