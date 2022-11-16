@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Tests;
@@ -21,7 +22,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
             // For now, deserialize with the existing deserializer, until we have completed
             // the dynamicserializer too.
-            return (TypedSerialization.ToPoco<TestPatient>(FhirXmlNode.Parse(expected)), expected);
+            return (FhirXmlNode.Parse(expected).ToPoco<TestPatient>(ModelInspector.ForType<TestPatient>()), expected);
         }
 
         [TestMethod]
