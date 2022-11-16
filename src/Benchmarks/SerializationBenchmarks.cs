@@ -1,5 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Utility;
@@ -23,7 +24,7 @@ namespace Firely.Sdk.Benchmarks.Common
             var data = File.ReadAllText(filename);
             // For now, deserialize with the existing deserializer, until we have completed
             // the dynamicserializer too.
-            Patient = TypedSerialization.ToPoco<TestPatient>(FhirJsonNode.Parse(data));
+            Patient = FhirJsonNode.Parse(data).ToPoco<TestPatient>(ModelInspector.ForType<TestPatient>());
             Options = new JsonSerializerOptions().ForFhir(typeof(TestPatient).Assembly);
             XmlSerializer = new FhirXmlPocoSerializer(Hl7.Fhir.Specification.FhirRelease.STU3);
         }
@@ -43,13 +44,13 @@ namespace Firely.Sdk.Benchmarks.Common
         [Benchmark]
         public string TypedElementSerializerJson()
         {
-            return TypedSerialization.ToTypedElement(Patient).ToJson();
+            return Patient.ToTypedElement(ModelInspector.ForType<TestPatient>()).ToJson();
         }
 
         [Benchmark]
         public string TypedElementSerializerXml()
         {
-            return TypedSerialization.ToTypedElement(Patient).ToXml();
+            return Patient.ToTypedElement(ModelInspector.ForType<TestPatient>()).ToXml();
         }
     }
 }

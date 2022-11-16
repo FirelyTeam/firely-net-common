@@ -1,5 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using System.IO;
@@ -65,13 +66,13 @@ namespace Firely.Sdk.Benchmarks.Common
         [Benchmark]
         public TestPatient TypedElementDeserializerJson()
         {
-            return TypedSerialization.ToPoco<TestPatient>(FhirJsonNode.Parse(JsonData));
+            return FhirJsonNode.Parse(JsonData).ToPoco<TestPatient>(ModelInspector.ForType<TestPatient>());
         }
 
         [Benchmark]
         public Resource TypedElementDeserializerXml()
         {
-            return TypedSerialization.ToPoco<TestPatient>(FhirXmlNode.Parse(XmlData));
+            return FhirXmlNode.Parse(XmlData).ToPoco<TestPatient>(ModelInspector.ForType<TestPatient>());
         }
     }
 }

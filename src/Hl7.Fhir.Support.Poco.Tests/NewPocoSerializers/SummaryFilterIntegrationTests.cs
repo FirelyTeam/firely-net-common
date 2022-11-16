@@ -64,7 +64,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             string actual = JsonSerializer.Serialize(b, options);
 
             // Root bundle should not have been filtered at all
-            var bp = TypedSerialization.ToPoco<TestBundle>(FhirJsonNode.Parse(actual));
+            var bp = FhirJsonNode.Parse(actual).ToPoco<TestBundle>(ModelInspector.ForType<TestBundle>());
             assertIdentifier(bp.Identifier);
             bp.Type.Value.Should().Be(TestBundle.BundleType.Batch);
             bp.Count().Should().Be(4);
@@ -88,7 +88,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
 
             // Non-bundle root resources should be filtered normally too 
             actual = JsonSerializer.Serialize(p, options);
-            pat = TypedSerialization.ToPoco<TestPatient>(FhirJsonNode.Parse(actual));
+            pat = FhirJsonNode.Parse(actual).ToPoco<TestPatient>(ModelInspector.ForType<TestPatient>());
             pat.Count().Should().Be(1);
             pat.Communication.Should().NotBeNull();
 
@@ -147,14 +147,14 @@ namespace Hl7.Fhir.Support.Poco.Tests
         private (T full, T summarized) runSummarize<T>(string filename, SerializationFilter filter) where T : Resource
         {
             var fullXml = File.ReadAllText(Path.Combine("TestData", filename));
-            var full = TypedSerialization.ToPoco<T>(FhirXmlNode.Parse(fullXml));
+            var full = FhirXmlNode.Parse(fullXml).ToPoco<T>(ModelInspector.ForType<T>());
 
             var options = new JsonSerializerOptions()
                 .ForFhir(typeof(TestPatient).Assembly, new FhirJsonPocoSerializerSettings { SummaryFilter = filter })
                 .Pretty();
             string summarizedJson = JsonSerializer.Serialize(full, options);
 
-            var summarized = TypedSerialization.ToPoco<T>(FhirJsonNode.Parse(summarizedJson));
+            var summarized = FhirJsonNode.Parse(summarizedJson).ToPoco<T>(ModelInspector.ForType<T>());
 
             return (full, summarized);
         }
