@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using Hl7.Fhir.ElementModel;
+using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
 using Hl7.FhirPath;
 using Hl7.FhirPath.Expressions;
@@ -557,7 +558,7 @@ namespace HL7.FhirPath.Tests
         public void ContextNestingLevelTest()
         {
             Coding c = new("http://nu.nl", "nl");
-            var te = TypedSerialization.ToTypedElement(c);
+            var te = c.ToTypedElement(ModelInspector.Common);
             Assert.IsTrue(te.IsBoolean($"system.endsWith(code)", true));
             Assert.IsTrue(te.IsBoolean($"system.endsWith(%context.code)", true));
             Assert.IsTrue(te.IsBoolean($"system.endsWith('nl')", true));

@@ -182,7 +182,7 @@ namespace Hl7.Fhir.Specification.Source
                                 ? FhirJsonNode.Parse(content)
                                 : FhirXmlNode.Parse(content);
 
-                return TypedSerialization.ToPoco(sourceNode, _provider) as Resource;
+                return sourceNode.ToPoco(_provider) as Resource;
             }
             catch
             {
