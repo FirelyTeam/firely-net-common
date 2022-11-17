@@ -52,7 +52,7 @@ namespace Hl7.Fhir.Specification.Source
 
         }
 
-        private async static Task<PackageManifest> initialize(string path, string name, string version, string author, string description, string[] dependencies)
+        private static async Task<PackageManifest> initialize(string path, string name, string version, string author, string description, string[] dependencies)
         {
             if (!Directory.Exists(path)) Directory.CreateDirectory(path);
             var project = new FolderProject(path);
@@ -276,21 +276,20 @@ namespace Hl7.Fhir.Specification.Source
         }
 
         ///<inheritdoc/>
-        public async Task<IEnumerable<Resource>?> FindConceptMaps(string? sourceUri = null, string? targetUri = null)
+        public async Task<IEnumerable<Resource>> FindConceptMaps(string? sourceUri = null, string? targetUri = null)
         {
             var content = await FindConceptMapsAsStrings(sourceUri, targetUri).ConfigureAwait(false);
-            return content is null
-                 ? null
-                 : (from item in content
-                    let resource = toResource(item)
-                    where resource is not null
-                    select resource);
+            return from item in content
+                   let resource = toResource(item)
+                   where resource is not null
+                   select resource;
         }
 
         //internal for test purposes
-        internal async Task<IEnumerable<string>?> FindConceptMapsAsStrings(string? sourceUri = null, string? targetUri = null)
+        internal async Task<IEnumerable<string>> FindConceptMapsAsStrings(string? sourceUri = null, string? targetUri = null)
         {
-            return await _context.Value.GetConceptMapsBySourceAndTarget(sourceUri, targetUri).ConfigureAwait(false);
+            var cms = await _context.Value.GetConceptMapsBySourceAndTarget(sourceUri, targetUri).ConfigureAwait(false);
+            return cms is not null ? cms : Enumerable.Empty<string>();
         }
 
         ///<inheritdoc/>

@@ -1,3 +1,4 @@
+#nullable enable
 /* 
  * Copyright (c) 2017, Firely (info@fire.ly) and contributors
  * See the file CONTRIBUTORS for details.
@@ -23,7 +24,9 @@ namespace Hl7.Fhir.Specification.Source
         /// The ISummarySource interface provides methods to unambiguously retrieve specific
         /// artifacts from the associated summary instance.
         /// </remarks>
-        Stream LoadArtifactByName(string artifactName);
+        Stream? LoadArtifactByName(string artifactName);
     }
 
 }
+
+#nullable restore
