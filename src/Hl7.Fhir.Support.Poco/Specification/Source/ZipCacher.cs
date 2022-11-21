@@ -29,6 +29,8 @@ namespace Hl7.Fhir.Specification.Source
         /// <summary>
         /// The full path to the directory where the files from the zip will be cached.
         /// </summary>
+        /// <remarks>Note that actual extraction will take place in a directory with the name of the zip file
+        /// to make the same cache path useable for different zip files.</remarks>
         public string CachePath { get; private set; }
 
         /// <summary>
@@ -73,6 +75,25 @@ namespace Hl7.Fhir.Specification.Source
             var currentZipFileTime = File.GetLastWriteTimeUtc(ZipPath);
 
             return dir.CreationTimeUtc >= currentZipFileTime;
+        }
+
+        /// <summary>
+        /// Makes sure the cache is extracted and up to date.
+        /// </summary>
+        public void EnsureActual()
+        {
+            if (!IsActual()) Refresh();
+        }
+
+        /// <summary>
+        /// Returns the directory where the contents of the zip are extracted. 
+        /// </summary>
+        /// <remarks>Note that this function will update the cache before returning the directory name.</remarks>
+        public string GetContentDirectory()
+        {
+            if (!IsActual()) Refresh();
+
+            return getCachedZipDirectory().FullName;
         }
 
         /// <summary>
@@ -139,7 +160,8 @@ namespace Hl7.Fhir.Specification.Source
             var versionInfo = satellite.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
             var productInfo = satellite.GetCustomAttribute<AssemblyProductAttribute>();
 
-            var cleanedInformationalVersion = new string(versionInfo!.InformationalVersion.TakeWhile(c => c != '+').ToArray());
+            //  var cleanedInformationalVersion = new string(versionInfo!.InformationalVersion.TakeWhile(c => c != '+').ToArray());
+            var cleanedInformationalVersion = versionInfo!.InformationalVersion;
             return $"FhirArtifactCache-{cleanedInformationalVersion}-{productInfo!.Product}";
         }
 
