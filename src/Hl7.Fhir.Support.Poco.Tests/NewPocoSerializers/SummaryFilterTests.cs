@@ -16,7 +16,7 @@ namespace Hl7.Fhir.Support.Poco.Tests
             var epf = new ElementPrefixFilter("elem");
             var bf = new BundleFilter(epf);
 
-            var inspector = ModelInspector.ForAssembly(typeof(TestBundle).Assembly);
+            var inspector = ModelInspector.ForAssembly(typeof(Bundle).Assembly);
 
             bf.EnterObject(null, inspector.FindClassMapping("Bundle"));
             bf.TryEnterMember("bundleElement", null, null).Should().BeTrue();
