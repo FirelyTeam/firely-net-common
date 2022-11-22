@@ -41,7 +41,7 @@ namespace Hl7.Fhir.Specification.Terminology
     /// <summary>
     /// Subset of the FHIR terminology service (http://hl7.org/fhir/terminology-service.html) that concerns lookup and validation of single codes.
     /// </summary>
-    public interface ICodeSystemTerminologyService : ICodeValidationTerminologyService
+    public interface ICodeSystemTerminologyService
     {
         /// <summary>
         /// Validate that a coded value is in the code system.
