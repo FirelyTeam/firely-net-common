@@ -117,7 +117,7 @@ namespace Hl7.Fhir.Specification.Terminology
         Task<Resource> Expand(Parameters parameters, string id = null, bool useGet = false);
     }
 
-    public interface ITerminologyService : ICodeSystemTerminologyService, IMappingTerminologyService, ITerminologyServiceWithClosure, IExpandingTerminologyService
+    public interface ITerminologyService : ICodeValidationTerminologyService, ICodeSystemTerminologyService, IMappingTerminologyService, ITerminologyServiceWithClosure, IExpandingTerminologyService
     {
     }
 }
