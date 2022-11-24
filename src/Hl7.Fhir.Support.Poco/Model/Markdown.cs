@@ -30,6 +30,7 @@
 
 #nullable enable
 
+
 namespace Hl7.Fhir.Model
 {
     public partial class Markdown
@@ -38,6 +39,10 @@ namespace Hl7.Fhir.Model
         /// Checks whether the given literal is correctly formatted.
         /// </summary>
         public static bool IsValidValue(string value) => FhirString.IsValidValue(value);
+
+        public static implicit operator string(Markdown md) => md.Value;
+        public static implicit operator Markdown(string s) => new(s);
+
     }
 
 }
