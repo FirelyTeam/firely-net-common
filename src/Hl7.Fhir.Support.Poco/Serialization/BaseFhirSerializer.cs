@@ -6,6 +6,8 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
+#nullable enable
+
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
@@ -19,73 +21,70 @@ namespace Hl7.Fhir.Serialization
     {
         public readonly SerializerSettings Settings;
         private readonly ModelInspector _modelInspector;
+        private readonly Coding[] _subsettedTags =
+            new[]
+            {
+                new Coding("http://hl7.org/fhir/v3/ObservationValue", "SUBSETTED"), // STU3 Tag
+                new Coding("http://terminology.hl7.org/CodeSystem/v3-ObservationValue", "SUBSETTED"), // Tag from R4 and higher
+            };
 
-        public BaseFhirSerializer(ModelInspector modelInspector, SerializerSettings settings = null)
+        public BaseFhirSerializer(ModelInspector modelInspector, SerializerSettings? settings = null)
         {
             Settings = settings?.Clone() ?? new SerializerSettings();
             _modelInspector = modelInspector;
         }
 
-        protected ITypedElement MakeElementStack(Base instance, SummaryType summary, string[] elements)
+        protected ITypedElement MakeElementStack(Base instance, SummaryType summary, string[]? elements)
             => MakeElementStack(instance, summary, elements, false);
 
-        protected ITypedElement MakeElementStack(Base instance, SummaryType summary, string[] elements, bool includeMandatoryInElementsSummary)
+        protected ITypedElement MakeElementStack(Base instance, SummaryType summary, string[]? elements, bool includeMandatoryInElementsSummary)
         {
             if (summary == SummaryType.False && elements == null) return instance.ToTypedElement(_modelInspector);
 
-            if (elements != null && summary != SummaryType.False)
+            if (elements is not null && summary != SummaryType.False)
                 throw Error.Argument("elements", "Elements parameter is supported only when summary is SummaryType.False or summary is not specified at all.");
 
             var patchedInstance = (Base)instance.DeepCopy();
 
-            MetaSubsettedAdder.AddSubsetted(patchedInstance, atRoot: true);
+            addSubsetted(patchedInstance, atRoot: true);
 
             var baseNav = new ScopedNode(patchedInstance.ToTypedElement(_modelInspector));
 
-            switch (summary)
+            return summary switch
             {
-                case SummaryType.True:
-                    return MaskingNode.ForSummary(baseNav);
-                case SummaryType.Text:
-                    return MaskingNode.ForText(baseNav);
-                case SummaryType.Data:
-                    return MaskingNode.ForData(baseNav);
-                case SummaryType.Count:
-                    return MaskingNode.ForCount(baseNav);
-                case SummaryType.False:
-                    return MaskingNode.ForElements(baseNav, elements, includeMandatoryInElementsSummary);
-                default:
-                    return baseNav;
-            }
+                SummaryType.True => MaskingNode.ForSummary(baseNav),
+                SummaryType.Text => MaskingNode.ForText(baseNav),
+                SummaryType.Data => MaskingNode.ForData(baseNav),
+                SummaryType.Count => MaskingNode.ForCount(baseNav),
+                SummaryType.False => MaskingNode.ForElements(baseNav, elements, includeMandatoryInElementsSummary),
+                _ => baseNav,
+            };
         }
 
         // This is a hack to retain the capability to automatically add a SUBSETTED metatag to an 
         // instance, even if the current ITypedElement based serializer won't let you have that.
         // I am not convinced it's the responsibility of the serializer (it's an outside policy), so
         // it's just here to not break existing logic of the POCO serializers.
-        private class MetaSubsettedAdder
+        private void addSubsetted(Base instance, bool atRoot)
         {
-            public static void AddSubsetted(Base instance, bool atRoot)
+            var isBundleAtRoot = instance is Bundle && atRoot;
+
+            if (instance is Resource resource && !isBundleAtRoot)
             {
-                var isBundleAtRoot = instance is Bundle && atRoot;
+                resource.Meta ??= new Meta();
 
-                if (instance is Resource resource && !isBundleAtRoot)
+                foreach (var item in _subsettedTags)
                 {
-                    if (resource.Meta == null)
+                    if (!resource.Meta.Tag.Any(t => t.System == item.System && t.Code == item.Code))
                     {
-                        resource.Meta = new Meta();
-                    }
-
-                    if (!resource.Meta.Tag.Any(t => t.System == "http://terminology.hl7.org/CodeSystem/v3-ObservationValue" && t.Code == "SUBSETTED"))
-                    {
-                        var subsettedTag = new Coding("http://terminology.hl7.org/CodeSystem/v3-ObservationValue", "SUBSETTED");
-                        resource.Meta.Tag.Add(subsettedTag);
+                        resource.Meta.Tag.Add((Coding)item.DeepCopy());
                     }
                 }
-
-                foreach (var child in instance.Children)
-                    AddSubsetted(child, atRoot: false);
             }
+
+            foreach (var child in instance.Children)
+                addSubsetted(child, atRoot: false);
         }
     }
 }
+#nullable restore
