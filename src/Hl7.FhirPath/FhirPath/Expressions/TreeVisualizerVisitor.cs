@@ -17,23 +17,23 @@ namespace Hl7.FhirPath.Expressions
         private readonly StringBuilder _result = new StringBuilder();
         private int _indent = 0;
 
-        public override StringBuilder VisitConstant(ConstantExpression expression, SymbolTable scope)
+        public override StringBuilder VisitConstant(ConstantExpression expression)
         {
             append("const {0}".FormatWith(expression.Value));
             appendType(expression);
             return _result;
         }
 
-        public override StringBuilder VisitFunctionCall(FunctionCallExpression expression, SymbolTable scope)
+        public override StringBuilder VisitFunctionCall(FunctionCallExpression expression)
         {
             append("func {0}".FormatWith(expression.FunctionName));
             appendType(expression);
 
             incr();
-            expression.Focus.Accept(this, scope);
+            expression.Focus.Accept(this);
 
             foreach (var arg in expression.Arguments)
-                arg.Accept(this, scope);
+                arg.Accept(this);
             decr();
 
             return _result;
@@ -51,34 +51,26 @@ namespace Hl7.FhirPath.Expressions
         //    return _result;
         //}
 
-        public override StringBuilder VisitNewNodeListInit(NewNodeListInitExpression expression, SymbolTable scope)
+        public override StringBuilder VisitNewNodeListInit(NewNodeListInitExpression expression)
         {
             append("new NodeSet");
             appendType(expression);
 
             incr();
             foreach (var element in expression.Contents)
-                element.Accept(this, scope);
+                element.Accept(this);
             decr();
 
             return _result;
         }
 
-        public override StringBuilder VisitVariableRef(VariableRefExpression expression, SymbolTable scope)
+        public override StringBuilder VisitVariableRef(VariableRefExpression expression)
         {
             append("var {0}".FormatWith(expression.Name));
             appendType(expression);
 
-            return _result;              
+            return _result;
         }
-
-        //public override StringBuilder VisitTypeBinaryExpression(TypeBinaryExpression expression)
-        //{
-        //    append("{0} {1}".FormatWith(expression.Op, expression.Type.Name));
-        //    appendType(expression);
-
-        //    return _result;
-        //}
 
         private void appendType(Expression expr)
         {
@@ -98,8 +90,8 @@ namespace Hl7.FhirPath.Expressions
         }
 
         private void incr()
-        {           
-            _indent += 1;        
+        {
+            _indent += 1;
         }
 
         private void decr()
@@ -113,7 +105,7 @@ namespace Hl7.FhirPath.Expressions
         public static string Dump(this Expression expr)
         {
             var dumper = new TreeVisualizerVisitor();
-            return expr.Accept(dumper, new SymbolTable()).ToString();
+            return expr.Accept(dumper).ToString();
         }
     }
 

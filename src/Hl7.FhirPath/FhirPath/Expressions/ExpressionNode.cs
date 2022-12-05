@@ -6,14 +6,14 @@
  * available at https://raw.githubusercontent.com/FirelyTeam/firely-net-sdk/master/LICENSE
  */
 
+using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Language;
 using Hl7.Fhir.Language.Debugging;
-using P = Hl7.Fhir.ElementModel.Types;
 using Hl7.Fhir.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Hl7.Fhir.ElementModel;
+using P = Hl7.Fhir.ElementModel.Types;
 
 namespace Hl7.FhirPath.Expressions
 {
@@ -36,7 +36,7 @@ namespace Hl7.FhirPath.Expressions
 
         public TypeSpecifier ExpressionType { get; protected set; }
 
-        public abstract T Accept<T>(ExpressionVisitor<T> visitor, SymbolTable scope);
+        public abstract T Accept<T>(ExpressionVisitor<T> visitor);
 
         public override bool Equals(object obj) => Equals(obj as Expression);
         public bool Equals(Expression other) => other != null && EqualityComparer<TypeSpecifier>.Default.Equals(ExpressionType, other.ExpressionType);
@@ -72,10 +72,7 @@ namespace Hl7.FhirPath.Expressions
 
         public object Value { get; private set; }
 
-        public override T Accept<T>(ExpressionVisitor<T> visitor, SymbolTable scope)
-        {
-            return visitor.VisitConstant(this, scope);
-        }
+        public override T Accept<T>(ExpressionVisitor<T> visitor) => visitor.VisitConstant(this);
 
         public override bool Equals(object obj)
         {
@@ -113,10 +110,7 @@ namespace Hl7.FhirPath.Expressions
 
         public IEnumerable<Expression> Arguments { get; private set; }
 
-        public override T Accept<T>(ExpressionVisitor<T> visitor, SymbolTable scope)
-        {
-            return visitor.VisitFunctionCall(this, scope);
-        }
+        public override T Accept<T>(ExpressionVisitor<T> visitor) => visitor.VisitFunctionCall(this);
 
         public override bool Equals(object obj)
         {
@@ -139,7 +133,7 @@ namespace Hl7.FhirPath.Expressions
 
     public class ChildExpression : FunctionCallExpression
     {
-        public ChildExpression(Expression focus, string name) : base(focus, OP_PREFIX + "children", TypeSpecifier.Any, 
+        public ChildExpression(Expression focus, string name) : base(focus, OP_PREFIX + "children", TypeSpecifier.Any,
                 new ConstantExpression(name, TypeSpecifier.String))
         {
         }
@@ -284,10 +278,7 @@ namespace Hl7.FhirPath.Expressions
 
         public IEnumerable<Expression> Contents { get; private set; }
 
-        public override T Accept<T>(ExpressionVisitor<T> visitor, SymbolTable scope)
-        {
-            return visitor.VisitNewNodeListInit(this, scope);
-        }
+        public override T Accept<T>(ExpressionVisitor<T> visitor) => visitor.VisitNewNodeListInit(this);
         public override bool Equals(object obj)
         {
             if (base.Equals(obj) && obj is NewNodeListInitExpression ne)
@@ -317,9 +308,9 @@ namespace Hl7.FhirPath.Expressions
 
         public string Name { get; private set; }
 
-        public override T Accept<T>(ExpressionVisitor<T> visitor, SymbolTable scope)
+        public override T Accept<T>(ExpressionVisitor<T> visitor)
         {
-            return visitor.VisitVariableRef(this, scope);
+            return visitor.VisitVariableRef(this);
         }
         public override bool Equals(object obj)
         {
