@@ -24,7 +24,7 @@ namespace Hl7.Fhir.Rest
             var result = new EntryRequest
             {
                 Agent = fhirVersion,
-                Method = bundleHttpVerbToRestHttpVerb(entry.Request.Method),
+                Method = bundleHttpVerbToRestHttpVerb(entry.Request.Method, entry.Annotation<InteractionType>()),
                 Type = entry.Annotation<InteractionType>(),
                 Url = entry.Request.Url,
                 Headers = new EntryRequestHeaders
@@ -58,7 +58,7 @@ namespace Hl7.Fhir.Rest
             var result = new EntryRequest
             {
                 Agent = fhirVersion,
-                Method = bundleHttpVerbToRestHttpVerb(entry.Request.Method),
+                Method = bundleHttpVerbToRestHttpVerb(entry.Request.Method, entry.Annotation<InteractionType>()),
                 Type = entry.Annotation<InteractionType>(),
                 Url = entry.Request.Url,
                 Headers = new EntryRequestHeaders
@@ -87,7 +87,7 @@ namespace Hl7.Fhir.Rest
             return result;
         }
 
-        private static HTTPVerb? bundleHttpVerbToRestHttpVerb(Bundle.HTTPVerb? bundleHttp)
+        private static HTTPVerb? bundleHttpVerbToRestHttpVerb(Bundle.HTTPVerb? bundleHttp, InteractionType type)
         {
             switch (bundleHttp)
             {
@@ -105,7 +105,8 @@ namespace Hl7.Fhir.Rest
                     }
                 case Bundle.HTTPVerb.PUT:
                     {
-                        return HTTPVerb.PUT;
+                        //No PATCH in Bundle.HttpVerb in STU3, so this is corrected here. 
+                        return type == InteractionType.Patch ? HTTPVerb.PATCH : HTTPVerb.PUT; ;
                     }
                 case Bundle.HTTPVerb.PATCH:
                     {
@@ -126,7 +127,7 @@ namespace Hl7.Fhir.Rest
             {
 
                 //Binary.Content is available for STU3. This has changed for R4 as it is Binary.Data
-                request.RequestBodyContent = bin.Data;
+                request.RequestBodyContent = bin.Data ?? bin.Content;
 
                 // This is done by the caller after the OnBeforeRequest is called so that other properties
                 // can be set before the content is committed
