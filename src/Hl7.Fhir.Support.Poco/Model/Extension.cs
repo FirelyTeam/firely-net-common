@@ -46,6 +46,7 @@ namespace Hl7.Fhir.Model
     [System.Diagnostics.DebuggerDisplay(@"\{Value={Value} Url={_Url}}")]
     [FhirType("Extension", "http://hl7.org/fhir/StructureDefinition/Extension")]
     [DataContract]
+    [Bindable(true)]
     public class Extension : DataType
     {
         public Extension()

@@ -219,6 +219,8 @@ namespace Hl7.Fhir.Model
     /// Organization that issued id (may be just text)
     /// </summary>
     [FhirElement("assigner", InSummary=true, Order=80)]
+    [CLSCompliant(false)]
+    [References("Organization")]
     [DataMember]
     public Hl7.Fhir.Model.ResourceReference Assigner
     {

@@ -133,6 +133,30 @@ namespace Hl7.Fhir.Tests.Introspection
             public Code<SomeEnum> Type1 { get; set; }
         }
 
+        [FhirType("BindableClass")]
+        [Bindable(true)]
+        public class BindableClass
+        {
+        }
+
+        [FhirType("NonBindableClass")]
+        [Bindable(false)]
+        public class NonBindableClass
+        {
+        }
+
+        [TestMethod]
+        public void IsBindableTest()
+        {
+            ClassMapping.TryCreate(typeof(BindableClass), out var mapping);
+            mapping.Should().NotBeNull();
+            mapping.IsBindable.Should().BeTrue();
+
+            ClassMapping.TryCreate(typeof(NonBindableClass), out mapping);
+            mapping.Should().NotBeNull();
+            mapping.IsBindable.Should().BeFalse();
+        }
+
         [TestMethod]
         public void TestPerformanceOfMapping()
         {

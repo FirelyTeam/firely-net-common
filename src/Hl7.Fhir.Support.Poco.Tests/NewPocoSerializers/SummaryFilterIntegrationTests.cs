@@ -19,10 +19,10 @@ namespace Hl7.Fhir.Support.Poco.Tests
         public void Basics()
         {
             // This bundle should get through unfiltered
-            TestBundle b = new()
+            Bundle b = new()
             {
                 Identifier = new Identifier("http://nu.nl", "abc"),
-                Type = TestBundle.BundleType.Batch,
+                Type = Bundle.BundleType.Batch,
                 Total = 1000
             };
 
@@ -37,14 +37,14 @@ namespace Hl7.Fhir.Support.Poco.Tests
             p.Communication.Add(new TestPatient.CommunicationComponent { Language = new CodeableConcept("x", "nl-nl"), Preferred = true });
 
             // This nested bundle also will have only its "identifier" pass the filter
-            TestBundle nestedB = new()
+            Bundle nestedB = new()
             {
                 Identifier = new Identifier("http://nu.nl", "abc"),
-                Type = TestBundle.BundleType.Collection
+                Type = Bundle.BundleType.Collection
             };
 
-            b.Entry.Add(new TestBundle.EntryComponent { Resource = p });
-            b.Entry.Add(new TestBundle.EntryComponent { Resource = nestedB });
+            b.Entry.Add(new Bundle.EntryComponent { Resource = p });
+            b.Entry.Add(new Bundle.EntryComponent { Resource = nestedB });
 
             var filter = new BundleFilter(new TopLevelFilter(
                 new ElementMetadataFilter
@@ -64,9 +64,9 @@ namespace Hl7.Fhir.Support.Poco.Tests
             string actual = JsonSerializer.Serialize(b, options);
 
             // Root bundle should not have been filtered at all
-            var bp = TypedSerialization.ToPoco<TestBundle>(FhirJsonNode.Parse(actual));
+            var bp = FhirJsonNode.Parse(actual).ToPoco<Bundle>(ModelInspector.ForType<TestPatient>());
             assertIdentifier(bp.Identifier);
-            bp.Type.Value.Should().Be(TestBundle.BundleType.Batch);
+            bp.Type.Value.Should().Be(Bundle.BundleType.Batch);
             bp.Count().Should().Be(4);
 
             // The nested Patient should only its "communication" element included
@@ -82,13 +82,13 @@ namespace Hl7.Fhir.Support.Poco.Tests
             communication.Language.Should().BeEquivalentTo(new CodeableConcept("x", "nl-nl"));
 
             // The nested Bundle should only its "type" present
-            var nb = bp.Entry[1].Resource as TestBundle;
+            var nb = bp.Entry[1].Resource as Bundle;
             nb.Count().Should().Be(1);
             nb.Type.Should().NotBeNull();
 
             // Non-bundle root resources should be filtered normally too 
             actual = JsonSerializer.Serialize(p, options);
-            pat = TypedSerialization.ToPoco<TestPatient>(FhirJsonNode.Parse(actual));
+            pat = FhirJsonNode.Parse(actual).ToPoco<TestPatient>(ModelInspector.ForType<TestPatient>());
             pat.Count().Should().Be(1);
             pat.Communication.Should().NotBeNull();
 
@@ -147,14 +147,14 @@ namespace Hl7.Fhir.Support.Poco.Tests
         private (T full, T summarized) runSummarize<T>(string filename, SerializationFilter filter) where T : Resource
         {
             var fullXml = File.ReadAllText(Path.Combine("TestData", filename));
-            var full = TypedSerialization.ToPoco<T>(FhirXmlNode.Parse(fullXml));
+            var full = FhirXmlNode.Parse(fullXml).ToPoco<T>(ModelInspector.ForType<T>());
 
             var options = new JsonSerializerOptions()
                 .ForFhir(typeof(TestPatient).Assembly, new FhirJsonPocoSerializerSettings { SummaryFilter = filter })
                 .Pretty();
             string summarizedJson = JsonSerializer.Serialize(full, options);
 
-            var summarized = TypedSerialization.ToPoco<T>(FhirJsonNode.Parse(summarizedJson));
+            var summarized = FhirJsonNode.Parse(summarizedJson).ToPoco<T>(ModelInspector.ForType<T>());
 
             return (full, summarized);
         }
