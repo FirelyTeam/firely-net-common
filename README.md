@@ -1,7 +1,5 @@
 # PLEASE NOTE
-This repository has served as the place for code shared between the FHIR release branches for the [.NET SDK repo](https://github.com/FirelyTeam/firely-net-api). However, since SDK 5.0, all these branches have been unified and this repo is now integrated in that main repo.
-
-> Starting from SDK 5.0, this repo is no longer in use, and just kept for archival purposes.
+This repository has served as the place for code shared between the FHIR release branches for the [Firely .NET SDK](https://github.com/FirelyTeam/firely-net-sdk). However, since SDK 5.0, all these branches have been unified and this repo is no longer in use and just kept for archival purposes.
 
 
 _(Original README continues below)_
