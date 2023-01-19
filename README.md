@@ -1,4 +1,7 @@
 # PLEASE NOTE
+
+> THIS REPO IS NO LONGER IN USE
+
 This repository has served as the place for code shared between the FHIR release branches for the [Firely .NET SDK](https://github.com/FirelyTeam/firely-net-sdk). However, since SDK 5.0, all these branches have been unified and this repo is no longer in use and just kept for archival purposes.
 
 
